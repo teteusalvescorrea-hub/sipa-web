@@ -1,29 +1,17 @@
-/* =========================================
-   SIPA — UNIDADES (da autoescola logada)
-   ========================================= */
-
 import * as api from "../../essencial/utils/api.js";
 
-
-/* GET /api/unidades — Autoescola
-   [{ id, nome, endereco, locais: [{ id, categoria, endereco, mesmoEnderecoDaUnidade }] }] */
+// GET /api/unidades — Autoescola
 export const listarUnidades = () =>
     api.Get("unidades");
 
-
-/* POST /api/unidades — Autoescola
-   { nome, endereco, locais?: [{ categoria, usarEnderecoDaUnidade, endereco? }] } → 201 { id } */
+// POST /api/unidades — Autoescola
 export const cadastrarUnidade = (unidade) =>
     api.Post("unidades", unidade);
 
-
-/* PUT /api/unidades/{id} — Autoescola
-   { nome, endereco } → 204 */
+// PUT /api/unidades/{id} — Autoescola
 export const atualizarUnidade = (id, unidade) =>
     api.Put(`unidades/${id}`, unidade);
 
-
-/* DELETE /api/unidades/{id} — Autoescola → 204.
-   Não exclui a última unidade nem unidade com aula futura. */
+// DELETE /api/unidades/{id} — Autoescola → 204
 export const excluirUnidade = (id) =>
     api.Delete(`unidades/${id}`);

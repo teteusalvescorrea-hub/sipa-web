@@ -1,8 +1,4 @@
-/* =========================================
-   SIPA — ERRO DA API
-   A API responde os erros no formato ProblemDetails:
-   { status, title, detail, listErrors? }
-   ========================================= */
+// Erro da API (ProblemDetails: title, detail, listErrors).
 
 export class ApiErro extends Error {
 

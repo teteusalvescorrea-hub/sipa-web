@@ -1,8 +1,4 @@
-/* =========================================
-   SIPA — SESSÃO DO USUÁRIO
-   Guarda só o token devolvido pelo login (nunca a senha).
-   O perfil (Aluno, Motorista ou Autoescola) vem dentro do token.
-   ========================================= */
+// Sessão: guarda só o token do login. O perfil vem dentro do token.
 
 const CHAVE_TOKEN = "sipa.token";
 const CLAIM_PERFIL = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
@@ -23,7 +19,6 @@ export function limparSessao() {
 }
 
 
-/* Lê o conteúdo do token (sem validar: quem valida é a API). */
 function lerToken() {
 
     const token = obterToken();
@@ -57,8 +52,7 @@ export function estaLogado() {
 }
 
 
-/* Proteção de rota: chamar no topo de cada tela logada.
-   Ex.: exigirLogin(["Aluno"]) */
+// Proteção de rota. Ex.: exigirLogin(["Aluno"])
 export function exigirLogin(perfisPermitidos = []) {
 
     const perfil = obterPerfil();

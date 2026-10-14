@@ -1,8 +1,4 @@
-/* =========================================
-   SIPA — CONFIGURAÇÃO DA API
-   Faz o papel do .env do front do Simplea:
-   o endereço da API muda conforme o ambiente.
-   ========================================= */
+// Endereço da API por ambiente (faz o papel do .env do Simplea).
 
 const AMBIENTES = {
     local: "http://localhost:5080/api",

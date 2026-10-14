@@ -3,12 +3,6 @@
    JAVASCRIPT DO PAINEL DO ALUNO
    ========================================= */
 
-/* =========================================
-   IMPORTS DA API
-   O painel busca os dados do aluno e a
-   próxima aula na API (nada no localStorage).
-   ========================================= */
-
 import { exigirLogin } from "./modules/essencial/utils/sessao.js";
 import { sair } from "./modules/essencial/service/authService.js";
 import { obterAlunoLogado } from "./modules/alunos/services/alunos.service.js";
@@ -54,9 +48,7 @@ const progressBar =
 
 
 /* =========================================
-   SIGLAS DAS CATEGORIAS
-   A API manda cada categoria como
-   { descricao, valor }: 1 = A (moto), 2 = B (carro).
+   SIGLAS DAS CATEGORIAS (1 = A, 2 = B)
    ========================================= */
 
 function siglasDasCategorias(categorias) {
@@ -75,7 +67,6 @@ function siglasDasCategorias(categorias) {
 
 /* =========================================
    CARREGAR DADOS DO ALUNO
-   aluno = resposta do GET /api/alunos/me
    ========================================= */
 
 function carregarDadosAluno(aluno) {
@@ -110,7 +101,7 @@ function carregarDadosAluno(aluno) {
     }
 
 
-    /* CATEGORIA (a do pacote contratado ou, sem pacote, a escolhida no cadastro) */
+    /* CATEGORIA */
 
     const categoria =
         siglasDasCategorias(aluno.categoriasFormacao);
@@ -150,7 +141,7 @@ function carregarDadosAluno(aluno) {
     }
 
 
-    /* PACOTE (total de aulas contratadas) */
+    /* PACOTE */
 
     if (studentPackage) {
 
@@ -160,7 +151,7 @@ function carregarDadosAluno(aluno) {
     }
 
 
-    /* PROGRESSO (a API já calcula a porcentagem) */
+    /* PROGRESSO */
 
     const progresso =
         aluno.percentualProgresso;
@@ -194,7 +185,6 @@ function carregarDadosAluno(aluno) {
 
 /* =========================================
    LOGOUT
-   sair() apaga o token e volta para o login.
    ========================================= */
 
 const logoutButton =
@@ -555,8 +545,6 @@ const mesesSipa = [
 
 /* =========================================
    MOSTRAR PRÓXIMA AULA
-   aula = 1º item do GET /api/agendamentos
-   (a API já devolve as próximas aulas em ordem)
    ========================================= */
 
 function carregarProximaAula(aula) {
@@ -636,12 +624,6 @@ function carregarProximaAula(aula) {
     }
 
 
-    /* =====================================
-       DATA
-       "2026-10-20T14:00:00" vira uma data
-       (horário de Brasília, sem fuso)
-       ===================================== */
-
     const data =
         new Date(aula.dataHoraInicio);
 
@@ -688,8 +670,6 @@ function carregarProximaAula(aula) {
 
     /* =====================================
        HORÁRIO
-       Se a aula ainda não está confirmada,
-       mostra o status junto (ex.: Aguardando aceite).
        ===================================== */
 
     if (nextLessonTime) {
@@ -746,7 +726,6 @@ function carregarProximaAula(aula) {
 
     /* =====================================
        LOCALIZAÇÃO DA AULA
-       (unidade e endereço do ponto de encontro)
        ===================================== */
 
     if (nextLessonLocation) {
@@ -785,9 +764,6 @@ function mostrarErroPainel(mensagem) {
 
 /* =========================================
    CARREGAR O PAINEL
-   Busca o aluno e as próximas aulas na API.
-   Se o login venceu, o cliente da API já
-   volta para o login sozinho.
    ========================================= */
 
 async function carregarPainel() {
@@ -816,8 +792,6 @@ async function carregarPainel() {
 
 /* =========================================
    EXECUTAR
-   Só carrega se houver login de aluno.
-   Sem login, exigirLogin manda para o login.
    ========================================= */
 
 if (exigirLogin(["Aluno"])) {

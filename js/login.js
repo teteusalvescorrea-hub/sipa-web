@@ -1,9 +1,3 @@
-/* =========================================
-   IMPORTS DA API
-   O login e o cadastro passam a usar a API
-   (nada mais é gravado no localStorage).
-   ========================================= */
-
 import { login } from "./modules/essencial/service/authService.js";
 import { limparSessao } from "./modules/essencial/utils/sessao.js";
 import { cadastrarAluno } from "./modules/alunos/services/alunos.service.js";
@@ -174,9 +168,7 @@ function mostrarErroCampo(campo, mensagem) {
 
 
 /* =========================================
-   MOSTRAR UM ERRO DA API NO CAMPO CERTO
-   Procura uma palavra da mensagem para saber
-   o campo. Sem campo: mostra no aviso geral.
+   MOSTRAR ERRO DA API NO CAMPO
    ========================================= */
 
 function mostrarErroDaApi(mensagem) {
@@ -436,7 +428,6 @@ if (loginForm) {
 
         const cpf = loginCpf.value.replace(/\D/g, "");
 
-        /* A senha vai do jeito que foi digitada (sem trim), igual ao cadastro. */
         const senha = loginPassword.value;
 
 
@@ -466,9 +457,7 @@ if (loginForm) {
         }
 
 
-        /* LOGIN NA API
-           POST /api/usuarios/login. Se der certo, o token
-           fica guardado e a resposta diz o perfil. */
+        /* LOGIN */
 
         let resposta;
 
@@ -477,9 +466,6 @@ if (loginForm) {
             resposta = await login(cpf, senha);
 
         } catch (erro) {
-
-            /* CPF ou senha errados, ou API desligada:
-               a mensagem já vem pronta da API. */
 
             loginMessage.textContent =
                 erro.message;
@@ -673,10 +659,7 @@ if (cadastroForm) {
 
 
         /* =====================================
-           CADASTRO NA API
-           POST /api/alunos. A categoria vira uma lista
-           de números: A = [1], B = [2], AB = [1, 2].
-           O pacote é contratado depois, na vitrine.
+           CADASTRO
            ===================================== */
 
         const categoriasDaApi = {
@@ -698,9 +681,6 @@ if (cadastroForm) {
             });
 
         } catch (erro) {
-
-            /* A API devolve todos os erros juntos em erro.erros
-               (ex.: "Este CPF já está cadastrado."). */
 
             erro.erros.forEach(mostrarErroDaApi);
 
