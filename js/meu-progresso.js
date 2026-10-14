@@ -80,6 +80,12 @@ const progressPackageLabel =
     );
 
 
+const studentSchool =
+    document.getElementById(
+        "student-school"
+    );
+
+
 const logoutButton =
     document.getElementById(
         "progress-logout"
@@ -280,6 +286,11 @@ function mostrarPacotes(contratacoes) {
                 contratacao.status.valor === 4
         );
 
+    const autoescolas =
+        [...new Set(comProgresso.map((contratacao) => contratacao.autoescolaNome))];
+
+    studentSchool.textContent = autoescolas.join(", ") || "—";
+
     packagesList.replaceChildren();
 
     if (comProgresso.length === 0) {
@@ -304,10 +315,33 @@ function mostrarPacotes(contratacoes) {
 
 
 /* =========================================
+   LIMPAR A TELA ANTES DA API
+   ========================================= */
+
+function limparTela() {
+
+    const campos = [
+        progressPercentage, progressMessage, completedLessons, remainingLessons,
+        packageLessons, scheduledLessons, studentCategory, progressBarPercentage,
+        progressPackageLabel, studentSchool
+    ];
+
+    campos.forEach((campo) => {
+        campo.textContent = "—";
+    });
+
+    progressFill.style.width = "0%";
+    progressCircle.style.background = "";
+}
+
+
+/* =========================================
    CARREGAR PROGRESSO DA API
    ========================================= */
 
 async function carregarProgresso() {
+
+    limparTela();
 
     try {
 

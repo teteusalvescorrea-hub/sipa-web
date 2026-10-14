@@ -6,6 +6,8 @@
 import { exigirLogin } from "./modules/essencial/utils/sessao.js";
 import { sair } from "./modules/essencial/service/authService.js";
 import { obterAlunoLogado } from "./modules/alunos/services/alunos.service.js";
+import { listarContratacoes }
+    from "./modules/contratacoes/services/contratacoes.service.js";
 
 
 /* =========================================
@@ -60,6 +62,11 @@ const profilePackage =
 const profileRemaining =
     document.getElementById(
         "profile-remaining"
+    );
+
+const profileSchool =
+    document.getElementById(
+        "profile-school"
     );
 
 
@@ -379,10 +386,35 @@ if (logoutButton) {
 
 
 /* =========================================
+   AUTOESCOLA (CONTRATAÇÕES APROVADAS E ENCERRADAS)
+   ========================================= */
+
+async function carregarAutoescola() {
+
+    try {
+
+        const contratacoes = await listarContratacoes([2, 4]);
+
+        const nomes =
+            [...new Set(contratacoes.map((contratacao) => contratacao.autoescolaNome))];
+
+        profileSchool.textContent = nomes.join(", ") || "—";
+
+    } catch {
+
+        profileSchool.textContent = "—";
+
+    }
+
+}
+
+
+/* =========================================
    INICIAR
    ========================================= */
 
 if (exigirLogin(["Aluno"])) {
     carregarPerfil();
+    carregarAutoescola();
 }
 

@@ -9,6 +9,8 @@ import { exigirLogin } from "./modules/essencial/utils/sessao.js";
 import { sair } from "./modules/essencial/service/authService.js";
 import { listarContratacoes }
     from "./modules/contratacoes/services/contratacoes.service.js";
+import { obterAutoescola }
+    from "./modules/autoescolas/services/autoescolas.service.js";
 import {
     listarHorariosDisponiveis,
     listarMotoristasDisponiveis,
@@ -20,8 +22,21 @@ import {
    CONFIGURAÇÕES
    ========================================= */
 
-let dataAtual = new Date();
-// Agosto = mês 7 no JavaScript
+/* Hoje no horário de Brasília ("2026-10-14"), o mesmo da API. */
+const formatoDataBrasilia = new Intl.DateTimeFormat(
+    "sv-SE",
+    { timeZone: "America/Sao_Paulo" }
+);
+
+function hojeEmBrasilia() {
+    return formatoDataBrasilia.format(new Date());
+}
+
+const [anoHoje, mesHoje] =
+    hojeEmBrasilia().split("-").map(Number);
+
+/* Mês aberto no calendário, sempre no dia 1. */
+let dataAtual = new Date(anoHoje, mesHoje - 1, 1);
 
 let dataSelecionada = null;
 
@@ -44,9 +59,6 @@ const nextMonthButton =
 
 const selectedDateLabel =
     document.getElementById("selected-date-label");
-
-const summaryDate =
-    document.getElementById("summary-date");
 
 
 /* =========================================
@@ -150,18 +162,11 @@ function renderizarCalendario() {
 
 
     /* =====================================
-       DATA DE HOJE
+       DATA DE HOJE (BRASÍLIA)
        ===================================== */
 
     const hoje =
-        new Date();
-
-    hoje.setHours(
-        0,
-        0,
-        0,
-        0
-    );
+        hojeEmBrasilia();
 
 
     /* =====================================
@@ -223,39 +228,13 @@ function renderizarCalendario() {
 
 
         /* =================================
-           DATA COMPLETA DO DIA
+           DATA COMPLETA DO DIA ("2026-10-20")
            ================================= */
 
         const dataDoDia =
-            new Date(
-                ano,
-                mes,
-                dia
+            formatarDataSistema(
+                new Date(ano, mes, dia)
             );
-
-
-        dataDoDia.setHours(
-            0,
-            0,
-            0,
-            0
-        );
-
-
-        /* =================================
-           VERIFICAR DOMINGO
-           ================================= */
-
-        const domingo =
-            dataDoDia.getDay() === 0;
-
-
-        /* =================================
-           VERIFICAR SÁBADO
-           ================================= */
-
-        const sabado =
-            dataDoDia.getDay() === 6;
 
 
         /* =================================
@@ -264,27 +243,6 @@ function renderizarCalendario() {
 
         const dataPassada =
             dataDoDia < hoje;
-
-
-        /* =================================
-           DOMINGO
-           ================================= */
-
-        if (domingo) {
-
-            elementoDia.classList.add(
-                "closed-day"
-            );
-
-
-            elementoDia.disabled =
-                true;
-
-
-            elementoDia.title =
-                "Autoescola fechada aos domingos";
-
-        }
 
 
         /* =================================
@@ -313,8 +271,7 @@ function renderizarCalendario() {
            ================================= */
 
         const ehHoje =
-            dataDoDia.getTime() ===
-            hoje.getTime();
+            dataDoDia === hoje;
 
 
         if (ehHoje) {
@@ -346,12 +303,10 @@ function renderizarCalendario() {
 
         /* =================================
            CLIQUE NO DIA
+           Dia fechado quem diz é a grade da autoescola.
            ================================= */
 
-        if (
-            !domingo &&
-            !dataPassada
-        ) {
+        if (!dataPassada) {
 
             elementoDia.addEventListener(
                 "click",
@@ -437,10 +392,6 @@ function atualizarDataSelecionada() {
         dataSelecionada.getMonth();
 
 
-    const ano =
-        dataSelecionada.getFullYear();
-
-
     const nomeDia =
         nomesDias[
             dataSelecionada.getDay()
@@ -460,18 +411,6 @@ function atualizarDataSelecionada() {
 
     }
 
-
-    /* RESUMO */
-
-    if (summaryDate) {
-
-        summaryDate.textContent =
-            `${dia.toString().padStart(2, "0")}/${(mes + 1)
-                .toString()
-                .padStart(2, "0")}/${ano}`;
-
-    }
-
 }
 
 
@@ -485,8 +424,10 @@ if (previousMonthButton) {
         "click",
         () => {
 
-            dataAtual.setMonth(
-                dataAtual.getMonth() - 1
+            dataAtual = new Date(
+                dataAtual.getFullYear(),
+                dataAtual.getMonth() - 1,
+                1
             );
 
 
@@ -500,14 +441,6 @@ if (previousMonthButton) {
 
                 selectedDateLabel.textContent =
                     "Selecione uma data";
-
-            }
-
-
-            if (summaryDate) {
-
-                summaryDate.textContent =
-                    "Não selecionada";
 
             }
 
@@ -527,8 +460,10 @@ if (nextMonthButton) {
         "click",
         () => {
 
-            dataAtual.setMonth(
-                dataAtual.getMonth() + 1
+            dataAtual = new Date(
+                dataAtual.getFullYear(),
+                dataAtual.getMonth() + 1,
+                1
             );
 
 
@@ -542,14 +477,6 @@ if (nextMonthButton) {
 
                 selectedDateLabel.textContent =
                     "Selecione uma data";
-
-            }
-
-
-            if (summaryDate) {
-
-                summaryDate.textContent =
-                    "Não selecionada";
 
             }
 
@@ -570,16 +497,19 @@ renderizarCalendario();
    PARTE 2 — DADOS DA API
    Etapa 1: contratação e categoria
    Etapa 2: horários do dia
-   Etapa 3: motorista
+   Etapa 3: resumo, unidade e motorista
    Etapa 4: confirmar
    ========================================= */
 
 const timeSlots = document.getElementById("time-slots");
-const summaryTime = document.getElementById("summary-time");
 const summaryCategory = document.getElementById("summary-category");
+const summaryUnit = document.getElementById("summary-unit");
+const unidadeSelect = document.getElementById("booking-unidade");
+const summaryLessons = document.getElementById("summary-lessons");
 const confirmBookingButton = document.getElementById("confirm-booking");
 const bookingMessage = document.getElementById("booking-message");
 const bookingPackageInfo = document.getElementById("booking-package-info");
+const bookingRetry = document.getElementById("booking-retry");
 const contratacaoSelect = document.getElementById("booking-contratacao");
 const selectedLessonsCount = document.getElementById("selected-lessons-count");
 const categoryOptions = document.querySelectorAll(".category-option");
@@ -587,16 +517,25 @@ const instructorAvatar = document.querySelector(".instructor-avatar");
 const selectedInstructor = document.getElementById("selected-instructor");
 const selectedVehicle = document.getElementById("selected-vehicle");
 const motoristaSelect = document.getElementById("motorista-select");
+const sidebarUnit = document.getElementById("sidebar-unit");
+const sidebarUnitName = document.getElementById("sidebar-unit-name");
+const sidebarUnitSchool = document.getElementById("sidebar-unit-school");
+const footerUnit = document.getElementById("footer-unit");
 
 /* Os botões da tela usam letras. A API usa números: 1 = A, 2 = B. */
 const VALOR_CATEGORIA = { A: 1, B: 2 };
+const LETRA_CATEGORIA = { 1: "A", 2: "B" };
 
 let contratacoes = [];           // contratações aprovadas com saldo
 let contratacaoAtual = null;     // contratação usada no pedido
+let autoescolaAtual = null;      // autoescola da contratação, com unidades e locais
+let avisoUnidade = "";           // texto da unidade enquanto a autoescola não chega
+let unidadePorCategoria = {};    // categoria → id da unidade escolhida
 let categoriaSelecionada = null; // 1, 2 ou null
 let horariosDoDia = null;        // resposta de horarios-disponiveis
 let aulasSelecionadas = [];      // aulas que vão no pedido
 let aulaDoMotorista = null;      // aula mostrada no quadro do motorista
+let enviando = false;            // pedido em andamento: a seleção fica travada
 let buscaHorarios = 0;           // número da busca de horários mais recente
 let buscaMotoristas = 0;         // número da busca de motoristas mais recente
 
@@ -621,6 +560,20 @@ function formatarDataHora(dataHoraInicio) {
     return `${dia}/${mes}/${ano} às ${hora.slice(0, 5)}`;
 }
 
+/* Erro por aula da API, "20/10/2026 14:00: ..." → "2026-10-20T14:00" */
+function inicioDoErro(texto) {
+    const partes = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}:\d{2}):/.exec(texto);
+
+    return partes ? `${partes[3]}-${partes[2]}-${partes[1]}T${partes[4]}` : null;
+}
+
+/* "27999998888" → "(27) 99999-8888" */
+function formatarWhatsapp(numero) {
+    const resto = numero.slice(2);
+
+    return `(${numero.slice(0, 2)}) ${resto.slice(0, -4)}-${resto.slice(-4)}`;
+}
+
 /* tipo: "success" (verde) ou "error" (vermelho) */
 function mostrarMensagem(mensagem, tipo) {
     bookingMessage.textContent = mensagem;
@@ -633,20 +586,28 @@ function limparMensagem() {
     bookingMessage.className = "booking-message";
 }
 
-/* Erro da API: a lista de erros (um por linha) ou a mensagem pronta. */
-function mostrarErroApi(erro) {
-    const texto = erro.erros ? erro.erros.join("\n") : erro.message;
-
-    mostrarMensagem(texto, "error");
-}
-
 function atualizarContadorAulas() {
     selectedLessonsCount.textContent = aulasSelecionadas.length;
 }
 
-/* O botão Confirmar só fica ativo com pelo menos uma aula escolhida. */
+/* Confirmar só com aula escolhida. Com pedido em andamento, tudo travado. */
 function verificarAgendamento() {
-    confirmBookingButton.disabled = aulasSelecionadas.length === 0;
+    confirmBookingButton.disabled = enviando || aulasSelecionadas.length === 0;
+    contratacaoSelect.disabled = enviando;
+    unidadeSelect.disabled = enviando;
+    motoristaSelect.disabled = enviando || motoristaSelect.options.length === 0;
+}
+
+/* Depois de mudar o lote: contador, resumo, horários e botão. */
+function atualizarSelecao() {
+    atualizarContadorAulas();
+    mostrarResumoAulas();
+
+    if (horariosDoDia) {
+        mostrarHorarios();
+    }
+
+    verificarAgendamento();
 }
 
 /* =========================================
@@ -655,14 +616,32 @@ function verificarAgendamento() {
    ========================================= */
 
 async function carregarContratacoes() {
+    contratacoes = [];
+    contratacaoAtual = null;
+    autoescolaAtual = null;
+    categoriaSelecionada = null;
+    aulasSelecionadas = [];
+    horariosDoDia = null;
+    buscaHorarios = buscaHorarios + 1; // descarta a busca de horários em andamento
+
+    bookingPackageInfo.textContent = "Carregando informações...";
+    bookingRetry.hidden = true;
+    contratacaoSelect.style.display = "none";
+    summaryCategory.textContent = "Não selecionada";
+
+    mostrarCategorias([]);
+    mostrarUnidade();
+    mostrarAvisoHorarios("◷", "Carregando seu pacote", "Aguarde um instante.");
+    atualizarPainelMotorista(null);
+    atualizarSelecao();
+
     let lista;
 
     try {
         lista = await listarContratacoes(2);
     } catch (erro) {
         bookingPackageInfo.textContent = erro.message;
-        mostrarErroApi(erro);
-        mostrarCategorias([]);
+        bookingRetry.hidden = false;
         mostrarHorarios();
         return;
     }
@@ -671,10 +650,7 @@ async function carregarContratacoes() {
     contratacoes = lista.filter((contratacao) => contratacao.aulasRestantes > 0);
 
     if (contratacoes.length === 0) {
-        bookingPackageInfo.textContent =
-            "Você não tem pacote aprovado com aulas disponíveis. " +
-            "Contrate um pacote e aguarde a aprovação da autoescola.";
-        mostrarCategorias([]);
+        mostrarSemPacote(lista[0]);
         mostrarHorarios();
         return;
     }
@@ -695,14 +671,49 @@ async function carregarContratacoes() {
     escolherContratacao(contratacoes[0]);
 }
 
-function escolherContratacao(contratacao) {
-    contratacaoAtual = contratacao;
-    aulasSelecionadas = [];
+/* Sem saldo: a vitrine ainda não existe, então o aluno fala com a autoescola. */
+function mostrarSemPacote(contratacao) {
+    const texto = "Você não tem pacote aprovado com aulas disponíveis. ";
 
+    if (!contratacao) {
+        bookingPackageInfo.textContent =
+            texto + "Fale com a sua autoescola para contratar um pacote.";
+        return;
+    }
+
+    const contato = `${texto}Para contratar mais aulas, fale com ${contratacao.autoescolaNome}`;
+
+    if (!contratacao.autoescolaWhatsapp) {
+        bookingPackageInfo.textContent = `${contato}.`;
+        return;
+    }
+
+    const link = document.createElement("a");
+
+    link.className = "booking-whatsapp-link";
+    link.href = `https://wa.me/55${contratacao.autoescolaWhatsapp}`;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = formatarWhatsapp(contratacao.autoescolaWhatsapp);
+
+    bookingPackageInfo.replaceChildren(`${contato} pelo WhatsApp `, link, ".");
+}
+
+function mostrarPacote(contratacao) {
     bookingPackageInfo.textContent =
         `${contratacao.pacoteNome} (${contratacao.autoescolaNome}): ` +
         `${contratacao.aulasRestantes} de ${contratacao.quantidadeAulas} ` +
         "aulas disponíveis";
+}
+
+function escolherContratacao(contratacao) {
+    contratacaoAtual = contratacao;
+    autoescolaAtual = null;
+    unidadePorCategoria = {};
+    aulasSelecionadas = [];
+
+    mostrarPacote(contratacao);
+    carregarAutoescola();
 
     /* Pacote de uma categoria só: ela já vem marcada. */
     const categorias = contratacao.categorias;
@@ -710,11 +721,38 @@ function escolherContratacao(contratacao) {
     mostrarCategorias(categorias);
     selecionarCategoria(categorias.length === 1 ? categorias[0].valor : null);
 
-    limparMensagem();
-    atualizarContadorAulas();
-    atualizarPainelMotorista();
-    verificarAgendamento();
+    atualizarPainelMotorista(null);
+    atualizarSelecao();
 }
+
+/* Relê o saldo depois de um erro da contratação, sem apagar a seleção. */
+async function atualizarContratacao() {
+    const contratacao = contratacaoAtual;
+    let lista;
+
+    try {
+        lista = await listarContratacoes(2);
+    } catch {
+        return;
+    }
+
+    if (enviando || contratacao !== contratacaoAtual) {
+        return;
+    }
+
+    const atual = lista.find((item) => item.id === contratacao.id);
+
+    /* Encerrada, recusada ou sem saldo: a etapa 1 recomeça. */
+    if (!atual || atual.aulasRestantes === 0) {
+        carregarContratacoes();
+        return;
+    }
+
+    contratacao.aulasRestantes = atual.aulasRestantes;
+    mostrarPacote(contratacao);
+}
+
+bookingRetry.addEventListener("click", () => carregarContratacoes());
 
 /* =========================================
    ETAPA 1 — CATEGORIA
@@ -752,19 +790,148 @@ function selecionarCategoria(valor) {
         ? categoria.descricao
         : "Não selecionada";
 
+    mostrarUnidade();
+
     /* Nova busca de horários a cada troca de categoria. */
     carregarHorarios();
 }
 
 categoryOptions.forEach((botao) => {
     botao.addEventListener("click", () => {
-        selecionarCategoria(VALOR_CATEGORIA[botao.dataset.category]);
+        if (!enviando) {
+            selecionarCategoria(VALOR_CATEGORIA[botao.dataset.category]);
+        }
     });
 });
 
 contratacaoSelect.addEventListener("change", () => {
+    if (enviando) {
+        return;
+    }
+
+    limparMensagem();
     escolherContratacao(contratacoes[Number(contratacaoSelect.value)]);
 });
+
+/* =========================================
+   UNIDADE DAS AULAS
+   GET /api/autoescolas/{id}
+   2+ unidades com ponto de encontro da categoria: o aluno escolhe (DA8).
+   ========================================= */
+
+async function carregarAutoescola() {
+    const contratacao = contratacaoAtual;
+
+    avisoUnidade = "Carregando...";
+    mostrarUnidade();
+
+    try {
+        const autoescola = await obterAutoescola(contratacao.autoescolaId);
+
+        if (contratacao === contratacaoAtual) {
+            autoescolaAtual = autoescola;
+        }
+    } catch {
+        if (contratacao === contratacaoAtual) {
+            autoescolaAtual = null;
+            avisoUnidade = "Não foi possível carregar";
+        }
+    }
+
+    if (contratacao === contratacaoAtual) {
+        mostrarUnidade();
+        mostrarResumoAulas();
+    }
+
+    return autoescolaAtual !== null;
+}
+
+function unidadesDaCategoria(categoria) {
+    if (!autoescolaAtual) {
+        return [];
+    }
+
+    return autoescolaAtual.unidades.filter((unidade) =>
+        unidade.locais.some((local) => local.categoria.valor === categoria));
+}
+
+/* A única unidade da categoria ou a escolhida na lista. */
+function unidadeDaCategoria(categoria) {
+    const unidades = unidadesDaCategoria(categoria);
+
+    if (unidades.length === 1) {
+        return unidades[0];
+    }
+
+    return unidades.find((unidade) => unidade.id === unidadePorCategoria[categoria]) || null;
+}
+
+function textoDaUnidade(unidade) {
+    if (unidade) {
+        return unidade.nome;
+    }
+
+    if (!contratacaoAtual || !categoriaSelecionada) {
+        return "Não selecionada";
+    }
+
+    return autoescolaAtual ? "Sem ponto de encontro" : avisoUnidade;
+}
+
+/* Resumo, barra lateral e rodapé mostram a unidade da categoria marcada. */
+function mostrarUnidade() {
+    const unidades = unidadesDaCategoria(categoriaSelecionada);
+    const unidade = unidadeDaCategoria(categoriaSelecionada);
+    const escolher = unidades.length > 1;
+
+    summaryUnit.hidden = escolher;
+    unidadeSelect.hidden = !escolher;
+
+    if (escolher) {
+        unidadeSelect.replaceChildren(new Option("Escolha a unidade", ""));
+        unidades.forEach((item) => unidadeSelect.add(new Option(item.nome, item.id)));
+        unidadeSelect.value = unidade ? unidade.id : "";
+    } else {
+        summaryUnit.textContent = textoDaUnidade(unidade);
+    }
+
+    sidebarUnit.hidden = !unidade;
+    footerUnit.hidden = !unidade;
+
+    if (unidade) {
+        sidebarUnitName.textContent = unidade.nome;
+        sidebarUnitSchool.textContent = autoescolaAtual.nome;
+        footerUnit.textContent = unidade.nome;
+    }
+}
+
+unidadeSelect.addEventListener("change", () => {
+    unidadePorCategoria[categoriaSelecionada] = unidadeSelect.value || null;
+    mostrarUnidade();
+    mostrarResumoAulas();
+});
+
+/* Antes do pedido: autoescola carregada e unidade escolhida onde precisa. */
+async function conferirUnidades() {
+    if (!autoescolaAtual && !(await carregarAutoescola())) {
+        return "Não foi possível carregar as unidades da autoescola. Tente de novo.";
+    }
+
+    const faltando = contratacaoAtual.categorias.filter((categoria) =>
+        aulasSelecionadas.some((aula) => aula.categoria === categoria.valor) &&
+        unidadesDaCategoria(categoria.valor).length > 1 &&
+        !unidadeDaCategoria(categoria.valor));
+
+    if (faltando.length === 0) {
+        return "";
+    }
+
+    const nomes = faltando.map((categoria) => categoria.descricao).join(" e ");
+    const outra = faltando.some((categoria) => categoria.valor !== categoriaSelecionada);
+
+    return `Escolha a unidade das aulas de ${nomes}.` +
+        (outra ? " Marque a categoria na etapa 1 para ver as unidades." : "");
+}
 
 /* =========================================
    ETAPA 2 — HORÁRIOS DO DIA
@@ -791,8 +958,6 @@ async function carregarHorarios() {
     buscaHorarios = buscaHorarios + 1;
 
     const busca = buscaHorarios;
-
-    atualizarResumoHorario();
 
     if (!contratacaoAtual || !categoriaSelecionada || !dataSelecionada) {
         mostrarHorarios();
@@ -822,19 +987,7 @@ async function carregarHorarios() {
     }
 }
 
-/* Resumo: horários já escolhidos no dia marcado no calendário. */
-function atualizarResumoHorario() {
-    const dataChave = dataSelecionada ? formatarDataSistema(dataSelecionada) : "";
-    const doDia = aulasSelecionadas.filter((aula) => aula.data === dataChave);
-
-    summaryTime.textContent = doDia.length > 0
-        ? doDia.map((aula) => aula.horario).join(", ")
-        : "Não selecionado";
-}
-
 function mostrarHorarios() {
-    atualizarResumoHorario();
-
     if (!contratacaoAtual) {
         mostrarAvisoHorarios("!", "Nenhum pacote disponível",
             "Veja o aviso na etapa 1.");
@@ -861,59 +1014,92 @@ function mostrarHorarios() {
     timeSlots.innerHTML = "";
 
     horariosDoDia.horarios.forEach((item) => {
-        const botao = document.createElement("button");
-        botao.type = "button";
-        botao.className = "time-slot";
-        botao.textContent = item.horario;
-
-        const escolhido = aulasSelecionadas.some(
-            (aula) => aula.dataHoraInicio === item.dataHoraInicio
-        );
-
-        if (escolhido) {
-            botao.classList.add("selected");
-        }
-
-        if (item.disponivel || escolhido) {
-            botao.addEventListener("click", () => selecionarHorario(item));
-        } else {
-            botao.classList.add("unavailable");
-            botao.disabled = true;
-        }
-
-        timeSlots.appendChild(botao);
+        timeSlots.appendChild(criarBotaoHorario(item));
     });
+}
+
+/* Aula do lote que começa neste horário, em qualquer categoria. */
+function aulaNoInicio(dataHoraInicio) {
+    return aulasSelecionadas.find((aula) => aula.dataHoraInicio === dataHoraInicio);
+}
+
+function criarBotaoHorario(item) {
+    const botao = document.createElement("button");
+    const marcada = aulaNoInicio(item.dataHoraInicio);
+
+    botao.type = "button";
+    botao.className = "time-slot";
+    botao.textContent = item.horario;
+
+    /* A API recusa o mesmo início duas vezes no lote, mesmo em outra categoria. */
+    if (marcada && marcada.categoria !== categoriaSelecionada) {
+        const aviso = document.createElement("small");
+
+        aviso.textContent = `já escolhido em ${LETRA_CATEGORIA[marcada.categoria]}`;
+        botao.classList.add("other-category");
+        botao.disabled = true;
+        botao.appendChild(aviso);
+        return botao;
+    }
+
+    if (marcada) {
+        botao.classList.add("selected");
+    }
+
+    /* Escolhido que deixou de estar livre fica selected + unavailable e desmarca no clique. */
+    if (!item.disponivel) {
+        botao.classList.add("unavailable");
+    }
+
+    if (item.disponivel || marcada) {
+        botao.addEventListener("click", () => selecionarHorario(item));
+    } else {
+        botao.disabled = true;
+    }
+
+    return botao;
 }
 
 /* Clicou num horário: marca. Clicou de novo: desmarca. */
 function selecionarHorario(item) {
-    const indice = aulasSelecionadas.findIndex(
-        (aula) => aula.dataHoraInicio === item.dataHoraInicio
-    );
+    if (enviando || !contratacaoAtual) {
+        return;
+    }
 
-    if (indice !== -1) {
-        aulasSelecionadas.splice(indice, 1);
-    } else if (aulasSelecionadas.length >= contratacaoAtual.aulasRestantes) {
+    const marcada = aulaNoInicio(item.dataHoraInicio);
+
+    if (marcada) {
+        if (marcada.categoria === categoriaSelecionada) {
+            removerAula(marcada);
+        }
+        return;
+    }
+
+    if (aulasSelecionadas.length >= contratacaoAtual.aulasRestantes) {
         const saldo = contratacaoAtual.aulasRestantes;
 
         mostrarMensagem(`Seu pacote tem ${saldo} aula(s) disponível(is).`, "error");
         return;
-    } else {
-        aulasSelecionadas.push({
-            data: formatarDataSistema(dataSelecionada),
-            horario: item.horario,
-            dataHoraInicio: item.dataHoraInicio,
-            categoria: categoriaSelecionada,
-            motoristaId: null, // null = "Sem preferência"
-            veiculoId: null
-        });
     }
 
+    const categoria = contratacaoAtual.categorias.find(
+        (opcao) => opcao.valor === categoriaSelecionada
+    );
+
+    const aula = {
+        dataHoraInicio: item.dataHoraInicio,
+        categoria: categoriaSelecionada,
+        categoriaDescricao: categoria ? categoria.descricao : "",
+        motoristaId: null, // null = "Sem preferência"
+        veiculoId: null,
+        motoristaNome: null
+    };
+
+    aulasSelecionadas.push(aula);
+
     limparMensagem();
-    atualizarContadorAulas();
-    mostrarHorarios();
-    atualizarPainelMotorista();
-    verificarAgendamento();
+    atualizarPainelMotorista(aula);
+    atualizarSelecao();
 }
 
 /* O calendário (parte 1) chama renderizarCalendario ao trocar de dia ou de mês.
@@ -926,9 +1112,97 @@ renderizarCalendario = function () {
 };
 
 /* =========================================
+   ETAPA 3 — RESUMO DO LOTE
+   ========================================= */
+
+function detalheDaAula(aula) {
+    const partes = [aula.categoriaDescricao, aula.motoristaNome || "Sem preferência"];
+
+    if (unidadesDaCategoria(aula.categoria).length > 1) {
+        const unidade = unidadeDaCategoria(aula.categoria);
+        partes.push(unidade ? unidade.nome : "Unidade a escolher");
+    }
+
+    return partes.join(" · ");
+}
+
+function criarItemResumo(aula) {
+    const item = document.createElement("li");
+    const abrir = document.createElement("button");
+    const remover = document.createElement("button");
+    const quando = formatarDataHora(aula.dataHoraInicio);
+
+    item.className = "summary-lesson";
+    item.classList.toggle("editing", aula === aulaDoMotorista);
+
+    abrir.type = "button";
+    abrir.className = "summary-lesson-info";
+    abrir.title = "Escolher o motorista desta aula";
+    abrir.innerHTML = "<strong></strong><span></span>";
+    abrir.children[0].textContent = quando;
+    abrir.children[1].textContent = detalheDaAula(aula);
+    abrir.addEventListener("click", () => editarMotorista(aula));
+
+    remover.type = "button";
+    remover.className = "summary-lesson-remove";
+    remover.textContent = "×";
+    remover.setAttribute("aria-label", `Remover a aula de ${quando}`);
+    remover.addEventListener("click", () => removerAula(aula));
+
+    item.append(abrir, remover);
+
+    return item;
+}
+
+function mostrarResumoAulas() {
+    summaryLessons.replaceChildren();
+
+    if (aulasSelecionadas.length === 0) {
+        const vazio = document.createElement("li");
+
+        vazio.className = "summary-lessons-empty";
+        vazio.textContent = "Nenhuma aula selecionada";
+        summaryLessons.appendChild(vazio);
+        return;
+    }
+
+    [...aulasSelecionadas]
+        .sort((a, b) => a.dataHoraInicio.localeCompare(b.dataHoraInicio))
+        .forEach((aula) => summaryLessons.appendChild(criarItemResumo(aula)));
+}
+
+function editarMotorista(aula) {
+    if (enviando || aula === aulaDoMotorista) {
+        return;
+    }
+
+    atualizarPainelMotorista(aula);
+    mostrarResumoAulas();
+}
+
+function removerAula(aula) {
+    if (enviando) {
+        return;
+    }
+
+    aulasSelecionadas = aulasSelecionadas.filter((item) => item !== aula);
+
+    limparMensagem();
+    aposRemoverAulas();
+}
+
+/* Se a aula do quadro do motorista saiu, o quadro passa para a última. */
+function aposRemoverAulas() {
+    if (!aulasSelecionadas.includes(aulaDoMotorista)) {
+        atualizarPainelMotorista(aulasSelecionadas[aulasSelecionadas.length - 1]);
+    }
+
+    atualizarSelecao();
+}
+
+/* =========================================
    ETAPA 3 — MOTORISTA
    GET /api/agendamentos/motoristas-disponiveis
-   O quadro mostra a última aula escolhida.
    ========================================= */
 
 function mostrarMotorista(avatar, nome, detalhe) {
@@ -945,9 +1219,7 @@ function adicionarOpcaoMotorista(valor, texto) {
     motoristaSelect.appendChild(opcao);
 }
 
-async function atualizarPainelMotorista() {
-    const aula = aulasSelecionadas[aulasSelecionadas.length - 1] || null;
-
+async function atualizarPainelMotorista(aula = null) {
     buscaMotoristas = buscaMotoristas + 1;
 
     const busca = buscaMotoristas;
@@ -1012,26 +1284,36 @@ function preencherListaMotoristas(motoristas, aula) {
         motoristaSelect.value = "";
     }
 
-    motoristaSelect.disabled = false;
+    motoristaSelect.disabled = enviando;
     guardarMotoristaEscolhido();
 }
 
-/* Guarda na aula o motorista escolhido e mostra no quadro. */
+/* Guarda na aula o motorista escolhido e mostra no quadro e no resumo. */
 function guardarMotoristaEscolhido() {
     const aula = aulaDoMotorista;
+
+    if (!aula) {
+        return;
+    }
+
     const [motoristaId, veiculoId] = motoristaSelect.value.split("|");
 
     aula.motoristaId = motoristaId || null;
     aula.veiculoId = veiculoId || null;
+    aula.motoristaNome = aula.motoristaId
+        ? motoristaSelect.selectedOptions[0].textContent
+        : null;
 
     const detalhe = `Aula de ${formatarDataHora(aula.dataHoraInicio)}`;
 
-    if (aula.motoristaId) {
-        const nome = motoristaSelect.selectedOptions[0].textContent;
+    if (aula.motoristaNome) {
+        const nome = aula.motoristaNome;
         mostrarMotorista(nome.charAt(0).toUpperCase(), nome, detalhe);
     } else {
         mostrarMotorista("?", "Sem preferência", detalhe);
     }
+
+    mostrarResumoAulas();
 }
 
 motoristaSelect.addEventListener("change", guardarMotoristaEscolhido);
@@ -1041,24 +1323,91 @@ motoristaSelect.addEventListener("change", guardarMotoristaEscolhido);
    POST /api/agendamentos (tudo ou nada)
    ========================================= */
 
+function montarAulas() {
+    return aulasSelecionadas.map((aula) => {
+        const escolher = unidadesDaCategoria(aula.categoria).length > 1;
+        const unidade = unidadeDaCategoria(aula.categoria);
+
+        return {
+            dataHoraInicio: aula.dataHoraInicio,
+            categoria: aula.categoria,
+            motoristaId: aula.motoristaId,
+            veiculoId: aula.veiculoId,
+            unidadeId: escolher && unidade ? unidade.id : null
+        };
+    });
+}
+
+/* 409 e 400 por aula: o horário perdido sai do lote e as outras aulas ficam. */
+function tratarErroDoPedido(erro) {
+    const erros = erro.erros || [erro.message];
+    const daUnidade = (texto) => /unidade/i.test(texto);
+    const inicios = erros
+        .filter((texto) => !daUnidade(texto))
+        .map(inicioDoErro)
+        .filter(Boolean);
+    const perdidas = aulasSelecionadas.filter((aula) =>
+        inicios.includes(aula.dataHoraInicio.slice(0, 16)));
+
+    let texto = erro.status === 422
+        ? `${erro.message} Desmarque algumas aulas.`
+        : erros.join("\n");
+
+    if (perdidas.length > 0) {
+        const horarios = perdidas.map((aula) => formatarDataHora(aula.dataHoraInicio));
+
+        aulasSelecionadas = aulasSelecionadas.filter((aula) => !perdidas.includes(aula));
+        aposRemoverAulas();
+
+        texto += `\nSaíram da seleção: ${horarios.join(", ")}.`;
+
+        if (aulasSelecionadas.length > 0) {
+            texto += " As outras aulas continuam marcadas.";
+        }
+    }
+
+    mostrarMensagem(texto, "error");
+
+    /* As unidades mudaram: relê a autoescola e o aluno escolhe de novo. */
+    if (erros.some(daUnidade)) {
+        carregarAutoescola();
+    }
+
+    /* 422 (saldo), 404 ou 400 sem data na frente: erro da contratação. */
+    const semData = erros.some((item) => !inicioDoErro(item));
+
+    if ([422, 404].includes(erro.status) || (erro.status === 400 && semData)) {
+        atualizarContratacao();
+    }
+
+    carregarHorarios();
+}
+
 confirmBookingButton.addEventListener("click", async () => {
+    if (enviando) {
+        return;
+    }
+
     if (aulasSelecionadas.length === 0) {
         mostrarMensagem("Selecione pelo menos uma aula.", "error");
         return;
     }
 
-    const aulas = aulasSelecionadas.map((aula) => ({
-        dataHoraInicio: aula.dataHoraInicio,
-        categoria: aula.categoria,
-        motoristaId: aula.motoristaId,
-        veiculoId: aula.veiculoId
-    }));
-
-    confirmBookingButton.disabled = true;
+    enviando = true;
+    verificarAgendamento();
     mostrarMensagem("Enviando o pedido...", "success");
 
+    const aviso = await conferirUnidades();
+
+    if (aviso) {
+        enviando = false;
+        verificarAgendamento();
+        mostrarMensagem(aviso, "error");
+        return;
+    }
+
     try {
-        const resposta = await agendarAulas(contratacaoAtual.id, aulas);
+        const resposta = await agendarAulas(contratacaoAtual.id, montarAulas());
 
         mostrarMensagem(
             `${resposta.ids.length} aula(s) agendada(s). ` +
@@ -1066,23 +1415,14 @@ confirmBookingButton.addEventListener("click", async () => {
             "success"
         );
 
-        aulasSelecionadas = [];
-        atualizarContadorAulas();
-
+        /* Continua travado até ir para o painel. */
         setTimeout(() => {
             window.location.href = "dashboard.html";
         }, 1800);
     } catch (erro) {
-        if (erro.status === 422) {
-            /* 422 = saldo insuficiente. A mensagem já traz o saldo. */
-            mostrarMensagem(`${erro.message} Desmarque algumas aulas.`, "error");
-        } else {
-            /* 400 e 409: um erro por aula, com a data e a hora na frente. */
-            mostrarErroApi(erro);
-        }
-
-        confirmBookingButton.disabled = false;
-        carregarHorarios();
+        enviando = false;
+        tratarErroDoPedido(erro);
+        verificarAgendamento();
     }
 });
 

@@ -179,19 +179,20 @@
     <!-- PARTE INFERIOR -->
     <div class="sipa-sidebar-bottom">
 
-        <div class="sipa-sidebar-unit">
+        <!-- Unidade das aulas: o JS preenche e mostra -->
+        <div
+            class="sipa-sidebar-unit"
+            id="sidebar-unit"
+            hidden
+        >
 
             <span class="sipa-sidebar-status"></span>
 
             <div class="sipa-sidebar-unit-text">
 
-                <strong>
-                    Unidade Centro
-                </strong>
+                <strong id="sidebar-unit-name"></strong>
 
-                <small>
-                    Atendimento disponível
-                </small>
+                <small id="sidebar-unit-school"></small>
 
             </div>
 
@@ -486,6 +487,15 @@
             Carregando informações...
         </span>
 
+        <button
+            type="button"
+            id="booking-retry"
+            class="booking-retry"
+            hidden
+        >
+            Tentar de novo
+        </button>
+
         <select
             id="booking-contratacao"
             aria-label="Pacote contratado"
@@ -757,48 +767,6 @@
                         <div class="summary-item">
 
                             <span class="summary-item-icon">
-                                ◫
-                            </span>
-
-                            <div>
-
-                                <span>
-                                    DATA
-                                </span>
-
-                                <strong id="summary-date">
-                                    Não selecionada
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="summary-item">
-
-                            <span class="summary-item-icon">
-                                ◷
-                            </span>
-
-                            <div>
-
-                                <span>
-                                    HORÁRIO
-                                </span>
-
-                                <strong id="summary-time">
-                                    Não selecionado
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="summary-item">
-
-                            <span class="summary-item-icon">
                                 ◎
                             </span>
 
@@ -808,11 +776,38 @@
                                     UNIDADE
                                 </span>
 
-                                <strong>
-                                    Centro
+                                <strong id="summary-unit">
+                                    Não selecionada
                                 </strong>
 
+                                <select
+                                    id="booking-unidade"
+                                    aria-label="Unidade das aulas"
+                                    style="width: 100%; margin-top: 4px; padding: 4px;"
+                                    hidden
+                                ></select>
+
                             </div>
+
+                        </div>
+
+
+                        <!-- AULAS DO LOTE -->
+
+                        <div class="summary-lessons">
+
+                            <span class="summary-lessons-title">
+                                AULAS SELECIONADAS
+                            </span>
+
+                            <ul
+                                class="summary-lessons-list"
+                                id="summary-lessons"
+                            >
+                                <li class="summary-lessons-empty">
+                                    Nenhuma aula selecionada
+                                </li>
+                            </ul>
 
                         </div>
 
@@ -930,9 +925,10 @@
 
                 <div>
 
-                    <span>
-                        Unidade Centro
-                    </span>
+                    <span
+                        id="footer-unit"
+                        hidden
+                    ></span>
 
                     <span class="footer-status">
                         ● Sistema online

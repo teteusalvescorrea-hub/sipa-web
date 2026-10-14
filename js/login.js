@@ -16,6 +16,9 @@ const registerPanel = document.getElementById("register-panel");
 const loginForm = document.getElementById("login-form");
 const cadastroForm = document.getElementById("cadastroForm");
 
+const loginSubmit = document.getElementById("login-submit");
+const cadastroSubmit = cadastroForm?.querySelector('button[type="submit"]');
+
 const loginCpf = document.getElementById("login-cpf");
 const loginPassword = document.getElementById("login-password");
 const loginMessage = document.getElementById("login-message");
@@ -103,12 +106,12 @@ function limparMensagens() {
 
     if (loginMessage) {
         loginMessage.textContent = "";
-        loginMessage.className = "login-message";
+        loginMessage.className = "form-message";
     }
 
     if (cadastroMessage) {
         cadastroMessage.textContent = "";
-        cadastroMessage.className = "cadastro-message";
+        cadastroMessage.className = "form-message";
     }
 
     limparErrosCadastro();
@@ -460,6 +463,8 @@ if (loginForm) {
 
         let resposta;
 
+        loginSubmit.disabled = true;
+
         try {
 
             resposta = await login(cpf, senha);
@@ -472,6 +477,10 @@ if (loginForm) {
             loginMessage.classList.add("error");
 
             return;
+
+        } finally {
+
+            loginSubmit.disabled = false;
         }
 
 
@@ -668,6 +677,8 @@ if (cadastroForm) {
         };
 
 
+        cadastroSubmit.disabled = true;
+
         try {
 
             await cadastrarAluno({
@@ -681,9 +692,16 @@ if (cadastroForm) {
 
         } catch (erro) {
 
-            erro.erros.forEach(mostrarErroDaApi);
+            const erros =
+                erro.erros ?? [erro.message || "Erro inesperado. Tente de novo."];
+
+            erros.forEach(mostrarErroDaApi);
 
             return;
+
+        } finally {
+
+            cadastroSubmit.disabled = false;
         }
 
 
@@ -748,4 +766,17 @@ const parametrosUrl =
 if (parametrosUrl.get("cadastro") === "true") {
 
     mostrarCadastro();
+}
+
+
+/* =========================================
+   SESSÃO EXPIRADA (401 NA API)
+   ========================================= */
+
+if (parametrosUrl.get("sessao") === "expirada" && loginMessage) {
+
+    loginMessage.textContent =
+        "Sua sessão expirou. Entre de novo.";
+
+    loginMessage.classList.add("info");
 }

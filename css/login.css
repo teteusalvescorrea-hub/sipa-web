@@ -1752,6 +1752,14 @@ body.login-page {
     border: 1px solid rgba(217,83,83,.15) !important;
 }
 
+.form-message.info {
+    color: #2f6fd6 !important;
+}
+
+.form-message.success {
+    color: #23944a !important;
+}
+
 
 /* =========================================================
    CAMPOS

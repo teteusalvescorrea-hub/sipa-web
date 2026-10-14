@@ -70,19 +70,12 @@ function separarDataHora(dataHora) {
 }
 
 
-/* Data do navegador no formato da API: "2026-07-15T00:00:00" */
-function dataParaApi(data) {
+/* ApiErro traz erros[]; outro erro qualquer só tem message. */
+function mensagemDoErro(erro) {
 
-    const doisDigitos = (numero) => String(numero).padStart(2, "0");
+    const erros = erro.erros ?? [erro.message || "Erro inesperado. Tente de novo."];
 
-    const dia =
-        `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}` +
-        `-${doisDigitos(data.getDate())}`;
-
-    const hora =
-        `${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}:00`;
-
-    return `${dia}T${hora}`;
+    return erros.join("\n");
 }
 
 
@@ -92,10 +85,14 @@ function textoQuantidade(total) {
 }
 
 
-/* Texto do selo: "Expirada" ou o status.descricao que veio da API. */
+/* Texto do selo: "Expirada", "Aguardando marcação" ou o status.descricao da API. */
 function textoDoStatus(aula) {
 
-    return aula.expirada ? "Expirada" : aula.status.descricao;
+    if (aula.expirada) {
+        return "Expirada";
+    }
+
+    return aula.aguardandoMarcacao ? "Aguardando marcação" : aula.status.descricao;
 }
 
 
@@ -104,6 +101,10 @@ function classeDoStatus(aula) {
 
     if (aula.expirada) {
         return "status-neutro";
+    }
+
+    if (aula.aguardandoMarcacao) {
+        return "status-espera";
     }
 
     const classes = {
@@ -198,11 +199,33 @@ function montarBotaoCancelar(aula) {
 }
 
 
+/* Na 4 (Recusada), motorista e veículo são de quem recusou: não mostra. */
+function montarVeiculo(aula) {
+
+    if (aula.status.valor === 4) {
+        return "";
+    }
+
+    const icone = aula.categoria.valor === 1 ? "🏍️" : "🚗";
+
+    return `
+        <div class="lesson-detail">
+            <span class="lesson-detail-icon">${icone}</span>
+            ${escapar(aula.veiculoModelo)} • ${escapar(aula.veiculoPlaca)}
+        </div>
+    `;
+}
+
+
 function criarCardAula(aula) {
 
     const { data, hora } = separarDataHora(aula.dataHoraInicio);
 
-    const icone = aula.categoria.valor === 1 ? "🏍️" : "🚗";
+    let motorista = `Motorista: ${escapar(aula.motoristaNome)}`;
+
+    if (aula.status.valor === 4) {
+        motorista = aula.expirada ? "Sem motorista" : "Aguardando novo motorista";
+    }
 
     const item = document.createElement("article");
 
@@ -230,7 +253,7 @@ function criarCardAula(aula) {
             </strong>
 
             <span class="lesson-instructor">
-                Motorista: ${escapar(aula.motoristaNome)}
+                ${motorista}
             </span>
 
         </div>
@@ -238,10 +261,7 @@ function criarCardAula(aula) {
 
         <div class="lesson-details">
 
-            <div class="lesson-detail">
-                <span class="lesson-detail-icon">${icone}</span>
-                ${escapar(aula.veiculoModelo)} • ${escapar(aula.veiculoPlaca)}
-            </div>
+            ${montarVeiculo(aula)}
 
             <div class="lesson-detail">
                 <span class="lesson-detail-icon">◎</span>
@@ -476,8 +496,17 @@ function cancelarAula(id) {
             /* POST /api/agendamentos/{id}/cancelar. O saldo volta na API. */
             await cancelarAulaApi(id, campoMotivo.value);
         } catch (erro) {
-            botaoConfirmar.disabled = false;
-            alert(erro.erros.join("\n"));
+
+            alert(mensagemDoErro(erro));
+
+            /* Sem conexão (status 0): a janela fica aberta para tentar de novo. */
+            if (erro.status === 0) {
+                botaoConfirmar.disabled = false;
+                return;
+            }
+
+            modalConfirmacao.remove();
+            carregarAulas();
             return;
         }
 
@@ -502,7 +531,7 @@ async function mostrarHistorico(id) {
         /* GET /api/agendamentos/{id}: { aula, historico } */
         resposta = await obterAgendamento(id);
     } catch (erro) {
-        alert(erro.message);
+        alert(mensagemDoErro(erro));
         return;
     }
 
@@ -667,15 +696,16 @@ async function carregarAulas() {
         /* Sem filtro, a API devolve as próximas aulas do aluno. */
         const proximas = await listarAgendamentos();
 
+        /* de e ate em UTC (com Z): a API converte para Brasília. */
         const anteriores = await listarAgendamentos({
-            de: dataParaApi(inicio),
-            ate: dataParaApi(agora)
+            de: inicio.toISOString(),
+            ate: agora.toISOString()
         });
 
         /* Canceladas com data futura (próximos 31 dias). */
         const canceladasFuturas = await listarAgendamentos({
             status: [2],
-            de: dataParaApi(agora)
+            de: agora.toISOString()
         });
 
         aulasCarregadas.clear();
@@ -696,7 +726,7 @@ async function carregarAulas() {
 
         console.error(erro);
 
-        mostrarErro(erro.message);
+        mostrarErro(mensagemDoErro(erro));
     }
 }
 

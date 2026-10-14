@@ -534,17 +534,20 @@ function mostrarProximaAula(aula) {
     const [data, hora] = aula.dataHoraInicio.split("T");
     const [ano, mes, dia] = data.split("-").map(Number);
     const diaDaSemana = new Date(ano, mes - 1, dia).getDay();
-    const veiculo = `${aula.veiculoModelo} · ${aula.veiculoPlaca}`;
     const local = `${aula.unidade} — ${aula.localAula}`;
+
+    /* Na 4 (Recusada), motorista e veículo são de quem recusou. */
+    const recusada = aula.status.valor === 4;
+    const veiculo = recusada ? "" : `${aula.veiculoModelo} · ${aula.veiculoPlaca}`;
 
     nextLessonDay.textContent = String(dia).padStart(2, "0");
     nextLessonWeekday.textContent = diasSemanaSipa[diaDaSemana];
     nextLessonMonth.textContent = `${mesesSipa[mes - 1]} de ${ano}`;
     nextLessonTime.textContent = hora.slice(0, 5);
 
-    nextLessonVehicle.textContent = veiculo;
+    nextLessonVehicle.textContent = veiculo || "—";
     nextLessonVehicle.title = veiculo;
-    nextLessonInstructor.textContent = aula.motoristaNome;
+    nextLessonInstructor.textContent = recusada ? "Aguardando novo motorista" : aula.motoristaNome;
     nextLessonLocation.textContent = local;
     nextLessonLocation.title = local;
 

@@ -26,14 +26,23 @@ async function requisicao(metodo, rota, corpo) {
         throw new ApiErro(0, null);
     }
 
-    // 401 numa tela logada: volta para o login.
+    // 401 numa tela logada: volta para o login e não resolve, para a tela não mostrar erro.
     if (resposta.status === 401 && token) {
         limparSessao();
-        window.location.href = "login.html";
+        window.location.href = "login.html?sessao=expirada";
+        return new Promise(() => {});
     }
 
     const texto = await resposta.text();
-    const dados = texto ? JSON.parse(texto) : null;
+
+    // Corpo que não é JSON (HTML de 404/502 do servidor) vira null.
+    let dados = null;
+
+    try {
+        dados = texto ? JSON.parse(texto) : null;
+    } catch {
+        dados = null;
+    }
 
     if (!resposta.ok) {
         throw new ApiErro(resposta.status, dados);
