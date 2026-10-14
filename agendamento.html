@@ -485,6 +485,12 @@
         <span id="booking-package-info">
             Carregando informações...
         </span>
+
+        <select
+            id="booking-contratacao"
+            aria-label="Pacote contratado"
+            style="display: none; width: 100%; margin-top: 4px; padding: 4px;"
+        ></select>
     </div>
 
     <div class="booking-selection-counter">
@@ -831,7 +837,7 @@
                         <div class="instructor-info">
 
                             <span>
-                                INSTRUTOR
+                                MOTORISTA
                             </span>
 
                             <strong id="selected-instructor">
@@ -839,8 +845,15 @@
                             </strong>
 
                             <small id="selected-vehicle">
-                                Veículo disponível conforme a categoria
+                                Escolha a data e o horário da aula
                             </small>
+
+                            <select
+                                id="motorista-select"
+                                aria-label="Motorista da aula"
+                                style="width: 100%; margin-top: 4px; padding: 4px;"
+                                disabled
+                            ></select>
 
                         </div>
 
@@ -941,7 +954,7 @@
          ========================================= -->
 
     <script
-        src="js/agendamento.js"
+        type="module" src="js/agendamento.js"
     ></script>
 
 

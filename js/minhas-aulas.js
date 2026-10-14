@@ -1,8 +1,16 @@
-"use strict";
-
 /* =========================================
    SIPA — MINHAS AULAS
+   As aulas vêm da API. Cancelar e ver o
+   histórico também passam pela API.
    ========================================= */
+
+import { exigirLogin } from "./modules/essencial/utils/sessao.js";
+import { sair } from "./modules/essencial/service/authService.js";
+import {
+    listarAgendamentos,
+    obterAgendamento,
+    cancelarAula as cancelarAulaApi
+} from "./modules/agendamentos/services/agendamentos.service.js";
 
 
 /* =========================================
@@ -21,287 +29,91 @@ const lessonsCount =
 const nextLessonSummary =
     document.getElementById("next-lesson-summary");
 
+const unitSummary =
+    document.querySelector(".lessons-summary .summary-card:nth-child(3) strong");
+
+const pastLessonsList =
+    document.getElementById("past-lessons-list");
+
+const pastLessonsCount =
+    document.getElementById("past-lessons-count");
+
+/* Aulas que vieram da API, guardadas pelo id. */
+const aulasCarregadas = new Map();
+
 
 /* =========================================
-   BUSCAR ALUNO LOGADO
+   AJUDANTES
    ========================================= */
 
-function obterAluno() {
+/* Mostra o texto como texto (um nome ou motivo nunca vira código na tela). */
+function escapar(texto) {
 
-    const alunoSalvo =
-        sessionStorage.getItem("sipaAluno");
+    const div = document.createElement("div");
 
-    if (!alunoSalvo) {
+    div.textContent = texto ?? "";
 
-        window.location.href =
-            "login.html";
-
-        return null;
-    }
-
-    try {
-
-        return JSON.parse(alunoSalvo);
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar aluno:",
-            error
-        );
-
-        window.location.href =
-            "login.html";
-
-        return null;
-    }
+    return div.innerHTML;
 }
 
 
-/* =========================================
-   BUSCAR AGENDAMENTOS
-   ========================================= */
+/* "2026-10-20T14:00:00" vira { data: "20/10/2026", hora: "14:00" } */
+function separarDataHora(dataHora) {
 
-function obterAgendamentos() {
+    const [data, hora] = dataHora.split("T");
+    const [ano, mes, dia] = data.split("-");
 
-    const dados =
-        localStorage.getItem(
-            "sipaAgendamentos"
-        );
-
-    if (!dados) {
-        return [];
-    }
-
-    try {
-
-        return JSON.parse(dados);
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar agendamentos:",
-            error
-        );
-
-        return [];
-    }
+    return {
+        data: `${dia}/${mes}/${ano}`,
+        hora: hora.slice(0, 5)
+    };
 }
 
 
-/* =========================================
-   CONVERTER DATA
-   ========================================= */
+/* Data do navegador no formato da API: "2026-07-15T00:00:00" */
+function dataParaApi(data) {
 
-function converterData(data) {
+    const doisDigitos = (numero) => String(numero).padStart(2, "0");
 
-    const partes =
-        data.split("-");
+    const dia =
+        `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}` +
+        `-${doisDigitos(data.getDate())}`;
 
-    return new Date(
-        Number(partes[0]),
-        Number(partes[1]) - 1,
-        Number(partes[2])
-    );
+    const hora =
+        `${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}:00`;
+
+    return `${dia}T${hora}`;
 }
 
 
-/* =========================================
-   CALCULAR HORAS ÚTEIS
-   REGRA DE CANCELAMENTO
-   ========================================= */
+function textoQuantidade(total) {
 
-function calcularHorasUteis(
-    inicio,
-    fim
-) {
-
-    let totalHoras = 0;
-
-    let atual =
-        new Date(inicio);
+    return `${total} ${total === 1 ? "aula" : "aulas"}`;
+}
 
 
-    while (atual < fim) {
+/* Texto do selo: "Expirada" ou o status.descricao que veio da API. */
+function textoDoStatus(aula) {
 
-        const diaSemana =
-            atual.getDay();
-
-
-        /* =====================================
-           DOMINGO
-           ===================================== */
-
-        if (diaSemana === 0) {
-
-            atual.setDate(
-                atual.getDate() + 1
-            );
-
-            atual.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-            continue;
-        }
+    return aula.expirada ? "Expirada" : aula.status.descricao;
+}
 
 
-        /* =====================================
-           LIMITE DO DIA
-           ===================================== */
+/* Cor do selo. Sem classe = verde (Confirmada e Realizada). */
+function classeDoStatus(aula) {
 
-        const limiteDia =
-            new Date(atual);
-
-
-        /*
-         * SÁBADO
-         * Conta somente até 12:00.
-         */
-
-        if (diaSemana === 6) {
-
-            limiteDia.setHours(
-                12,
-                0,
-                0,
-                0
-            );
-
-        } else {
-
-            /*
-             * SEGUNDA A SEXTA
-             */
-
-            limiteDia.setHours(
-                23,
-                59,
-                59,
-                999
-            );
-        }
-
-
-        const fimDoPeriodo =
-            fim < limiteDia
-                ? fim
-                : limiteDia;
-
-
-        if (fimDoPeriodo > atual) {
-
-            totalHoras +=
-                (
-                    fimDoPeriodo - atual
-                ) /
-                (
-                    1000 * 60 * 60
-                );
-        }
-
-
-        /* =====================================
-           PRÓXIMO DIA
-           ===================================== */
-
-        atual.setDate(
-            atual.getDate() + 1
-        );
-
-        atual.setHours(
-            0,
-            0,
-            0,
-            0
-        );
+    if (aula.expirada) {
+        return "status-neutro";
     }
 
+    const classes = {
+        2: "status-neutro",
+        3: "status-espera",
+        4: "status-alerta",
+        6: "status-alerta"
+    };
 
-    return totalHoras;
-}
-
-
-/* =========================================
-   BUSCAR AULAS DO ALUNO
-   ========================================= */
-
-function buscarAulasDoAluno() {
-
-    const aluno =
-        obterAluno();
-
-    if (!aluno) {
-        return [];
-    }
-
-
-    const agendamentos =
-        obterAgendamentos();
-
-
-    return agendamentos.filter(
-        (agendamento) => {
-
-            return (
-                agendamento.alunoCpf ===
-                aluno.cpf
-            );
-
-        }
-    );
-}
-
-
-/* =========================================
-   ORDENAR AULAS
-   ========================================= */
-
-function ordenarAulas(aulas) {
-
-    return aulas.sort(
-        (a, b) => {
-
-            const dataA =
-                converterData(
-                    a.dataSistema
-                );
-
-            const dataB =
-                converterData(
-                    b.dataSistema
-                );
-
-
-            const horaA =
-                Number(
-                    a.horario
-                        .split(":")[0]
-                );
-
-            const horaB =
-                Number(
-                    b.horario
-                        .split(":")[0]
-                );
-
-
-            dataA.setHours(
-                horaA
-            );
-
-            dataB.setHours(
-                horaB
-            );
-
-
-            return dataA - dataB;
-
-        }
-    );
+    return classes[aula.status.valor] || "";
 }
 
 
@@ -310,11 +122,6 @@ function ordenarAulas(aulas) {
    ========================================= */
 
 function mostrarEstadoVazio() {
-
-    if (!lessonsList) {
-        return;
-    }
-
 
     lessonsList.innerHTML = `
 
@@ -325,11 +132,11 @@ function mostrarEstadoVazio() {
             </div>
 
             <strong>
-                Você ainda não possui aulas agendadas
+                Você não tem próximas aulas
             </strong>
 
             <span>
-                Agende sua próxima aula para começar
+                Agende sua próxima aula para continuar
                 sua formação.
             </span>
 
@@ -337,7 +144,7 @@ function mostrarEstadoVazio() {
                 href="agendamento.html"
                 class="new-lesson-button"
             >
-                + Agendar minha primeira aula
+                + Agendar aula
             </a>
 
         </div>
@@ -350,40 +157,67 @@ function mostrarEstadoVazio() {
    CRIAR CARD DA AULA
    ========================================= */
 
+/* Linha das horas úteis. A API só manda o número na aula confirmada futura. */
+function montarHorasUteis(aula) {
+
+    if (aula.horasUteisAteAula === null || aula.horasUteisAteAula === undefined) {
+        return "";
+    }
+
+    const horas = aula.horasUteisAteAula.toLocaleString("pt-BR");
+
+    return `
+        <div class="lesson-detail">
+            <span class="lesson-detail-icon">⏱</span>
+            ${horas} h úteis (prazo ${aula.prazoCancelamentoHorasUteis} h)
+        </div>
+    `;
+}
+
+
+/* O botão Cancelar só aparece quando a API manda podeCancelar = true. */
+function montarBotaoCancelar(aula) {
+
+    if (aula.podeCancelar) {
+        return `
+            <button
+                type="button"
+                class="cancel-lesson-button"
+                data-id="${aula.id}"
+            >
+                Cancelar aula
+            </button>
+        `;
+    }
+
+    if (aula.horasUteisAteAula !== null && aula.horasUteisAteAula !== undefined) {
+        return `<span class="lesson-cancel-blocked">Fora do prazo para cancelar</span>`;
+    }
+
+    return "";
+}
+
+
 function criarCardAula(aula) {
 
-    const item =
-        document.createElement(
-            "article"
-        );
+    const { data, hora } = separarDataHora(aula.dataHoraInicio);
 
+    const icone = aula.categoria.valor === 1 ? "🏍️" : "🚗";
 
-    item.className =
-        "lesson-item";
+    const item = document.createElement("article");
 
+    item.className = "lesson-item";
 
     item.innerHTML = `
 
         <div class="lesson-date">
 
-            <div class="lesson-date-icon">
-                ◫
-            </div>
+            <div class="lesson-date-icon"></div>
 
             <div class="lesson-date-info">
-
-                <span>
-                    DATA
-                </span>
-
-                <strong>
-                    ${aula.data}
-                </strong>
-
-                <small>
-                    ${aula.horario}
-                </small>
-
+                <span>DATA</span>
+                <strong>${data}</strong>
+                <small>${hora}</small>
             </div>
 
         </div>
@@ -392,11 +226,11 @@ function criarCardAula(aula) {
         <div class="lesson-main-info">
 
             <strong class="lesson-category">
-                ${aula.categoriaNome}
+                ${escapar(aula.categoria.descricao)}
             </strong>
 
             <span class="lesson-instructor">
-                Instrutor: ${aula.instrutor}
+                Motorista: ${escapar(aula.motoristaNome)}
             </span>
 
         </div>
@@ -405,42 +239,25 @@ function criarCardAula(aula) {
         <div class="lesson-details">
 
             <div class="lesson-detail">
-
-    <span class="lesson-detail-icon">
-        ${
-            aula.categoria === "A"
-                ? "🏍️"
-                : aula.categoria === "B"
-                    ? "🚗"
-                    : "🚗🏍️"
-        }
-    </span>
-
-    ${aula.veiculo}
-
-</div>
+                <span class="lesson-detail-icon">${icone}</span>
+                ${escapar(aula.veiculoModelo)} • ${escapar(aula.veiculoPlaca)}
+            </div>
 
             <div class="lesson-detail">
-
-                <span class="lesson-detail-icon">
-                    ◎
-                </span>
-
-                Unidade Centro
-
+                <span class="lesson-detail-icon">◎</span>
+                ${escapar(aula.unidade)}
             </div>
+
+            ${montarHorasUteis(aula)}
 
         </div>
 
 
         <div class="lesson-status">
 
-            <span class="lesson-status-badge">
-
+            <span class="lesson-status-badge ${classeDoStatus(aula)}">
                 <span class="lesson-status-dot"></span>
-
-                ${aula.status}
-
+                ${escapar(textoDoStatus(aula))}
             </span>
 
         </div>
@@ -448,19 +265,19 @@ function criarCardAula(aula) {
 
         <div class="lesson-actions">
 
+            ${montarBotaoCancelar(aula)}
+
             <button
                 type="button"
-                class="cancel-lesson-button"
-                data-date="${aula.dataSistema}"
-                data-time="${aula.horario}"
+                class="history-lesson-button"
+                data-id="${aula.id}"
             >
-                Cancelar aula
+                Ver histórico
             </button>
 
         </div>
 
     `;
-
 
     return item;
 }
@@ -576,148 +393,20 @@ function mostrarSucessoCancelamento(
    CANCELAR AULA
    ========================================= */
 
-function cancelarAula(
-    data,
-    horario
-) {
+function cancelarAula(id) {
 
-    console.log(
-        "Tentando cancelar:",
-        data,
-        horario
-    );
+    const aula = aulasCarregadas.get(id);
 
-
-    /* =====================================
-       ALUNO
-       ===================================== */
-
-    const aluno =
-        obterAluno();
-
-
-    if (!aluno) {
+    if (!aula) {
+        alert("Não foi possível identificar esta aula. Atualize a tela.");
         return;
     }
 
+    const { data, hora } = separarDataHora(aula.dataHoraInicio);
 
-    /* =====================================
-       DATA DA AULA
-       ===================================== */
+    const modalConfirmacao = document.createElement("div");
 
-    const partesData =
-        data.split("-");
-
-
-    const partesHorario =
-        horario.split(":");
-
-
-    const dataAula =
-        new Date(
-
-            Number(partesData[0]),
-
-            Number(partesData[1]) - 1,
-
-            Number(partesData[2]),
-
-            Number(partesHorario[0]),
-
-            Number(partesHorario[1] || 0),
-
-            0,
-
-            0
-
-        );
-
-
-    /* =====================================
-       DATA ATUAL
-       ===================================== */
-
-    const agora =
-        new Date();
-
-
-    /* =====================================
-       VERIFICAR SE A AULA JÁ PASSOU
-       ===================================== */
-
-    if (dataAula <= agora) {
-
-        alert(
-            "Não é possível cancelar uma aula que já passou."
-        );
-
-        return;
-    }
-
-
-    /* =====================================
-       CALCULAR HORAS ÚTEIS
-       ===================================== */
-
-    const horasUteis =
-        calcularHorasUteis(
-            agora,
-            dataAula
-        );
-
-
-    console.log(
-        "Horas úteis disponíveis:",
-        horasUteis
-    );
-
-
-    /* =====================================
-       REGRA DE 48 HORAS ÚTEIS
-       ===================================== */
-
-    if (horasUteis < 48) {
-
-        alert(
-
-            "Não é possível cancelar esta aula.\n\n" +
-
-            "O cancelamento deve ser solicitado " +
-
-            "com pelo menos 48 horas úteis " +
-            "de antecedência.\n\n" +
-
-            "Tempo disponível: " +
-
-            horasUteis.toFixed(1) +
-
-            " horas úteis."
-
-        );
-
-        return;
-    }
-
-
-    /* =====================================
-       DATA FORMATADA
-       ===================================== */
-
-    const dataFormatada =
-        `${partesData[2]}/${partesData[1]}/${partesData[0]}`;
-
-
-    /* =====================================
-       MODAL DE CONFIRMAÇÃO
-       ===================================== */
-
-    const modalConfirmacao =
-        document.createElement("div");
-
-
-    modalConfirmacao.className =
-        "cancel-confirm-overlay";
-
+    modalConfirmacao.className = "cancel-confirm-overlay";
 
     modalConfirmacao.innerHTML = `
 
@@ -733,39 +422,33 @@ function cancelarAula(
 
             <p>
                 Deseja realmente cancelar sua aula do dia
-                <strong>${dataFormatada}</strong>
+                <strong>${data}</strong>
                 às
-                <strong>${horario}</strong>?
+                <strong>${hora}</strong>?
             </p>
 
+            <textarea
+                class="cancel-confirm-motivo"
+                maxlength="500"
+                placeholder="Motivo (opcional)"
+                aria-label="Motivo do cancelamento"
+            ></textarea>
+
             <div class="cancel-confirm-info">
-
-                <strong>
-                    Atenção
-                </strong>
-
+                <strong>Atenção</strong>
                 <span>
                     Essa aula será devolvida ao seu saldo
                     e poderá ser reagendada.
                 </span>
-
             </div>
 
             <div class="cancel-confirm-actions">
 
-                <button
-                    type="button"
-                    class="cancel-confirm-back"
-                    id="cancel-confirm-back"
-                >
+                <button type="button" class="cancel-confirm-back">
                     Voltar
                 </button>
 
-                <button
-                    type="button"
-                    class="cancel-confirm-yes"
-                    id="cancel-confirm-yes"
-                >
+                <button type="button" class="cancel-confirm-yes">
                     Confirmar cancelamento
                 </button>
 
@@ -775,374 +458,246 @@ function cancelarAula(
 
     `;
 
+    document.body.appendChild(modalConfirmacao);
 
-    document.body.appendChild(
-        modalConfirmacao
-    );
+    const campoMotivo = modalConfirmacao.querySelector(".cancel-confirm-motivo");
+    const botaoVoltar = modalConfirmacao.querySelector(".cancel-confirm-back");
+    const botaoConfirmar = modalConfirmacao.querySelector(".cancel-confirm-yes");
 
+    botaoVoltar.addEventListener("click", function () {
+        modalConfirmacao.remove();
+    });
 
-    /* =================================
-       BOTÃO VOLTAR
-       ================================= */
+    botaoConfirmar.addEventListener("click", async function () {
 
-    const voltarConfirmacao =
-        document.getElementById(
-            "cancel-confirm-back"
-        );
+        botaoConfirmar.disabled = true;
 
+        try {
+            /* POST /api/agendamentos/{id}/cancelar. O saldo volta na API. */
+            await cancelarAulaApi(id, campoMotivo.value);
+        } catch (erro) {
+            botaoConfirmar.disabled = false;
+            alert(erro.erros.join("\n"));
+            return;
+        }
 
-    if (voltarConfirmacao) {
+        modalConfirmacao.remove();
 
-        voltarConfirmacao.addEventListener(
-            "click",
-            function () {
+        mostrarSucessoCancelamento(data, hora);
 
-                modalConfirmacao.remove();
-
-            }
-        );
-
-    }
-
-
-    /* =================================
-       BOTÃO CONFIRMAR
-       ================================= */
-
-    const confirmarCancelamento =
-        document.getElementById(
-            "cancel-confirm-yes"
-        );
-
-
-    if (confirmarCancelamento) {
-
-        confirmarCancelamento.addEventListener(
-            "click",
-            function () {
-
-                modalConfirmacao.remove();
-
-
-                /* =================================
-                   BUSCAR AGENDAMENTOS
-                   ================================= */
-
-                const agendamentos =
-                    obterAgendamentos();
-
-
-                /* =================================
-                   LOCALIZAR AULA
-                   ================================= */
-
-                const aulaEncontrada =
-                    agendamentos.find(
-                        function (agendamento) {
-
-                            return (
-                                agendamento.alunoCpf ===
-                                    aluno.cpf &&
-
-                                agendamento.dataSistema ===
-                                    data &&
-
-                                agendamento.horario ===
-                                    horario
-                            );
-
-                        }
-                    );
-
-
-                if (!aulaEncontrada) {
-
-                    alert(
-                        "Não foi possível encontrar esta aula."
-                    );
-
-                    return;
-                }
-
-
-                /* =================================
-                   REMOVER AULA
-                   ================================= */
-
-                const agendamentosAtualizados =
-                    agendamentos.filter(
-                        function (agendamento) {
-
-                            return !(
-                                agendamento.alunoCpf ===
-                                    aluno.cpf &&
-
-                                agendamento.dataSistema ===
-                                    data &&
-
-                                agendamento.horario ===
-                                    horario
-                            );
-
-                        }
-                    );
-
-
-                /* =================================
-                   SALVAR AGENDAMENTOS
-                   ================================= */
-
-                localStorage.setItem(
-                    "sipaAgendamentos",
-                    JSON.stringify(
-                        agendamentosAtualizados
-                    )
-                );
-
-
-                /* =================================
-                   DEVOLVER AULA AO SALDO
-                   ================================= */
-
-                const saldoAtual =
-                    Number(
-                        aluno.aulasRestantes
-                    ) || 0;
-
-                const pacote =
-                    Number(
-                        aluno.pacote
-                    ) || 0;
-
-                aluno.aulasRestantes =
-                    Math.min(
-                        saldoAtual + 1,
-                        pacote
-                    );
-
-
-                /* =================================
-                   ATUALIZAR SESSION STORAGE
-                   ================================= */
-
-                sessionStorage.setItem(
-                    "sipaAluno",
-                    JSON.stringify(
-                        aluno
-                    )
-                );
-
-
-                /* =================================
-                   ATUALIZAR BASE CENTRAL
-                   ================================= */
-
-                if (
-                    typeof atualizarAlunoSipa ===
-                    "function"
-                ) {
-
-                    atualizarAlunoSipa(
-                        aluno
-                    );
-
-                }
-
-
-                /* =================================
-                   MOSTRAR SUCESSO
-                   ================================= */
-
-                mostrarSucessoCancelamento(
-                    dataFormatada,
-                    horario
-                );
-
-
-                /* =================================
-                   ATUALIZAR LISTA
-                   ================================= */
-
-                carregarAulas();
-
-            }
-        );
-
-    }
-
+        carregarAulas();
+    });
 }
 
 
 /* =========================================
-   CLIQUE NO BOTÃO CANCELAR
+   HISTÓRICO DA AULA
    ========================================= */
 
-if (lessonsList) {
+async function mostrarHistorico(id) {
 
-    lessonsList.addEventListener(
-        "click",
-        function (event) {
+    let resposta;
 
-            const botao =
-                event.target.closest(
-                    ".cancel-lesson-button"
-                );
-
-
-            if (!botao) {
-                return;
-            }
-
-
-            console.log(
-                "Botão cancelar clicado"
-            );
-
-
-            const data =
-                botao.dataset.date;
-
-
-            const horario =
-                botao.dataset.time;
-
-
-            console.log(
-                "Data:",
-                data,
-                "Horário:",
-                horario
-            );
-
-
-            if (!data || !horario) {
-
-                alert(
-                    "Não foi possível identificar os dados da aula."
-                );
-
-                return;
-            }
-
-
-            cancelarAula(
-                data,
-                horario
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================
-   MOSTRAR AULAS
-   ========================================= */
-
-function carregarAulas() {
-
-    const aulas =
-        ordenarAulas(
-            buscarAulasDoAluno()
-        );
-
-
-    /* =====================================
-       TOTAL
-       ===================================== */
-
-    if (totalLessons) {
-
-        totalLessons.textContent =
-            aulas.length;
-
-    }
-
-
-    if (lessonsCount) {
-
-        lessonsCount.textContent =
-            `${aulas.length} ${
-                aulas.length === 1
-                    ? "aula"
-                    : "aulas"
-            }`;
-
-    }
-
-
-    /* =====================================
-       NENHUMA AULA
-       ===================================== */
-
-    if (
-        aulas.length === 0
-    ) {
-
-        mostrarEstadoVazio();
-
-
-        if (nextLessonSummary) {
-
-            nextLessonSummary.textContent =
-                "Nenhuma";
-
-        }
-
-
+    try {
+        /* GET /api/agendamentos/{id}: { aula, historico } */
+        resposta = await obterAgendamento(id);
+    } catch (erro) {
+        alert(erro.message);
         return;
     }
 
+    const { data, hora } = separarDataHora(resposta.aula.dataHoraInicio);
 
-    /* =====================================
-       PRÓXIMA AULA
-       ===================================== */
+    const itens = resposta.historico.map(function (evento) {
 
-    if (nextLessonSummary) {
+        const quando = separarDataHora(evento.quando);
 
-        nextLessonSummary.textContent =
-            `${aulas[0].data} • ${aulas[0].horario}`;
+        const motorista = evento.motoristaNome
+            ? `<span>Motorista: ${escapar(evento.motoristaNome)}</span>`
+            : "";
 
+        const motivo = evento.motivo
+            ? `<span>Motivo: ${escapar(evento.motivo)}</span>`
+            : "";
+
+        return `
+            <li>
+                <strong>${escapar(evento.tipo.descricao)}</strong>
+                <span>${quando.data} ${quando.hora} • ${escapar(evento.autorNome)}</span>
+                ${motorista}
+                ${motivo}
+            </li>
+        `;
+    }).join("");
+
+    const modal = document.createElement("div");
+
+    modal.className = "cancel-success-overlay";
+
+    modal.innerHTML = `
+        <div class="cancel-success-modal">
+            <h2>Histórico da aula</h2>
+            <p>${data} às ${hora} • ${escapar(textoDoStatus(resposta.aula))}</p>
+            <ul class="history-list">${itens}</ul>
+            <button type="button" class="cancel-success-button">Fechar</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector("button").addEventListener("click", function () {
+        modal.remove();
+    });
+}
+
+
+/* =========================================
+   CLIQUE NOS BOTÕES DAS AULAS
+   ========================================= */
+
+function tratarCliqueNaLista(event) {
+
+    const botaoCancelar = event.target.closest(".cancel-lesson-button");
+
+    if (botaoCancelar) {
+        cancelarAula(botaoCancelar.dataset.id);
+        return;
     }
 
+    const botaoHistorico = event.target.closest(".history-lesson-button");
 
-    /* =====================================
-       LIMPAR LISTA
-       ===================================== */
+    if (botaoHistorico) {
+        mostrarHistorico(botaoHistorico.dataset.id);
+    }
+}
 
-    if (lessonsList) {
+lessonsList.addEventListener("click", tratarCliqueNaLista);
 
-        lessonsList.innerHTML =
-            "";
+pastLessonsList.addEventListener("click", tratarCliqueNaLista);
 
+
+/* =========================================
+   MOSTRAR AS LISTAS
+   ========================================= */
+
+function mostrarErro(mensagem) {
+
+    nextLessonSummary.textContent = "—";
+
+    lessonsList.innerHTML = `
+        <div class="lessons-empty">
+            <strong>Não foi possível carregar suas aulas</strong>
+            <span>${escapar(mensagem)}</span>
+        </div>
+    `;
+
+    pastLessonsList.innerHTML = "";
+}
+
+
+function mostrarProximas(aulas) {
+
+    totalLessons.textContent = aulas.length;
+
+    lessonsCount.textContent = textoQuantidade(aulas.length);
+
+    if (aulas.length === 0) {
+        mostrarEstadoVazio();
+        nextLessonSummary.textContent = "Nenhuma";
+        unitSummary.textContent = "—";
+        return;
     }
 
+    /* A API manda em ordem de data: a aula [0] é a próxima. */
+    const proxima = separarDataHora(aulas[0].dataHoraInicio);
 
-    /* =====================================
-       CRIAR CARDS
-       ===================================== */
+    nextLessonSummary.textContent = `${proxima.data} • ${proxima.hora}`;
 
-    aulas.forEach(
-        (aula) => {
+    unitSummary.textContent = aulas[0].unidade;
 
-            const card =
-                criarCardAula(
-                    aula
-                );
+    lessonsList.innerHTML = "";
+
+    aulas.forEach(function (aula) {
+        lessonsList.appendChild(criarCardAula(aula));
+    });
+}
 
 
-            if (lessonsList) {
+function mostrarAnteriores(aulas) {
 
-                lessonsList.appendChild(
-                    card
-                );
+    pastLessonsCount.textContent = textoQuantidade(aulas.length);
 
-            }
+    if (aulas.length === 0) {
+        pastLessonsList.innerHTML = `
+            <div class="lessons-empty">
+                <strong>Nenhuma aula anterior ou cancelada</strong>
+            </div>
+        `;
+        return;
+    }
 
-        }
-    );
+    pastLessonsList.innerHTML = "";
 
+    aulas.forEach(function (aula) {
+        pastLessonsList.appendChild(criarCardAula(aula));
+    });
+}
+
+
+/* =========================================
+   CARREGAR AS AULAS DA API
+   ========================================= */
+
+async function carregarAulas() {
+
+    /* Sem login de aluno, volta para o login.html. */
+    if (!exigirLogin(["Aluno"])) {
+        return;
+    }
+
+    /* Aulas anteriores: de 90 dias atrás até agora (a API aceita até 92 dias). */
+    const agora = new Date();
+    const inicio = new Date(agora);
+
+    inicio.setDate(inicio.getDate() - 90);
+    inicio.setHours(0, 0, 0, 0);
+
+    try {
+
+        /* Sem filtro, a API devolve as próximas aulas do aluno. */
+        const proximas = await listarAgendamentos();
+
+        const anteriores = await listarAgendamentos({
+            de: dataParaApi(inicio),
+            ate: dataParaApi(agora)
+        });
+
+        /* Canceladas com data futura (próximos 31 dias). */
+        const canceladasFuturas = await listarAgendamentos({
+            status: [2],
+            de: dataParaApi(agora)
+        });
+
+        aulasCarregadas.clear();
+
+        proximas.concat(anteriores, canceladasFuturas).forEach(function (aula) {
+            aulasCarregadas.set(aula.id, aula);
+        });
+
+        mostrarProximas(proximas);
+
+        /* A mais recente primeiro. */
+        const historico = anteriores.concat(canceladasFuturas)
+            .sort((a, b) => b.dataHoraInicio.localeCompare(a.dataHoraInicio));
+
+        mostrarAnteriores(historico);
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        mostrarErro(erro.message);
+    }
 }
 
 
@@ -1150,118 +705,47 @@ function carregarAulas() {
    LOGOUT
    ========================================= */
 
-const logoutButton =
-    document.getElementById(
-        "lessons-logout"
-    );
+const logoutButton = document.getElementById("lessons-logout");
 
+logoutButton.addEventListener("click", function (event) {
 
-if (logoutButton) {
+    event.preventDefault();
 
-    logoutButton.addEventListener(
-        "click",
-        function (event) {
-
-            event.preventDefault();
-
-
-            sessionStorage.removeItem(
-                "sipaAluno"
-            );
-
-
-            window.location.href =
-                "login.html";
-
-        }
-    );
-
-}
+    /* Apaga o token e volta para o login.html. */
+    sair();
+});
 
 
 /* =========================================
    MENU MOBILE
    ========================================= */
 
-const mobileMenu =
-    document.getElementById(
-        "lessons-mobile-menu"
-    );
+const mobileMenu = document.getElementById("lessons-mobile-menu");
 
+const sidebar = document.querySelector(".lessons-sidebar");
 
-const sidebar =
-    document.querySelector(
-        ".lessons-sidebar"
-    );
-
-
-if (
-    mobileMenu &&
-    sidebar
-) {
-
-    mobileMenu.addEventListener(
-        "click",
-        function () {
-
-            sidebar.classList.toggle(
-                "mobile-open"
-            );
-
-        }
-    );
-
-}
+mobileMenu.addEventListener("click", function () {
+    sidebar.classList.toggle("mobile-open");
+});
 
 
 /* =========================================
    FECHAR MENU AO CLICAR FORA
    ========================================= */
 
-document.addEventListener(
-    "click",
-    function (event) {
+document.addEventListener("click", function (event) {
 
-        if (
-            window.innerWidth > 640
-            ||
-            !sidebar
-            ||
-            !sidebar.classList.contains(
-                "mobile-open"
-            )
-        ) {
-
-            return;
-        }
-
-
-        const clicouSidebar =
-            sidebar.contains(
-                event.target
-            );
-
-
-        const clicouMenu =
-            mobileMenu &&
-            mobileMenu.contains(
-                event.target
-            );
-
-
-        if (
-            !clicouSidebar &&
-            !clicouMenu
-        ) {
-
-            sidebar.classList.remove(
-                "mobile-open"
-            );
-
-        }
-
+    if (window.innerWidth > 640 || !sidebar.classList.contains("mobile-open")) {
+        return;
     }
-);
+
+    const clicouSidebar = sidebar.contains(event.target);
+    const clicouMenu = mobileMenu.contains(event.target);
+
+    if (!clicouSidebar && !clicouMenu) {
+        sidebar.classList.remove("mobile-open");
+    }
+});
 
 
 /* =========================================

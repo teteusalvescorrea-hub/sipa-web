@@ -3,7 +3,9 @@
    PARTE 1 — CARREGAR DADOS DO ALUNO
    ========================================= */
 
-"use strict";
+import { exigirLogin } from "./modules/essencial/utils/sessao.js";
+import { sair } from "./modules/essencial/service/authService.js";
+import { obterAlunoLogado } from "./modules/alunos/services/alunos.service.js";
 
 
 /* =========================================
@@ -59,51 +61,6 @@ const profileRemaining =
     document.getElementById(
         "profile-remaining"
     );
-
-
-/* =========================================
-   BUSCAR ALUNO LOGADO
-   ========================================= */
-
-function obterAluno() {
-
-    const alunoSalvo =
-        sessionStorage.getItem(
-            "sipaAluno"
-        );
-
-
-    if (!alunoSalvo) {
-
-        window.location.href =
-            "login.html";
-
-        return null;
-
-    }
-
-
-    try {
-
-        return JSON.parse(
-            alunoSalvo
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar aluno:",
-            error
-        );
-
-        window.location.href =
-            "login.html";
-
-        return null;
-
-    }
-
-}
 
 
 /* =========================================
@@ -231,13 +188,17 @@ function obterNomeCategoria(categoria) {
    CARREGAR PERFIL
    ========================================= */
 
-function carregarPerfil() {
+async function carregarPerfil() {
 
-    const aluno =
-        obterAluno();
+    let aluno;
 
+    try {
 
-    if (!aluno) {
+        aluno = await obterAlunoLogado();
+
+    } catch (erro) {
+
+        profileName.textContent = erro.message;
 
         return;
 
@@ -292,8 +253,11 @@ function carregarPerfil() {
        CATEGORIA
        ===================================== */
 
-    const categoria =
-        aluno.categoria;
+    const siglas = { 1: "A", 2: "B" };
+
+    const categoria = aluno.categoriasPretendidas
+        .map((item) => siglas[item.valor])
+        .join("");
 
 
     const nomeCategoria =
@@ -365,9 +329,7 @@ function carregarPerfil() {
     if (profilePackage) {
 
         profilePackage.textContent =
-            aluno.pacote
-                ? `${aluno.pacote}`
-                : "-";
+            aluno.aulasContratadas;
 
     }
 
@@ -410,20 +372,7 @@ if (logoutButton) {
 
     logoutButton.addEventListener(
         "click",
-        (event) => {
-
-            event.preventDefault();
-
-
-            sessionStorage.removeItem(
-                "sipaAluno"
-            );
-
-
-            window.location.href =
-                "login.html";
-
-        }
+        sair
     );
 
 }
@@ -433,5 +382,7 @@ if (logoutButton) {
    INICIAR
    ========================================= */
 
-carregarPerfil();
+if (exigirLogin(["Aluno"])) {
+    carregarPerfil();
+}
 

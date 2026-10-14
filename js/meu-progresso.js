@@ -2,7 +2,11 @@
    SIPA — MEU PROGRESSO
    ========================================= */
 
-"use strict";
+import { exigirLogin } from "./modules/essencial/utils/sessao.js";
+import { sair } from "./modules/essencial/service/authService.js";
+import { obterAlunoLogado } from "./modules/alunos/services/alunos.service.js";
+import { listarContratacoes }
+    from "./modules/contratacoes/services/contratacoes.service.js";
 
 
 
@@ -83,639 +87,245 @@ const logoutButton =
 
 
 
-/* =========================================
-   BUSCAR ALUNO LOGADO
-   ========================================= */
-
-function obterAluno() {
-
-    const alunoSalvo =
-        sessionStorage.getItem(
-            "sipaAluno"
-        );
-
-
-    /*
-     * Se não existir aluno logado,
-     * volta para o login.
-     */
-
-    if (!alunoSalvo) {
-
-        window.location.href =
-            "login.html";
-
-        return null;
-
-    }
-
-
-    try {
-
-        const alunoSessao =
-            JSON.parse(
-                alunoSalvo
-            );
-
-
-        let aluno =
-            alunoSessao;
-
-
-
-        /*
-         * Buscar a versão mais atualizada
-         * do aluno na base central.
-         */
-
-        if (
-            typeof buscarAlunoPorCpf ===
-            "function"
-        ) {
-
-            const alunoCentral =
-                buscarAlunoPorCpf(
-                    alunoSessao.cpf
-                );
-
-
-            if (alunoCentral) {
-
-                aluno =
-                    alunoCentral;
-
-
-
-                /*
-                 * Atualizar também a sessão.
-                 */
-
-                sessionStorage.setItem(
-                    "sipaAluno",
-                    JSON.stringify(
-                        aluno
-                    )
-                );
-
-            }
-
-        }
-
-
-        return aluno;
-
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar aluno:",
-            error
-        );
-
-
-        window.location.href =
-            "login.html";
-
-
-        return null;
-
-    }
-
-}
-
 
 
 /* =========================================
-   BUSCAR AGENDAMENTOS
+   ELEMENTOS NOVOS (API)
    ========================================= */
 
-function obterAgendamentos() {
-
-    const dados =
-        localStorage.getItem(
-            "sipaAgendamentos"
-        );
-
-
-    /*
-     * Se ainda não existir nenhum
-     * agendamento, retorna lista vazia.
-     */
-
-    if (!dados) {
-
-        return [];
-
-    }
-
-
-    try {
-
-        const agendamentos =
-            JSON.parse(
-                dados
-            );
-
-
-        /*
-         * Garante que o retorno seja
-         * realmente uma lista.
-         */
-
-        if (
-            Array.isArray(
-                agendamentos
-            )
-        ) {
-
-            return agendamentos;
-
-        }
-
-
-        return [];
-
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar agendamentos:",
-            error
-        );
-
-
-        return [];
-
-    }
-
-}
-
-
-
-/* =========================================
-   BUSCAR AULAS DO ALUNO
-   ========================================= */
-
-function buscarAulasDoAluno() {
-
-    const aluno =
-        obterAluno();
-
-
-    if (!aluno) {
-
-        return [];
-
-    }
-
-
-    const agendamentos =
-        obterAgendamentos();
-
-
-    /*
-     * Filtra somente os agendamentos
-     * pertencentes ao aluno logado.
-     */
-
-    return agendamentos.filter(
-        (agendamento) => {
-
-            return (
-                String(
-                    agendamento.alunoCpf
-                ) ===
-                String(
-                    aluno.cpf
-                )
-            );
-
-        }
+const packagesList =
+    document.getElementById(
+        "progress-packages"
     );
 
-}
+
+const progressError =
+    document.getElementById(
+        "progress-error"
+    );
 
 
 
 /* =========================================
-   CONVERTER DATA DO AGENDAMENTO
+   MOSTRAR ERRO DA API
    ========================================= */
 
-function criarDataDaAula(aula) {
+function mostrarErro(erro) {
 
-    if (
-        !aula ||
-        !aula.dataSistema ||
-        !aula.horario
-    ) {
+    console.error(
+        "SIPA — Erro ao carregar o progresso:",
+        erro
+    );
 
-        return null;
+    progressError.textContent =
+        erro.message;
 
-    }
+    progressError.hidden =
+        false;
+
+}
 
 
-    const data =
-        new Date(
-            `${aula.dataSistema}T${aula.horario}:00`
+/* =========================================
+   TEXTOS DA TELA
+   ========================================= */
+
+function textoDasCategorias(categorias) {
+
+    const temA =
+        categorias.some(
+            (categoria) => categoria.valor === 1
         );
 
+    const temB =
+        categorias.some(
+            (categoria) => categoria.valor === 2
+        );
 
-    if (
-        Number.isNaN(
-            data.getTime()
-        )
-    ) {
+    const texto =
+        (temA ? "A" : "") + (temB ? "B" : "");
 
-        return null;
-
-    }
-
-
-    return data;
+    return texto || "-";
 
 }
 
 
+function mensagemDoProgresso(percentual) {
+
+    if (percentual === 0) {
+        return "Continue avançando!";
+    }
+
+    if (percentual < 25) {
+        return "Você está começando!";
+    }
+
+    if (percentual < 50) {
+        return "Você está evoluindo!";
+    }
+
+    if (percentual < 75) {
+        return "Você está na metade do caminho!";
+    }
+
+    if (percentual < 100) {
+        return "Está quase lá!";
+    }
+
+    return "Parabéns! Formação concluída!";
+
+}
+
 
 /* =========================================
-   ATUALIZAR PROGRESSO
+   TOTAIS DO ALUNO (GET /api/alunos/me)
    ========================================= */
 
-function carregarProgresso() {
+function mostrarTotais(aluno) {
 
-    const aluno =
-        obterAluno();
+    const percentual =
+        aluno.percentualProgresso;
+
+    completedLessons.textContent =
+        aluno.aulasRealizadas;
+
+    remainingLessons.textContent =
+        aluno.aulasRestantes;
+
+    packageLessons.textContent =
+        aluno.aulasContratadas;
+
+    scheduledLessons.textContent =
+        aluno.aulasAgendadas;
+
+    studentCategory.textContent =
+        textoDasCategorias(aluno.categoriasFormacao);
+
+    progressPercentage.textContent =
+        `${percentual}%`;
+
+    progressBarPercentage.textContent =
+        `${percentual}%`;
+
+    progressFill.style.width =
+        `${percentual}%`;
+
+    progressCircle.style.background =
+        `conic-gradient(#247cff ${percentual}%, #122d57 ${percentual}%)`;
+
+    progressPackageLabel.textContent =
+        `${aluno.aulasContratadas} aulas`;
+
+    progressMessage.textContent =
+        mensagemDoProgresso(percentual);
+
+}
 
 
-    if (!aluno) {
+/* =========================================
+   PROGRESSO POR PACOTE (GET /api/contratacoes)
+   ========================================= */
+
+function criarTexto(tag, texto) {
+
+    const elemento =
+        document.createElement(tag);
+
+    elemento.textContent =
+        texto;
+
+    return elemento;
+
+}
+
+
+function criarCardPacote(contratacao) {
+
+    const card =
+        document.createElement("article");
+
+    card.className =
+        "progress-detail-card";
+
+    card.append(
+        criarTexto("span", contratacao.status.descricao),
+        criarTexto("strong", contratacao.pacoteNome),
+        criarTexto("small", contratacao.autoescolaNome),
+        criarTexto("small", `${contratacao.percentualProgresso}% concluído`),
+        criarTexto("small", `Realizadas: ${contratacao.aulasRealizadas}`),
+        criarTexto("small", `Faltas: ${contratacao.aulasFaltas}`),
+        criarTexto("small", `Agendadas: ${contratacao.aulasAgendadas}`),
+        criarTexto(
+            "small",
+            `Aguardando marcação: ${contratacao.aulasAguardandoMarcacao}`
+        ),
+        criarTexto("small", `Restantes: ${contratacao.aulasRestantes}`)
+    );
+
+    return card;
+
+}
+
+
+function mostrarPacotes(contratacoes) {
+
+    /*
+     * Só as aprovadas (2) e as encerradas (4) têm progresso.
+     */
+
+    const comProgresso =
+        contratacoes.filter(
+            (contratacao) =>
+                contratacao.status.valor === 2 ||
+                contratacao.status.valor === 4
+        );
+
+    packagesList.replaceChildren();
+
+    if (comProgresso.length === 0) {
+
+        packagesList.append(
+            criarTexto("p", "Você ainda não tem pacote aprovado.")
+        );
 
         return;
 
     }
 
-
-    const aulas =
-        buscarAulasDoAluno();
-
-
-
-    /* =====================================
-       DADOS DO PACOTE
-       ===================================== */
-
-    const pacote =
-        Number(
-            aluno.pacote
-        ) || 0;
-
-
-    const restantes =
-        Number(
-            aluno.aulasRestantes
-        ) || 0;
-
-
-
-    /* =====================================
-       DATA ATUAL
-       ===================================== */
-
-    const agora =
-        new Date();
-
-
-
-    /* =====================================
-       SEPARAR AULAS
-
-       FUTURAS =
-       AGENDADAS
-
-       PASSADAS =
-       REALIZADAS
-       ===================================== */
-
-    const aulasRealizadas =
-        aulas.filter(
-            (aula) => {
-
-                const dataAula =
-                    criarDataDaAula(
-                        aula
-                    );
-
-
-                if (!dataAula) {
-
-                    return false;
-
-                }
-
-
-                return (
-                    dataAula <
-                    agora
-                );
-
-            }
-        );
-
-
-
-    const aulasAgendadas =
-        aulas.filter(
-            (aula) => {
-
-                const dataAula =
-                    criarDataDaAula(
-                        aula
-                    );
-
-
-                if (!dataAula) {
-
-                    return false;
-
-                }
-
-
-                return (
-                    dataAula >=
-                    agora
-                );
-
-            }
-        );
-
-
-
-    const realizadas =
-        aulasRealizadas.length;
-
-
-    const agendadas =
-        aulasAgendadas.length;
-
-
-
-    /* =====================================
-       CALCULAR PORCENTAGEM
-       ===================================== */
-
-    let percentual =
-        0;
-
-
-    if (pacote > 0) {
-
-        percentual =
-            Math.round(
-                (
-                    realizadas /
-                    pacote
-                ) * 100
+    comProgresso.forEach(
+        (contratacao) => {
+            packagesList.append(
+                criarCardPacote(contratacao)
             );
-
-    }
-
-
-    /*
-     * Garantir que a porcentagem
-     * fique entre 0 e 100.
-     */
-
-    percentual =
-        Math.max(
-            0,
-            Math.min(
-                100,
-                percentual
-            )
-        );
-
-
-
-    /* =====================================
-       AULAS REALIZADAS
-       ===================================== */
-
-    if (completedLessons) {
-
-        completedLessons.textContent =
-            realizadas;
-
-    }
-
-
-
-    /* =====================================
-       AULAS RESTANTES
-       ===================================== */
-
-    if (remainingLessons) {
-
-        remainingLessons.textContent =
-            restantes;
-
-    }
-
-
-
-    /* =====================================
-       PACOTE CONTRATADO
-       ===================================== */
-
-    if (packageLessons) {
-
-        packageLessons.textContent =
-            pacote;
-
-    }
-
-
-
-    /* =====================================
-       AULAS AGENDADAS
-       ===================================== */
-
-    if (scheduledLessons) {
-
-        scheduledLessons.textContent =
-            agendadas;
-
-    }
-
-
-
-    /* =====================================
-       CATEGORIA
-       ===================================== */
-
-    if (studentCategory) {
-
-        const categorias = {
-
-            A: "A",
-
-            B: "B",
-
-            AB: "AB"
-
-        };
-
-
-        studentCategory.textContent =
-            categorias[
-                aluno.categoria
-            ] || "-";
-
-    }
-
-
-
-    /* =====================================
-       PORCENTAGEM DO CÍRCULO
-       ===================================== */
-
-    if (progressPercentage) {
-
-        progressPercentage.textContent =
-            `${percentual}%`;
-
-    }
-
-
-
-    /* =====================================
-       PORCENTAGEM DA BARRA
-       ===================================== */
-
-    if (progressBarPercentage) {
-
-        progressBarPercentage.textContent =
-            `${percentual}%`;
-
-    }
-
-
-
-    /* =====================================
-       PREENCHER BARRA
-       ===================================== */
-
-    if (progressFill) {
-
-        progressFill.style.width =
-            `${percentual}%`;
-
-    }
-
-
-
-    /* =====================================
-       ATUALIZAR CÍRCULO
-       ===================================== */
-
-    if (progressCircle) {
-
-        progressCircle.style.background =
-            `conic-gradient(
-                #247cff ${percentual}%,
-                #122d57 ${percentual}%
-            )`;
-
-    }
-
-
-
-    /* =====================================
-       TEXTO DA LEGENDA
-       ===================================== */
-
-    if (progressPackageLabel) {
-
-        progressPackageLabel.textContent =
-            `${pacote} aulas`;
-
-    }
-
-
-
-    /* =====================================
-       MENSAGEM DE PROGRESSO
-       ===================================== */
-
-    if (progressMessage) {
-
-
-        if (percentual === 0) {
-
-            progressMessage.textContent =
-                "Continue avançando!";
-
-        }
-
-
-        else if (percentual < 25) {
-
-            progressMessage.textContent =
-                "Você está começando!";
-
-        }
-
-
-        else if (percentual < 50) {
-
-            progressMessage.textContent =
-                "Você está evoluindo!";
-
-        }
-
-
-        else if (percentual < 75) {
-
-            progressMessage.textContent =
-                "Você está na metade do caminho!";
-
-        }
-
-
-        else if (percentual < 100) {
-
-            progressMessage.textContent =
-                "Está quase lá!";
-
-        }
-
-
-        else {
-
-            progressMessage.textContent =
-                "Parabéns! Formação concluída!";
-
-        }
-
-    }
-
-
-
-    /* =====================================
-       CONSOLE
-       ===================================== */
-
-    console.log(
-        "SIPA — Progresso do aluno:",
-        {
-            aluno: aluno.nome,
-            cpf: aluno.cpf,
-            categoria: aluno.categoria,
-            pacote: pacote,
-            realizadas: realizadas,
-            agendadas: agendadas,
-            restantes: restantes,
-            percentual: percentual
         }
     );
+
+}
+
+
+/* =========================================
+   CARREGAR PROGRESSO DA API
+   ========================================= */
+
+async function carregarProgresso() {
+
+    try {
+
+        const aluno =
+            await obterAlunoLogado();
+
+        mostrarTotais(aluno);
+
+        const contratacoes =
+            await listarContratacoes();
+
+        mostrarPacotes(contratacoes);
+
+    } catch (erro) {
+
+        mostrarErro(erro);
+
+    }
 
 }
 
@@ -725,27 +335,16 @@ function carregarProgresso() {
    LOGOUT
    ========================================= */
 
-if (logoutButton) {
+logoutButton.addEventListener(
+    "click",
+    (event) => {
 
-    logoutButton.addEventListener(
-        "click",
-        (event) => {
+        event.preventDefault();
 
-            event.preventDefault();
+        sair();
 
-
-            sessionStorage.removeItem(
-                "sipaAluno"
-            );
-
-
-            window.location.href =
-                "login.html";
-
-        }
-    );
-
-}
+    }
+);
 
 
 
@@ -753,4 +352,8 @@ if (logoutButton) {
    INICIAR
    ========================================= */
 
-carregarProgresso();
+if (exigirLogin(["Aluno"])) {
+
+    carregarProgresso();
+
+}
