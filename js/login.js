@@ -1,4 +1,13 @@
-"use strict";
+/* =========================================
+   IMPORTS DA API
+   O login e o cadastro passam a usar a API
+   (nada mais é gravado no localStorage).
+   ========================================= */
+
+import { login } from "./modules/essencial/service/authService.js";
+import { limparSessao } from "./modules/essencial/utils/sessao.js";
+import { cadastrarAluno } from "./modules/alunos/services/alunos.service.js";
+
 
 /* =========================================
    ELEMENTOS
@@ -165,6 +174,44 @@ function mostrarErroCampo(campo, mensagem) {
 
 
 /* =========================================
+   MOSTRAR UM ERRO DA API NO CAMPO CERTO
+   Procura uma palavra da mensagem para saber
+   o campo. Sem campo: mostra no aviso geral.
+   ========================================= */
+
+function mostrarErroDaApi(mensagem) {
+
+    const texto = mensagem.toLowerCase();
+
+    const camposPorPalavra = [
+        ["cpf", cadastroCpf],
+        ["nome", cadastroNome],
+        ["e-mail", cadastroEmail],
+        ["telefone", cadastroTelefone],
+        ["categoria", cadastroCategoria],
+        ["senha", cadastroSenha]
+    ];
+
+    const encontrado = camposPorPalavra.find(
+        ([palavra]) => texto.includes(palavra)
+    );
+
+
+    if (encontrado) {
+
+        mostrarErroCampo(encontrado[1], mensagem);
+
+        return;
+    }
+
+
+    cadastroMessage.textContent = mensagem;
+
+    cadastroMessage.classList.add("error");
+}
+
+
+/* =========================================
    REMOVER ERRO AO DIGITAR
    ========================================= */
 
@@ -286,7 +333,6 @@ const cadastroNome = document.getElementById("nome");
 const cadastroEmail = document.getElementById("email");
 const cadastroTelefone = document.getElementById("telefone");
 const cadastroCategoria = document.getElementById("categoria");
-const cadastroPacote = document.getElementById("pacote");
 const cadastroSenha = document.getElementById("senha");
 const cadastroConfirmarSenha = document.getElementById("confirmarSenha");
 
@@ -295,7 +341,6 @@ ativarRemocaoDeErro(cadastroNome);
 ativarRemocaoDeErro(cadastroEmail);
 ativarRemocaoDeErro(cadastroTelefone);
 ativarRemocaoDeErro(cadastroCategoria);
-ativarRemocaoDeErro(cadastroPacote);
 ativarRemocaoDeErro(cadastroSenha);
 ativarRemocaoDeErro(cadastroConfirmarSenha);
 
@@ -383,14 +428,16 @@ if (passwordToggle && loginPassword) {
 
 if (loginForm) {
 
-    loginForm.addEventListener("submit", function (event) {
+    loginForm.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
         limparMensagens();
 
         const cpf = loginCpf.value.replace(/\D/g, "");
-        const senha = loginPassword.value.trim();
+
+        /* A senha vai do jeito que foi digitada (sem trim), igual ao cadastro. */
+        const senha = loginPassword.value;
 
 
         /* CPF */
@@ -419,15 +466,23 @@ if (loginForm) {
         }
 
 
-        /* BUSCA ALUNO */
+        /* LOGIN NA API
+           POST /api/usuarios/login. Se der certo, o token
+           fica guardado e a resposta diz o perfil. */
 
-        const alunoEncontrado = buscarAlunoPorCpf(cpf);
+        let resposta;
 
+        try {
 
-        if (!alunoEncontrado) {
+            resposta = await login(cpf, senha);
+
+        } catch (erro) {
+
+            /* CPF ou senha errados, ou API desligada:
+               a mensagem já vem pronta da API. */
 
             loginMessage.textContent =
-                "CPF não encontrado. Faça seu cadastro.";
+                erro.message;
 
             loginMessage.classList.add("error");
 
@@ -435,25 +490,19 @@ if (loginForm) {
         }
 
 
-        /* SENHA INCORRETA */
+        /* SÓ O ALUNO TEM TELAS POR ENQUANTO */
 
-        if (alunoEncontrado.senha !== senha) {
+        if (resposta.perfil.descricao !== "Aluno") {
+
+            limparSessao();
 
             loginMessage.textContent =
-                "Senha incorreta.";
+                "As telas de motorista e autoescola ainda estão em construção.";
 
-            loginMessage.classList.add("error");
+            loginMessage.classList.add("info");
 
             return;
         }
-
-
-        /* SALVA ALUNO LOGADO */
-
-        sessionStorage.setItem(
-            "sipaAluno",
-            JSON.stringify(alunoEncontrado)
-        );
 
 
         loginMessage.textContent =
@@ -480,11 +529,11 @@ if (loginForm) {
 
 if (cadastroForm) {
 
-    cadastroForm.addEventListener("submit", function (event) {
+    cadastroForm.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
-        limparErrosCadastro();
+        limparMensagens();
 
 
         /* =====================================
@@ -500,8 +549,6 @@ if (cadastroForm) {
         const telefone = cadastroTelefoneInput.value.replace(/\D/g, "");
 
         const categoria = cadastroCategoria.value;
-
-        const pacote = Number(cadastroPacote.value);
 
         const senha = cadastroSenha.value;
 
@@ -587,21 +634,6 @@ if (cadastroForm) {
 
 
         /* =====================================
-           PACOTE
-           ===================================== */
-
-        if (![2, 5, 10, 15, 20].includes(pacote)) {
-
-            mostrarErroCampo(
-                cadastroPacote,
-                "Selecione um pacote válido."
-            );
-
-            formularioValido = false;
-        }
-
-
-        /* =====================================
            SENHA
            ===================================== */
 
@@ -641,81 +673,39 @@ if (cadastroForm) {
 
 
         /* =====================================
-           BUSCA ALUNOS
+           CADASTRO NA API
+           POST /api/alunos. A categoria vira uma lista
+           de números: A = [1], B = [2], AB = [1, 2].
+           O pacote é contratado depois, na vitrine.
            ===================================== */
 
-        const alunos = obterAlunosSipa();
-
-
-        /* =====================================
-           CPF DUPLICADO
-           ===================================== */
-
-        const cpfExiste = alunos.some(
-            aluno => aluno.cpf === cpf
-        );
-
-
-        if (cpfExiste) {
-
-            mostrarErroCampo(
-                cadastroCpf,
-                "Este CPF já está cadastrado."
-            );
-
-            return;
-        }
-
-
-        /* =====================================
-           GERA ID
-           ===================================== */
-
-        const ids = alunos.map(
-            aluno => Number(aluno.id) || 0
-        );
-
-        const maiorId =
-            ids.length > 0
-                ? Math.max(...ids)
-                : 0;
-
-        const novoId = maiorId + 1;
-
-
-        /* =====================================
-           NOVO ALUNO
-           ===================================== */
-
-        const novoAluno = {
-
-            id: novoId,
-
-            nome: nome,
-
-            cpf: cpf,
-
-            senha: senha,
-
-            categoria: categoria,
-
-            pacote: pacote,
-
-            aulasRestantes: pacote,
-
-            email: email,
-
-            telefone: telefone
+        const categoriasDaApi = {
+            A: [1],
+            B: [2],
+            AB: [1, 2]
         };
 
 
-        /* =====================================
-           SALVA
-           ===================================== */
+        try {
 
-        alunos.push(novoAluno);
+            await cadastrarAluno({
+                nome: nome,
+                cpf: cpf,
+                email: email,
+                telefone: telefone,
+                categorias: categoriasDaApi[categoria],
+                senha: senha
+            });
 
-        salvarAlunosSipa(alunos);
+        } catch (erro) {
+
+            /* A API devolve todos os erros juntos em erro.erros
+               (ex.: "Este CPF já está cadastrado."). */
+
+            erro.erros.forEach(mostrarErroDaApi);
+
+            return;
+        }
 
 
         /* =====================================

@@ -3,47 +3,16 @@
    JAVASCRIPT DO PAINEL DO ALUNO
    ========================================= */
 
-"use strict";
-
-
 /* =========================================
-   RECUPERAR ALUNO LOGADO
+   IMPORTS DA API
+   O painel busca os dados do aluno e a
+   próxima aula na API (nada no localStorage).
    ========================================= */
 
-const alunoSalvo =
-    sessionStorage.getItem("sipaAluno");
-
-let alunoAtual = null;
-
-if (alunoSalvo) {
-
-    try {
-
-        alunoAtual =
-            JSON.parse(alunoSalvo);
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar os dados do aluno:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   PROTEGER O DASHBOARD
-   ========================================= */
-
-if (!alunoAtual) {
-
-    window.location.href =
-        "login.html";
-
-}
+import { exigirLogin } from "./modules/essencial/utils/sessao.js";
+import { sair } from "./modules/essencial/service/authService.js";
+import { obterAlunoLogado } from "./modules/alunos/services/alunos.service.js";
+import { listarAgendamentos } from "./modules/agendamentos/services/agendamentos.service.js";
 
 
 /* =========================================
@@ -85,22 +54,38 @@ const progressBar =
 
 
 /* =========================================
-   CARREGAR DADOS DO ALUNO
+   SIGLAS DAS CATEGORIAS
+   A API manda cada categoria como
+   { descricao, valor }: 1 = A (moto), 2 = B (carro).
    ========================================= */
 
-function carregarDadosAluno() {
+function siglasDasCategorias(categorias) {
 
-    if (!alunoAtual) {
-        return;
-    }
+    const siglas = {
+        1: "A",
+        2: "B"
+    };
 
+    return categorias
+        .map((categoria) => siglas[categoria.valor])
+        .join("");
+
+}
+
+
+/* =========================================
+   CARREGAR DADOS DO ALUNO
+   aluno = resposta do GET /api/alunos/me
+   ========================================= */
+
+function carregarDadosAluno(aluno) {
 
     /* NOME */
 
     if (studentName) {
 
         studentName.textContent =
-            alunoAtual.nome.split(" ")[0];
+            aluno.nome.split(" ")[0];
 
     }
 
@@ -108,7 +93,7 @@ function carregarDadosAluno() {
     if (headerStudentName) {
 
         headerStudentName.textContent =
-            alunoAtual.nome;
+            aluno.nome;
 
     }
 
@@ -118,19 +103,23 @@ function carregarDadosAluno() {
     if (studentInitial) {
 
         studentInitial.textContent =
-            alunoAtual.nome
+            aluno.nome
                 .charAt(0)
                 .toUpperCase();
 
     }
 
 
-    /* CATEGORIA */
+    /* CATEGORIA (a do pacote contratado ou, sem pacote, a escolhida no cadastro) */
+
+    const categoria =
+        siglasDasCategorias(aluno.categoriasFormacao);
+
 
     if (studentCategory) {
 
         studentCategory.textContent =
-            alunoAtual.categoria;
+            categoria;
 
     }
 
@@ -138,7 +127,7 @@ function carregarDadosAluno() {
     if (headerStudentCategory) {
 
         headerStudentCategory.textContent =
-            `Categoria ${alunoAtual.categoria}`;
+            `Categoria ${categoria}`;
 
     }
 
@@ -146,7 +135,7 @@ function carregarDadosAluno() {
     if (licenseCategory) {
 
         licenseCategory.textContent =
-            `Categoria ${alunoAtual.categoria}`;
+            `Categoria ${categoria}`;
 
     }
 
@@ -156,34 +145,25 @@ function carregarDadosAluno() {
     if (remainingLessons) {
 
         remainingLessons.textContent =
-            alunoAtual.aulasRestantes;
+            aluno.aulasRestantes;
 
     }
 
 
-    /* PACOTE */
+    /* PACOTE (total de aulas contratadas) */
 
     if (studentPackage) {
 
         studentPackage.textContent =
-            alunoAtual.pacote;
+            aluno.aulasContratadas;
 
     }
 
 
-    /* PROGRESSO */
-
-    const aulasRealizadas =
-        alunoAtual.pacote -
-        alunoAtual.aulasRestantes;
+    /* PROGRESSO (a API já calcula a porcentagem) */
 
     const progresso =
-        alunoAtual.pacote > 0
-            ? Math.round(
-                (aulasRealizadas /
-                    alunoAtual.pacote) * 100
-            )
-            : 0;
+        aluno.percentualProgresso;
 
 
     if (progressPercent) {
@@ -213,14 +193,8 @@ function carregarDadosAluno() {
 
 
 /* =========================================
-   INICIALIZAR DASHBOARD
-   ========================================= */
-
-carregarDadosAluno();
-
-
-/* =========================================
    LOGOUT
+   sair() apaga o token e volta para o login.
    ========================================= */
 
 const logoutButton =
@@ -231,16 +205,7 @@ if (logoutButton) {
 
     logoutButton.addEventListener(
         "click",
-        () => {
-
-            sessionStorage.removeItem(
-                "sipaAluno"
-            );
-
-            window.location.href =
-                "login.html";
-
-        }
+        sair
     );
 
 }
@@ -498,315 +463,6 @@ document.addEventListener(
 
 
 /* =========================================
-   BUSCAR AGENDAMENTOS
-   ========================================= */
-
-function obterAgendamentosDashboard() {
-
-    const dados =
-        localStorage.getItem(
-            "sipaAgendamentos"
-        );
-
-
-    if (!dados) {
-        return [];
-    }
-
-
-    try {
-
-        const agendamentos =
-            JSON.parse(dados);
-
-        return Array.isArray(agendamentos)
-            ? agendamentos
-            : [];
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar agendamentos:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
-
-/* =========================================
-   BUSCAR ALUNO LOGADO
-   ========================================= */
-
-function obterAlunoDashboard() {
-
-    const aluno =
-        sessionStorage.getItem(
-            "sipaAluno"
-        );
-
-
-    if (!aluno) {
-        return null;
-    }
-
-
-    try {
-
-        return JSON.parse(aluno);
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar aluno:",
-            error
-        );
-
-        return null;
-
-    }
-
-}
-
-
-/* =========================================
-   CONVERTER DATA
-   ========================================= */
-
-function converterDataDashboard(data) {
-
-    if (!data) {
-        return null;
-    }
-
-
-    const partes =
-        data.split("-");
-
-
-    if (partes.length !== 3) {
-        return null;
-    }
-
-
-    return new Date(
-        Number(partes[0]),
-        Number(partes[1]) - 1,
-        Number(partes[2])
-    );
-
-}
-
-
-/* =========================================
-   CRIAR DATA + HORA DA AULA
-   ========================================= */
-
-function criarDataHoraAula(agendamento) {
-
-    if (
-        !agendamento ||
-        !agendamento.dataSistema ||
-        !agendamento.horario
-    ) {
-
-        return null;
-
-    }
-
-
-    const partesData =
-        agendamento.dataSistema.split("-");
-
-    const partesHorario =
-        agendamento.horario.split(":");
-
-
-    if (
-        partesData.length !== 3 ||
-        partesHorario.length < 2
-    ) {
-
-        return null;
-
-    }
-
-
-    const ano =
-        Number(partesData[0]);
-
-    const mes =
-        Number(partesData[1]) - 1;
-
-    const dia =
-        Number(partesData[2]);
-
-    const hora =
-        Number(partesHorario[0]);
-
-    const minuto =
-        Number(partesHorario[1]);
-
-
-    const dataHora =
-        new Date(
-            ano,
-            mes,
-            dia,
-            hora,
-            minuto,
-            0,
-            0
-        );
-
-
-    if (
-        Number.isNaN(
-            dataHora.getTime()
-        )
-    ) {
-
-        return null;
-
-    }
-
-
-    return dataHora;
-
-}
-
-
-/* =========================================
-   BUSCAR PRÓXIMA AULA
-   ========================================= */
-
-function buscarProximaAula() {
-
-    const aluno =
-        obterAlunoDashboard();
-
-
-    if (!aluno) {
-        return null;
-    }
-
-
-    const agendamentos =
-        obterAgendamentosDashboard();
-
-
-    const agora =
-        new Date();
-
-
-    /* =====================================
-       PEGAR SOMENTE AS AULAS DO ALUNO
-       QUE AINDA NÃO ACONTECERAM
-       ===================================== */
-
-    const aulasFuturas =
-        agendamentos.filter(
-            (agendamento) => {
-
-                /* ALUNO */
-
-                if (
-                    String(
-                        agendamento.alunoCpf
-                    ) !==
-                    String(
-                        aluno.cpf
-                    )
-                ) {
-
-                    return false;
-
-                }
-
-
-                /* DATA E HORÁRIO */
-
-                if (
-                    !agendamento.dataSistema ||
-                    !agendamento.horario
-                ) {
-
-                    return false;
-
-                }
-
-
-                /* CRIAR DATA COMPLETA */
-
-                const dataHoraAula =
-                    criarDataHoraAula(
-                        agendamento
-                    );
-
-
-                if (!dataHoraAula) {
-
-                    return false;
-
-                }
-
-
-                /* IGNORAR AULAS PASSADAS */
-
-                return (
-                    dataHoraAula >= agora
-                );
-
-            }
-        );
-
-
-    /* =====================================
-       NENHUMA AULA FUTURA
-       ===================================== */
-
-    if (
-        aulasFuturas.length === 0
-    ) {
-
-        return null;
-
-    }
-
-
-    /* =====================================
-       ORDENAR DA MAIS PRÓXIMA
-       PARA A MAIS DISTANTE
-       ===================================== */
-
-    aulasFuturas.sort(
-        (a, b) => {
-
-            const dataA =
-                criarDataHoraAula(a);
-
-            const dataB =
-                criarDataHoraAula(b);
-
-
-            return (
-                dataA.getTime() -
-                dataB.getTime()
-            );
-
-        }
-    );
-
-
-    return aulasFuturas[0];
-
-}
-
-
-/* =========================================
    ELEMENTOS DA PRÓXIMA AULA
    ========================================= */
 
@@ -899,13 +555,11 @@ const mesesSipa = [
 
 /* =========================================
    MOSTRAR PRÓXIMA AULA
+   aula = 1º item do GET /api/agendamentos
+   (a API já devolve as próximas aulas em ordem)
    ========================================= */
 
-function carregarProximaAula() {
-
-    const aula =
-        buscarProximaAula();
-
+function carregarProximaAula(aula) {
 
     /* =====================================
        NENHUMA AULA FUTURA
@@ -972,7 +626,7 @@ function carregarProximaAula() {
         if (nextLessonLocation) {
 
             nextLessonLocation.textContent =
-                "Unidade Centro";
+                "—";
 
         }
 
@@ -983,18 +637,13 @@ function carregarProximaAula() {
 
 
     /* =====================================
-       CONVERTER DATA
+       DATA
+       "2026-10-20T14:00:00" vira uma data
+       (horário de Brasília, sem fuso)
        ===================================== */
 
     const data =
-        converterDataDashboard(
-            aula.dataSistema
-        );
-
-
-    if (!data) {
-        return;
-    }
+        new Date(aula.dataHoraInicio);
 
 
     /* =====================================
@@ -1039,24 +688,33 @@ function carregarProximaAula() {
 
     /* =====================================
        HORÁRIO
+       Se a aula ainda não está confirmada,
+       mostra o status junto (ex.: Aguardando aceite).
        ===================================== */
 
     if (nextLessonTime) {
 
+        let horario =
+            aula.dataHoraInicio.substring(11, 16);
+
+        if (aula.status.valor !== 1) {
+            horario += ` · ${aula.status.descricao}`;
+        }
+
         nextLessonTime.textContent =
-            aula.horario;
+            horario;
 
     }
 
 
     /* =====================================
-       INSTRUTOR
+       MOTORISTA
        ===================================== */
 
     if (nextLessonInstructor) {
 
         nextLessonInstructor.textContent =
-            aula.instrutor ||
+            aula.motoristaNome ||
             "—";
 
     }
@@ -1069,8 +727,7 @@ function carregarProximaAula() {
     if (nextLessonVehicle) {
 
         nextLessonVehicle.textContent =
-            aula.veiculo ||
-            "—";
+            `${aula.veiculoModelo} — ${aula.veiculoPlaca}`;
 
     }
 
@@ -1082,49 +739,75 @@ function carregarProximaAula() {
     if (nextLessonCategory) {
 
         nextLessonCategory.textContent =
-            aula.categoriaNome ||
-            aula.categoria ||
-            "—";
+            aula.categoria.descricao;
 
     }
 
 
     /* =====================================
        LOCALIZAÇÃO DA AULA
+       (unidade e endereço do ponto de encontro)
        ===================================== */
 
     if (nextLessonLocation) {
 
-        if (
-            aula.categoria === "B" ||
-            aula.categoriaNome === "Carro"
-        ) {
+        nextLessonLocation.textContent =
+            `${aula.unidade}: ${aula.localAula}`;
 
-            nextLessonLocation.textContent =
-                "🚗 Av. Carlos Lindenberg, 1500 — Centro, Vila Velha/ES";
+    }
 
-        } else if (
-            aula.categoria === "A" ||
-            aula.categoriaNome === "Moto"
-        ) {
+}
 
-            nextLessonLocation.textContent =
-                "🏍️ Rua Professor Augusto, 320 — Centro, Vila Velha/ES";
 
-        } else if (
-            aula.categoria === "AB" ||
-            aula.categoriaNome === "Carro + Moto"
-        ) {
+/* =========================================
+   MOSTRAR ERRO NO CARD DA PRÓXIMA AULA
+   ========================================= */
 
-            nextLessonLocation.textContent =
-                "🚗 Carro: Av. Carlos Lindenberg, 1500 — Centro, Vila Velha/ES | 🏍️ Moto: Rua Professor Augusto, 320 — Centro, Vila Velha/ES";
+function mostrarErroPainel(mensagem) {
 
-        } else {
+    if (nextLessonWeekday) {
 
-            nextLessonLocation.textContent =
-                "Unidade Centro";
+        nextLessonWeekday.textContent =
+            "Não foi possível carregar o painel";
 
-        }
+    }
+
+
+    if (nextLessonMonth) {
+
+        nextLessonMonth.textContent =
+            mensagem;
+
+    }
+
+}
+
+
+/* =========================================
+   CARREGAR O PAINEL
+   Busca o aluno e as próximas aulas na API.
+   Se o login venceu, o cliente da API já
+   volta para o login sozinho.
+   ========================================= */
+
+async function carregarPainel() {
+
+    try {
+
+        const aluno =
+            await obterAlunoLogado();
+
+        carregarDadosAluno(aluno);
+
+
+        const proximasAulas =
+            await listarAgendamentos();
+
+        carregarProximaAula(proximasAulas[0]);
+
+    } catch (erro) {
+
+        mostrarErroPainel(erro.message);
 
     }
 
@@ -1133,6 +816,12 @@ function carregarProximaAula() {
 
 /* =========================================
    EXECUTAR
+   Só carrega se houver login de aluno.
+   Sem login, exigirLogin manda para o login.
    ========================================= */
 
-carregarProximaAula();
+if (exigirLogin(["Aluno"])) {
+
+    carregarPainel();
+
+}
