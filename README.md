@@ -6,7 +6,7 @@ O sistema foi desenvolvido com foco em organização, praticidade e controle dos
 
 ## Acesse o sistema
 
-[**Acessar o SIPA**](https://teteusalvescorrea-hub.github.io/SIPA/)
+[**Acessar o SIPA**](https://teteusalvescorrea-hub.github.io/sipa-web/)
 
 ## Funcionalidades
 
