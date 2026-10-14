@@ -453,312 +453,121 @@ document.addEventListener(
 
 
 /* =========================================
-   ELEMENTOS DA PRÓXIMA AULA
+   ELEMENTOS DA PRÓXIMA AULA, DO RESUMO E DO AVISO
    ========================================= */
 
-const nextLessonDay =
-    document.getElementById(
-        "next-lesson-day"
-    );
-
-
-const nextLessonWeekday =
-    document.getElementById(
-        "next-lesson-weekday"
-    );
-
-
-const nextLessonMonth =
-    document.getElementById(
-        "next-lesson-month"
-    );
-
-
-const nextLessonTime =
-    document.getElementById(
-        "next-lesson-time"
-    );
-
-
-const nextLessonInstructor =
-    document.getElementById(
-        "next-lesson-instructor"
-    );
-
-
-const nextLessonVehicle =
-    document.getElementById(
-        "next-lesson-vehicle"
-    );
-
-
-const nextLessonCategory =
-    document.getElementById(
-        "next-lesson-category"
-    );
+const nextLessonStatus = document.getElementById("next-lesson-status");
+const nextLessonDay = document.getElementById("next-lesson-day");
+const nextLessonWeekday = document.getElementById("next-lesson-weekday");
+const nextLessonMonth = document.getElementById("next-lesson-month");
+const nextLessonTime = document.getElementById("next-lesson-time");
+const nextLessonVehicle = document.getElementById("next-lesson-vehicle");
+const nextLessonInstructor = document.getElementById("next-lesson-instructor");
+const nextLessonLocation = document.getElementById("next-lesson-location");
+const lessonsSummary = document.querySelector(".progress-footer span");
+const dashboardNotice = document.getElementById("dashboard-notice");
 
 
 /* =========================================
-   LOCALIZAÇÃO DA PRÓXIMA AULA
-   ========================================= */
-
-const nextLessonLocation =
-    document.querySelector(
-        ".lesson-footer > span"
-    );
-
-
-/* =========================================
-   NOMES DOS DIAS
+   NOMES DOS DIAS E DOS MESES
    ========================================= */
 
 const diasSemanaSipa = [
-    "Domingo",
-    "Segunda-feira",
-    "Terça-feira",
-    "Quarta-feira",
-    "Quinta-feira",
-    "Sexta-feira",
-    "Sábado"
+    "Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira",
+    "Quinta-feira", "Sexta-feira", "Sábado"
 ];
-
-
-/* =========================================
-   NOMES DOS MESES
-   ========================================= */
 
 const mesesSipa = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro"
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
 
 /* =========================================
-   MOSTRAR PRÓXIMA AULA
+   LIMPAR OS VALORES DE EXEMPLO DO HTML
    ========================================= */
 
-function carregarProximaAula(aula) {
-
-    /* =====================================
-       NENHUMA AULA FUTURA
-       ===================================== */
-
-    if (!aula) {
-
-        if (nextLessonDay) {
-
-            nextLessonDay.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonWeekday) {
-
-            nextLessonWeekday.textContent =
-                "Nenhuma aula agendada";
-
-        }
-
-
-        if (nextLessonMonth) {
-
-            nextLessonMonth.textContent =
-                "Agende sua próxima aula";
-
-        }
-
-
-        if (nextLessonTime) {
-
-            nextLessonTime.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonInstructor) {
-
-            nextLessonInstructor.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonVehicle) {
-
-            nextLessonVehicle.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonCategory) {
-
-            nextLessonCategory.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonLocation) {
-
-            nextLessonLocation.textContent =
-                "—";
-
-        }
-
-
-        return;
-
-    }
-
-
-    const data =
-        new Date(aula.dataHoraInicio);
-
-
-    /* =====================================
-       DIA
-       ===================================== */
-
-    if (nextLessonDay) {
-
-        nextLessonDay.textContent =
-            String(
-                data.getDate()
-            ).padStart(2, "0");
-
-    }
-
-
-    /* =====================================
-       DIA DA SEMANA
-       ===================================== */
-
-    if (nextLessonWeekday) {
-
-        nextLessonWeekday.textContent =
-            diasSemanaSipa[
-                data.getDay()
-            ];
-
-    }
-
-
-    /* =====================================
-       MÊS E ANO
-       ===================================== */
-
-    if (nextLessonMonth) {
-
-        nextLessonMonth.textContent =
-            `${mesesSipa[data.getMonth()]} de ${data.getFullYear()}`;
-
-    }
-
-
-    /* =====================================
-       HORÁRIO
-       ===================================== */
-
-    if (nextLessonTime) {
-
-        let horario =
-            aula.dataHoraInicio.substring(11, 16);
-
-        if (aula.status.valor !== 1) {
-            horario += ` · ${aula.status.descricao}`;
-        }
-
-        nextLessonTime.textContent =
-            horario;
-
-    }
-
-
-    /* =====================================
-       MOTORISTA
-       ===================================== */
-
-    if (nextLessonInstructor) {
-
-        nextLessonInstructor.textContent =
-            aula.motoristaNome ||
-            "—";
-
-    }
-
-
-    /* =====================================
-       VEÍCULO
-       ===================================== */
-
-    if (nextLessonVehicle) {
-
-        nextLessonVehicle.textContent =
-            `${aula.veiculoModelo} — ${aula.veiculoPlaca}`;
-
-    }
-
-
-    /* =====================================
-       CATEGORIA
-       ===================================== */
-
-    if (nextLessonCategory) {
-
-        nextLessonCategory.textContent =
-            aula.categoria.descricao;
-
-    }
-
-
-    /* =====================================
-       LOCALIZAÇÃO DA AULA
-       ===================================== */
-
-    if (nextLessonLocation) {
-
-        nextLessonLocation.textContent =
-            `${aula.unidade}: ${aula.localAula}`;
-
-    }
-
+function limparTela() {
+
+    const campos = [
+        studentName, headerStudentName, studentInitial, studentCategory,
+        headerStudentCategory, licenseCategory, remainingLessons, studentPackage,
+        progressPercent, progressNumber, lessonsSummary, nextLessonDay,
+        nextLessonWeekday, nextLessonMonth, nextLessonTime, nextLessonVehicle,
+        nextLessonInstructor, nextLessonLocation
+    ];
+
+    campos.forEach((campo) => {
+        campo.textContent = "—";
+    });
+
+    progressBar.style.width = "0%";
+    nextLessonStatus.hidden = true;
 }
 
 
 /* =========================================
-   MOSTRAR ERRO NO CARD DA PRÓXIMA AULA
+   RESUMO DAS AULAS, EMBAIXO DA BARRA
    ========================================= */
 
-function mostrarErroPainel(mensagem) {
+function mostrarResumoDasAulas(aluno) {
 
-    if (nextLessonWeekday) {
+    lessonsSummary.textContent =
+        `${aluno.aulasRealizadas} de ${aluno.aulasContratadas} aulas realizadas · ` +
+        `${aluno.aulasAgendadas} agendadas · ` +
+        `${aluno.aulasAguardandoMarcacao} aguardando marcação`;
+}
 
-        nextLessonWeekday.textContent =
-            "Não foi possível carregar o painel";
 
+/* =========================================
+   MOSTRAR A PRÓXIMA AULA
+   ========================================= */
+
+function mostrarProximaAula(aula) {
+
+    if (!aula) {
+        nextLessonWeekday.textContent = "Nenhuma aula agendada";
+        nextLessonMonth.textContent = "Agende sua próxima aula";
+        return;
     }
 
+    const [data, hora] = aula.dataHoraInicio.split("T");
+    const [ano, mes, dia] = data.split("-").map(Number);
+    const diaDaSemana = new Date(ano, mes - 1, dia).getDay();
+    const veiculo = `${aula.veiculoModelo} · ${aula.veiculoPlaca}`;
+    const local = `${aula.unidade} — ${aula.localAula}`;
 
-    if (nextLessonMonth) {
+    nextLessonDay.textContent = String(dia).padStart(2, "0");
+    nextLessonWeekday.textContent = diasSemanaSipa[diaDaSemana];
+    nextLessonMonth.textContent = `${mesesSipa[mes - 1]} de ${ano}`;
+    nextLessonTime.textContent = hora.slice(0, 5);
 
-        nextLessonMonth.textContent =
-            mensagem;
+    nextLessonVehicle.textContent = veiculo;
+    nextLessonVehicle.title = veiculo;
+    nextLessonInstructor.textContent = aula.motoristaNome;
+    nextLessonLocation.textContent = local;
+    nextLessonLocation.title = local;
 
-    }
+    nextLessonStatus.textContent = aula.status.descricao;
+    nextLessonStatus.hidden = false;
+}
 
+
+/* =========================================
+   MOSTRAR ERRO NO QUADRO DE AVISO
+   ========================================= */
+
+function mostrarErro(erro) {
+
+    console.error("Erro ao carregar o painel:", erro);
+
+    dashboardNotice.querySelector("strong").textContent =
+        "Não foi possível carregar o painel";
+
+    dashboardNotice.querySelector(".notice-content span").textContent =
+        erro.message;
+
+    dashboardNotice.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 
@@ -770,23 +579,20 @@ async function carregarPainel() {
 
     try {
 
-        const aluno =
-            await obterAlunoLogado();
+        limparTela();
 
+        const aluno = await obterAlunoLogado();
         carregarDadosAluno(aluno);
+        mostrarResumoDasAulas(aluno);
 
-
-        const proximasAulas =
-            await listarAgendamentos();
-
-        carregarProximaAula(proximasAulas[0]);
+        const proximasAulas = await listarAgendamentos();
+        mostrarProximaAula(proximasAulas[0]);
 
     } catch (erro) {
 
-        mostrarErroPainel(erro.message);
+        mostrarErro(erro);
 
     }
-
 }
 
 
@@ -795,7 +601,5 @@ async function carregarPainel() {
    ========================================= */
 
 if (exigirLogin(["Aluno"])) {
-
     carregarPainel();
-
 }

@@ -24,7 +24,6 @@ const cadastroMessage = document.getElementById("cadastro-message");
 
 const passwordToggle = document.getElementById("password-toggle");
 const forgotPassword = document.getElementById("forgot-password");
-const googleLogin = document.getElementById("google-login");
 
 const bottomRegisterButton = document.getElementById("bottom-register-button");
 const bottomLoginButton = document.getElementById("bottom-login-button");
@@ -737,22 +736,6 @@ if (forgotPassword) {
     });
 }
 
-
-/* =========================================
-   LOGIN COM GOOGLE
-   ========================================= */
-
-if (googleLogin) {
-
-    googleLogin.addEventListener("click", function () {
-
-        loginMessage.textContent =
-            "Login com Google disponível em uma futura versão.";
-
-        loginMessage.classList.add("info");
-
-    });
-}
 
 
 /* =========================================

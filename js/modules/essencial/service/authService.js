@@ -5,6 +5,8 @@ import { salvarToken, limparSessao } from "../utils/sessao.js";
 // POST /api/usuarios/login — CPF ou CNPJ. Guarda o token e devolve o perfil.
 export const login = async (documento, senha) => {
 
+    limparSessao();
+
     const resposta = await Post("usuarios/login", { documento, senha });
 
     salvarToken(resposta.token);
