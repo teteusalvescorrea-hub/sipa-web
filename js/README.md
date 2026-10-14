@@ -68,5 +68,6 @@ Erros chegam como `ApiErro`, com `status`, `message` (a mensagem pronta para a t
 
 ## Rodar local
 
-- API em `http://localhost:5080` (o endereço está em `modules/essencial/settings/config.js`).
-- Front servido em `http://localhost:5500` (por exemplo, com a extensão Live Server do VS Code). É a única origem que a API aceita (CORS).
+- API em `http://localhost:5080`. O endereço de cada ambiente (development, homolog, production) está em `modules/essencial/settings/config.js`, que faz o papel dos `.env` do Simplea.
+- Para apontar para outra API sem mexer no arquivo (como o `.env.local`), rode no console do navegador `localStorage.setItem("sipa.API_URL", "http://localhost:5081/api")` e recarregue. Para voltar: `localStorage.removeItem("sipa.API_URL")`.
+- Front servido em `http://localhost:5500` (por exemplo, com a extensão Live Server do VS Code). A API aceita `http://localhost:5500` e `http://127.0.0.1:5500` (CORS).
