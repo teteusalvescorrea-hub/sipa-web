@@ -519,6 +519,8 @@ const packageAlertTitle = document.getElementById("package-alert-title");
 const packageAlertText = document.getElementById("package-alert-text");
 const packageAlertButton = document.getElementById("package-alert-button");
 
+const lessonsList = document.getElementById("lessons-list");
+
 
 /* =========================================
    NOMES DOS DIAS E DOS MESES
@@ -558,6 +560,7 @@ function limparTela() {
     licenseStatus.hidden = true;
     progressCheer.hidden = true;
     packageAlert.hidden = true;
+    lessonsList.replaceChildren();
 }
 
 
@@ -622,6 +625,85 @@ function mostrarAvisoDoPacote(contratacoes) {
     }
 
     packageAlert.hidden = false;
+}
+
+
+/* =========================================
+   PRÓXIMAS AULAS (ATÉ 3)
+   ========================================= */
+
+function criarElemento(tag, classe, texto) {
+
+    const elemento = document.createElement(tag);
+
+    if (classe) {
+        elemento.className = classe;
+    }
+
+    if (texto !== undefined) {
+        elemento.textContent = texto;
+    }
+
+    return elemento;
+}
+
+
+function criarLinhaDeAula(aula) {
+
+    const [data, hora] = aula.dataHoraInicio.split("T");
+    const [ano, mes, dia] = data.split("-").map(Number);
+    const diaDaSemana = diasSemanaSipa[new Date(ano, mes - 1, dia).getDay()];
+
+    /* Na 4 (Recusada), o motorista é quem recusou. */
+    const recusada = aula.status.valor === 4;
+
+    const linha = criarElemento("article", "lesson-row");
+
+    const quando = criarElemento("div", "lesson-row-date");
+    quando.append(
+        criarElemento("span", "", mesesSipa[mes - 1].slice(0, 3).toUpperCase()),
+        criarElemento("strong", "", String(dia).padStart(2, "0"))
+    );
+
+    const info = criarElemento("div", "lesson-row-info");
+    info.append(
+        criarElemento("strong", "", `${diaDaSemana}, ${hora.slice(0, 5)}`),
+        criarElemento("span", "", aula.unidade)
+    );
+
+    const categoria = criarElemento("div", "lesson-row-category");
+    categoria.append(criarElemento("span", "category-badge", aula.categoria.descricao));
+
+    const motorista = criarElemento("div", "lesson-row-instructor");
+    motorista.append(
+        criarElemento("span", "", "MOTORISTA"),
+        criarElemento("strong", "", recusada ? "Aguardando novo motorista" : aula.motoristaNome)
+    );
+
+    const classeStatus = aula.status.valor === 1 ? "confirmed" : "pending";
+
+    linha.append(
+        quando,
+        info,
+        categoria,
+        motorista,
+        criarElemento("span", `lesson-row-status ${classeStatus}`, aula.status.descricao)
+    );
+
+    return linha;
+}
+
+
+function mostrarProximasAulas(aulas) {
+
+    if (aulas.length === 0) {
+        lessonsList.replaceChildren(
+            criarElemento("p", "lessons-empty", "Nenhuma aula agendada.")
+        );
+        return;
+    }
+
+    lessonsList.replaceChildren(...aulas.slice(0, 3).map(criarLinhaDeAula));
 }
 
 
@@ -729,6 +811,7 @@ async function carregarPainel() {
 
     if (proximasAulas) {
         mostrarProximaAula(proximasAulas[0]);
+        mostrarProximasAulas(proximasAulas);
     } else {
         mostrarErro(respostas[2].reason);
     }

@@ -1483,6 +1483,12 @@ a {
     border-top: 0;
 }
 
+.lessons-empty {
+    padding: 9px 0;
+    color: var(--dashboard-text-muted);
+    font-size: 9px;
+}
+
 .lesson-row-date {
     width: 46px;
 
