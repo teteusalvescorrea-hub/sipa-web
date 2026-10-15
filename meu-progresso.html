@@ -221,7 +221,7 @@
             <div class="sipa-sidebar-unit-text">
 
                 <strong>
-                    Unidade Centro
+                    SIPA
                 </strong>
 
                 <small>
@@ -302,6 +302,15 @@
 
 
         </header>
+
+
+        <!-- MENSAGEM DE ERRO DA API (o JS preenche) -->
+
+        <p
+            id="progress-error"
+            style="margin-top: 14px; color: #b42318; font-weight: 700;"
+            hidden
+        ></p>
 
 
 
@@ -558,15 +567,15 @@
                 <article class="progress-detail-card">
 
                     <span>
-                        UNIDADE
+                        AUTOESCOLA
                     </span>
 
-                    <strong>
-                        Centro
+                    <strong id="student-school">
+                        —
                     </strong>
 
                     <small>
-                        unidade de atendimento
+                        onde você faz as aulas
                     </small>
 
                 </article>
@@ -645,6 +654,42 @@
 
 
         <!-- =====================================
+             SEUS PACOTES
+             ===================================== -->
+
+        <section class="progress-details">
+
+
+            <div class="progress-section-header">
+
+                <div>
+
+                    <span class="progress-eyebrow">
+                        SEUS PACOTES
+                    </span>
+
+                    <h2>
+                        Progresso por pacote
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <!-- CARDS (o JS cria um card por pacote) -->
+
+            <div
+                class="progress-details-grid"
+                id="progress-packages"
+            ></div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
              RODAPÉ
              ===================================== -->
 
@@ -672,8 +717,7 @@
      JAVASCRIPT
      ===================================== -->
 
-<script src="js/dados.js"></script>
-<script src="js/meu-progresso.js"></script>
+<script type="module" src="js/meu-progresso.js"></script>
 
 
 </body>

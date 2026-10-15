@@ -3,47 +3,10 @@
    JAVASCRIPT DO PAINEL DO ALUNO
    ========================================= */
 
-"use strict";
-
-
-/* =========================================
-   RECUPERAR ALUNO LOGADO
-   ========================================= */
-
-const alunoSalvo =
-    sessionStorage.getItem("sipaAluno");
-
-let alunoAtual = null;
-
-if (alunoSalvo) {
-
-    try {
-
-        alunoAtual =
-            JSON.parse(alunoSalvo);
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar os dados do aluno:",
-            error
-        );
-
-    }
-
-}
-
-
-/* =========================================
-   PROTEGER O DASHBOARD
-   ========================================= */
-
-if (!alunoAtual) {
-
-    window.location.href =
-        "login.html";
-
-}
+import { exigirLogin } from "./modules/essencial/utils/sessao.js";
+import { sair } from "./modules/essencial/service/authService.js";
+import { obterAlunoLogado } from "./modules/alunos/services/alunos.service.js";
+import { listarAgendamentos } from "./modules/agendamentos/services/agendamentos.service.js";
 
 
 /* =========================================
@@ -85,22 +48,35 @@ const progressBar =
 
 
 /* =========================================
+   SIGLAS DAS CATEGORIAS (1 = A, 2 = B)
+   ========================================= */
+
+function siglasDasCategorias(categorias) {
+
+    const siglas = {
+        1: "A",
+        2: "B"
+    };
+
+    return categorias
+        .map((categoria) => siglas[categoria.valor])
+        .join("");
+
+}
+
+
+/* =========================================
    CARREGAR DADOS DO ALUNO
    ========================================= */
 
-function carregarDadosAluno() {
-
-    if (!alunoAtual) {
-        return;
-    }
-
+function carregarDadosAluno(aluno) {
 
     /* NOME */
 
     if (studentName) {
 
         studentName.textContent =
-            alunoAtual.nome.split(" ")[0];
+            aluno.nome.split(" ")[0];
 
     }
 
@@ -108,7 +84,7 @@ function carregarDadosAluno() {
     if (headerStudentName) {
 
         headerStudentName.textContent =
-            alunoAtual.nome;
+            aluno.nome;
 
     }
 
@@ -118,7 +94,7 @@ function carregarDadosAluno() {
     if (studentInitial) {
 
         studentInitial.textContent =
-            alunoAtual.nome
+            aluno.nome
                 .charAt(0)
                 .toUpperCase();
 
@@ -127,10 +103,14 @@ function carregarDadosAluno() {
 
     /* CATEGORIA */
 
+    const categoria =
+        siglasDasCategorias(aluno.categoriasFormacao);
+
+
     if (studentCategory) {
 
         studentCategory.textContent =
-            alunoAtual.categoria;
+            categoria;
 
     }
 
@@ -138,7 +118,7 @@ function carregarDadosAluno() {
     if (headerStudentCategory) {
 
         headerStudentCategory.textContent =
-            `Categoria ${alunoAtual.categoria}`;
+            `Categoria ${categoria}`;
 
     }
 
@@ -146,7 +126,7 @@ function carregarDadosAluno() {
     if (licenseCategory) {
 
         licenseCategory.textContent =
-            `Categoria ${alunoAtual.categoria}`;
+            `Categoria ${categoria}`;
 
     }
 
@@ -156,7 +136,7 @@ function carregarDadosAluno() {
     if (remainingLessons) {
 
         remainingLessons.textContent =
-            alunoAtual.aulasRestantes;
+            aluno.aulasRestantes;
 
     }
 
@@ -166,24 +146,15 @@ function carregarDadosAluno() {
     if (studentPackage) {
 
         studentPackage.textContent =
-            alunoAtual.pacote;
+            aluno.aulasContratadas;
 
     }
 
 
     /* PROGRESSO */
 
-    const aulasRealizadas =
-        alunoAtual.pacote -
-        alunoAtual.aulasRestantes;
-
     const progresso =
-        alunoAtual.pacote > 0
-            ? Math.round(
-                (aulasRealizadas /
-                    alunoAtual.pacote) * 100
-            )
-            : 0;
+        aluno.percentualProgresso;
 
 
     if (progressPercent) {
@@ -213,13 +184,6 @@ function carregarDadosAluno() {
 
 
 /* =========================================
-   INICIALIZAR DASHBOARD
-   ========================================= */
-
-carregarDadosAluno();
-
-
-/* =========================================
    LOGOUT
    ========================================= */
 
@@ -231,16 +195,7 @@ if (logoutButton) {
 
     logoutButton.addEventListener(
         "click",
-        () => {
-
-            sessionStorage.removeItem(
-                "sipaAluno"
-            );
-
-            window.location.href =
-                "login.html";
-
-        }
+        sair
     );
 
 }
@@ -498,636 +453,149 @@ document.addEventListener(
 
 
 /* =========================================
-   BUSCAR AGENDAMENTOS
+   ELEMENTOS DA PRÓXIMA AULA, DO RESUMO E DO AVISO
    ========================================= */
 
-function obterAgendamentosDashboard() {
-
-    const dados =
-        localStorage.getItem(
-            "sipaAgendamentos"
-        );
-
-
-    if (!dados) {
-        return [];
-    }
-
-
-    try {
-
-        const agendamentos =
-            JSON.parse(dados);
-
-        return Array.isArray(agendamentos)
-            ? agendamentos
-            : [];
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar agendamentos:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
+const nextLessonStatus = document.getElementById("next-lesson-status");
+const nextLessonDay = document.getElementById("next-lesson-day");
+const nextLessonWeekday = document.getElementById("next-lesson-weekday");
+const nextLessonMonth = document.getElementById("next-lesson-month");
+const nextLessonTime = document.getElementById("next-lesson-time");
+const nextLessonVehicle = document.getElementById("next-lesson-vehicle");
+const nextLessonInstructor = document.getElementById("next-lesson-instructor");
+const nextLessonLocation = document.getElementById("next-lesson-location");
+const lessonsSummary = document.querySelector(".progress-footer span");
+const dashboardNotice = document.getElementById("dashboard-notice");
 
 
 /* =========================================
-   BUSCAR ALUNO LOGADO
-   ========================================= */
-
-function obterAlunoDashboard() {
-
-    const aluno =
-        sessionStorage.getItem(
-            "sipaAluno"
-        );
-
-
-    if (!aluno) {
-        return null;
-    }
-
-
-    try {
-
-        return JSON.parse(aluno);
-
-    } catch (error) {
-
-        console.error(
-            "Erro ao carregar aluno:",
-            error
-        );
-
-        return null;
-
-    }
-
-}
-
-
-/* =========================================
-   CONVERTER DATA
-   ========================================= */
-
-function converterDataDashboard(data) {
-
-    if (!data) {
-        return null;
-    }
-
-
-    const partes =
-        data.split("-");
-
-
-    if (partes.length !== 3) {
-        return null;
-    }
-
-
-    return new Date(
-        Number(partes[0]),
-        Number(partes[1]) - 1,
-        Number(partes[2])
-    );
-
-}
-
-
-/* =========================================
-   CRIAR DATA + HORA DA AULA
-   ========================================= */
-
-function criarDataHoraAula(agendamento) {
-
-    if (
-        !agendamento ||
-        !agendamento.dataSistema ||
-        !agendamento.horario
-    ) {
-
-        return null;
-
-    }
-
-
-    const partesData =
-        agendamento.dataSistema.split("-");
-
-    const partesHorario =
-        agendamento.horario.split(":");
-
-
-    if (
-        partesData.length !== 3 ||
-        partesHorario.length < 2
-    ) {
-
-        return null;
-
-    }
-
-
-    const ano =
-        Number(partesData[0]);
-
-    const mes =
-        Number(partesData[1]) - 1;
-
-    const dia =
-        Number(partesData[2]);
-
-    const hora =
-        Number(partesHorario[0]);
-
-    const minuto =
-        Number(partesHorario[1]);
-
-
-    const dataHora =
-        new Date(
-            ano,
-            mes,
-            dia,
-            hora,
-            minuto,
-            0,
-            0
-        );
-
-
-    if (
-        Number.isNaN(
-            dataHora.getTime()
-        )
-    ) {
-
-        return null;
-
-    }
-
-
-    return dataHora;
-
-}
-
-
-/* =========================================
-   BUSCAR PRÓXIMA AULA
-   ========================================= */
-
-function buscarProximaAula() {
-
-    const aluno =
-        obterAlunoDashboard();
-
-
-    if (!aluno) {
-        return null;
-    }
-
-
-    const agendamentos =
-        obterAgendamentosDashboard();
-
-
-    const agora =
-        new Date();
-
-
-    /* =====================================
-       PEGAR SOMENTE AS AULAS DO ALUNO
-       QUE AINDA NÃO ACONTECERAM
-       ===================================== */
-
-    const aulasFuturas =
-        agendamentos.filter(
-            (agendamento) => {
-
-                /* ALUNO */
-
-                if (
-                    String(
-                        agendamento.alunoCpf
-                    ) !==
-                    String(
-                        aluno.cpf
-                    )
-                ) {
-
-                    return false;
-
-                }
-
-
-                /* DATA E HORÁRIO */
-
-                if (
-                    !agendamento.dataSistema ||
-                    !agendamento.horario
-                ) {
-
-                    return false;
-
-                }
-
-
-                /* CRIAR DATA COMPLETA */
-
-                const dataHoraAula =
-                    criarDataHoraAula(
-                        agendamento
-                    );
-
-
-                if (!dataHoraAula) {
-
-                    return false;
-
-                }
-
-
-                /* IGNORAR AULAS PASSADAS */
-
-                return (
-                    dataHoraAula >= agora
-                );
-
-            }
-        );
-
-
-    /* =====================================
-       NENHUMA AULA FUTURA
-       ===================================== */
-
-    if (
-        aulasFuturas.length === 0
-    ) {
-
-        return null;
-
-    }
-
-
-    /* =====================================
-       ORDENAR DA MAIS PRÓXIMA
-       PARA A MAIS DISTANTE
-       ===================================== */
-
-    aulasFuturas.sort(
-        (a, b) => {
-
-            const dataA =
-                criarDataHoraAula(a);
-
-            const dataB =
-                criarDataHoraAula(b);
-
-
-            return (
-                dataA.getTime() -
-                dataB.getTime()
-            );
-
-        }
-    );
-
-
-    return aulasFuturas[0];
-
-}
-
-
-/* =========================================
-   ELEMENTOS DA PRÓXIMA AULA
-   ========================================= */
-
-const nextLessonDay =
-    document.getElementById(
-        "next-lesson-day"
-    );
-
-
-const nextLessonWeekday =
-    document.getElementById(
-        "next-lesson-weekday"
-    );
-
-
-const nextLessonMonth =
-    document.getElementById(
-        "next-lesson-month"
-    );
-
-
-const nextLessonTime =
-    document.getElementById(
-        "next-lesson-time"
-    );
-
-
-const nextLessonInstructor =
-    document.getElementById(
-        "next-lesson-instructor"
-    );
-
-
-const nextLessonVehicle =
-    document.getElementById(
-        "next-lesson-vehicle"
-    );
-
-
-const nextLessonCategory =
-    document.getElementById(
-        "next-lesson-category"
-    );
-
-
-/* =========================================
-   LOCALIZAÇÃO DA PRÓXIMA AULA
-   ========================================= */
-
-const nextLessonLocation =
-    document.querySelector(
-        ".lesson-footer > span"
-    );
-
-
-/* =========================================
-   NOMES DOS DIAS
+   NOMES DOS DIAS E DOS MESES
    ========================================= */
 
 const diasSemanaSipa = [
-    "Domingo",
-    "Segunda-feira",
-    "Terça-feira",
-    "Quarta-feira",
-    "Quinta-feira",
-    "Sexta-feira",
-    "Sábado"
+    "Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira",
+    "Quinta-feira", "Sexta-feira", "Sábado"
 ];
-
-
-/* =========================================
-   NOMES DOS MESES
-   ========================================= */
 
 const mesesSipa = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro"
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
 
 /* =========================================
-   MOSTRAR PRÓXIMA AULA
+   LIMPAR OS VALORES DE EXEMPLO DO HTML
    ========================================= */
 
-function carregarProximaAula() {
+function limparTela() {
 
-    const aula =
-        buscarProximaAula();
+    const campos = [
+        studentName, headerStudentName, studentInitial, studentCategory,
+        headerStudentCategory, licenseCategory, remainingLessons, studentPackage,
+        progressPercent, progressNumber, lessonsSummary, nextLessonDay,
+        nextLessonWeekday, nextLessonMonth, nextLessonTime, nextLessonVehicle,
+        nextLessonInstructor, nextLessonLocation
+    ];
+
+    campos.forEach((campo) => {
+        campo.textContent = "—";
+    });
+
+    progressBar.style.width = "0%";
+    nextLessonStatus.hidden = true;
+}
 
 
-    /* =====================================
-       NENHUMA AULA FUTURA
-       ===================================== */
+/* =========================================
+   RESUMO DAS AULAS, EMBAIXO DA BARRA
+   ========================================= */
+
+function mostrarResumoDasAulas(aluno) {
+
+    lessonsSummary.textContent =
+        `${aluno.aulasRealizadas} de ${aluno.aulasContratadas} aulas realizadas · ` +
+        `${aluno.aulasAgendadas} agendadas · ` +
+        `${aluno.aulasAguardandoMarcacao} aguardando marcação`;
+}
+
+
+/* =========================================
+   MOSTRAR A PRÓXIMA AULA
+   ========================================= */
+
+function mostrarProximaAula(aula) {
 
     if (!aula) {
-
-        if (nextLessonDay) {
-
-            nextLessonDay.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonWeekday) {
-
-            nextLessonWeekday.textContent =
-                "Nenhuma aula agendada";
-
-        }
-
-
-        if (nextLessonMonth) {
-
-            nextLessonMonth.textContent =
-                "Agende sua próxima aula";
-
-        }
-
-
-        if (nextLessonTime) {
-
-            nextLessonTime.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonInstructor) {
-
-            nextLessonInstructor.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonVehicle) {
-
-            nextLessonVehicle.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonCategory) {
-
-            nextLessonCategory.textContent =
-                "—";
-
-        }
-
-
-        if (nextLessonLocation) {
-
-            nextLessonLocation.textContent =
-                "Unidade Centro";
-
-        }
-
-
-        return;
-
-    }
-
-
-    /* =====================================
-       CONVERTER DATA
-       ===================================== */
-
-    const data =
-        converterDataDashboard(
-            aula.dataSistema
-        );
-
-
-    if (!data) {
+        nextLessonWeekday.textContent = "Nenhuma aula agendada";
+        nextLessonMonth.textContent = "Agende sua próxima aula";
         return;
     }
 
+    const [data, hora] = aula.dataHoraInicio.split("T");
+    const [ano, mes, dia] = data.split("-").map(Number);
+    const diaDaSemana = new Date(ano, mes - 1, dia).getDay();
+    const local = `${aula.unidade} — ${aula.localAula}`;
 
-    /* =====================================
-       DIA
-       ===================================== */
+    /* Na 4 (Recusada), motorista e veículo são de quem recusou. */
+    const recusada = aula.status.valor === 4;
+    const veiculo = recusada ? "" : `${aula.veiculoModelo} · ${aula.veiculoPlaca}`;
 
-    if (nextLessonDay) {
+    nextLessonDay.textContent = String(dia).padStart(2, "0");
+    nextLessonWeekday.textContent = diasSemanaSipa[diaDaSemana];
+    nextLessonMonth.textContent = `${mesesSipa[mes - 1]} de ${ano}`;
+    nextLessonTime.textContent = hora.slice(0, 5);
 
-        nextLessonDay.textContent =
-            String(
-                data.getDate()
-            ).padStart(2, "0");
+    nextLessonVehicle.textContent = veiculo || "—";
+    nextLessonVehicle.title = veiculo;
+    nextLessonInstructor.textContent = recusada ? "Aguardando novo motorista" : aula.motoristaNome;
+    nextLessonLocation.textContent = local;
+    nextLessonLocation.title = local;
 
-    }
-
-
-    /* =====================================
-       DIA DA SEMANA
-       ===================================== */
-
-    if (nextLessonWeekday) {
-
-        nextLessonWeekday.textContent =
-            diasSemanaSipa[
-                data.getDay()
-            ];
-
-    }
+    nextLessonStatus.textContent = aula.status.descricao;
+    nextLessonStatus.hidden = false;
+}
 
 
-    /* =====================================
-       MÊS E ANO
-       ===================================== */
+/* =========================================
+   MOSTRAR ERRO NO QUADRO DE AVISO
+   ========================================= */
 
-    if (nextLessonMonth) {
+function mostrarErro(erro) {
 
-        nextLessonMonth.textContent =
-            `${mesesSipa[data.getMonth()]} de ${data.getFullYear()}`;
+    console.error("Erro ao carregar o painel:", erro);
 
-    }
+    dashboardNotice.querySelector("strong").textContent =
+        "Não foi possível carregar o painel";
 
+    dashboardNotice.querySelector(".notice-content span").textContent =
+        erro.message;
 
-    /* =====================================
-       HORÁRIO
-       ===================================== */
-
-    if (nextLessonTime) {
-
-        nextLessonTime.textContent =
-            aula.horario;
-
-    }
+    dashboardNotice.scrollIntoView({ behavior: "smooth", block: "center" });
+}
 
 
-    /* =====================================
-       INSTRUTOR
-       ===================================== */
+/* =========================================
+   CARREGAR O PAINEL
+   ========================================= */
 
-    if (nextLessonInstructor) {
+async function carregarPainel() {
 
-        nextLessonInstructor.textContent =
-            aula.instrutor ||
-            "—";
+    try {
 
-    }
+        limparTela();
 
+        const aluno = await obterAlunoLogado();
+        carregarDadosAluno(aluno);
+        mostrarResumoDasAulas(aluno);
 
-    /* =====================================
-       VEÍCULO
-       ===================================== */
+        const proximasAulas = await listarAgendamentos();
+        mostrarProximaAula(proximasAulas[0]);
 
-    if (nextLessonVehicle) {
+    } catch (erro) {
 
-        nextLessonVehicle.textContent =
-            aula.veiculo ||
-            "—";
+        mostrarErro(erro);
 
     }
-
-
-    /* =====================================
-       CATEGORIA
-       ===================================== */
-
-    if (nextLessonCategory) {
-
-        nextLessonCategory.textContent =
-            aula.categoriaNome ||
-            aula.categoria ||
-            "—";
-
-    }
-
-
-    /* =====================================
-       LOCALIZAÇÃO DA AULA
-       ===================================== */
-
-    if (nextLessonLocation) {
-
-        if (
-            aula.categoria === "B" ||
-            aula.categoriaNome === "Carro"
-        ) {
-
-            nextLessonLocation.textContent =
-                "🚗 Av. Carlos Lindenberg, 1500 — Centro, Vila Velha/ES";
-
-        } else if (
-            aula.categoria === "A" ||
-            aula.categoriaNome === "Moto"
-        ) {
-
-            nextLessonLocation.textContent =
-                "🏍️ Rua Professor Augusto, 320 — Centro, Vila Velha/ES";
-
-        } else if (
-            aula.categoria === "AB" ||
-            aula.categoriaNome === "Carro + Moto"
-        ) {
-
-            nextLessonLocation.textContent =
-                "🚗 Carro: Av. Carlos Lindenberg, 1500 — Centro, Vila Velha/ES | 🏍️ Moto: Rua Professor Augusto, 320 — Centro, Vila Velha/ES";
-
-        } else {
-
-            nextLessonLocation.textContent =
-                "Unidade Centro";
-
-        }
-
-    }
-
 }
 
 
@@ -1135,4 +603,6 @@ function carregarProximaAula() {
    EXECUTAR
    ========================================= */
 
-carregarProximaAula();
+if (exigirLogin(["Aluno"])) {
+    carregarPainel();
+}
