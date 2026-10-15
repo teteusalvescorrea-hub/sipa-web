@@ -3814,3 +3814,210 @@ body {
 .booking-selection-counter.disabled strong {
     color: #6b7280;
 }
+
+/* =========================================
+   AGENDAMENTO EM LOTE
+   ========================================= */
+
+[hidden] {
+    display: none !important;
+}
+
+/* ---------- ETAPA 1 ---------- */
+
+.booking-retry {
+    display: block;
+
+    margin-top: 6px;
+    padding: 6px 12px;
+
+    border: 1px solid var(--booking-blue);
+    border-radius: 8px;
+
+    color: var(--booking-blue);
+    background: var(--booking-white);
+
+    cursor: pointer;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.booking-retry:hover {
+    color: var(--booking-white);
+    background: var(--booking-blue);
+}
+
+.booking-whatsapp-link {
+    color: var(--booking-blue);
+
+    font-weight: 700;
+
+    text-decoration: underline;
+}
+
+/* ---------- HORÁRIOS ---------- */
+
+.time-slot.other-category {
+    flex-direction: column;
+
+    gap: 2px;
+
+    color: var(--booking-text-muted);
+    border-style: dashed;
+    background: #f1f5f9;
+
+    cursor: not-allowed;
+}
+
+.time-slot.other-category:hover {
+    color: var(--booking-text-muted);
+    border-color: #c8d9e8;
+    background: #f1f5f9;
+
+    transform: none;
+}
+
+.time-slot.other-category small {
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.time-slot.selected.unavailable,
+.time-slot.selected.unavailable:hover {
+    color: #b42331;
+    border-color: #e8a3ad;
+    background: #fff1f3;
+
+    cursor: pointer;
+
+    opacity: 1;
+}
+
+/* ---------- RESUMO ---------- */
+
+@media (min-width: 951px) {
+
+    .booking-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.summary-item > div {
+    flex: 1;
+}
+
+.summary-lessons {
+    grid-column: 1 / -1;
+
+    padding: 14px 16px;
+
+    border: 1px solid var(--booking-border);
+    border-radius: 11px;
+
+    background: #f7fafd;
+}
+
+.summary-lessons-title {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--booking-text-secondary);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 0.6px;
+}
+
+.summary-lessons-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+.summary-lessons-empty {
+    color: var(--booking-text-secondary);
+
+    font-size: 14px;
+}
+
+.summary-lesson {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    border: 1px solid var(--booking-border-light);
+    border-radius: 9px;
+
+    background: var(--booking-white);
+}
+
+.summary-lesson.editing {
+    border-color: var(--booking-blue);
+
+    box-shadow: 0 0 0 2px rgba(23, 105, 170, 0.12);
+}
+
+.summary-lesson-info {
+    flex: 1;
+
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+
+    padding: 8px 12px;
+
+    text-align: left;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+.summary-lesson-info strong {
+    color: var(--booking-text);
+
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.summary-lesson-info span {
+    overflow: hidden;
+
+    color: var(--booking-text-secondary);
+
+    font-size: 12px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.summary-lesson-remove {
+    width: 30px;
+    height: 30px;
+
+    flex-shrink: 0;
+
+    margin-right: 8px;
+
+    border-radius: 8px;
+
+    color: #b42331;
+    background: #fff1f3;
+
+    cursor: pointer;
+
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.summary-lesson-remove:hover {
+    background: #fde0e4;
+}
