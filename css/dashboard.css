@@ -2092,3 +2092,131 @@ a {
         padding: 14px;
     }
 }
+
+/* Textos mais legíveis no painel do aluno */
+.header-greeting > span,
+.header-profile-info span,
+.welcome-tag,
+.welcome-progress strong,
+.welcome-progress span,
+.summary-info > span,
+.summary-info small,
+.card-eyebrow,
+.lesson-status,
+.lesson-detail > div span,
+.lesson-date span,
+.quick-action > div span,
+.lesson-row-info span,
+.lesson-row-instructor span,
+.category-badge,
+.lesson-row-status,
+.progress-footer span,
+.license-info > span,
+.license-info small,
+.license-status,
+.notice-content span {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.header-profile-info strong,
+.welcome-text p,
+.quick-action strong,
+.lesson-row-info strong,
+.lesson-row-instructor strong,
+.progress-footer strong,
+.license-info strong,
+.notice-content strong,
+.secondary-button,
+.text-button {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Data, horário, categoria e instrutor */
+.lesson-date strong,
+.lesson-detail strong {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Número do dia da próxima aula */
+.lesson-date .lesson-day {
+    margin-top: 0;
+    font-size: 24px;
+    color: #fff;
+}
+
+/* Endereço completo, com quebra de linha */
+.lesson-footer > span {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--dashboard-text-secondary);
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Evita cortar informações importantes */
+.lesson-detail strong,
+.lesson-row-instructor strong,
+.quick-action > div span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.lesson-footer,
+.license-card,
+.card-header {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.dashboard-main,
+.header-greeting,
+.next-lesson-card,
+.quick-actions-card,
+.summary-card {
+    min-width: 0;
+}
+
+/* Organiza os detalhes em telas menores */
+@media (max-width: 1350px) {
+    .next-lesson-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .lesson-divider {
+        display: none;
+    }
+
+    .lesson-details {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .summary-grid,
+    .dashboard-grid,
+    .progress-section,
+    .lesson-details {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lesson-date {
+        max-width: 100%;
+    }
+
+    .lesson-date > div {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .header-greeting h1 {
+        overflow-wrap: anywhere;
+    }
+
+    .header-actions {
+        flex-shrink: 0;
+    }
+}
