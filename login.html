@@ -22,6 +22,11 @@
         href="css/login.css"
     >
 
+    <link
+        rel="stylesheet"
+        href="css/pacotes.css"
+    >
+
 
     <!-- =========================================
          FONTE
@@ -368,7 +373,7 @@
                     <div class="form-field">
 
                         <label for="login-cpf">
-                            CPF
+                            CPF ou CNPJ
                         </label>
 
 
@@ -379,8 +384,8 @@
                             <input
                                 type="text"
                                 id="login-cpf"
-                                placeholder="000.000.000-00"
-                                maxlength="14"
+                                placeholder="Digite seu CPF ou CNPJ"
+                                maxlength="18"
                                 autocomplete="username"
                             >
 
@@ -682,7 +687,7 @@
                             </strong>
 
                             <small>
-                                Escolha a categoria. O pacote você contrata depois.
+                                Escolha a categoria. Depois de criar a conta, você informa o pacote de aulas que comprou.
                             </small>
 
                         </div>
@@ -720,7 +725,7 @@
                                 </option>
 
                                 <option value="AB">
-                                    AB — Carro + Moto
+                                    A+B — Carro + Moto
                                 </option>
 
                             </select>
@@ -731,8 +736,6 @@
                         </div>
 
                     </div>
-
-
 
 
 
@@ -846,6 +849,92 @@
                     >
                         Fazer login
                     </button>
+
+                </div>
+
+
+
+                <!-- =================================
+                     PACOTE COMPRADO
+                     (aparece depois de criar a conta)
+                     ================================= -->
+
+                <div
+                    id="pacote-step"
+                    class="pacote-step"
+                    hidden
+                >
+
+
+                    <div class="login-header">
+
+                        <span class="form-eyebrow">
+                            CONTA CRIADA
+                        </span>
+
+
+                        <h2>
+                            Qual pacote você comprou?
+                        </h2>
+
+
+                        <p>
+                            Escolha o pacote que você comprou na autoescola.
+                            Ela confirma o pedido e as aulas aparecem no seu painel.
+                        </p>
+
+                    </div>
+
+
+
+                    <!-- MENSAGEM -->
+
+                    <div
+                        id="pacote-message"
+                        class="form-message"
+                    ></div>
+
+
+
+                    <!-- PACOTES (o JS monta os cards) -->
+
+                    <div
+                        id="pacote-escolha"
+                        class="pacote-step-lista"
+                    ></div>
+
+
+
+                    <!-- BOTÕES -->
+
+                    <div class="pacote-step-acoes">
+
+                        <button
+                            type="button"
+                            id="pacote-confirmar"
+                            class="primary-button"
+                            disabled
+                        >
+
+                            <span>
+                                Confirmar pacote
+                            </span>
+
+                            <i class="fa-solid fa-check"></i>
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            id="pacote-depois"
+                            class="secondary-button"
+                        >
+                            Escolher depois
+                        </button>
+
+                    </div>
+
 
                 </div>
 

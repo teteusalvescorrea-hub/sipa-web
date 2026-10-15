@@ -49,6 +49,7 @@ sipa-web/
 ├── docs/
 ├── js/
 ├── agendamento.html
+├── autoescola.html      # login com CNPJ: pacotes à venda e pedidos dos alunos
 ├── cadastro.html
 ├── dashboard.html
 ├── index.html
@@ -56,6 +57,7 @@ sipa-web/
 ├── meu-perfil.html
 ├── meu-progresso.html
 ├── minhas-aulas.html
+├── pacotes.html
 └── README.md
 
 ## Rodar local

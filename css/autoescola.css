@@ -1,0 +1,191 @@
+/* =========================================
+   SIPA — AUTOESCOLA
+   Formulário do pacote e botões dos cards.
+   Os cards e avisos vêm do pacotes.css.
+   ========================================= */
+
+
+/* =========================================
+   NOVO PACOTE
+   ========================================= */
+
+.autoescola-form {
+    margin-top: 13px;
+
+    display: grid;
+
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    align-items: end;
+
+    gap: 12px;
+}
+
+.autoescola-campo {
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+
+    min-width: 0;
+
+    margin: 0;
+    padding: 0;
+
+    border: none;
+}
+
+.autoescola-campo label,
+.autoescola-campo legend {
+    padding: 0;
+
+    color: #456582;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.autoescola-campo input[type="text"],
+.autoescola-campo input[type="number"] {
+    width: 100%;
+    height: 38px;
+
+    padding: 0 11px;
+
+    border: 1px solid #cbddec;
+    border-radius: 9px;
+
+    background: #edf5fc;
+
+    color: #16324f;
+
+    font-size: 10px;
+
+    outline: none;
+}
+
+.autoescola-campo input:focus {
+    border-color: #2388d9;
+
+    background: #f8fbfe;
+}
+
+.autoescola-categorias {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+
+    gap: 12px;
+}
+
+.autoescola-categorias legend {
+    width: 100%;
+
+    margin-bottom: 5px;
+}
+
+.autoescola-categorias label {
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+
+    color: #16324f;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.autoescola-salvar {
+    justify-content: center;
+
+    cursor: pointer;
+}
+
+.autoescola-salvar:disabled {
+    opacity: .55;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================
+   CARDS (PEDIDOS E PACOTES)
+   ========================================= */
+
+.autoescola-pedido-pacote {
+    color: #16324f;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.autoescola-acoes {
+    margin-top: 6px;
+
+    display: flex;
+
+    gap: 8px;
+}
+
+.autoescola-botao {
+    margin-top: 6px;
+    padding: 7px 12px;
+
+    border: 1px solid #1676c5;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #1676c5;
+
+    font-family: inherit;
+    font-size: 9px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+.autoescola-acoes .autoescola-botao {
+    margin-top: 0;
+}
+
+.autoescola-botao.aprovar {
+    border-color: #23944a;
+
+    background: #23944a;
+
+    color: #ffffff;
+}
+
+.autoescola-botao.recusar {
+    border-color: rgba(192, 61, 61, .45);
+
+    color: #c03d3d;
+}
+
+.autoescola-botao:hover:not(:disabled) {
+    filter: brightness(.95);
+}
+
+.autoescola-botao:disabled {
+    opacity: .55;
+
+    cursor: not-allowed;
+}
+
+.autoescola-card-erro {
+    margin: 4px 0 0;
+
+    color: #c03d3d;
+
+    font-size: 8px;
+    font-weight: 600;
+
+    line-height: 1.4;
+
+    white-space: pre-line;
+}

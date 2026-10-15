@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Autoescola | SIPA</title>
+
+    <link rel="stylesheet" href="css/meu-progresso.css">
+
+    <link rel="stylesheet" href="css/sidebar.css">
+
+    <link rel="stylesheet" href="css/pacotes.css">
+
+    <link rel="stylesheet" href="css/autoescola.css">
+
+
+    <!-- =====================================
+         FONTE
+         ===================================== -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+
+<body>
+
+
+<div class="progress-layout">
+
+
+    <!-- =====================================
+         SIDEBAR
+         ===================================== -->
+
+    <aside class="sipa-sidebar">
+
+    <!-- LOGO -->
+    <a href="autoescola.html" class="sipa-sidebar-logo">
+
+        <div class="sipa-sidebar-logo-symbol">
+
+            <svg
+                viewBox="0 0 70 70"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path
+                    d="M52 12H29C17 12 9 20 9 31C9 40 14 46 23 48L42 52C46 53 48 55 48 58C48 61 46 63 41 63H18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+
+                <path
+                    d="M18 58H41C53 58 61 50 61 39C61 30 56 24 47 22L28 18C24 17 22 15 22 12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+
+        </div>
+
+        <div class="sipa-sidebar-logo-text">
+
+            <strong>SIPA</strong>
+
+            <span>
+                SISTEMA INTELIGENTE
+                <br>
+                PARA AGENDAMENTOS
+            </span>
+
+        </div>
+
+    </a>
+
+
+    <!-- MENU -->
+    <nav class="sipa-sidebar-menu">
+
+        <span class="sipa-sidebar-title">
+            AUTOESCOLA
+        </span>
+
+
+        <!-- PACOTES E PEDIDOS -->
+        <a
+            href="autoescola.html"
+            class="sipa-sidebar-link active"
+        >
+
+            <span class="sipa-sidebar-icon">
+                📦
+            </span>
+
+            <span>
+                Pacotes e pedidos
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <!-- RODAPÉ -->
+    <div class="sipa-sidebar-bottom">
+
+        <div class="sipa-sidebar-unit">
+
+            <span class="sipa-sidebar-status"></span>
+
+            <div class="sipa-sidebar-unit-text">
+
+                <strong>
+                    SIPA
+                </strong>
+
+                <small>
+                    Atendimento disponível
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- SAIR -->
+        <button
+            type="button"
+            id="autoescola-logout"
+            class="sipa-sidebar-logout"
+        >
+
+            <span>
+                ↪
+            </span>
+
+            Sair da conta
+
+        </button>
+
+    </div>
+
+</aside>
+
+
+
+    <!-- =====================================
+         CONTEÚDO PRINCIPAL
+         ===================================== -->
+
+    <main class="progress-main">
+
+
+        <!-- =================================
+             CABEÇALHO
+             ================================= -->
+
+        <header class="progress-header">
+
+
+            <div class="progress-header-text">
+
+                <span class="progress-eyebrow">
+                    AUTOESCOLA
+                </span>
+
+                <h1 id="autoescola-nome">
+                    Sua autoescola
+                </h1>
+
+                <p>
+                    Cadastre os pacotes que você vende e confirme os pedidos
+                    dos alunos depois de receber o pagamento.
+                </p>
+
+            </div>
+
+
+        </header>
+
+
+
+        <!-- =====================================
+             PEDIDOS DOS ALUNOS
+             ===================================== -->
+
+        <section class="progress-details">
+
+
+            <div class="progress-section-header">
+
+                <div>
+
+                    <span class="progress-eyebrow">
+                        CONTRATAÇÕES
+                    </span>
+
+                    <h2>
+                        Pedidos dos alunos
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <p class="pacotes-ajuda">
+                Aprove só depois de receber o pagamento.
+                Com o pedido aprovado, o aluno já pode agendar as aulas.
+            </p>
+
+
+            <!-- O JS cria um card por pedido (pendentes primeiro) -->
+
+            <div
+                class="pedidos-lista"
+                id="pedidos-lista"
+            ></div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             PACOTES À VENDA
+             ===================================== -->
+
+        <section class="progress-details">
+
+
+            <div class="progress-section-header">
+
+                <div>
+
+                    <span class="progress-eyebrow">
+                        PACOTES
+                    </span>
+
+                    <h2>
+                        Pacotes à venda
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <p class="pacotes-ajuda">
+                O aluno escolhe na vitrine o pacote que comprou com você.
+            </p>
+
+
+            <!-- NOVO PACOTE -->
+
+            <form
+                id="pacote-form"
+                class="autoescola-form"
+                novalidate
+            >
+
+                <div class="autoescola-campo">
+
+                    <label for="pacote-nome">
+                        Nome (opcional)
+                    </label>
+
+                    <input
+                        type="text"
+                        id="pacote-nome"
+                        maxlength="100"
+                        placeholder="Ex.: Pacote Carro 10 aulas"
+                    >
+
+                </div>
+
+
+                <div class="autoescola-campo">
+
+                    <label for="pacote-quantidade">
+                        Quantidade de aulas
+                    </label>
+
+                    <input
+                        type="number"
+                        id="pacote-quantidade"
+                        min="1"
+                        max="100"
+                        step="1"
+                        inputmode="numeric"
+                        placeholder="Ex.: 10"
+                    >
+
+                </div>
+
+
+                <div class="autoescola-campo">
+
+                    <label for="pacote-preco">
+                        Preço (R$)
+                    </label>
+
+                    <input
+                        type="text"
+                        id="pacote-preco"
+                        inputmode="decimal"
+                        placeholder="Ex.: 1.890,00"
+                    >
+
+                </div>
+
+
+                <fieldset class="autoescola-campo autoescola-categorias">
+
+                    <legend>
+                        Categorias
+                    </legend>
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            name="pacote-categoria"
+                            value="2"
+                        >
+                        B — Carro
+                    </label>
+
+                    <label>
+                        <input
+                            type="checkbox"
+                            name="pacote-categoria"
+                            value="1"
+                        >
+                        A — Moto
+                    </label>
+
+                </fieldset>
+
+
+                <button
+                    type="submit"
+                    id="pacote-salvar"
+                    class="progress-action-button autoescola-salvar"
+                >
+
+                    <span>
+                        +
+                    </span>
+
+                    Cadastrar pacote
+
+                </button>
+
+            </form>
+
+
+            <!-- MENSAGEM DO CADASTRO -->
+
+            <div
+                id="pacote-form-message"
+                class="pacotes-mensagem"
+                hidden
+            ></div>
+
+
+            <!-- O JS cria um card por pacote -->
+
+            <div
+                class="pedidos-lista"
+                id="pacotes-lista"
+            ></div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             RODAPÉ
+             ===================================== -->
+
+        <footer class="progress-footer">
+
+            <span>
+                SIPA • Sistema Inteligente Para Agendamentos
+            </span>
+
+            <span class="progress-online">
+                ● Atendimento disponível
+            </span>
+
+        </footer>
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =====================================
+     JAVASCRIPT
+     ===================================== -->
+
+<script type="module" src="js/autoescola.js"></script>
+
+
+</body>
+
+</html>

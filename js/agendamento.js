@@ -538,6 +538,7 @@ let aulaDoMotorista = null;      // aula mostrada no quadro do motorista
 let enviando = false;            // pedido em andamento: a seleção fica travada
 let buscaHorarios = 0;           // número da busca de horários mais recente
 let buscaMotoristas = 0;         // número da busca de motoristas mais recente
+let buscaContratacoes = 0;       // número da carga da etapa 1 mais recente
 
 /* =========================================
    AJUDANTES
@@ -616,6 +617,8 @@ function atualizarSelecao() {
    ========================================= */
 
 async function carregarContratacoes() {
+    const busca = ++buscaContratacoes;
+
     contratacoes = [];
     contratacaoAtual = null;
     autoescolaAtual = null;
@@ -640,9 +643,16 @@ async function carregarContratacoes() {
     try {
         lista = await listarContratacoes(2);
     } catch (erro) {
-        bookingPackageInfo.textContent = erro.message;
-        bookingRetry.hidden = false;
-        mostrarHorarios();
+        if (busca === buscaContratacoes) {
+            bookingPackageInfo.textContent = erro.message;
+            bookingRetry.hidden = false;
+            mostrarHorarios();
+        }
+        return;
+    }
+
+    /* Uma carga mais nova já começou. */
+    if (busca !== buscaContratacoes) {
         return;
     }
 
@@ -650,7 +660,7 @@ async function carregarContratacoes() {
     contratacoes = lista.filter((contratacao) => contratacao.aulasRestantes > 0);
 
     if (contratacoes.length === 0) {
-        mostrarSemPacote(lista[0]);
+        mostrarSemPacote(lista[0], busca);
         mostrarHorarios();
         return;
     }
@@ -671,20 +681,53 @@ async function carregarContratacoes() {
     escolherContratacao(contratacoes[0]);
 }
 
-/* Sem saldo: a vitrine ainda não existe, então o aluno fala com a autoescola. */
-function mostrarSemPacote(contratacao) {
-    const texto = "Você não tem pacote aprovado com aulas disponíveis. ";
+/* Link para a vitrine (pacotes.html). */
+function linkDaVitrine(texto) {
+    const vitrine = document.createElement("a");
 
-    if (!contratacao) {
-        bookingPackageInfo.textContent =
-            texto + "Fale com a sua autoescola para contratar um pacote.";
+    vitrine.className = "booking-whatsapp-link";
+    vitrine.href = "pacotes.html";
+    vitrine.textContent = texto;
+
+    return vitrine;
+}
+
+/*
+ * Sem saldo. Pedido pendente (1): espera a autoescola.
+ * Aprovada sem saldo: comprar com a autoescola (WhatsApp) e informar o pacote novo.
+ * Sem nada: link para a vitrine. busca: número da carga que chamou.
+ */
+async function mostrarSemPacote(contratacao, busca) {
+    const texto = "Você não tem pacote aprovado com aulas disponíveis. ";
+    let pendentes = [];
+
+    try {
+        pendentes = await listarContratacoes(1);
+    } catch {
+        pendentes = []; // sem a lista, segue como se não houvesse pedido
+    }
+
+    /* Outra carga da etapa 1 já começou (ela escreve o próprio texto). */
+    if (busca !== buscaContratacoes) {
         return;
     }
 
-    const contato = `${texto}Para contratar mais aulas, fale com ${contratacao.autoescolaNome}`;
+    if (pendentes.length > 0) {
+        bookingPackageInfo.textContent =
+            "Seu pacote está aguardando a confirmação da autoescola.";
+        return;
+    }
+
+    if (!contratacao) {
+        bookingPackageInfo.replaceChildren(texto, linkDaVitrine("Escolher um pacote"), ".");
+        return;
+    }
+
+    const contato = `${texto}Compre mais aulas com ${contratacao.autoescolaNome}`;
+    const fim = [" e depois ", linkDaVitrine("informe o novo pacote"), "."];
 
     if (!contratacao.autoescolaWhatsapp) {
-        bookingPackageInfo.textContent = `${contato}.`;
+        bookingPackageInfo.replaceChildren(contato, ...fim);
         return;
     }
 
@@ -696,7 +739,7 @@ function mostrarSemPacote(contratacao) {
     link.rel = "noopener";
     link.textContent = formatarWhatsapp(contratacao.autoescolaWhatsapp);
 
-    bookingPackageInfo.replaceChildren(`${contato} pelo WhatsApp `, link, ".");
+    bookingPackageInfo.replaceChildren(`${contato} pelo WhatsApp `, link, ...fim);
 }
 
 function mostrarPacote(contratacao) {
