@@ -1846,6 +1846,92 @@ a {
 
 
 /* =========================================================
+   AVISO DO PACOTE (TOPO DO CONTEÚDO)
+   ========================================================= */
+
+.package-alert {
+    margin-bottom: 14px;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+
+    gap: 11px;
+
+    padding:
+        13px
+        16px;
+
+    background:
+        #fffaf0;
+
+    border:
+        1px solid
+        #efd9a8;
+
+    border-radius:
+        var(--dashboard-radius);
+
+    box-shadow:
+        0 5px 18px
+        rgba(18, 59, 99, .06);
+}
+
+.package-alert[hidden],
+.package-alert-button[hidden] {
+    display: none;
+}
+
+/* No celular, o botão desce para a linha de baixo. */
+.package-alert .notice-content {
+    flex: 1 1 220px;
+
+    min-width: 0;
+}
+
+.package-alert-button {
+    flex: 0 0 auto;
+
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+
+    padding:
+        8px
+        12px;
+
+    color: #ffffff;
+
+    background:
+        var(--dashboard-blue);
+
+    border-radius: 9px;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    text-decoration: none;
+
+    transition:
+        background var(--dashboard-transition);
+}
+
+.package-alert-button:hover {
+    background:
+        var(--dashboard-blue-light);
+}
+
+.license-status.sem-pacote {
+    color:
+        var(--dashboard-yellow);
+
+    background:
+        #fbf2df;
+}
+
+
+/* =========================================================
    FOOTER
    ========================================================= */
 

@@ -1968,7 +1968,28 @@ body.login-page {
     font-weight: 500;
     line-height: 1.2;
 }
-/* Campos de pacotes seguem a categoria selecionada. */
-.register-form [hidden] {
+/* =========================================
+   ETAPA DO PACOTE (DEPOIS DO CADASTRO)
+   ========================================= */
+
+/* O hidden vence o display das classes (form, seletor e etapa). */
+.login-card [hidden] {
     display: none !important;
+}
+
+.pacote-step .form-message {
+    white-space: pre-line;
+}
+
+/* Mais forte que o .pacotes-escolha do pacotes.css (carregado depois). */
+.pacote-step .pacote-step-lista {
+    margin-top: 18px;
+}
+
+.pacote-step-acoes {
+    margin-top: 20px;
+
+    display: grid;
+
+    gap: 10px;
 }

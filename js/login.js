@@ -1,6 +1,10 @@
 import { login } from "./modules/essencial/service/authService.js";
 import { limparSessao } from "./modules/essencial/utils/sessao.js";
 import { cadastrarAluno } from "./modules/alunos/services/alunos.service.js";
+import {
+    montarEscolhaDePacotes,
+    resumoDoEnvio
+} from "./modules/pacotes/components/escolhaDePacotes.js";
 
 
 /* =========================================
@@ -292,13 +296,44 @@ function formatarCPF(valor) {
 
 
 /* =========================================
-   CPF DO LOGIN
+   CPF OU CNPJ DO LOGIN
+   O CNPJ novo tem letras nas 12 primeiras posições.
    ========================================= */
+
+function limparDocumento(valor) {
+    return valor.replace(/[^0-9A-Za-z]/g, "").toUpperCase().substring(0, 14);
+}
+
+
+function formatarDocumento(valor) {
+
+    const documento = limparDocumento(valor);
+
+    if (documento.length <= 11 && /^\d*$/.test(documento)) {
+        return formatarCPF(documento);
+    }
+
+    return documento.replace(
+        /^(\w{2})(\w{0,3})(\w{0,3})(\w{0,4})(\w{0,2})$/,
+        function (_, p1, p2, p3, p4, p5) {
+
+            let resultado = p1;
+
+            resultado += p2 ? `.${p2}` : "";
+            resultado += p3 ? `.${p3}` : "";
+            resultado += p4 ? `/${p4}` : "";
+            resultado += p5 ? `-${p5}` : "";
+
+            return resultado;
+        }
+    );
+}
+
 
 if (loginCpf) {
 
     loginCpf.addEventListener("input", function () {
-        this.value = formatarCPF(this.value);
+        this.value = formatarDocumento(this.value);
     });
 }
 
@@ -329,28 +364,6 @@ const cadastroTelefone = document.getElementById("telefone");
 const cadastroCategoria = document.getElementById("categoria");
 const cadastroSenha = document.getElementById("senha");
 const cadastroConfirmarSenha = document.getElementById("confirmarSenha");
-
-const pacotesDeAulas = [
-    { categoria: "B", campo: document.getElementById("aulas-carro"), grupo: document.getElementById("pacote-carro-field") },
-    { categoria: "A", campo: document.getElementById("aulas-moto"), grupo: document.getElementById("pacote-moto-field") }
-];
-
-function atualizarPacotesDeAulas() {
-    pacotesDeAulas.forEach(({ categoria, campo, grupo }) => {
-        if (!campo || !grupo) return;
-        const ativo = cadastroCategoria?.value === categoria || cadastroCategoria?.value === "AB";
-        grupo.hidden = !ativo;
-        campo.disabled = !ativo;
-        campo.required = ativo;
-        campo.classList.remove("cadastro-field-error");
-        grupo.querySelector(".cadastro-error-message")?.remove();
-    });
-}
-
-cadastroCategoria?.addEventListener("change", atualizarPacotesDeAulas);
-pacotesDeAulas.forEach(({ campo }) => ativarRemocaoDeErro(campo));
-atualizarPacotesDeAulas();
-
 
 
 ativarRemocaoDeErro(cadastroNome);
@@ -450,17 +463,19 @@ if (loginForm) {
 
         limparMensagens();
 
-        const cpf = loginCpf.value.replace(/\D/g, "");
+        const documento = limparDocumento(loginCpf.value);
 
         const senha = loginPassword.value;
 
 
-        /* CPF */
+        /* CPF (aluno e motorista) OU CNPJ (autoescola) */
 
-        if (cpf.length !== 11) {
+        const cpfValido = documento.length === 11 && /^\d+$/.test(documento);
+
+        if (!cpfValido && documento.length !== 14) {
 
             loginMessage.textContent =
-                "Digite um CPF com 11 números.";
+                "Digite um CPF com 11 números ou um CNPJ com 14 caracteres.";
 
             loginMessage.classList.add("error");
 
@@ -489,7 +504,7 @@ if (loginForm) {
 
         try {
 
-            resposta = await login(cpf, senha);
+            resposta = await login(documento, senha);
 
         } catch (erro) {
 
@@ -506,14 +521,21 @@ if (loginForm) {
         }
 
 
-        /* SÓ O ALUNO TEM TELAS POR ENQUANTO */
+        /* TELA DE CADA PERFIL (O MOTORISTA AINDA NÃO TEM) */
 
-        if (resposta.perfil.descricao !== "Aluno") {
+        const telaDoPerfil = {
+            Aluno: "dashboard.html",
+            Autoescola: "autoescola.html"
+        };
+
+        const tela = telaDoPerfil[resposta.perfil.descricao];
+
+        if (!tela) {
 
             limparSessao();
 
             loginMessage.textContent =
-                "As telas de motorista e autoescola ainda estão em construção.";
+                "A tela do motorista ainda está em construção.";
 
             loginMessage.classList.add("info");
 
@@ -527,11 +549,9 @@ if (loginForm) {
         loginMessage.classList.add("success");
 
 
-        /* DASHBOARD */
-
         setTimeout(function () {
 
-            window.location.href = "dashboard.html";
+            window.location.href = tela;
 
         }, 700);
 
@@ -653,13 +673,6 @@ if (cadastroForm) {
            SENHA
            ===================================== */
 
-        pacotesDeAulas.forEach(({ campo }) => {
-            if (campo && !campo.disabled && ![2, 5, 10, 15, 20].includes(Number(campo.value))) {
-                mostrarErroCampo(campo, "Selecione um pacote de aulas.");
-                formularioValido = false;
-            }
-        });
-
         if (senha.length < 6) {
 
             mostrarErroCampo(
@@ -706,6 +719,7 @@ if (cadastroForm) {
         };
 
 
+        /* O botão fica travado até o login da conta nova. */
         cadastroSubmit.disabled = true;
 
         try {
@@ -721,49 +735,169 @@ if (cadastroForm) {
 
         } catch (erro) {
 
+            cadastroSubmit.disabled = false;
+
             const erros =
                 erro.erros ?? [erro.message || "Erro inesperado. Tente de novo."];
 
             erros.forEach(mostrarErroDaApi);
 
             return;
-
-        } finally {
-
-            cadastroSubmit.disabled = false;
         }
 
 
         /* =====================================
-           SUCESSO
+           ENTRA COM A CONTA NOVA
            ===================================== */
 
-        cadastroMessage.textContent =
-            "Cadastro realizado com sucesso!";
+        try {
 
-        cadastroMessage.classList.add("success");
+            await login(cpf, senha);
+
+        } catch {
+
+            cadastroSubmit.disabled = false;
+
+            voltarParaLogin(cpf);
+
+            return;
+        }
 
 
-        cadastroForm.reset();
-        atualizarPacotesDeAulas();
+        cadastroSubmit.disabled = false;
 
-
-        /* =====================================
-           VOLTA PARA LOGIN
-           ===================================== */
-
-        setTimeout(function () {
-
-            mostrarLogin();
-
-            loginCpf.value = formatarCPF(cpf);
-
-            loginPassword.focus();
-
-        }, 1000);
+        mostrarEtapaPacote(categoriasDaApi[categoria]);
 
     });
 }
+
+
+/* =========================================
+   LOGIN DEPOIS DO CADASTRO FALHOU:
+   VOLTA PARA O LOGIN COM O CPF
+   ========================================= */
+
+function voltarParaLogin(cpf) {
+
+    cadastroMessage.textContent =
+        "Cadastro realizado com sucesso!";
+
+    cadastroMessage.classList.add("success");
+
+
+    cadastroForm.reset();
+
+
+    setTimeout(function () {
+
+        mostrarLogin();
+
+        loginCpf.value = formatarCPF(cpf);
+
+        loginPassword.focus();
+
+    }, 1000);
+}
+
+
+/* =========================================
+   ETAPA DO PACOTE (DEPOIS DO CADASTRO)
+   ========================================= */
+
+const accessSwitch = document.querySelector(".access-switch");
+const pacoteStep = document.getElementById("pacote-step");
+const pacoteEscolha = document.getElementById("pacote-escolha");
+const pacoteMessage = document.getElementById("pacote-message");
+const pacoteConfirmar = document.getElementById("pacote-confirmar");
+const pacoteDepois = document.getElementById("pacote-depois");
+
+let escolhaDePacotes = null;
+let indoParaPainel = false;
+
+
+function irParaPainel() {
+
+    window.location.href = "dashboard.html";
+}
+
+
+/* categorias: [1], [2] ou [1, 2] */
+function mostrarEtapaPacote(categorias) {
+
+    limparMensagens();
+
+    cadastroForm.reset();
+
+
+    /* Fica só a etapa do pacote no painel de cadastro. */
+    accessSwitch.hidden = true;
+
+    Array.from(registerPanel.children).forEach(function (filho) {
+        filho.hidden = filho !== pacoteStep;
+    });
+
+
+    escolhaDePacotes = montarEscolhaDePacotes(
+        pacoteEscolha,
+        categorias,
+        { botao: pacoteConfirmar }
+    );
+
+    pacoteStep.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
+pacoteConfirmar.addEventListener("click", async function () {
+
+    if (!escolhaDePacotes || indoParaPainel) {
+        return;
+    }
+
+    pacoteMessage.replaceChildren();
+
+
+    /* Sair no meio do envio deixaria pedido sem aviso. */
+    pacoteDepois.disabled = true;
+
+    const resultados = await escolhaDePacotes.enviar();
+
+    if (!resultados) {
+        pacoteDepois.disabled = false;
+        return;
+    }
+
+
+    /* Falhou algum: mostra e deixa tentar de novo (os enviados não voltam). */
+
+    const falhas = resultados.filter((resultado) => !resultado.ok);
+
+    if (falhas.length > 0) {
+
+        const enviados = resultados
+            .filter((resultado) => resultado.ok)
+            .map((resultado) => resultado.pacote);
+
+        pacoteMessage.replaceChildren(...resumoDoEnvio(enviados, falhas));
+
+        pacoteDepois.disabled = false;
+
+        return;
+    }
+
+
+    /* Tudo enviado: "Escolher depois" continua travado. */
+
+    indoParaPainel = true;
+
+    pacoteMessage.replaceChildren(
+        ...resumoDoEnvio(escolhaDePacotes.enviados(), [])
+    );
+
+    setTimeout(irParaPainel, 2000);
+});
+
+
+pacoteDepois.addEventListener("click", irParaPainel);
 
 
 /* =========================================
