@@ -330,6 +330,28 @@ const cadastroCategoria = document.getElementById("categoria");
 const cadastroSenha = document.getElementById("senha");
 const cadastroConfirmarSenha = document.getElementById("confirmarSenha");
 
+const pacotesDeAulas = [
+    { categoria: "B", campo: document.getElementById("aulas-carro"), grupo: document.getElementById("pacote-carro-field") },
+    { categoria: "A", campo: document.getElementById("aulas-moto"), grupo: document.getElementById("pacote-moto-field") }
+];
+
+function atualizarPacotesDeAulas() {
+    pacotesDeAulas.forEach(({ categoria, campo, grupo }) => {
+        if (!campo || !grupo) return;
+        const ativo = cadastroCategoria?.value === categoria || cadastroCategoria?.value === "AB";
+        grupo.hidden = !ativo;
+        campo.disabled = !ativo;
+        campo.required = ativo;
+        campo.classList.remove("cadastro-field-error");
+        grupo.querySelector(".cadastro-error-message")?.remove();
+    });
+}
+
+cadastroCategoria?.addEventListener("change", atualizarPacotesDeAulas);
+pacotesDeAulas.forEach(({ campo }) => ativarRemocaoDeErro(campo));
+atualizarPacotesDeAulas();
+
+
 
 ativarRemocaoDeErro(cadastroNome);
 ativarRemocaoDeErro(cadastroEmail);
@@ -631,6 +653,13 @@ if (cadastroForm) {
            SENHA
            ===================================== */
 
+        pacotesDeAulas.forEach(({ campo }) => {
+            if (campo && !campo.disabled && ![2, 5, 10, 15, 20].includes(Number(campo.value))) {
+                mostrarErroCampo(campo, "Selecione um pacote de aulas.");
+                formularioValido = false;
+            }
+        });
+
         if (senha.length < 6) {
 
             mostrarErroCampo(
@@ -716,6 +745,7 @@ if (cadastroForm) {
 
 
         cadastroForm.reset();
+        atualizarPacotesDeAulas();
 
 
         /* =====================================

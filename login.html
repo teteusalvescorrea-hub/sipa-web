@@ -682,7 +682,7 @@
                             </strong>
 
                             <small>
-                                Escolha a categoria. O pacote você contrata depois.
+                                Escolha a categoria e a quantidade de aulas adquiridas.
                             </small>
 
                         </div>
@@ -720,7 +720,7 @@
                                 </option>
 
                                 <option value="AB">
-                                    AB — Carro + Moto
+                                    A+B — Carro + Moto
                                 </option>
 
                             </select>
@@ -735,6 +735,38 @@
 
 
 
+
+                    <div class="form-field full-field" id="pacote-carro-field" hidden>
+                        <label for="aulas-carro">Quantidade de aulas adquiridas — Carro</label>
+                        <div class="input-wrapper select-wrapper">
+                            <i class="fa-solid fa-car" aria-hidden="true"></i>
+                            <select id="aulas-carro" name="aulasCarro" disabled>
+                                <option value="">Selecione o pacote</option>
+                                <option value="2">2 aulas</option>
+                                <option value="5">5 aulas</option>
+                                <option value="10">10 aulas</option>
+                                <option value="15">15 aulas</option>
+                                <option value="20">20 aulas</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-arrow" aria-hidden="true"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-field full-field" id="pacote-moto-field" hidden>
+                        <label for="aulas-moto">Quantidade de aulas adquiridas — Moto</label>
+                        <div class="input-wrapper select-wrapper">
+                            <i class="fa-solid fa-motorcycle" aria-hidden="true"></i>
+                            <select id="aulas-moto" name="aulasMoto" disabled>
+                                <option value="">Selecione o pacote</option>
+                                <option value="2">2 aulas</option>
+                                <option value="5">5 aulas</option>
+                                <option value="10">10 aulas</option>
+                                <option value="15">15 aulas</option>
+                                <option value="20">20 aulas</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-arrow" aria-hidden="true"></i>
+                        </div>
+                    </div>
 
                     <!-- =================================
                          SEGURANÇA

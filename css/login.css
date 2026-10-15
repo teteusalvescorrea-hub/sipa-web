@@ -1968,3 +1968,7 @@ body.login-page {
     font-weight: 500;
     line-height: 1.2;
 }
+/* Campos de pacotes seguem a categoria selecionada. */
+.register-form [hidden] {
+    display: none !important;
+}
