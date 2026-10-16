@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="css/meu-progresso.css">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/operador-cfc.css">
+    <link rel="stylesheet" href="css/operador-paineis.css">
 </head>
 <body class="operador-page">
     <svg class="op-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -38,14 +39,18 @@
             <p>O acesso ao atendimento depende da identificação do perfil de operador e da unidade vinculada à sua conta.</p>
             <p id="acesso-orientacao">Entre com sua conta para continuar na área já disponível para o seu perfil.</p>
             <a id="operador-voltar" class="op-button op-button-primary" href="login.html">Voltar ao acesso <svg aria-hidden="true"><use href="#op-arrow"/></svg></a>
+            <div id="operador-demo-local" hidden>
+                <a class="op-button op-button-outline" href="?demo=1">Abrir demonstração local</a>
+                <p class="op-help">Somente dados fictícios. Não utiliza sua conta nem acessa a API.</p>
+            </div>
         </section>
         <noscript><p class="op-access-note">Esta área permanece indisponível. O JavaScript é necessário para utilizar o sistema.</p></noscript>
     </main>
 
     <div id="operador-conteudo" hidden></div>
 
-    <!-- Estrutura visual preparada para integração futura, sem dados de usuários,
-         credenciais ou consultas. Não há modo de prévia que contorne o acesso. -->
+    <!-- Estrutura de apresentação. A demonstração explícita em loopback usa
+         dados fictícios; o acesso real continua bloqueado pelo entrypoint. -->
     <template id="operador-template">
         <a href="#op-conteudo" class="op-skip">Ir para o conteúdo</a>
         <aside class="sipa-sidebar op-sidebar" aria-label="Menu do operador">
@@ -58,6 +63,7 @@
                 <span class="sipa-sidebar-title">ATENDIMENTO</span>
                 <a class="sipa-sidebar-link active" href="#visao-geral" data-op-nav="visao-geral" aria-current="page"><svg aria-hidden="true"><use href="#op-grid"/></svg>Visão geral</a>
                 <a class="sipa-sidebar-link" href="#alunos" data-op-nav="alunos"><svg aria-hidden="true"><use href="#op-users"/></svg>Alunos</a>
+                <a class="sipa-sidebar-link" href="#agenda" data-op-nav="agenda"><svg aria-hidden="true"><use href="#op-grid"/></svg>Agenda da Unidade</a>
                 <a class="sipa-sidebar-link" href="#verificacoes" data-op-nav="verificacoes"><svg aria-hidden="true"><use href="#op-check"/></svg>Verificações</a>
                 <a class="sipa-sidebar-link" href="#acessos" data-op-nav="acessos"><svg aria-hidden="true"><use href="#op-key"/></svg>Gestão de acessos</a>
                 <a class="sipa-sidebar-link" href="#recursos" data-op-nav="recursos"><svg aria-hidden="true"><use href="#op-car"/></svg>Recursos da unidade</a>
@@ -100,6 +106,8 @@
                 </article>
                 <article class="op-card op-detail"><div class="op-card-heading"><div><p class="op-eyebrow">FICHA DO ALUNO</p><h2>Detalhes e acompanhamento</h2></div><span class="op-badge">Nenhum aluno selecionado</span></div><dl class="op-fields"><div><dt>Nome completo</dt><dd>—</dd></div><div><dt>CPF</dt><dd>—</dd></div><div><dt>Contato</dt><dd>—</dd></div><div><dt>Unidade vinculada</dt><dd>—</dd></div><div><dt>Categoria pretendida</dt><dd>—</dd></div><div><dt>Situação do acesso</dt><dd>Não consultada</dd></div></dl><p class="op-help">Os dados serão exibidos após selecionar um aluno autorizado desta unidade.</p></article>
             </section>
+
+            <section data-op-panel="agenda" aria-label="Agenda da Unidade" hidden><article class="op-card"><h2>Agenda aguardando habilitação</h2><p class="op-help">Depende das permissões e do vínculo com a unidade confirmados no servidor.</p></article></section>
 
             <section data-op-panel="verificacoes" aria-label="Verificações financeiras, prova e exames" hidden>
                 <article class="op-card op-student-selector"><div><h2>Acompanhamento das verificações</h2><p>Selecione um aluno da unidade antes de iniciar uma consulta.</p></div><button class="op-button op-button-outline" type="button" data-op-go="alunos">Consultar alunos <svg aria-hidden="true"><use href="#op-arrow"/></svg></button></article>

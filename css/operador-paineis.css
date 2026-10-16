@@ -1,0 +1,175 @@
+/* Visão geral e agenda. As demais seções mantêm seus componentes e estilos. */
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-notice { display: none; }
+.op-mode-demo[data-op-secao="agenda"] .op-main > .op-demo-feedback:not([data-op-feedback-secao="agenda"]):not([data-op-feedback-global]),
+.op-mode-demo[data-op-secao="visao-geral"] .op-main > .op-demo-feedback:not([data-op-feedback-secao="visao-geral"]):not([data-op-feedback-global]) { display: none; }
+.op-mode-demo[data-op-secao="agenda"] .op-header > button,
+.op-mode-demo[data-op-secao="agenda"] [data-op-description] { display: none; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-demo-banner p { display: none; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-demo-banner { padding: 8px 14px; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-topbar { min-height: 46px; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-header { margin: 18px 0; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-header h1 { font-size: 27px; }
+.op-mode-demo .op-dashboard .op-dashboard-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.op-dashboard .op-metric-button { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; text-align: left; width: 100%; padding: 12px 14px; transition: border-color .18s; border-radius: 9px; box-shadow: none; }
+.op-dashboard .op-metric-button:hover { border-color: #8bb5d8; background: #f1f7fc; }
+.op-metric-heading { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; font-size: 12px; font-weight: 600; color: #395e7c; line-height: 1.5; }
+.op-metric-heading svg { box-sizing: content-box; width: 16px; height: 16px; padding: 4px; border-radius: 6px; color: #1769aa; background: #edf5fc; }
+.op-dashboard .op-metric-button > strong { font-size: 28px; color: #123f68; margin: 0; line-height: 1.1; }
+.op-metric-footer { align-self: end; font-size: 11px; color: #1769aa; line-height: 1.5; white-space: nowrap; }
+.op-proximas { margin-top: 14px; padding: 16px; box-shadow: none; border-radius: 10px; }
+.op-proximas .op-card-heading { align-items: center; margin-bottom: 10px; }
+.op-proximas .op-card-heading h2 { font-size: 15px; }
+.op-proximas .op-card-heading .op-button { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+.op-proximas-lista { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.op-aula-card { min-width: 0; border: 1px solid #c8d9e8; border-left: 3px solid #2388d9; border-radius: 11px; padding: 18px; background: #f7fafd; overflow-wrap: anywhere; }
+.op-aula-card h3 { font-size: 15px; color: #18324a; line-height: 1.5; }
+.op-aula-horario { display: block; font-size: 19px; color: #1769aa; font-weight: 600; margin-top: 9px; }
+.op-aula-data { font-size: 12px; color: #55708a; margin-top: 7px; line-height: 1.7; }
+.op-aula-recursos { margin: 15px 0; padding: 12px 0; border-top: 1px solid #d8e5f0; border-bottom: 1px solid #d8e5f0; font-size: 12px; line-height: 1.9; color: #55708a; }
+.op-aula-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+.op-aula-categoria { font-size: 11px; color: #55708a; }
+.op-aula-footer .op-button { margin-left: auto; font-size: 11px; padding: 8px 12px; min-height: 36px; }
+.op-aula-footer .op-badge, .op-aula-destaque .op-badge { font-size: 10px; }
+.op-aula-lista { display: grid; grid-template-columns: minmax(130px, 1fr) 120px 175px auto; grid-template-areas: "nome horario data acoes" "recursos recursos recursos acoes"; gap: 5px 14px; padding: 10px 12px; border-left-width: 2px; border-radius: 7px; box-shadow: none; }
+.op-aula-lista h3 { grid-area: nome; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.op-aula-lista .op-aula-horario { grid-area: horario; font-size: 13px; margin: 0; align-self: center; }
+.op-aula-lista .op-aula-data { grid-area: data; font-size: 11px; margin: 0; align-self: center; }
+.op-aula-lista .op-aula-recursos { grid-area: recursos; display: flex; gap: 14px; margin: 0; padding: 0; border: 0; font-size: 11px; line-height: 1.6; min-width: 0; }
+.op-aula-lista .op-aula-recursos p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-aula-lista .op-aula-footer { grid-area: acoes; align-self: center; gap: 8px; flex-wrap: nowrap; }
+.op-aula-lista .op-aula-footer .op-button { min-height: 30px; padding: 5px 8px; font-size: 11px; white-space: nowrap; }
+.op-aula-lista .op-aula-footer .op-badge { padding: 3px 6px; }
+.op-aula-evento { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "nome nome nome" "horario categoria status"; align-items: center; gap: 3px 8px; width: 100%; padding: 7px 10px; text-align: left; border-radius: 6px; border-left-width: 2px; color: #18324a; background: #edf5fc; line-height: 1.35; }
+.op-aula-evento:hover { background: #e3eff9; border-color: #8bb5d8; }
+.op-evento-nome { grid-area: nome; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; }
+.op-evento-horario { grid-area: horario; font-size: 11px; color: #1769aa; white-space: nowrap; }
+.op-evento-categoria { grid-area: categoria; font-size: 10px; color: #55708a; }
+.op-aula-evento .op-badge { grid-area: status; font-size: 10px; padding: 2px 5px; }
+.op-aula-status-1 { background: #e3eff9; color: #12578f; border-color: #bdd3e7; }
+.op-aula-status-3 { background: #f8f0e1; color: #806028; border-color: #e6d9ba; }
+.op-aula-destaque { background: #edf5fc; border: 1px solid #c8d9e8; border-radius: 12px; padding: 22px; }
+.op-aula-destaque h3 { font-size: 24px; margin-top: 8px; overflow-wrap: anywhere; }
+.op-aula-destaque .op-badge { margin-top: 15px; }
+.op-aula-ficha { margin: 18px 0; }
+.op-aula-ficha dd { font-size: 14px; line-height: 1.7; }
+.op-empty-state { padding: 36px 20px; border: 1px dashed #b9cfdf; border-radius: 12px; color: #55708a; background: #eff5fb; text-align: center; font-size: 13px; line-height: 1.8; grid-column: 1 / -1; }
+.op-indicador-resumo { display: flex; align-items: center; gap: 15px; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid #c8d9e8; }
+.op-indicador-resumo strong { color: #123f68; font-size: 32px; }
+.op-indicador-resumo p { font-size: 12px; color: #55708a; }
+.op-indicador-filtros { grid-template-columns: 1fr 200px; }
+.op-indicador-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+.op-indicador-registro { border: 1px solid #c8d9e8; background: #eff5fb; border-radius: 12px; padding: 18px; min-width: 0; }
+.op-indicador-registro h3 { font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.op-record-meta { color: #55708a; font-size: 12px; line-height: 1.8; margin: 9px 0; overflow-wrap: anywhere; }
+.op-record-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+.op-record-tags .op-badge { white-space: normal; text-align: left; justify-content: start; font-size: 10px; }
+.op-indicador-registro .op-button { margin-top: 9px; }
+.op-pares-lista { padding-left: 15px; margin-top: 12px; color: #55708a; font-size: 12px; line-height: 1.8; }
+.op-booking-resumo { display: grid; gap: 8px; padding: 18px; margin-bottom: 20px; border-radius: 10px; background: #e6f0fa; color: #123f68; }
+.op-booking-resumo strong { font-size: 19px; }
+.op-booking-resumo span { font-size: 12px; }
+.op-booking-feedback { color: #805422; border: 1px solid #e6d9ba; background: #f8f0e1; padding: 13px; border-radius: 8px; font-size: 13px; line-height: 1.7; margin-bottom: 18px; }
+[data-op-agendar] .op-form-fields label { font-size: 13px; }
+[data-op-agendar] .op-form-fields select { font-size: 13px; height: 46px; }
+.op-agenda-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; padding: 6px 0 10px; }
+.op-agenda-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 240px; }
+.op-agenda-nav h2 { font-size: 16px; color: #18324a; line-height: 1.6; margin-left: 8px; text-transform: capitalize; }
+.op-agenda-nav .op-button { font-size: 12px; padding: 9px 12px; }
+.op-agenda-toolbar > label { display: grid; gap: 6px; font-size: 11px; color: #55708a; }
+.op-agenda .op-agenda-modos { display: flex; padding: 4px; border: 1px solid #c8d9e8; border-radius: 10px; background: #eff5fb; gap: 3px; }
+.op-agenda-modos button { min-height: 36px; border: 0; border-radius: 7px; font-size: 12px; }
+.op-agenda-modos button[aria-pressed=true] { background: #1769aa; color: #fff; }
+.op-agenda-filter-panel { padding: 9px 12px; background: #f7fafd; border: 1px solid #c8d9e8; border-radius: 8px; }
+.op-agenda-filter-panel summary { cursor: pointer; font-size: 12px; color: #395e7c; font-weight: 600; }
+.op-agenda-filter-panel .op-agenda-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0 12px; }
+.op-agenda-filter-panel .op-button { font-size: 11px; }
+.op-agenda-success { margin-top: 16px; padding: 14px; background: #e6f1ed; border: 1px solid #bfd7cd; color: #326750; border-radius: 10px; font-size: 13px; line-height: 1.7; }
+.op-agenda-legenda { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px 0; font-size: 11px; color: #55708a; }
+.op-agenda-legenda span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 3px; margin-right: 7px; background: #b5c7d6; }
+.op-agenda-legenda .op-legenda-livre::before { background: #84ab9d; }
+.op-agenda-legenda .op-legenda-confirmada::before { background: #2388d9; }
+.op-agenda-legenda .op-legenda-aguardando::before { background: #b6975c; }
+.op-agenda-legenda .op-legenda-feriado::before { background: #8e744a; }
+.op-agenda-legenda .op-legenda-facultativo::before { background: #b7cfe4; }
+.op-agenda .op-agenda-day { margin: 0; padding: 0; border: 1px solid #c8d9e8; background: #f7fafd; border-radius: 12px; overflow: hidden; }
+.op-day-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #e6f0fa; border-bottom: 1px solid #c8d9e8; }
+.op-agenda .op-day-heading h3 { font-size: 14px; margin: 0; text-transform: capitalize; }
+.op-day-heading span { color: #55708a; font-size: 12px; }
+.op-agenda .op-agenda-slot { display: grid; grid-template-columns: 56px 1fr; gap: 0; padding: 0; border-bottom: 1px solid #dce6ef; }
+.op-agenda-slot > time { display: flex; align-items: center; justify-content: center; padding: 8px 6px; background: #eff5fb; color: #55708a; font-size: 12px; border-right: 1px solid #dce6ef; }
+.op-slot-conteudo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px; padding: 6px 8px; min-width: 0; align-items: center; }
+.op-slot-disponivel { text-align: left; padding: 6px 10px; border: 1px dashed #b2cbdc; background: #f4f8fc; color: #1769aa; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; justify-self: start; min-height: 32px; max-width: 100%; }
+.op-slot-disponivel strong { font-size: 12px; white-space: nowrap; }
+.op-slot-disponivel span { font-size: 11px; }
+.op-slot-disponivel:hover { background: #e3eff9; border-color: #8bb5d8; }
+.op-agenda .op-slot-closed { font-size: 12px; padding: 8px 6px; min-width: 0; line-height: 1.5; }
+.op-slot-almoco { background: #eef1f4; border-radius: 7px; }
+.op-day-special { padding: 12px 18px; color: #806028; background: #f8f0e1; font-size: 12px; }
+.op-agenda .op-day-closed { padding: 20px; min-height: 60px; }
+.op-week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0 5px; align-items: stretch; }
+.op-week-grid > .op-agenda-day { display: grid; grid-template-rows: subgrid; grid-row: span 13; }
+.op-week-grid .op-agenda-fechada { background: #e9eef2; }
+.op-week-grid .op-agenda-fechada > .op-slot-closed { grid-row: 2 / -1; align-self: start; }
+.op-week-grid .op-day-heading { display: block; padding: 8px 6px; min-width: 0; }
+.op-week-grid .op-day-heading h3 { font-size: 12px; line-height: 1.5; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.op-week-grid .op-day-heading span { display: block; margin-top: 3px; font-size: 11px; }
+.op-week-grid .op-agenda-slot { grid-template-columns: 1fr; align-content: start; }
+.op-week-grid .op-agenda-slot > time { justify-content: start; padding: 3px 6px; border: 0; font-size: 11px; }
+.op-week-grid .op-slot-conteudo { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 4px; min-height: 36px; }
+.op-week-grid .op-slot-disponivel { width: auto; align-self: start; padding: 3px 5px; min-height: 28px; gap: 4px; flex-wrap: wrap; }
+.op-week-grid .op-slot-disponivel strong { font-size: 11px; }
+.op-week-grid .op-slot-disponivel span { font-size: 10px; }
+.op-week-grid .op-slot-closed { font-size: 11px; padding: 4px 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.op-aula-evento.op-aula-compact { position: relative; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nome nome" "horario categoria"; padding: 5px 6px; gap: 2px 4px; margin: 0; }
+.op-aula-compact .op-evento-nome { padding-right: 10px; }
+.op-aula-compact .op-evento-horario { font-size: 10px; }
+.op-aula-compact .op-badge { position: absolute; top: 8px; right: 6px; width: 7px; height: 7px; padding: 0; overflow: hidden; font-size: 0; border: 0; border-radius: 50%; background: #7a91a7; }
+.op-aula-compact .op-aula-status-1 { background: #1769aa; }
+.op-aula-compact .op-aula-status-3 { background: #b6975c; }
+.op-month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: #c8d9e8; border: 1px solid #c8d9e8; border-radius: 12px; overflow: hidden; }
+.op-month-weekday { font-size: 11px; text-align: center; background: #e6f0fa; color: #55708a; padding: 12px 5px; }
+.op-month-day { display: flex; flex-direction: column; align-items: start; gap: 7px; text-align: left; min-height: 130px; min-width: 0; padding: 12px; background: #f7fafd; color: #18324a; }
+.op-month-day > strong { display: grid; place-items: center; min-width: 26px; min-height: 26px; font-size: 13px; border-radius: 8px; }
+.op-month-day.op-selected > strong { background: #1769aa; color: #fff; }
+.op-month-day[aria-current=date] > strong { outline: 1px solid #2388d9; }
+.op-month-day.op-outside { background: #eaf0f5; color: #698093; }
+.op-month-day.op-closed { background: #e9eef2; }
+.op-month-day.op-holiday { border-top: 3px solid #b39a6c; }
+.op-month-day.op-facultativo { border-top: 3px dotted #b7cfe4; }
+.op-month-day.op-facultativo .op-month-special { color: #55708a; }
+.op-month-day:hover { background: #e2eef9; }
+.op-month-special { color: #806028; font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.op-month-count { font-size: 11px; color: #55708a; }
+.op-month-event { display: block; padding: 5px; border-radius: 5px; width: 100%; background: #e0edf8; color: #12578f; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1250px) { .op-agenda-nav { flex-basis: 100%; } .op-aula-lista { grid-template-columns: minmax(100px, 1fr) 110px 150px; grid-template-areas: "nome horario data" "recursos recursos acoes"; } }
+@media (max-width: 1100px) { .op-week-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+    .op-mode-demo .op-dashboard .op-dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .op-dashboard .op-metric-button { padding: 10px; }
+    .op-metric-heading { font-size: 12px; align-items: start; }
+    .op-metric-heading svg { width: 15px; height: 15px; padding: 5px; }
+    .op-metric-footer { font-size: 11px; grid-column: 1 / -1; }
+    .op-proximas-lista, .op-indicador-lista { grid-template-columns: 1fr; }
+    .op-aula-lista { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nome horario" "data data" "recursos recursos" "acoes acoes"; gap: 5px 8px; }
+    .op-aula-lista .op-aula-recursos { flex-wrap: wrap; gap: 3px 10px; }
+    .op-aula-lista .op-aula-footer { flex-wrap: wrap; }
+    .op-indicador-filtros { grid-template-columns: 1fr; }
+    .op-agenda-toolbar { gap: 12px; }
+    .op-agenda-nav { min-width: 0; }
+    .op-agenda-nav h2 { flex-basis: 100%; margin-left: 0; }
+    .op-agenda .op-agenda-filter-panel .op-agenda-filters { grid-template-columns: 1fr 1fr; }
+    .op-week-grid { grid-template-columns: 1fr; }
+    .op-week-grid > .op-agenda-day { display: block; grid-row: auto; margin-bottom: 14px; }
+    .op-week-grid .op-agenda-slot { grid-template-columns: 50px 1fr; min-height: 0; }
+    .op-week-grid .op-slot-conteudo { display: grid; grid-template-columns: 1fr; }
+    .op-month-weekday { font-size: 0; }
+    .op-month-weekday::first-letter { font-size: 11px; }
+    .op-month-day { padding: 5px 3px; min-height: 85px; gap: 5px; }
+    .op-month-event, .op-month-special { display: none; }
+    .op-month-day.op-holiday::after { content: "•"; color: #806028; }
+    .op-month-count { font-size: 9px; }
+    .op-aula-destaque h3 { font-size: 20px; }
+    .op-slot-conteudo { grid-template-columns: minmax(0, 1fr); padding: 6px; }
+    .op-agenda .op-agenda-slot { grid-template-columns: 50px 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .op-dashboard .op-metric-button { transition: none; } }
