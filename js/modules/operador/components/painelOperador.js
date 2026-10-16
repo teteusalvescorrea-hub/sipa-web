@@ -1,16 +1,17 @@
 // Somente estrutura de interface, sem dados, permissões, persistência ou API.
-// O entrypoint operador-cfc.js NÃO monta este componente no contrato atual.
-// Só integrar após autorização do operador e do vínculo de unidade no servidor.
+// Em ambiente real só integrar após autorização do operador/unidade no servidor.
+// A demonstração local injeta callbacks próprios e nunca utiliza a sessão real.
 
 const SECOES = Object.freeze({
     "visao-geral": ["Visão geral", "Visão geral da unidade", "Acompanhe os alunos e organize as etapas do atendimento."],
     alunos: ["Alunos", "Cadastro e consulta de alunos", "Encontre informações e acompanhe o atendimento de cada aluno."],
+    agenda: ["Agenda da Unidade", "Agenda da Unidade", "Consulte as aulas e a disponibilidade dos recursos da unidade."],
     verificacoes: ["Verificações", "Verificações do aluno", "Situação financeira, prova teórica e exames em um só lugar."],
     acessos: ["Gestão de acessos", "Gestão de acessos", "Libere acessos conforme as permissões concedidas ao seu perfil."],
     recursos: ["Recursos da unidade", "Recursos da unidade", "Veículos, instrutores e equipamentos vinculados à sua unidade."]
 });
 
-export function montarEstruturaOperador(raiz, template) {
+export function montarEstruturaOperador(raiz, template, { aoSair, aoSelecionarRecurso } = {}) {
     raiz.replaceChildren(template.content.cloneNode(true));
     const $ = (seletor) => raiz.querySelector(seletor);
     const todos = (seletor) => [...raiz.querySelectorAll(seletor)];
@@ -20,6 +21,7 @@ export function montarEstruturaOperador(raiz, template) {
         if (!Object.hasOwn(SECOES, secao)) return;
 
         const [rotulo, titulo, descricao] = SECOES[secao];
+        raiz.dataset.opSecao = secao;
         todos("[data-op-panel]").forEach((painel) => {
             painel.hidden = painel.dataset.opPanel !== secao;
         });
@@ -60,6 +62,7 @@ export function montarEstruturaOperador(raiz, template) {
         $("[data-op-resource-heading]").textContent = aba.dataset.opResource === "Todos"
             ? "Recursos aguardando consulta"
             : `${aba.dataset.opResource} aguardando consulta`;
+        aoSelecionarRecurso?.(aba.dataset.opResource);
     }
     abas.forEach((aba, indice) => {
         aba.addEventListener("click", () => selecionarRecurso(aba));
@@ -78,8 +81,13 @@ export function montarEstruturaOperador(raiz, template) {
 
     // Sair é a única ação de sessão; não apaga dados locais do atendimento.
     $("[data-op-sair]").addEventListener("click", async () => {
+        if (aoSair) {
+            aoSair();
+            return;
+        }
         const { sair } = await import("../../essencial/service/authService.js");
         sair();
     });
     navegar("visao-geral", false);
+    return { navegar };
 }
