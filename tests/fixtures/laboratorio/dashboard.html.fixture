@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <script src="js/tema-aluno.js"></script>
+    <script src="js/sidebar-aluno.js" defer></script>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Painel do aluno — SIPA"
+    >
+
+    <title>
+        Painel do Aluno | SIPA
+    </title>
+
+    <link rel="stylesheet" href="css/sidebar.css">
+
+    <!-- =========================================
+         FONTE
+         ========================================= -->
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- =========================================
+         CSS DO DASHBOARD
+         ========================================= -->
+
+    <link
+        rel="stylesheet"
+        href="css/dashboard.css"
+    >
+
+    <link rel="stylesheet" href="css/tema-aluno.css">
+</head>
+
+
+<body data-sipa-aluno>
+
+
+    <!-- =========================================
+         DASHBOARD
+         ========================================= -->
+
+    <div class="dashboard-page">
+
+
+        <!-- =====================================
+             BARRA LATERAL
+             ===================================== -->
+
+        <aside class="sipa-sidebar">
+
+    <!-- LOGO -->
+    <a href="dashboard.html" class="sipa-sidebar-logo">
+
+        <div class="sipa-sidebar-logo-symbol">
+
+            <svg
+                viewBox="0 0 70 70"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path
+                    d="M52 12H29C17 12 9 20 9 31C9 40 14 46 23 48L42 52C46 53 48 55 48 58C48 61 46 63 41 63H18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+
+                <path
+                    d="M18 58H41C53 58 61 50 61 39C61 30 56 24 47 22L28 18C24 17 22 15 22 12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+
+        </div>
+
+        <div class="sipa-sidebar-logo-text">
+
+            <strong>SIPA</strong>
+
+            <span>
+                SISTEMA INTELIGENTE
+                <br>
+                PARA AGENDAMENTOS
+            </span>
+
+        </div>
+
+    </a>
+
+
+    <!-- MENU -->
+    <nav class="sipa-sidebar-menu">
+
+        <span class="sipa-sidebar-title">
+            MENU
+        </span>
+
+
+        <!-- INÍCIO -->
+        <a
+            href="dashboard.html"
+            class="sipa-sidebar-link active"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Início
+            </span>
+
+        </a>
+
+
+        <!-- AGENDAR AULA -->
+        <a
+            href="agendamento.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Agendar aula
+            </span>
+
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
+            </span>
+
+        </a>
+
+
+        <!-- MEU PROGRESSO -->
+        <a
+            href="meu-progresso.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu progresso
+            </span>
+
+        </a>
+
+
+        <!-- PACOTES -->
+        <a
+            href="pacotes.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Pacotes adicionais
+            </span>
+
+        </a>
+
+
+        <!-- CONTA -->
+        <span class="sipa-sidebar-title account">
+            CONTA
+        </span>
+
+
+        <!-- PERFIL -->
+        <a
+            href="meu-perfil.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu perfil
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <!-- RODAPÉ -->
+    <div class="sipa-sidebar-bottom">
+
+        <div class="sipa-sidebar-unit">
+
+            <span class="sipa-sidebar-status"></span>
+
+            <div class="sipa-sidebar-unit-text">
+
+                <strong>
+                    SIPA
+                </strong>
+
+                <small>
+                    Atendimento disponível
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- SAIR -->
+        <button
+            type="button"
+            id="logout-button"
+            class="sipa-sidebar-logout"
+        >
+
+            <span></span>
+
+            Sair da conta
+
+        </button>
+
+    </div>
+
+</aside>
+
+
+        <!-- =====================================
+             CONTEÚDO PRINCIPAL
+             ===================================== -->
+
+        <main class="dashboard-main">
+
+
+            <!-- =================================
+                 TOPO
+                 ================================= -->
+
+            <header class="dashboard-header">
+
+
+                <div class="mobile-menu-button">
+
+                    <button
+                        type="button"
+                        id="mobile-menu-button"
+                        aria-label="Abrir menu"
+                    >
+                        ☰
+                    </button>
+
+                </div>
+
+
+                <div class="header-greeting">
+
+                    <span>
+                        PAINEL DO ALUNO
+                    </span>
+
+                    <h1>
+                        Olá, <strong id="student-name">bem-vindo</strong>!
+                    </h1>
+
+                </div>
+
+
+            </header>
+
+
+            <!-- =================================
+                 CONTEÚDO
+                 ================================= -->
+
+            <section class="dashboard-content">
+<svg aria-hidden="true" width="0" height="0" style="position:absolute"><defs>
+<symbol id="db-car" viewBox="0 0 24 24"><path d="m5 7 2-4h10l2 4 2 3v8h-3v-2H6v2H3v-8l2-3Zm0 0h14M3 11h18M7 13v1m10-1v1"/></symbol>
+<symbol id="db-moto" viewBox="0 0 32 26"><circle cx="6" cy="19" r="4.5"/><circle cx="26" cy="19" r="4.5"/><path d="M2 11h7m-3 8 5-7h9m-1-8h4l3 15m-4-11h4M17 20h6M10 19h7"/><path d="M10 10c3-4 7-4 10 0l1 3H10Z" fill="currentColor" stroke-linejoin="round"/><path d="M12 14h6l1 5h-8Z" fill="currentColor" stroke-linejoin="round"/><path d="M2 14c2-2 5-2 7-1m14 1c2-2 5-2 7 0"/></symbol>
+<symbol id="db-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 2v6m10-6v6M3 11h18m-13 4h3m3 0h2"/></symbol>
+<symbol id="db-chart" viewBox="0 0 24 24"><path d="M4 3v17h17M8 15l4-5 4 2 5-7"/></symbol>
+</defs></svg>
+<div class="dashboard-section-heading"><div><span class="card-eyebrow">Seu saldo de aulas</span><h2>Aulas disponíveis</h2></div><p id="creditos-resumo">Consulte seus créditos por categoria.</p></div>
+<div class="summary-grid"><article class="summary-card credit-card"><div class="credit-heading"><div><span>Moto</span><h2>Categoria A</h2></div></div><div class="credit-value"><strong id="credito-A">—</strong><span>aulas disponíveis</span></div><p id="credito-A-detalhe">Saldo ainda não informado.</p></article><article class="summary-card credit-card"><div class="credit-heading"><div><span>Carro</span><h2>Categoria B</h2></div></div><div class="credit-value"><strong id="credito-B">—</strong><span>aulas disponíveis</span></div><p id="credito-B-detalhe">Saldo ainda não informado.</p></article></div>
+<div class="dashboard-grid">
+<div class="dashboard-stack">
+<article class="next-lesson-card"><div class="card-header"><div><span class="card-eyebrow">Seu planejamento</span><h3>Sua próxima aula prática</h3></div><span id="next-lesson-status" class="lesson-status" hidden></span></div><div id="proxima-aula-conteudo" class="next-class-state"><p>Você ainda não possui aulas agendadas.</p><a href="agendamento.html">Agendar aula →</a></div></article>
+<article class="progress-card"><div class="card-header"><h3>Seu progresso</h3><span id="progress-number" class="progress-number">Ainda não iniciado</span></div><div class="progress-bar-container" role="progressbar" aria-label="Progresso das aulas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div><p id="progress-description">Sua evolução aparecerá conforme as aulas forem concluídas.</p></article>
+</div>
+<article class="quick-actions-card"><div class="card-header"><h3>Acesso rápido</h3></div><div class="quick-actions">
+<a class="quick-action" href="agendamento.html"><svg aria-hidden="true" class="dashboard-icon"><use href="#db-calendar"/></svg><div><strong>Agendar aula</strong><span>Escolha sua próxima aula</span></div><span aria-hidden="true">→</span></a>
+<a class="quick-action" href="minhas-aulas.html"><svg aria-hidden="true" class="dashboard-icon"><use href="#db-calendar"/></svg><div><strong>Minhas aulas</strong><span>Consulte sua agenda e histórico</span></div><span aria-hidden="true">→</span></a>
+<a class="quick-action" href="meu-progresso.html"><svg aria-hidden="true" class="dashboard-icon"><use href="#db-chart"/></svg><div><strong>Meu progresso</strong><span>Acompanhe as aulas concluídas</span></div><span aria-hidden="true">→</span></a>
+</div></article></div>
+<div id="dashboard-notice" class="dashboard-notice" role="status" hidden></div>
+</section>
+
+
+            <!-- =====================================
+                 FOOTER
+                 ===================================== -->
+
+            <footer class="dashboard-footer">
+
+                <span>
+                    SIPA — Sistema Inteligente Para Agendamentos
+                </span>
+
+
+                <span>
+                    © 2026
+                </span>
+
+            </footer>
+
+
+        </main>
+
+
+    </div>
+
+
+        <!-- =========================================
+         JAVASCRIPT
+         ========================================= -->
+
+    <script type="module">
+    import { prepararPaginaLocal } from "./js/modules/essencial/components/painelLocal.js";
+    if (!await prepararPaginaLocal("aluno")) await import("./js/dashboard.js");
+</script>
+
+</body>
+
+</html>

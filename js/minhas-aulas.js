@@ -1,3 +1,4 @@
+import {localDaAula,orientacoesComparecimento} from './modules/essencial/components/localAula.js';
 /* =========================================
    SIPA — MINHAS AULAS
    As aulas vêm da API. Cancelar e ver o
@@ -625,6 +626,8 @@ function mostrarErro(mensagem) {
 
 
 function mostrarProximas(aulas) {
+    document.getElementById('lesson-attendance')?.remove();
+    if(aulas.some(a=>a.status.valor===1&&Date.parse(a.dataHoraInicio)>Date.now())){const aviso=orientacoesComparecimento(true);aviso.id='lesson-attendance';lessonsList.before(aviso);}
 
     totalLessons.textContent = aulas.length;
 

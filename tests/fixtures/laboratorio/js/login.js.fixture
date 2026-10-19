@@ -1,0 +1,128 @@
+// Entrada pública única. Serviços da API são carregados somente ao autenticar
+// no modo integrado; cadastro interno permanece em template inerte no HTML.
+export const normalizarCPF = valor => String(valor || "").replace(/\D/g, "").slice(0, 11);
+export function formatarCPF(valor) {
+    return normalizarCPF(valor).replace(/^(\d{3})(\d)/, "$1.$2").replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3").replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3-$4");
+}
+export function validarCPF(valor) {
+    const cpf = normalizarCPF(valor);
+    if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+    for (let tamanho = 9; tamanho <= 10; tamanho++) {
+        const soma = [...cpf.slice(0, tamanho)].reduce((total, digito, i) => total + Number(digito) * (tamanho + 1 - i), 0);
+        const resto = soma * 10 % 11;
+        if ((resto === 10 ? 0 : resto) !== Number(cpf[tamanho])) return false;
+    }
+    return true;
+}
+function ativarMascaraCPF(campo) {
+    function formatar() {
+        const posicao = campo.selectionStart ?? campo.value.length;
+        const digitosAntes = campo.value.slice(0, posicao).replace(/\D/g, "").length;
+        campo.value = formatarCPF(campo.value);
+        let cursor = 0, vistos = 0;
+        while (cursor < campo.value.length && vistos < digitosAntes) if (/\d/.test(campo.value[cursor++])) vistos++;
+        campo.setSelectionRange(cursor, cursor);
+        campo.removeAttribute("aria-invalid");
+    }
+    campo.addEventListener("input", formatar);
+    campo.addEventListener("beforeinput", event => {
+        const pos = campo.selectionStart;
+        if (pos !== campo.selectionEnd || !["deleteContentBackward", "deleteContentForward"].includes(event.inputType)) return;
+        const paraTras = event.inputType === "deleteContentBackward", adjacente = paraTras ? pos - 1 : pos;
+        if (adjacente < 0 || adjacente >= campo.value.length || /\d/.test(campo.value[adjacente])) return;
+        let indice = adjacente;
+        while (indice >= 0 && indice < campo.value.length && /\D/.test(campo.value[indice])) indice += paraTras ? -1 : 1;
+        if (indice < 0 || indice >= campo.value.length) return;
+        event.preventDefault();
+        campo.value = campo.value.slice(0, indice) + campo.value.slice(indice + 1);
+        campo.setSelectionRange(paraTras ? indice : pos, paraTras ? indice : pos); formatar();
+    });
+}
+
+const form = document.getElementById("login-form"), cpf = document.getElementById("login-cpf"), senha = document.getElementById("login-password");
+const mensagem = document.getElementById("login-message"), entrar = document.getElementById("login-submit"), olho = document.getElementById("password-toggle");
+let enviando = false, servicoLocal, painelLocal, erroAmbiente;
+const ambientePronto = (async () => {
+    try {
+        const { criarServicoLocal, configurarAmbienteAtual } = await import("./modules/essencial/service/authLocal.js");
+        if (configurarAmbienteAtual() !== "local") {
+            return;
+        }
+        servicoLocal = await criarServicoLocal();
+        const { montarAcessoLocal } = await import("./modules/essencial/components/painelLocal.js");
+        painelLocal = await montarAcessoLocal(servicoLocal);
+    } catch (erro) {
+        erroAmbiente = erro; entrar.disabled = true;
+        informar(`Ambiente local indisponível: ${erro.message || "verifique as permissões de armazenamento do navegador."}`);
+    }
+})();
+function informar(texto, tipo = "error", campo) {
+    mensagem.textContent = texto; mensagem.className = `form-message ${texto ? `visible ${tipo}` : ""}`;
+    if (campo) { campo.setAttribute("aria-invalid", "true"); campo.focus(); }
+}
+ativarMascaraCPF(cpf); ativarMascaraCPF(document.getElementById("recuperacao-cpf"));
+senha.addEventListener("input", () => senha.removeAttribute("aria-invalid"));
+olho.addEventListener("click", () => {
+    const mostrar = senha.type === "password"; senha.type = mostrar ? "text" : "password";
+    olho.setAttribute("aria-label", mostrar ? "Ocultar senha" : "Mostrar senha"); olho.setAttribute("aria-pressed", String(mostrar));
+    olho.querySelector("i").className = mostrar ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+});
+const destinos = Object.freeze({ Aluno: "dashboard.html", Autoescola: "autoescola.html" });
+form.addEventListener("submit", async event => {
+    event.preventDefault(); if (enviando) return;
+    enviando = true; entrar.disabled = true; form.setAttribute("aria-busy", "true");
+    entrar.querySelector("span").textContent = "Entrando…";
+    entrar.querySelector("i").className = "fa-solid fa-spinner fa-spin";
+    let redirecionando = false;
+    try {
+        await ambientePronto;
+        if (erroAmbiente) return;
+        informar("");
+        if (servicoLocal && !await servicoLocal.contaConfigurada()) { informar("O acesso local ainda não foi configurado. Clique em Configurar acesso local.", "info"); return; }
+        const identificadorLocal = servicoLocal && await servicoLocal.identificadorLocal(normalizarCPF(cpf.value));
+        if (!validarCPF(cpf.value) && !identificadorLocal) { informar("Informe um CPF válido, com 11 números e dígitos verificadores corretos.", "error", cpf); return; }
+        if (!senha.value) { informar("Digite sua senha.", "error", senha); return; }
+        if (servicoLocal) {
+            const resultado = await servicoLocal.entrar(normalizarCPF(cpf.value), senha.value);
+            senha.value = "";
+            if (resultado.trocaObrigatoria) painelLocal.trocar(normalizarCPF(cpf.value));
+            else await painelLocal.abrir();
+            return;
+        }
+        const { login } = await import("./modules/essencial/service/authService.js");
+        const resposta = await login(normalizarCPF(cpf.value), senha.value);
+        const perfil = resposta?.perfil?.descricao;
+        if (!Object.hasOwn(destinos, perfil)) {
+            const { limparSessao } = await import("./modules/essencial/utils/sessao.js"); limparSessao();
+            informar(perfil === "Motorista" ? "A interface do instrutor ainda aguarda integração. Nenhuma permissão administrativa foi concedida." : "O perfil retornado ainda não possui um painel integrado.", "info"); return;
+        }
+        redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");
+        window.location.assign(destinos[perfil]);
+    } catch (erro) {
+        informar(erro.status === 401 ? "CPF ou senha inválidos, ou conta indisponível." : erro.message || "Não foi possível concluir o acesso. Tente novamente.");
+    } finally {
+        if (!redirecionando) { enviando = false; entrar.disabled = Boolean(erroAmbiente); form.removeAttribute("aria-busy"); entrar.querySelector("span").textContent = "Entrar"; entrar.querySelector("i").className = "fa-solid fa-arrow-right"; }
+    }
+});
+
+// Única configuração do contato: o destino já informado no link principal.
+const contato = document.getElementById("contato-recepcao");
+const urlContato = new URL(contato.href);
+urlContato.searchParams.set("text", "Olá! Estou tentando acessar minha conta no SIPA e preciso de ajuda da recepção.");
+contato.href = urlContato.href;
+document.querySelectorAll("[data-contato-copia]").forEach(link => { link.href = contato.href; });
+const recuperacao = document.getElementById("recuperar-acesso");
+document.getElementById("forgot-password").addEventListener("click", () => recuperacao.showModal());
+document.querySelector("[data-fechar-recuperacao]").addEventListener("click", () => recuperacao.close());
+document.querySelectorAll("[data-recuperacao]").forEach(botao => botao.addEventListener("click", () => {
+    const metodo = botao.dataset.recuperacao;
+    document.querySelectorAll("[data-recuperacao]").forEach(item => item.setAttribute("aria-pressed", String(item === botao)));
+    document.getElementById("recuperacao-presencial").hidden = metodo !== "presencial";
+    document.getElementById("recuperacao-digital").hidden = metodo === "presencial";
+    if (metodo !== "presencial") {
+        document.getElementById("recuperacao-metodo").textContent = metodo === "email" ? "Recuperação por e-mail" : "Recuperação pelo celular";
+        document.getElementById("recuperacao-pendente").textContent = `O envio ${metodo === "email" ? "por e-mail" : "pelo celular"} ainda depende da integração com o servidor. Nenhuma mensagem foi enviada.`;
+        document.getElementById("recuperacao-cpf").focus();
+    }
+}));
+if (new URLSearchParams(window.location.search).get("sessao") === "expirada") informar("Sua sessão expirou. Entre novamente.", "info");

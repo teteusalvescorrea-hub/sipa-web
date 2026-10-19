@@ -1,0 +1,105 @@
+import {localDaAula,orientacoesComparecimento} from './modules/essencial/components/localAula.js';
+import {nomeUnidadeInstitucional} from './modules/unidades/catalogoUnidades.js';
+﻿// Apresentação compartilhada. Saldo vem dos serviços; nunca é debitado pela tela.
+const texto = (id, valor) => { const node = document.getElementById(id); if (node) node.textContent = valor; };
+const statusAula = {1:'Confirmada',2:'Cancelada',3:'Aguardando aceite',4:'Recusada',5:'Realizada',6:'Falta'};
+const numeroStatus = aula => aula.status?.valor ?? aula.status;
+const dataInicio = aula => aula.inicio || aula.dataHoraInicio;
+function detalhe(lista, titulo, valor) {
+    if (!valor) return;
+    const item=document.createElement('div'), label=document.createElement('dt'), dado=document.createElement('dd');
+    label.textContent=titulo; dado.textContent=valor; item.append(label,dado); lista.append(item);
+}
+export function apresentarDashboard({aluno,resumo,aulas=[],registros=[],categorias=[],integrado=false}) {
+    const nome=aluno?.nome?.trim();
+    texto('student-name',nome?nome.split(/\s+/)[0]:'bem-vindo');
+    for(const categoria of ['A','B']) {
+        const saldo=resumo?.categorias?.[categoria]; texto('credito-'+categoria,saldo?.disponiveis??'—');
+        texto('credito-'+categoria+'-detalhe',saldo?`${saldo.total} créditos · ${saldo.reservadas} reservadas · ${saldo.realizadas} concluídas`:'Saldo por categoria ainda não informado.');
+    }
+    texto('creditos-resumo',resumo?`${resumo.total} créditos no total · créditos não são aulas realizadas`:'Seus saldos serão apresentados por categoria.');
+    const percentual=resumo?.percentual;
+    texto('progress-number',percentual!=null?percentual+'%':'Ainda não iniciado');
+    texto('progress-description',resumo?.realizadas>0?(resumo.total?`${resumo.realizadas} de ${resumo.total} aulas concluídas.`:`${resumo.realizadas} aulas concluídas. Total de créditos ainda não informado.`):'Sua evolução aparecerá conforme as aulas forem concluídas.');
+    const barra=document.getElementById('progress-bar');barra.style.width=(percentual??0)+'%';
+    barra.parentElement.setAttribute('aria-valuenow',String(percentual??0));barra.parentElement.setAttribute('aria-valuetext',percentual!=null?percentual+'%':'Sem aulas concluídas para calcular progresso');
+    const proxima=aulas.filter(a=>(integrado?[1,3,4]:[1]).includes(numeroStatus(a))&&Date.parse(dataInicio(a))>Date.now()).sort((a,b)=>Date.parse(dataInicio(a))-Date.parse(dataInicio(b)))[0];
+    const conteudo=document.getElementById('proxima-aula-conteudo'),selo=document.getElementById('next-lesson-status');conteudo.replaceChildren();selo.hidden=!proxima;
+    if(!proxima) {
+        const titulo=document.createElement('p');titulo.textContent='Você ainda não possui aulas agendadas.';
+        const link=document.createElement('a');link.href='agendamento.html';link.textContent='Agendar aula →';conteudo.append(titulo,link);
+    } else {
+        selo.textContent=statusAula[numeroStatus(proxima)];const dados=document.createElement('dl');dados.className='next-class-details';const inicio=new Date(dataInicio(proxima));
+        detalhe(dados,'Data',inicio.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'long',year:'numeric'}));
+        const hora=v=>new Date(v).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});detalhe(dados,'Horário',hora(dataInicio(proxima))+((proxima.fim||proxima.dataHoraFim)?' às '+hora(proxima.fim||proxima.dataHoraFim):''));
+        detalhe(dados,'Categoria',proxima.categoria?.descricao||proxima.categoria||'Não informada');
+        const recusada=numeroStatus(proxima)===4;
+        detalhe(dados,'Veículo',recusada?null:proxima.veiculoModelo||registros.find(r=>r.id===proxima.veiculo)?.nome);
+        detalhe(dados,'Instrutor',recusada?'Aguardando nova designação':proxima.motoristaNome||registros.find(r=>r.id===proxima.instrutor)?.nome);
+        detalhe(dados,'Unidade',integrado?proxima.unidade:nomeUnidadeInstitucional(proxima.unidade));conteudo.append(dados);if(numeroStatus(proxima)===1){conteudo.append(localDaAula(proxima.unidade,false,integrado?(proxima.localAula||''):undefined),orientacoesComparecimento());}
+        const link=document.createElement('a');link.href='minhas-aulas.html';link.textContent='Consultar minhas aulas →';conteudo.append(link);
+    }
+    const aviso=document.getElementById('dashboard-notice');
+    if(!integrado&&resumo?.incompletas){aviso.textContent='Há registros locais sem categoria ou situação. Confira esses dados antes de utilizar o saldo.';aviso.hidden=false;}
+    document.querySelectorAll('.notification-badge').forEach(node=>{node.hidden=true;});
+    const notificacoes=document.getElementById('notification-button');if(notificacoes){notificacoes.disabled=true;notificacoes.title='Notificações ainda indisponíveis.';}
+}
+export async function iniciarDashboardLocal(servico) {
+    const aviso=document.getElementById('dashboard-notice');aviso.hidden=true;aviso.className='dashboard-notice';
+    let dados=await servico.dadosAlunoLocal();apresentarDashboard(dados);if(!dados.podeConfigurar)return;
+    const sessao=await servico.sessao();
+    if(sessao?.interface!=='aluno'||sessao.identificador!=='17825035798'||(dados.aluno&&dados.aluno.documento!==sessao.identificador))throw new Error('Não foi possível confirmar o vínculo da conta de testes. Nenhum crédito foi alterado.');
+    const config=document.createElement('details');config.className='dashboard-test-setup';config.id='configurar-creditos-teste';
+    config.open=!dados.credito;
+    const titulo=document.createElement('summary');titulo.textContent=dados.credito?'Créditos da minha conta de testes':'Configurar meus créditos locais — 20 moto + 20 carro';
+    const identidade=document.createElement('p');identidade.className='test-account-summary';identidade.id='creditos-vinculo-local';
+    const descricao=document.createElement('p');
+    function diagnostico() {
+        identidade.textContent=`Sessão local: CPF final ${sessao.identificador.slice(-4)} · ${dados.aluno?`${dados.aluno.nome} · cadastro ${dados.aluno.id} · unidade ${dados.aluno.unidade}`:'Nenhum cadastro de aluno vinculado a este CPF. A configuração criará somente esse vínculo.'}`;
+        descricao.textContent=dados.credito?['A','B'].map(c=>{const s=dados.resumo.categorias[c];return `Categoria ${c}: ${s.total} iniciais, ${s.disponiveis??'a conferir'} disponíveis, ${s.reservadas} reservadas, ${s.realizadas} concluídas`;}).join('. ')+'. Saldo calculado pelo histórico; esta ação não reinicia créditos consumidos.':`Não há registro de créditos vinculado a esta conta. Login e seleção de ambiente não concedem créditos automaticamente. A ação abaixo grava 20 créditos iniciais de moto e 20 de carro no armazenamento deste navegador, preservando ${dados.aulas.length} registro(s) de aula. Reservas e aulas que consomem créditos serão descontadas do saldo disponível.`;
+    }
+    diagnostico();
+    const botao=document.createElement('button');botao.type='button';botao.textContent=dados.credito?'Créditos já registrados — histórico preservado':'Configurar 20 créditos de moto e 20 de carro';botao.disabled=Boolean(dados.credito);
+    const vincular=document.createElement('button');vincular.type='button';vincular.id='vincular-unidade-teste';
+    function situacaoVinculo(){vincular.disabled=dados.aluno?.unidade==='Cobilândia';vincular.textContent=vincular.disabled?'Vínculo com Unidade Cobilândia configurado':'Vincular minha conta à Unidade Cobilândia';}
+    situacaoVinculo();
+    const retorno=document.createElement('p');retorno.role='status';retorno.setAttribute('aria-live','polite');config.append(titulo,identidade,descricao,botao,vincular,retorno);
+    if(!vincular.disabled)config.open=true;
+    vincular.onclick=async()=>{
+        if(vincular.disabled)return;vincular.disabled=true;
+        try {await servico.configurarUnidadeTeste();dados=await servico.dadosAlunoLocal();diagnostico();situacaoVinculo();retorno.textContent='Vínculo salvo: Unidade Cobilândia. Créditos e agendamentos preservados. Você pode escolher outra unidade para cada aula.';}
+        catch(erro){retorno.textContent=erro.message||'Não foi possível salvar o vínculo.';vincular.disabled=false;}
+    };
+    document.querySelector('.summary-grid').after(config);
+    botao.onclick=async()=>{
+        if(botao.disabled)return;botao.disabled=true;
+        try {const resultado=await servico.configurarCreditosTeste();dados=await servico.dadosAlunoLocal();apresentarDashboard(dados);diagnostico();situacaoVinculo();titulo.textContent='Créditos da minha conta de testes';retorno.textContent=resultado.aplicado?'Créditos gravados e disponíveis na mesma fonte usada por Agendar aula. O saldo respeita seu histórico; horários exigem recursos cadastrados.':'Configuração já aplicada; nenhum crédito foi duplicado.';botao.textContent='Créditos já registrados — histórico preservado';}
+        catch(erro){retorno.textContent=erro.message||'Falha ao salvar a configuração local.';botao.disabled=false;}
+    };
+}
+async function iniciarIntegrado() {
+    const [{exigirLogin},{sair},{obterAlunoLogado},{listarAgendamentos},{listarContratacoes}]=await Promise.all([
+        import('./modules/essencial/utils/sessao.js'),import('./modules/essencial/service/authService.js'),import('./modules/alunos/services/alunos.service.js'),import('./modules/agendamentos/services/agendamentos.service.js'),import('./modules/contratacoes/services/contratacoes.service.js')]);
+    if(!exigirLogin(['Aluno']))return;
+    document.getElementById('logout-button').onclick=sair;document.getElementById('mobile-menu-button').onclick=()=>document.querySelector('.sipa-sidebar').classList.toggle('mobile-open');
+    apresentarDashboard({});
+    try {
+        const aluno=await obterAlunoLogado();
+        const categorias=(aluno.categoriasFormacao||[]).map(c=>({1:'A',2:'B'})[c.valor]).filter(Boolean);
+        const dados={aluno,categorias,integrado:true,resumo:{categorias:{},total:aluno.aulasContratadas,realizadas:aluno.aulasRealizadas,percentual:aluno.aulasRealizadas>0&&Number.isFinite(aluno.percentualProgresso)?aluno.percentualProgresso:null}};
+        // /me só informa saldo agregado. Não repartir artificialmente um pacote AB.
+        apresentarDashboard(dados);
+        const respostas=await Promise.allSettled([listarAgendamentos(),listarContratacoes()]);
+        if(respostas[0].status==='fulfilled')apresentarDashboard({...dados,aulas:respostas[0].value});
+        texto('creditos-resumo',`${aluno.aulasRestantes} aulas disponíveis no saldo conjunto · ${aluno.aulasAgendadas} agendadas · ${aluno.aulasRealizadas} realizadas`);
+        const aviso=document.getElementById('dashboard-notice');
+        if(respostas.some(r=>r.status==='rejected')){aviso.hidden=false;aviso.textContent=respostas.filter(r=>r.status==='rejected').map(r=>r.reason.message).join(' ');}
+        else if(aluno.aulasRestantes===0){
+            aviso.hidden=false;
+            const pendentes=respostas[1].value.filter(c=>c.status?.valor===1);
+            aviso.textContent=pendentes.length?'Seu pacote está aguardando a confirmação da autoescola.':'Você não possui saldo disponível para novos agendamentos.';
+            if(!pendentes.length){const link=document.createElement('a');link.href='pacotes.html';link.textContent=' Consultar pacotes adicionais →';aviso.append(link);}
+        }
+    }catch(erro){const aviso=document.getElementById('dashboard-notice');aviso.hidden=false;aviso.textContent=erro.message||'Não foi possível carregar o painel.';}
+}
+if(document.body.dataset.sipaLocal!=='aluno'&&document.body.dataset.sipaLocalInicializando!=='aluno')iniciarIntegrado();

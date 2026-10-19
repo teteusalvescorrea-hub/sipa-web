@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 
 <head>
+    <script src="js/tema-aluno.js"></script>
+    <script src="js/sidebar-aluno.js" defer></script>
 
     <meta charset="UTF-8">
 
@@ -48,10 +50,11 @@
         href="css/meu-perfil.css"
     >
 
+    <link rel="stylesheet" href="css/tema-aluno.css">
 </head>
 
 
-<body>
+<body data-sipa-aluno>
 
 
     <!-- =========================================
@@ -120,27 +123,10 @@
             href="dashboard.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">
-                🏠
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Início
-            </span>
-        </a>
-
-
-        <!-- MINHAS AULAS -->
-        <a
-            href="minhas-aulas.html"
-            class="sipa-sidebar-link"
-        >
-            <span class="sipa-sidebar-icon">
-                📚
-            </span>
-
-            <span>
-                Minhas aulas
             </span>
         </a>
 
@@ -150,12 +136,23 @@
             href="agendamento.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">
-                📅
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Agendar aula
+            </span>
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
             </span>
         </a>
 
@@ -165,9 +162,7 @@
             href="meu-progresso.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">
-                ⏱️
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu progresso
@@ -180,12 +175,10 @@
             href="pacotes.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">
-                📦
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
-                Pacotes
+                Pacotes adicionais
             </span>
         </a>
 
@@ -201,9 +194,7 @@
             href="meu-perfil.html"
             class="sipa-sidebar-link active"
         >
-            <span class="sipa-sidebar-icon">
-                👤
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu perfil
@@ -242,9 +233,7 @@
             class="sipa-sidebar-logout"
         >
 
-            <span>
-                ↪
-            </span>
+            <span></span>
 
             Sair da conta
 
@@ -465,9 +454,7 @@
                         PACOTE CONTRATADO
                     </span>
 
-                    <strong id="profile-package">
-                        -
-                    </strong>
+                    <div id="profile-package" class="profile-category-balances"><div><span>Categoria A — Moto</span><strong data-perfil-total="A">—</strong></div><div><span>Categoria B — Carro</span><strong data-perfil-total="B">—</strong></div></div>
 
                     <small>
                         aulas práticas
@@ -484,9 +471,7 @@
                         AULAS RESTANTES
                     </span>
 
-                    <strong id="profile-remaining">
-                        -
-                    </strong>
+                    <div id="profile-remaining" class="profile-category-balances"><div><span>Categoria A — Moto</span><strong data-perfil-disponivel="A">—</strong></div><div><span>Categoria B — Carro</span><strong data-perfil-disponivel="B">—</strong></div></div>
 
                     <small>
                         aulas disponíveis
@@ -586,7 +571,7 @@
 
 
             <span class="profile-online">
-                ● Sistema online
+                Acesso autenticado
             </span>
 
 
@@ -600,7 +585,7 @@
          JAVASCRIPT
          ========================================= -->
 
-    <script type="module" src="js/meu-perfil.js"></script>
+    <script type="module" src="js/aluno.js"></script>
 
 
 </body>

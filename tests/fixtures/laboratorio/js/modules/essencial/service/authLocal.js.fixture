@@ -1,0 +1,611 @@
+import { normalizarDisponibilidadeAntecipacao, MOTIVOS_CANCELAMENTO, identificarMotivo, criarCancelamento, normalizarPreferenciasAutomaticas, normalizarAntecipacao, gerarPropostaAutomatica, calcularPrazoCancelamento } from './agendamentoAluno.js';
+import { UNIDADES_INSTITUCIONAIS, normalizarChaveUnidade, nomeUnidadeInstitucional } from '../../unidades/catalogoUnidades.js';
+// Laboratório isolado: nunca emite JWT, importa serviços HTTP ou altera sipa.token.
+// Para desativar completamente o laboratório, altere esta constante para false.
+export const DESENVOLVIMENTO_LOCAL_HABILITADO = true;
+export const MOTIVOS_CANCELAMENTO_LOCAL = Object.freeze(MOTIVOS_CANCELAMENTO.map(m=>m.nome));
+export const CHAVE_AMBIENTE_LOCAL = "sipa.dev.ambiente";
+export function hostLocalPermitido(endereco) {
+    let url;
+    try { url = new URL(endereco); } catch { return false; }
+    return DESENVOLVIMENTO_LOCAL_HABILITADO && ["http:", "https:"].includes(url.protocol)
+        && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+}
+// Preferência explícita de execução, independente da existência de conta ou sessão.
+export function resolverAmbiente(endereco, preferencia = null) {
+    const url = new URL(endereco), modos = url.searchParams.getAll("ambiente");
+    if (modos.length > 1 || (modos.length === 1 && !["local", "integrado"].includes(modos[0]))) throw new Error("Seleção de ambiente inválida.");
+    if (!hostLocalPermitido(endereco)) {
+        if (modos[0] === "local") throw new Error("Ambiente local não autorizado neste endereço.");
+        return "integrado";
+    }
+    return modos[0] || (preferencia === "local" ? "local" : "integrado");
+}
+export function modoLocalPermitido(endereco, preferencia = null) {
+    try { return hostLocalPermitido(endereco) && resolverAmbiente(endereco, preferencia) === "local"; } catch { return false; }
+}
+export function ambienteAtual() {
+    const endereco = window.location.href;
+    // Fora do loopback, nem lê preferências de desenvolvimento.
+    let preferencia = null;
+    if (hostLocalPermitido(endereco)) {
+        try { preferencia = localStorage.getItem(CHAVE_AMBIENTE_LOCAL); }
+        catch { throw new Error("Não foi possível ler a configuração local. Libere o armazenamento deste site no navegador."); }
+    }
+    return resolverAmbiente(endereco, preferencia);
+}
+export function configurarAmbienteAtual() {
+    const ambiente = ambienteAtual();
+    if (hostLocalPermitido(window.location.href) && new URL(window.location.href).searchParams.has("ambiente")) {
+        localStorage.setItem(CHAVE_AMBIENTE_LOCAL, ambiente);
+    }
+    return ambiente;
+}
+const CHAVE = "sipa.dev.local.session";
+export const DOCUMENTO_CREDITOS_TESTE = "17825035798";
+// Consulta derivada; não debita saldo nem modifica o histórico. Mesmas regras de
+// Consome/Expirada do domínio: 3 e 4 só reservam antes do início; falta consome.
+export function resumirCreditos(credito, aulas = [], agora = Date.now()) {
+    const categorias = Object.fromEntries(["A", "B"].map(categoria => [categoria, { total: credito?.categorias?.[categoria] || 0, disponiveis: 0, reservadas: 0, realizadas: 0, consumidas: 0 }]));
+    let incompletas = 0;
+    // Consumos já existentes preservados ao retirar históricos descartáveis.
+    for(const item of credito?.consumosPreservadosLimpeza || []) {
+        if(categorias[item.categoria]&&item.quantidade===1) categorias[item.categoria].consumidas++;
+        else incompletas++;
+    }
+    const vistos = new Set();
+    for (const aula of aulas) {
+        if (vistos.has(aula.id)) continue; vistos.add(aula.id);
+        const c = categorias[aula.categoria], status = aula.status, inicio = Date.parse(aula.inicio);
+        if (!c || ![1, 2, 3, 4, 5, 6].includes(status) || !Number.isFinite(inicio)) { incompletas++; continue; }
+        if (status === 5) c.realizadas++;
+        if ([1, 3, 4].includes(status) && inicio > agora) c.reservadas++;
+        if ([1, 5, 6].includes(status) || (status === 2 && aula.cancelamento?.credito === "retido") || ([3, 4].includes(status) && inicio > agora)) c.consumidas++;
+    }
+    for (const c of Object.values(categorias)) c.disponiveis = incompletas ? null : Math.max(0, c.total - c.consumidas);
+    const total = Object.values(categorias).reduce((s, c) => s + c.total, 0), realizadas = Object.values(categorias).reduce((s, c) => s + c.realizadas, 0);
+    return { categorias, incompletas, total, realizadas, percentual: total && realizadas && !incompletas ? Math.min(100, Math.round(realizadas * 100 / total)) : null };
+}
+// Apresentação por categoria reutiliza o mesmo domínio de consumo de créditos.
+export function progressoPorCategoria(credito,aulas=[],agora=Date.now()){
+    const resumo=resumirCreditos(credito,aulas,agora);
+    for(const c of Object.values(resumo.categorias))c.percentual=c.total>0&&!resumo.incompletas?Math.min(100,Math.round(c.realizadas*100/c.total)):null;
+    return resumo;
+}
+// Consulta pura sobre um snapshot local. A gravação reexecuta esta consulta sob
+// o mesmo lock usado pelos demais escritores, nunca confia no horário do DOM.
+// Mesmas seis unidades divulgadas nas páginas públicas. Não representam recursos disponíveis.
+export const UNIDADES_LOCAIS = Object.freeze(UNIDADES_INSTITUCIONAIS.map(u=>u.id));
+export const normalizarUnidadeLocal=normalizarChaveUnidade;
+export const nomeUnidadeLocal=nomeUnidadeInstitucional;
+const SEED_RECURSOS = "sipa-recursos-agendamento-v1";
+export function criarRecursosFicticiosLocais() {
+    const registros = []; let sequencia = 0;
+    for (const [u, unidade] of UNIDADES_LOCAIS.entries()) for (const categoria of ["A", "B"]) for (let n = 1; n <= 2; n++) {
+        sequencia++;
+        const base = `sipa-seed-recursos-v1-u${u + 1}-${categoria.toLowerCase()}-${n}`;
+        const jornada = () => Array.from({ length: 6 }, (_, d) => ({ dia: d + 1, inicio: "07:00", fim: d === 5 ? "12:00" : "19:00" }));
+        const comum = { unidade, ativo: true, disponivel: true, seedId: SEED_RECURSOS, dadosDeTeste: true };
+        registros.push({ ...comum, id: `${base}-instrutor`, tipo: "instrutor", nome: `Instrutor Teste ${String(n).padStart(2, "0")} — ${unidade} · ${categoria} (fictício)`, documento: `TSTI${String(sequencia).padStart(4, "0")}`, categorias: [categoria], veiculoIds: [`${base}-veiculo`], disponibilidadeSemanal: jornada() });
+        registros.push({ ...comum, id: `${base}-veiculo`, tipo: "veiculo", nome: `${categoria === "A" ? "Moto" : "Carro"} Teste ${String(n).padStart(2, "0")} — ${unidade} (fictício)`, documento: `TSTV${String(sequencia).padStart(4, "0")}`, categoria, disponibilidadeSemanal: jornada() });
+    }
+    return registros;
+}
+function recursoFicticioGerado(registro) {
+    if (!registro || registro.seedId !== SEED_RECURSOS || registro.dadosDeTeste !== true) return false;
+    return criarRecursosFicticiosLocais().some(r => r.id === registro.id && r.tipo === registro.tipo && r.documento === registro.documento);
+}
+function planejarLimpezaRecursos(lista) {
+    const gerados = lista.filter(recursoFicticioGerado), ids = new Set(gerados.map(r => r.id)), protegidos = new Map();
+    const proteger = (id, origem) => {
+        if (!ids.has(id)) return;
+        if (!protegidos.has(id)) protegidos.set(id, new Set());
+        protegidos.get(id).add(origem);
+    };
+    for (const r of lista) if (r.tipo === "aula") { proteger(r.instrutor, `aula ${r.id}`); proteger(r.veiculo, `aula ${r.id}`); }
+    // Mantém veículos apontados por cadastros manuais ou instrutores preservados.
+    let anteriores;
+    do {
+        anteriores = protegidos.size;
+        for (const r of lista) if (!ids.has(r.id) || protegidos.has(r.id)) {
+            for (const id of Array.isArray(r.veiculoIds) ? r.veiculoIds : []) proteger(id, `cadastro ${r.id}`);
+        }
+    } while (anteriores !== protegidos.size);
+    return {
+        removiveis: gerados.filter(r => !protegidos.has(r.id)),
+        dependencias: gerados.filter(r => protegidos.has(r.id)).map(r => ({ id: r.id, nome: r.nome, referencias: [...protegidos.get(r.id)] }))
+    };
+}
+export function validarDisponibilidadeSemanal(jornada) {
+    const hora = h => typeof h === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(h);
+    if (!Array.isArray(jornada) || !jornada.length || jornada.length > 7 || new Set(jornada.map(j => j?.dia)).size !== jornada.length || jornada.some(j => !j || !Number.isInteger(j.dia) || j.dia < 0 || j.dia > 6 || !hora(j.inicio) || !hora(j.fim) || j.inicio >= j.fim)) throw new Error("Informe dias e horários válidos de disponibilidade, sem dias repetidos.");
+    return jornada;
+}
+export async function calcularHorariosLocais(dados, consulta, agora) {
+    const [{ validarHorario, motivoFechamento }, { agoraBrasil, dataValida, diaSemana }] = await Promise.all([
+        import("../../compartilhado/disponibilidade.js"), import("../../compartilhado/calendario.js")
+    ]);
+    agora ||= agoraBrasil();
+    const { categoria, data, unidade } = consulta;
+    if (!["A", "B"].includes(categoria) || !dataValida(data) || !unidade || data < agora.slice(0, 10)) return [];
+    if (motivoFechamento(data) || !dados.aluno?.unidade || dados.aluno.unidade === "Não informada") return [];
+    const recursos = dados.registros.filter(r => ["instrutor", "veiculo"].includes(r.tipo) && normalizarUnidadeLocal(r.unidade) === normalizarUnidadeLocal(unidade));
+    const emMinutos = h => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
+    const sobrepoe = (a, b, c, d) => emMinutos(a) < emMinutos(d) && emMinutos(c) < emMinutos(b);
+    const bloqueado = (r, hora, fim) => (r.bloqueios || []).some(b => b.data === data && (!b.inicio || sobrepoe(hora, fim, b.inicio, b.fim)));
+    if (recursos.some(r => (r.feriadosUnidade || []).includes(data) || (r.bloqueiosUnidade || []).some(b => b.data === data && !b.inicio))) return [];
+    const livres = (r, hora, fim) => r.ativo === true && r.disponivel !== false && !bloqueado(r, hora, fim) &&
+        (r.disponibilidadeSemanal == null || (Array.isArray(r.disponibilidadeSemanal) && r.disponibilidadeSemanal.some(j => j.dia === diaSemana(data) && j.inicio <= hora && fim <= j.fim))) &&
+        !recursos.some(u => (u.bloqueiosUnidade || []).some(b => b.data === data && b.inicio && sobrepoe(hora, fim, b.inicio, b.fim))) &&
+        !dados.registros.some(a => a.tipo === "aula" && [1, 3, 5, 6].includes(a.status ?? 1) && (a.instrutor === r.id || a.veiculo === r.id) && Date.parse(a.inicio) < Date.parse(`${data}T${fim}:00-03:00`) && Date.parse(`${data}T${hora}:00-03:00`) < Date.parse(a.fim));
+    const horarios = [];
+    for (let h = 7; h <= 18; h++) {
+        const hora = `${String(h).padStart(2, "0")}:00`, fim = `${String(h + 1).padStart(2, "0")}:00`;
+        if (validarHorario(data, hora) || `${data}T${hora}:00` <= agora) continue;
+        if (dados.aulas.some(a => [1, 3, 5, 6].includes(a.status ?? 1) && Date.parse(a.inicio) < Date.parse(`${data}T${fim}:00-03:00`) && Date.parse(`${data}T${hora}:00-03:00`) < Date.parse(a.fim))) continue;
+        const instrutores = recursos.filter(r => r.tipo === "instrutor" && r.categorias?.includes(categoria) && livres(r, hora, fim));
+        const veiculos = recursos.filter(r => r.tipo === "veiculo" && r.categoria === categoria && livres(r, hora, fim));
+        const pares = instrutores.flatMap(i => veiculos.filter(v => !i.veiculoIds?.length || i.veiculoIds.includes(v.id)).map(v => ({ instrutorId: i.id, veiculoId: v.id })));
+        if (pares.length) horarios.push({ hora, fim, pares });
+    }
+    return horarios;
+}
+export async function consultarRecursosLocais(dados, consulta, agora) {
+    const recursos = dados.registros.filter(r => normalizarUnidadeLocal(r.unidade) === normalizarUnidadeLocal(consulta.unidade));
+    const instrutores = recursos.filter(r => r.tipo === "instrutor" && r.categorias?.includes(consulta.categoria));
+    const veiculos = recursos.filter(r => r.tipo === "veiculo" && r.categoria === consulta.categoria);
+    const contagem = { instrutores: instrutores.length, veiculos: veiculos.length };
+    const resposta = mensagem => ({ horarios: [], mensagem, contagem });
+    if (!consulta.unidade) return resposta("Selecione a unidade da aula.");
+    if (!dados.aluno?.unidade || dados.aluno.unidade === "Não informada") return resposta("Configure a unidade de vínculo da sua conta no dashboard antes de reservar.");
+    if (!instrutores.length) return resposta("Sem instrutores cadastrados para esta unidade e categoria. Cadastre ou complete a habilitação do instrutor na configuração local abaixo.");
+    if (!veiculos.length) return resposta("Sem veículos cadastrados para esta unidade e categoria. Cadastre carro para B ou moto para A na configuração local abaixo.");
+    if (!consulta.data) return resposta("Recursos encontrados. Selecione uma data para consultar jornadas, bloqueios e conflitos.");
+    const horarios = await calcularHorariosLocais(dados, consulta, agora);
+    if (horarios.length) return { horarios, mensagem: "Horários válidos calculados pelos recursos locais.", contagem };
+    const { motivoFechamento } = await import("../../compartilhado/disponibilidade.js");
+    const fechamento = motivoFechamento(consulta.data);
+    if (fechamento) return resposta(fechamento);
+    const semConflitos = await calcularHorariosLocais({ ...dados, aulas: [], registros: dados.registros.filter(r => r.tipo !== "aula") }, consulta, agora);
+    return resposta(semConflitos.length ? "Horários ocupados por outros agendamentos do aluno, instrutor ou veículo." : "Recursos cadastrados, mas indisponíveis na data selecionada. Confira ativação, jornada, bloqueios e compatibilidade entre instrutor e veículo.");
+}
+const pedido = request => new Promise((resolve, reject) => { request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+const fim = tx => new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onabort = tx.onerror = () => reject(tx.error || new Error("Transação local interrompida.")); });
+const bytes = texto => new TextEncoder().encode(texto);
+const hex = buffer => Array.from(new Uint8Array(buffer), n => n.toString(16).padStart(2, "0")).join("");
+async function derivar(senha, sal) {
+    const chave = await crypto.subtle.importKey("raw", bytes(senha), "PBKDF2", false, ["deriveBits"]);
+    return hex(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: bytes(sal), iterations: 600000, hash: "SHA-256" }, chave, 256));
+}
+async function segredo(senha) {
+    const sal = hex(crypto.getRandomValues(new Uint8Array(24)));
+    return { sal, hash: await derivar(senha, sal) };
+}
+export async function criarServicoLocal() {
+    function proteger() {
+        if (ambienteAtual() !== "local") throw new Error("Ambiente local não autorizado.");
+    }
+    proteger();
+    if (!globalThis.indexedDB || !crypto.subtle) throw new Error("Este navegador não oferece armazenamento e criptografia locais necessários.");
+    const abertura = indexedDB.open("sipa.dev.local.v1", 2);
+    abertura.onupgradeneeded = () => {
+        for (const nome of ["contas", "sessoes", "registros", "creditos"]) {
+            if (!abertura.result.objectStoreNames.contains(nome)) abertura.result.createObjectStore(nome, { keyPath: "id" });
+        }
+    };
+    const db = await pedido(abertura);
+    db.onversionchange = () => db.close();
+    async function ler(store, id) {
+        proteger(); const tx = db.transaction(store); const done = fim(tx);
+        const valor = await pedido(tx.objectStore(store).get(id)); await done; return valor;
+    }
+    async function gravar(store, registro, inserir = false) {
+        proteger(); const tx = db.transaction(store, "readwrite"), done = fim(tx);
+        tx.objectStore(store)[inserir ? "add" : "put"](registro); await done;
+    }
+    async function sessao() {
+        proteger(); const nonce = sessionStorage.getItem(CHAVE);
+        if (!nonce) return null;
+        const id = hex(await crypto.subtle.digest("SHA-256", bytes(nonce)));
+        const registro = await ler("sessoes", id), conta = await ler("contas", "master");
+        if (!registro || registro.expira <= Date.now() || !conta?.ativa || conta.provisoria) { sessionStorage.removeItem(CHAVE); return null; }
+        return { perfil: "Master de desenvolvimento — Nível 5", identificador: conta.identificador, interface: registro.interface || null };
+    }
+    async function exigirSessao() { if (!await sessao()) throw new Error("Entre novamente no ambiente local."); }
+    async function registros() {
+        await exigirSessao(); const tx = db.transaction("registros"), done = fim(tx);
+        const lista = await pedido(tx.objectStore("registros").getAll()); await done; return lista;
+    }
+    async function creditos() {
+        await exigirSessao(); const tx = db.transaction("creditos"), done = fim(tx);
+        const lista = await pedido(tx.objectStore("creditos").getAll()); await done; return lista;
+    }
+    function validarRegistros(lista) {
+        if (!Array.isArray(lista) || lista.length > 10000) throw new Error("Backup inválido ou muito grande.");
+        const ids = new Set(), unicos = new Set();
+        const limpos = lista.map(item => {
+            if (!item || !["aluno", "instrutor", "veiculo", "aula"].includes(item.tipo) || typeof item.id !== "string" || ids.has(item.id)) throw new Error("Registro ou identificador inválido/duplicado.");
+            ids.add(item.id);
+            const r = { ...structuredClone(item), id: item.id, tipo: item.tipo, nome: String(item.nome || "").trim(), unidade: String(item.unidade || "").trim() };
+            if (!r.nome || r.nome.length > 120 || !r.unidade || r.unidade.length > 80) throw new Error("Informe nome e unidade válidos.");
+            if (r.tipo !== "aula") {
+                if (item.ativo != null && typeof item.ativo !== "boolean") throw new Error("Informe ativo como verdadeiro ou falso.");
+                if (item.disponibilidadeSemanal != null) validarDisponibilidadeSemanal(item.disponibilidadeSemanal);
+                if (item.disponivel != null && typeof item.disponivel !== "boolean") throw new Error("Disponibilidade inválida.");
+                if (item.veiculoIds != null && (!Array.isArray(item.veiculoIds) || item.veiculoIds.some(id => typeof id !== "string"))) throw new Error("Vínculos de veículos inválidos.");
+                if (item.categoria != null && !["A", "B"].includes(item.categoria)) throw new Error("Categoria de veículo inválida.");
+                if (item.categorias != null && (!Array.isArray(item.categorias) || item.categorias.some(c => !["A", "B"].includes(c)))) throw new Error("Categorias de instrutor inválidas.");
+                for (const chave of ["bloqueios", "bloqueiosUnidade"]) {
+                    if (item[chave] != null && (!Array.isArray(item[chave]) || item[chave].some(b => !/^\d{4}-\d{2}-\d{2}$/.test(b.data) || (b.inicio && (!/^\d{2}:\d{2}$/.test(b.inicio) || !/^\d{2}:\d{2}$/.test(b.fim) || b.inicio >= b.fim))))) throw new Error("Bloqueio local inválido.");
+                }
+                if (item.feriadosUnidade != null && (!Array.isArray(item.feriadosUnidade) || item.feriadosUnidade.some(d => !/^\d{4}-\d{2}-\d{2}$/.test(d)))) throw new Error("Feriados da unidade inválidos.");
+                r.documento = String(item.documento || "").replace(/[^a-z0-9]/gi, "").toUpperCase();
+                if (!recursoFicticioGerado(r) && (r.tipo === "veiculo" ? !/^[A-Z0-9]{7}$/.test(r.documento) : !/^\d{11}$/.test(r.documento))) throw new Error("Informe CPF com 11 dígitos ou placa com 7 caracteres. Identificadores TST são exclusivos dos recursos fictícios preparados pelo sistema local.");
+                const chave = `${r.tipo === "veiculo" ? "placa" : "cpf"}:${r.documento}`;
+                if (unicos.has(chave)) throw new Error("CPF ou placa já cadastrados no laboratório.");
+                unicos.add(chave);
+            } else {
+                for (const campo of ["aluno", "instrutor", "veiculo", "inicio", "fim"]) r[campo] = String(item[campo] || "");
+                // Metadados opcionais: registros antigos sem essas informações
+                // continuam preservados; não se atribui situação automaticamente.
+                if (item.categoria != null) { if (!["A", "B"].includes(item.categoria)) throw new Error("Categoria inválida."); r.categoria = item.categoria; }
+                if (item.status != null) { if (![1, 2, 3, 4, 5, 6].includes(item.status)) throw new Error("Situação da aula inválida."); r.status = item.status; }
+                if (!Number.isFinite(Date.parse(r.inicio)) || !Number.isFinite(Date.parse(r.fim)) || Date.parse(r.fim) <= Date.parse(r.inicio)) throw new Error("Informe início e fim válidos para a aula.");
+            }
+            return r;
+        });
+        for (const aula of limpos.filter(r => r.tipo === "aula")) {
+            for (const tipo of ["aluno", "instrutor", "veiculo"]) {
+                if (!limpos.some(r => r.id === aula[tipo] && r.tipo === tipo && (tipo === "aluno" || normalizarUnidadeLocal(r.unidade) === normalizarUnidadeLocal(aula.unidade)))) throw new Error("O aluno deve existir e os recursos devem pertencer à unidade da aula.");
+            }
+            if (![2, 4].includes(aula.status) && limpos.some(r => r.tipo === "aula" && ![2, 4].includes(r.status) && r.id !== aula.id && Date.parse(r.inicio) < Date.parse(aula.fim) && Date.parse(aula.inicio) < Date.parse(r.fim) && ["aluno", "instrutor", "veiculo"].some(c => r[c] === aula[c]))) throw new Error("Há conflito de horário nos recursos da aula local.");
+        }
+        return limpos;
+    }
+    async function substituir(lista) {
+        await exigirSessao(); const limpos = validarRegistros(lista);
+        if ((await creditos()).some(c => !limpos.some(r => r.id === c.alunoId && r.tipo === "aluno"))) throw new Error("Há créditos vinculados a alunos existentes. Nenhum registro foi removido.");
+        const tx = db.transaction("registros", "readwrite"), done = fim(tx), store = tx.objectStore("registros");
+        store.clear(); limpos.forEach(r => store.add(r)); await done;
+    }
+    // Serializa alterações deste serviço; revisões simultâneas em outras abas são
+    // bloqueadas por Web Locks, sem sobrescrever silenciosamente cadastros.
+    async function alterar(fn) {
+        if (!navigator.locks) throw new Error("Atualize o navegador para editar dados locais com segurança.");
+        return navigator.locks.request("sipa.dev.local.registros", async () => substituir(await fn(await registros())));
+    }
+    async function dadosAlunoLocal() {
+        const atual = await sessao(); if (!atual || atual.interface !== "aluno") throw new Error("Entre no ambiente local de Aluno.");
+        const lista = await registros(), vinculados = lista.filter(r => r.tipo === "aluno" && r.documento === atual.identificador);
+        if (vinculados.length > 1) throw new Error("Há cadastros duplicados para esta conta local. Confira o vínculo; nenhum dado foi alterado.");
+        const aluno = vinculados[0];
+        const credito = aluno ? await ler("creditos", aluno.id) : null;
+        if (credito && credito.alunoId !== aluno.id) throw new Error("Os créditos locais não correspondem ao cadastro vinculado. Nenhum saldo foi alterado.");
+        const aulas = aluno ? lista.filter(r => r.tipo === "aula" && r.aluno === aluno.id) : [];
+        return { aluno, credito, aulas, registros: lista, resumo: resumirCreditos(credito, aulas), podeConfigurar: atual.identificador === DOCUMENTO_CREDITOS_TESTE };
+    }
+    function referenciasCancelamento(valor,id){
+        if(typeof valor==='string')return valor===id;
+        if(Array.isArray(valor))return valor.some(v=>referenciasCancelamento(v,id));
+        return valor&&typeof valor==='object'&&Object.values(valor).some(v=>referenciasCancelamento(v,id));
+    }
+    async function planoCancelamentosTeste(){
+        const dados=await dadosAlunoLocal(),saldos=await creditos();
+        const candidatos=dados.aulas.filter(a=>a.status===2).map(a=>{
+            const referencias=[...dados.registros.filter(r=>r.id!==a.id),...saldos].some(r=>referenciasCancelamento(r,a.id));
+            // Reconhecer o formato local não certifica origem de teste: a confirmação
+            // humana continua obrigatória. Metadados desconhecidos nunca são ignorados.
+            const permitidos=['id','tipo','nome','aluno','categoria','unidade','instrutor','veiculo','inicio','fim','status','operacaoId','totalNoLote','ordemNoLote','criadoEm','historico','motivoCancelamento','cancelamento'];
+            const desconhecidos=Object.keys(a).filter(k=>!permitidos.includes(k));
+            const camposCancelamento=['versaoPolitica','minutosMinimos','milissegundosUteis','minutosUteis','dentroPrazo','semConsumoOriginal','em','motivoId','credito','frequencia','justificativa'];
+            const cancelamentoSeguro=c=>{
+                if(!c||typeof c!=='object'||Array.isArray(c)||Object.keys(c).some(k=>!camposCancelamento.includes(k)))return false;
+                if(c.versaoPolitica!=='local-calendario-util-v2'||!Number.isFinite(Date.parse(c.em))||c.minutosMinimos!==2880||!Number.isFinite(c.minutosUteis)||c.minutosUteis<0||c.minutosUteis>2880||c.milissegundosUteis!==c.minutosUteis*60000||typeof c.dentroPrazo!=='boolean'||typeof c.semConsumoOriginal!=='boolean'||!identificarMotivo(c.motivoId))return false;
+                if(c.frequencia==='cancelada'&&c.justificativa===null)return (c.dentroPrazo&&c.credito==='devolvido')||(c.semConsumoOriginal&&c.credito==='nao_consumido');
+                if(c.dentroPrazo||c.semConsumoOriginal||c.credito!=='retido')return false;
+                if(c.frequencia==='falta')return c.justificativa===null;
+                const j=c.justificativa;
+                return c.frequencia==='justificativa_pendente'&&c.motivoId==='saude'&&j?.estado==='aguardando_apresentacao'&&j.resultado===null&&Object.keys(j).every(k=>['estado','prazoApresentacao','resultado'].includes(k))&&Date.parse(j.prazoApresentacao)===Date.parse(c.em)+72*3600000;
+            };
+            const metadadosSeguros=a.cancelamento==null||cancelamentoSeguro(a.cancelamento);
+            const historicoSeguro=Array.isArray(a.historico)&&a.historico.length>0&&a.historico.some(e=>e.status===2)&&a.historico.every(e=>[1,2,3,4].includes(e.status)&&Number.isFinite(Date.parse(e.em))&&Object.keys(e).every(k=>['status','em','motivo','cancelamento'].includes(k))&&(!e.cancelamento||(e.status===2&&cancelamentoSeguro(e.cancelamento)&&JSON.stringify(e.cancelamento)===JSON.stringify(a.cancelamento))));
+            const origemLocal=a.cancelamento?.credito!=='retido'||(typeof a.operacaoId==='string'&&a.id==='reserva-'+a.operacaoId+(a.ordemNoLote?'-'+a.ordemNoLote:'')&&Number.isFinite(Date.parse(a.criadoEm))&&a.historico?.some(e=>e.status===1&&e.em===a.criadoEm));
+            const seguro=origemLocal&&!referencias&&!desconhecidos.length&&metadadosSeguros&&historicoSeguro&&['A','B'].includes(a.categoria);
+            return {registro:a,elegivel:seguro,motivo:!origemLocal?'Origem local não verificável. Baixe o backup e revise a identificação da reserva antes de solicitar a limpeza.':referencias?'Possui referência em outro registro ou crédito.':desconhecidos.length?'Metadados não reconhecidos: '+desconhecidos.join(', ')+'. Preservar para conferência.':!metadadosSeguros?'Metadados ou justificativa não verificáveis; preservar para revisão.':!seguro?'Histórico incompleto, incompatível ou com realização/falta; preservar.':'Sem referências externas ou impacto no saldo. Selecione somente se reconhecer como teste descartável.'};
+        });
+        return {alunoId:dados.aluno?.id||null,conta:(await sessao()).identificador,candidatos};
+    }
+    async function reservarLoteLocal(pedidoLote) {
+        if (!navigator.locks) throw new Error("Este navegador não oferece o controle de concorrência necessário.");
+        return navigator.locks.request("sipa.dev.local.registros", async () => {
+            const dados = await dadosAlunoLocal();
+            if (!dados.aluno?.unidade || dados.aluno.unidade === "Não informada") throw new Error("Vincule seu cadastro local de aluno à unidade antes de reservar.");
+            const { categoria, operacaoId } = pedidoLote, unidade = normalizarUnidadeLocal(pedidoLote.unidade);
+            if (!["A","B"].includes(categoria) || (pedidoLote.unidade != null && !UNIDADES_LOCAIS.includes(unidade))) throw new Error("Selecione categoria e unidade válidas.");
+            if (!/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(operacaoId || "")) throw new Error("Identificador da operação inválido.");
+            if (!Array.isArray(pedidoLote.aulas) || !pedidoLote.aulas.length) throw new Error("Selecione pelo menos uma aula para confirmar.");
+            const selecoes = pedidoLote.aulas.map(a => ({data:a.data,hora:a.hora,unidade:normalizarUnidadeLocal(a.unidade || unidade),instrutorId:a.instrutorId,veiculoId:a.veiculoId})).sort((a,b)=>String(a.data).localeCompare(String(b.data))||String(a.hora).localeCompare(String(b.hora)));
+            if (selecoes.some(a=>!UNIDADES_LOCAIS.includes(a.unidade))) throw new Error("Unidade da aula inválida.");
+            if (new Set(selecoes.map(a=>a.data+'T'+a.hora)).size !== selecoes.length) throw new Error("Há horários repetidos na seleção. Nenhuma aula foi salva.");
+            const ids = selecoes.map((_,i)=>'reserva-'+operacaoId+(i?'-'+i:''));
+            const anteriores = dados.registros.filter(r=>r.operacaoId===operacaoId || ids.includes(r.id));
+            if (anteriores.length) {
+                if (anteriores.length!==selecoes.length || selecoes.some((a,i)=>!anteriores.some(r=>r.id===ids[i]&&r.tipo==='aula'&&r.aluno===dados.aluno.id&&r.categoria===categoria&&normalizarUnidadeLocal(r.unidade)===a.unidade&&r.inicio===a.data+'T'+a.hora+':00-03:00'&&r.instrutor===a.instrutorId&&r.veiculo===a.veiculoId))) throw new Error("Operação já utilizada para outra reserva ou lote. Nenhuma aula adicional foi salva.");
+                return ids.map(id=>anteriores.find(r=>r.id===id));
+            }
+            if (!(dados.resumo.categorias[categoria]?.disponiveis >= selecoes.length)) throw new Error("Não há créditos disponíveis suficientes para todas as aulas. Nenhuma aula foi salva.");
+            const novos = [], snapshot = {...dados,registros:[...dados.registros],aulas:[...dados.aulas]};
+            for (const [i,a] of selecoes.entries()) {
+                const unidade = a.unidade;
+                const horario = (await calcularHorariosLocais(snapshot,{...a,categoria,unidade})).find(h=>h.hora===a.hora&&h.pares.some(p=>p.instrutorId===a.instrutorId&&p.veiculoId===a.veiculoId));
+                if (!horario) throw new Error('Seleção '+(i+1)+' — '+a.data+' às '+a.hora+': horário ou recursos indisponíveis. Corrija esta aula; nenhuma seleção foi salva.');
+                const em = new Date().toISOString();
+                // Somente novas reservas locais: a API futura deverá confirmar na transação após validar disponibilidade.
+                const r={id:ids[i],tipo:'aula',nome:'Aula prática local',aluno:dados.aluno.id,categoria,unidade,instrutor:a.instrutorId,veiculo:a.veiculoId,inicio:a.data+'T'+a.hora+':00-03:00',fim:a.data+'T'+horario.fim+':00-03:00',status:1,operacaoId,totalNoLote:selecoes.length,ordemNoLote:i,criadoEm:em,historico:[{status:1,em}]};
+                novos.push(r);snapshot.registros.push(r);snapshot.aulas.push(r);
+            }
+            proteger();
+            const tx=db.transaction('registros','readwrite'),done=fim(tx);
+            try { novos.forEach(r=>tx.objectStore('registros').add(r)); }
+            catch (erro) { try { tx.abort(); } catch {} await done.catch(()=>{}); throw erro; }
+            await done;
+            return novos;
+        });
+    }
+    return {
+        async contaConfigurada() { return Boolean(await ler("contas", "master")); },
+        async identificadorLocal(valor) { return (await ler("contas", "master"))?.identificador === valor; },
+        async configurar(identificador, senha) {
+            proteger();
+            if (!/^\d{11}$/.test(identificador) || senha.length !== 6) throw new Error("Use um identificador de 11 dígitos e senha provisória com exatamente 6 caracteres.");
+            await gravar("contas", { id: "master", identificador, ...await segredo(senha), ativa: true, provisoria: true }, true);
+        },
+        async entrar(identificador, senha) {
+            proteger(); const conta = await ler("contas", "master");
+            if (!conta || conta.identificador !== identificador || await derivar(senha, conta.sal) !== conta.hash) throw new Error("Credenciais locais inválidas.");
+            if (!conta.ativa) throw new Error("Conta local desativada.");
+            if (conta.provisoria) return { trocaObrigatoria: true };
+            const nonce = hex(crypto.getRandomValues(new Uint8Array(32)));
+            const id = hex(await crypto.subtle.digest("SHA-256", bytes(nonce)));
+            await gravar("sessoes", { id, expira: Date.now() + 2 * 60 * 60 * 1000 });
+            sessionStorage.setItem(CHAVE, nonce);
+            return { trocaObrigatoria: false };
+        },
+        async trocarSenha(identificador, anterior, nova) {
+            proteger(); const conta = await ler("contas", "master");
+            if (!conta || conta.identificador !== identificador || !conta.provisoria || await derivar(anterior, conta.sal) !== conta.hash) throw new Error("Senha provisória inválida.");
+            // Política simplificada somente do Master demonstrativo, protegida
+            // pelo modo local acima. Login de contas existentes não é alterado.
+            if (nova.length !== 6) throw new Error("A nova senha deve ter exatamente 6 caracteres.");
+            await gravar("contas", { ...conta, ...await segredo(nova), provisoria: false });
+        },
+        async alterarSenhaLocal({atual,nova,confirmacao}={}){
+            proteger();
+            const falha=(codigo,mensagem)=>Object.assign(new Error(mensagem),{codigo:'senha_local_'+codigo});
+            if(typeof atual!=='string'||!atual)throw falha('atual','Informe sua senha atual.');
+            if(typeof nova!=='string'||!nova)throw falha('nova','Informe uma nova senha.');
+            if(nova.length!==6)throw falha('politica','A nova senha deve ter exatamente 6 caracteres.');
+            if(confirmacao!==nova)throw falha('confirmacao','A confirmação não corresponde à nova senha.');
+            if(nova===atual)throw falha('igual','A nova senha deve ser diferente da senha atual.');
+            if(!navigator.locks)throw falha('suporte','Este navegador não oferece os recursos necessários para alterar a senha local.');
+            return navigator.locks.request('sipa.dev.local.credencial',async()=>{
+                const autenticada=await sessao(),conta=await ler('contas','master');
+                if(!autenticada||autenticada.interface!=='aluno'||!conta||conta.identificador!==autenticada.identificador||conta.provisoria||!conta.ativa)throw falha('sessao','Entre novamente na sua conta local de Aluno.');
+                if(await derivar(atual,conta.sal)!==conta.hash)throw falha('incorreta','A senha atual está incorreta.');
+                const credencial=await segredo(nova);
+                const tx=db.transaction('contas','readwrite'),done=fim(tx);
+                try{tx.objectStore('contas').put({...conta,...credencial});}catch(e){tx.abort();await done.catch(()=>{});throw e;}await done;
+            });
+        },
+        sessao,
+        async selecionarInterface(interfaceLocal) {
+            if (!["aluno", "adm1"].includes(interfaceLocal)) throw new Error("Interface local ainda não disponível.");
+            await exigirSessao();
+            const nonce = sessionStorage.getItem(CHAVE);
+            const id = hex(await crypto.subtle.digest("SHA-256", bytes(nonce)));
+            const registro = await ler("sessoes", id);
+            if (!registro || registro.expira <= Date.now()) throw new Error("Entre novamente no ambiente local.");
+            await gravar("sessoes", { ...registro, interface: interfaceLocal });
+        },
+        async sair() {
+            proteger(); const nonce = sessionStorage.getItem(CHAVE); sessionStorage.removeItem(CHAVE);
+            if (nonce) { const id = hex(await crypto.subtle.digest("SHA-256", bytes(nonce))); const tx = db.transaction("sessoes", "readwrite"), done = fim(tx); tx.objectStore("sessoes").delete(id); await done; }
+        },
+        registros,
+        dadosAlunoLocal,
+        async consultarPoliticaCancelamento(id) {
+            const dados = await dadosAlunoLocal(), aula = dados.aulas.find(a=>a.id===id);
+            if (!aula) throw new Error('Reserva não encontrada para este aluno.');
+            return calcularPrazoCancelamento(aula,dados.registros);
+        },
+        async buscarAgendamentoAutomatico(preferencias) {
+            return gerarPropostaAutomatica(await dadosAlunoLocal(),preferencias,calcularHorariosLocais);
+        },
+        async salvarPreferenciasAutomaticas(valor) {
+            const atual = await dadosAlunoLocal();
+            if (!atual.aluno) throw new Error('Cadastre o aluno antes de salvar preferências.');
+            return alterar(async lista=>{
+                const dados = await dadosAlunoLocal();
+                if (dados.aluno?.id !== atual.aluno.id) throw new Error('A sessão mudou. Entre novamente.');
+                const p = normalizarPreferenciasAutomaticas(valor,lista);
+                if (!(dados.resumo.categorias[p.categoria].disponiveis >= p.quantidade)) throw new Error('Quantidade superior ao saldo disponível da categoria.');
+                const em = new Date().toISOString(), preferencias = { ...p, alunoId:dados.aluno.id, atualizadoEm:em };
+                return lista.map(r=>r.id===dados.aluno.id?{...r,preferenciasAutomaticas:preferencias,historicoPreferencias:[...(r.historicoPreferencias||[]),{tipo:'automatico',em,valor:preferencias}]}:r);
+            });
+        },
+        async salvarAvisosAntecipacao(notificacoes, disponibilidade) {
+            if (typeof notificacoes !== 'boolean') throw new Error('Informe uma preferência válida.');
+            const atual = await dadosAlunoLocal();
+            if (!atual.aluno) throw new Error('Cadastre o aluno antes de salvar a preferência.');
+            return alterar(async lista=>{
+                const dados = await dadosAlunoLocal();
+                if (dados.aluno?.id !== atual.aluno.id) throw new Error('A sessão mudou. Entre novamente.');
+                const em = new Date().toISOString(), anterior = dados.aluno.antecipacao || {};
+                const preferencias=normalizarDisponibilidadeAntecipacao(disponibilidade??anterior.disponibilidade??{},notificacoes);
+                const antecipacao = { ...anterior, versaoDisponibilidade:1, disponibilidade:preferencias, diasDisponiveis:Object.keys(preferencias).filter(d=>preferencias[d].length).map(Number), alunoId:dados.aluno.id, unidadeVinculo:dados.aluno.unidade, ativo:notificacoes, notificacoes, atualizadoEm:em, ativadoEm:notificacoes?(anterior.ativo?anterior.ativadoEm||em:em):anterior.ativadoEm||null };
+                return lista.map(r=>r.id===dados.aluno.id?{...r,antecipacao,historicoPreferencias:[...(r.historicoPreferencias||[]),{tipo:'avisos_antecipacao',em,valor:antecipacao}]}:r);
+            });
+        },
+        async salvarAntecipacao(valor) {
+            const preferencia = normalizarAntecipacao(valor), atual = await dadosAlunoLocal();
+            if (!atual.aluno) throw new Error('Cadastre o aluno antes de salvar preferências.');
+            return alterar(async lista=>{
+                const dados = await dadosAlunoLocal();
+                if (dados.aluno?.id !== atual.aluno.id) throw new Error('A sessão mudou. Entre novamente.');
+                const em = new Date().toISOString(), anterior = dados.aluno.antecipacao;
+                const antecipacao = { ...preferencia, alunoId:dados.aluno.id, unidadeVinculo:dados.aluno.unidade, ativadoEm:preferencia.ativo?anterior?.ativo?anterior.ativadoEm:em:anterior?.ativadoEm||null, atualizadoEm:em };
+                return lista.map(r=>r.id===dados.aluno.id?{...r,antecipacao,historicoPreferencias:[...(r.historicoPreferencias||[]),{tipo:'antecipacao',em,valor:antecipacao}]}:r);
+            });
+        },
+        async disponibilidadeLocal(consulta) {
+            const dados = await dadosAlunoLocal();
+            return calcularHorariosLocais(dados, consulta);
+        },
+        async consultarRecursosLocal(consulta) { return consultarRecursosLocais(await dadosAlunoLocal(), consulta); },
+        async prepararRecursosTeste() {
+            if (!navigator.locks) throw new Error("Este navegador não oferece o controle de concorrência necessário.");
+            return navigator.locks.request("sipa.dev.local.registros", async () => {
+                await dadosAlunoLocal();
+                const lista = await registros(), plano = criarRecursosFicticiosLocais(), faltantes = [];
+                for (const r of plano) {
+                    const existente = lista.find(e => e.id === r.id);
+                    if (existente) {
+                        if (!recursoFicticioGerado(existente)) throw new Error(`O identificador ${r.id} já está em uso por outro cadastro. Nenhum recurso foi criado.`);
+                        continue;
+                    }
+                    if (lista.some(e => e.tipo !== "aula" && String(e.documento || "").replace(/[^a-z0-9]/gi, "").toUpperCase() === r.documento)) throw new Error(`O identificador sintético ${r.documento} já está em uso. Nenhum cadastro foi sobrescrito.`);
+                    faltantes.push(r);
+                }
+                // Apenas os candidatos são validados e adicionados: cadastros legados
+                // não são normalizados, regravados ou substituídos pela preparação.
+                const novos = validarRegistros(faltantes);
+                if (novos.length) {
+                    proteger();
+                    const tx = db.transaction("registros", "readwrite"), done = fim(tx);
+                    for (const r of novos) tx.objectStore("registros").add(r);
+                    await done;
+                }
+                return { instrutoresCriados: novos.filter(r => r.tipo === "instrutor").length, veiculosCriados: novos.filter(r => r.tipo === "veiculo").length, existentes: plano.length - novos.length };
+            });
+        },
+        async consultarLimpezaRecursosTeste() {
+            await dadosAlunoLocal();
+            const plano = planejarLimpezaRecursos(await registros());
+            return { removiveis: plano.removiveis.length, preservados: plano.dependencias.length, dependencias: plano.dependencias };
+        },
+        async removerRecursosTeste() {
+            if (!navigator.locks) throw new Error("Este navegador não oferece o controle de concorrência necessário.");
+            return navigator.locks.request("sipa.dev.local.registros", async () => {
+                await dadosAlunoLocal();
+                const plano = planejarLimpezaRecursos(await registros());
+                if (plano.removiveis.length) {
+                    proteger();
+                    const tx = db.transaction("registros", "readwrite"), done = fim(tx);
+                    for (const r of plano.removiveis) tx.objectStore("registros").delete(r.id);
+                    await done;
+                }
+                return { removidos: plano.removiveis.length, preservados: plano.dependencias.length, dependencias: plano.dependencias };
+            });
+        },
+        async salvarRecursoLocal(item) {
+            const atual = await sessao();
+            if (atual?.interface !== "aluno") throw new Error("Entre no ambiente local de Aluno para configurar recursos de testes.");
+            if (!["instrutor", "veiculo"].includes(item.tipo) || !UNIDADES_LOCAIS.includes(normalizarUnidadeLocal(item.unidade))) throw new Error("Informe tipo de recurso e unidade válidos.");
+            validarDisponibilidadeSemanal(item.disponibilidadeSemanal);
+            if (item.tipo === "instrutor" ? !item.categorias?.length : !["A", "B"].includes(item.categoria)) throw new Error("Informe a categoria de habilitação ou do veículo.");
+            return alterar(lista => {
+                const anterior = item.id && lista.find(r => r.id === item.id);
+                if (item.id && (!anterior || anterior.tipo !== item.tipo)) throw new Error("Recurso a editar não encontrado ou tipo incompatível.");
+                const id = anterior?.id || crypto.randomUUID();
+                return [...lista.filter(r => r.id !== id), { ...anterior, ...item, id, unidade: normalizarUnidadeLocal(item.unidade) }];
+            });
+        },
+        planoCancelamentosTeste,
+        async limparCancelamentosTeste({ids,registrosConfirmados,confirmarTestes}={}){
+            proteger();if(!navigator.locks)throw new Error('Controle de concorrência indisponível.');
+            if(confirmarTestes!==true||!Array.isArray(ids)||!ids.length||new Set(ids).size!==ids.length)throw new Error('Selecione e confirme especificamente os cancelamentos descartáveis de teste.');
+            return navigator.locks.request('sipa.dev.local.registros',async()=>{
+                const plano=await planoCancelamentosTeste(),dados=await dadosAlunoLocal();
+                const selecionados=ids.map(id=>plano.candidatos.find(c=>c.registro.id===id));
+                if(selecionados.some(c=>!c?.elegivel))throw new Error('Seleção inválida, de outra conta ou com dependências. Nada foi removido.');
+                const afetados=selecionados.map(c=>c.registro);
+                if(JSON.stringify(afetados)!==JSON.stringify(registrosConfirmados))throw new Error('Os registros mudaram. Reabra a conferência antes de limpar.');
+                const restantes=dados.aulas.filter(a=>!ids.includes(a.id));
+                const retidos=afetados.filter(a=>a.cancelamento?.credito==='retido');
+                if(retidos.length&&!dados.credito)throw new Error('Não há registro de crédito para preservar o consumo. Nada foi removido.');
+                const chave='sipa.dev.backup.cancelamentos.'+crypto.randomUUID();
+                const creditoPreservado=retidos.length?{...dados.credito,consumosPreservadosLimpeza:[...(dados.credito.consumosPreservadosLimpeza||[]),...retidos.map(a=>({id:crypto.randomUUID(),categoria:a.categoria,quantidade:1,backup:chave,cancelamento:structuredClone(a.cancelamento)}))]}:dados.credito;
+                if(JSON.stringify(resumirCreditos(creditoPreservado,restantes))!==JSON.stringify(dados.resumo))throw new Error('A remoção afetaria os saldos. Nada foi removido.');
+                const backup={formato:'sipa-cancelamentos-teste-v1',criadoEm:new Date().toISOString(),alunoId:plano.alunoId,registros:afetados,credito:dados.credito,referencias:dados.registros.filter(r=>afetados.some(a=>[a.aluno,a.instrutor,a.veiculo].includes(r.id)))};
+                const conteudo=JSON.stringify(backup);
+                // Backup durável separado do IndexedDB; se faltar espaço, a limpeza é recusada.
+                localStorage.setItem(chave,conteudo);if(localStorage.getItem(chave)!==conteudo)throw new Error('Não foi possível preservar o backup. Nada foi removido.');
+                const tx=db.transaction(['registros','creditos'],'readwrite'),done=fim(tx);try{const store=tx.objectStore('registros');ids.forEach(id=>store.delete(id));if(retidos.length)tx.objectStore('creditos').put(creditoPreservado);}catch(e){tx.abort();await done.catch(()=>{});throw e;}await done;
+                return {removidos:afetados.length,chaveBackup:chave,backup};
+            });
+        },
+        reservarAulasLocais: reservarLoteLocal,
+        async reservarAulaLocal(consulta) {
+            return (await reservarLoteLocal({categoria:consulta.categoria,unidade:consulta.unidade,operacaoId:consulta.operacaoId,aulas:[consulta]}))[0];
+        },
+        async cancelarReservaLocal(id, motivo, { aceitarConsequencias = false } = {}) {
+            if (!navigator.locks) throw new Error("Este navegador não oferece o controle de concorrência necessário.");
+            return navigator.locks.request("sipa.dev.local.registros", async () => {
+                const dados = await dadosAlunoLocal(), aula = dados.aulas.find(a => a.id === id);
+                if (!aula) throw new Error("Reserva não encontrada para este aluno.");
+                if (aula.status === 2) return aula;
+                // Regra exclusiva do laboratório: confirmadas futuras podem ser canceladas.
+                // Produção deverá aplicar a política de prazo validada pela API.
+                if (![1, 3, 4].includes(aula.status) || (aula.status === 1 && !(Date.parse(aula.inicio) > Date.now()))) throw new Error("Somente aulas confirmadas futuras ou reservas pendentes podem ser canceladas localmente.");
+                const motivoEscolhido = typeof motivo === 'string' ? motivo.trim() : '';
+                if (!identificarMotivo(motivoEscolhido)) throw new Error('Selecione o motivo do cancelamento para continuar.');
+                const cancelamento = criarCancelamento(aula, dados.registros, motivoEscolhido, aceitarConsequencias);
+                const registro = { ...aula, status: 2, cancelamento, motivoCancelamento: motivoEscolhido, historico: [...(aula.historico || []), { status: 2, em: cancelamento.em, motivo: motivoEscolhido, cancelamento: structuredClone(cancelamento) }] };
+                await gravar("registros", registro); return registro;
+            });
+        },
+        async configurarUnidadeTeste() {
+            if (!navigator.locks) throw new Error("Atualize o navegador para configurar o vínculo com segurança.");
+            return navigator.locks.request("sipa.dev.local.registros", async () => {
+                const atual = await sessao();
+                if (atual?.interface !== "aluno" || atual.identificador !== DOCUMENTO_CREDITOS_TESTE) throw new Error("Configuração exclusiva da conta local de testes autorizada.");
+                const dados = await dadosAlunoLocal();
+                if (!dados.aluno) throw new Error("Configure primeiro o cadastro da sua conta de testes no dashboard. Nenhum aluno foi criado.");
+                if (dados.aluno.unidade === "Cobilândia") return { aplicado: false };
+                await gravar("registros", { ...dados.aluno, unidade: "Cobilândia" });
+                return { aplicado: true };
+            });
+        },
+        async configurarCreditosTeste() {
+            const atual = await sessao();
+            if (atual?.interface !== "aluno" || atual.identificador !== DOCUMENTO_CREDITOS_TESTE) throw new Error("Configuração exclusiva da conta local de testes autorizada.");
+            if (!navigator.locks) throw new Error("Atualize o navegador para configurar os créditos com segurança.");
+            return navigator.locks.request("sipa.dev.local.registros", async () => {
+                const lista = await registros(), candidatos = lista.filter(r => r.tipo === "aluno" && r.documento === DOCUMENTO_CREDITOS_TESTE);
+                if (candidatos.length > 1) throw new Error("Há cadastros duplicados para esta conta. Nenhum dado foi alterado.");
+                const existente = candidatos[0];
+                if (!existente && lista.some(r => r.tipo === "instrutor" && r.documento === DOCUMENTO_CREDITOS_TESTE)) throw new Error("Há um cadastro de instrutor com este documento. Confira o vínculo antes de criar o aluno; nenhum dado foi alterado.");
+                if (existente) {
+                    const saldos = (await creditos()).filter(c => c.alunoId === existente.id);
+                    if (saldos.length) {
+                        if (saldos.length !== 1 || saldos[0].id !== existente.id || saldos[0].origem !== "configuracao-local-tela03" || saldos[0].categorias?.A !== 20 || saldos[0].categorias?.B !== 20) throw new Error("Há créditos existentes diferentes da configuração solicitada. Nenhum saldo foi sobrescrito.");
+                        return { aplicado: false };
+                    }
+                }
+                const aulas = existente ? lista.filter(r => r.tipo === "aula" && r.aluno === existente.id) : [];
+                if (aulas.some(a => !["A", "B"].includes(a.categoria) || ![1, 2, 3, 4, 5, 6].includes(a.status))) throw new Error("Existem aulas sem categoria ou situação definida. Preserve o histórico e confira esses registros antes de configurar créditos.");
+                if (Object.values(resumirCreditos({ categorias: { A: 20, B: 20 } }, aulas).categorias).some(c => c.consumidas > 20)) throw new Error("O histórico consome mais créditos que os solicitados. Nenhum dado foi alterado; confira os saldos antes de prosseguir.");
+                if (existente && ["saldo", "saldos", "creditos", "aulasRestantes", "aulasContratadas"].some(c => existente[c] != null)) throw new Error("Este cadastro já possui informações de saldo. Nenhum valor foi sobrescrito; confira o saldo existente antes de prosseguir.");
+                const aluno = { ...existente, id: existente?.id || crypto.randomUUID(), tipo: "aluno", documento: DOCUMENTO_CREDITOS_TESTE, nome: "Matheus", unidade: existente?.unidade || "Não informada" };
+                const tx = db.transaction(["registros", "creditos"], "readwrite"), done = fim(tx);
+                tx.objectStore("registros").put(aluno);
+                tx.objectStore("creditos").add({ id: aluno.id, alunoId: aluno.id, categorias: { A: 20, B: 20 }, origem: "configuracao-local-tela03", criadoEm: new Date().toISOString() });
+                await done; return { aplicado: true };
+            });
+        },
+        salvar(item) { return alterar(lista => { const id = item.id || crypto.randomUUID(); return [...lista.filter(r => r.id !== id), { ...item, id }]; }); },
+        excluir(id) { return alterar(lista => lista.filter(r => r.id !== id)); },
+        async backup() { return { formato: "sipa-local-v1", registros: await registros(), creditos: await creditos() }; },
+        async restaurar(backup) { if (backup?.formato !== "sipa-local-v1") throw new Error("Formato de backup desconhecido."); if (backup.creditos?.length) throw new Error("A restauração de créditos requer integração específica. Nenhum dado foi alterado."); return alterar(() => backup.registros); },
+    };
+}

@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 
 <head>
+    <script src="js/tema-aluno.js"></script>
+    <script src="js/sidebar-aluno.js" defer></script>
 
     <meta charset="UTF-8">
 
@@ -48,10 +50,11 @@
         href="css/dashboard.css"
     >
 
+    <link rel="stylesheet" href="css/tema-aluno.css">
 </head>
 
 
-<body>
+<body data-sipa-aluno>
 
 
     <!-- =========================================
@@ -127,29 +130,10 @@
             class="sipa-sidebar-link active"
         >
 
-            <span class="sipa-sidebar-icon">
-                🏠
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Início
-            </span>
-
-        </a>
-
-
-        <!-- MINHAS AULAS -->
-        <a
-            href="minhas-aulas.html"
-            class="sipa-sidebar-link"
-        >
-
-            <span class="sipa-sidebar-icon">
-                📚
-            </span>
-
-            <span>
-                Minhas aulas
             </span>
 
         </a>
@@ -161,12 +145,25 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                📅
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Agendar aula
+            </span>
+
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
             </span>
 
         </a>
@@ -178,9 +175,7 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                ⏱️
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu progresso
@@ -195,12 +190,10 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                📦
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
-                Pacotes
+                Pacotes adicionais
             </span>
 
         </a>
@@ -218,9 +211,7 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                👤
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu perfil
@@ -260,9 +251,7 @@
             class="sipa-sidebar-logout"
         >
 
-            <span>
-                ↪
-            </span>
+            <span></span>
 
             Sair da conta
 
@@ -307,57 +296,11 @@
                     </span>
 
                     <h1>
-                        Olá, <strong id="student-name">
-                            Aluno
-                        </strong>! 👋
+                        Olá, <strong id="student-name">bem-vindo</strong>!
                     </h1>
 
                 </div>
 
-
-                <div class="header-actions">
-
-
-                    <button
-                        type="button"
-                        class="notification-button"
-                        id="notification-button"
-                        aria-label="Notificações"
-                    >
-
-                        ◇
-
-                        <span class="notification-badge">
-                            2
-                        </span>
-
-                    </button>
-
-
-                    <div class="header-profile">
-
-                        <div class="profile-avatar">
-                            <span id="student-initial">
-                                A
-                            </span>
-                        </div>
-
-
-                        <div class="header-profile-info">
-
-                            <strong id="header-student-name">
-                                Aluno
-                            </strong>
-
-                            <span id="header-student-category">
-                                Categoria B
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </div>
 
             </header>
 
@@ -367,654 +310,26 @@
                  ================================= -->
 
             <section class="dashboard-content">
-
-
-                <!-- =================================
-                     AVISO DO PACOTE
-                     (o JS preenche e mostra quando
-                     não há aulas para agendar)
-                     ================================= -->
-
-                <div
-                    class="package-alert"
-                    id="package-alert"
-                    hidden
-                >
-
-                    <div class="notice-icon">
-                        !
-                    </div>
-
-
-                    <div class="notice-content">
-
-                        <strong id="package-alert-title"></strong>
-
-                        <span id="package-alert-text"></span>
-
-                    </div>
-
-
-                    <a
-                        href="pacotes.html"
-                        class="package-alert-button"
-                        id="package-alert-button"
-                    >
-                        Escolher pacote
-                        <span>→</span>
-                    </a>
-
-                </div>
-
-
-                <!-- =================================
-                     BANNER DE BOAS-VINDAS
-                     ================================= -->
-
-                <div class="welcome-banner">
-
-
-                    <div class="welcome-text">
-
-                        <span class="welcome-tag">
-                            SUA JORNADA
-                        </span>
-
-
-                        <h2>
-                            Continue avançando
-                            <span>
-                                rumo à sua habilitação.
-                            </span>
-                        </h2>
-
-
-                        <p>
-                            Organize suas aulas, acompanhe
-                            seu progresso e mantenha tudo
-                            sob controle.
-                        </p>
-
-
-                    </div>
-
-
-                    <div class="welcome-progress">
-
-                        <div class="progress-circle">
-
-                            <span id="progress-percent">
-                                75%
-                            </span>
-
-                        </div>
-
-
-                        <div>
-
-                            <strong>
-                                Seu progresso
-                            </strong>
-
-                            <span id="welcome-progress-message">
-                                Você está indo muito bem!
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-
-
-                <!-- =================================
-                     CARDS DE RESUMO
-                     ================================= -->
-
-                <div class="summary-grid">
-
-
-                    <div class="summary-card">
-
-                        <div class="summary-icon blue">
-                            □
-                        </div>
-
-
-                        <div class="summary-info">
-
-                            <span>
-                                AULAS RESTANTES
-                            </span>
-
-                            <strong id="remaining-lessons">
-                                12
-                            </strong>
-
-                            <small>
-                                aulas disponíveis
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="summary-card">
-
-                        <div class="summary-icon purple">
-                            ◫
-                        </div>
-
-
-                        <div class="summary-info">
-
-                            <span>
-                                CATEGORIA
-                            </span>
-
-                            <strong id="student-category">
-                                B
-                            </strong>
-
-                            <small>
-                                aulas práticas
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="summary-card">
-
-                        <div class="summary-icon green">
-                            ✓
-                        </div>
-
-
-                        <div class="summary-info">
-
-                            <span>
-                                PACOTE
-                            </span>
-
-                            <strong id="student-package">
-                                20
-                            </strong>
-
-                            <small>
-                                aulas contratadas
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-                                <!-- =================================
-                     PRÓXIMA AULA
-                     ================================= -->
-
-                <div class="dashboard-grid">
-
-
-                    <!-- =============================
-                         CARD PRÓXIMA AULA
-                         ============================= -->
-
-                    <div class="next-lesson-card">
-
-
-                        <div class="card-header">
-
-                            <div>
-
-                                <span class="card-eyebrow">
-                                    PRÓXIMA AULA
-                                </span>
-
-                                <h3>
-                                    Sua próxima aula prática
-                                </h3>
-
-                            </div>
-
-
-                            <span class="lesson-status" id="next-lesson-status">
-                                Confirmada
-                            </span>
-
-                        </div>
-
-
-                        <div class="next-lesson-content">
-
-
-                            <div class="lesson-date">
-
-                                <span
-                                    class="lesson-day"
-                                    id="next-lesson-day"
-                                >
-                                    13
-                                </span>
-
-
-                                <div>
-
-                                    <strong id="next-lesson-weekday">
-                                        Terça-feira
-                                    </strong>
-
-                                    <span id="next-lesson-month">
-                                        Maio de 2026
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="lesson-divider"></div>
-
-
-                            <div class="lesson-details">
-
-
-                                <div class="lesson-detail">
-
-                                    <span class="detail-icon">
-                                        ◷
-                                    </span>
-
-                                    <div>
-
-                                        <span>
-                                            HORÁRIO
-                                        </span>
-
-                                        <strong id="next-lesson-time">
-                                            14:00
-                                        </strong>
-
-                                    </div>
-
-                                </div>
-
-
-                                <div class="lesson-detail">
-
-                                    <span class="detail-icon">
-                                        🚗
-                                    </span>
-
-                                    <div>
-
-                                        <span>
-                                            VEÍCULO
-                                        </span>
-
-                                        <strong id="next-lesson-vehicle">
-                                            B
-                                        </strong>
-
-                                    </div>
-
-                                </div>
-
-
-                                <div class="lesson-detail">
-
-                                    <span class="detail-icon">
-                                        ◎
-                                    </span>
-
-                                    <div>
-
-                                        <span>
-                                            MOTORISTA
-                                        </span>
-
-                                        <strong id="next-lesson-instructor">
-                                            Carlos Mendes
-                                        </strong>
-
-                                    </div>
-
-                                </div>
-
-
-                            </div>
-
-
-                        </div>
-
-
-                        <div class="lesson-footer">
-
-                            <span id="next-lesson-location">
-    Localização da aula
-</span>
-
-
-                            <button
-                                type="button"
-                                class="secondary-button"
-                                id="view-lesson-button"
-                            >
-                                Ver detalhes
-                                <span>→</span>
-                            </button>
-
-                        </div>
-
-
-                    </div>
-
-
-                    <!-- =============================
-                         AÇÕES RÁPIDAS
-                         ============================= -->
-
-                    <div class="quick-actions-card">
-
-
-                        <div class="card-header">
-
-                            <div>
-
-                                <span class="card-eyebrow">
-                                    ACESSO RÁPIDO
-                                </span>
-
-                                <h3>
-                                    O que você deseja fazer?
-                                </h3>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="quick-actions">
-
-
-                            <button
-                                type="button"
-                                class="quick-action"
-                                data-action="schedule"
-                            >
-
-                                <span class="quick-action-icon blue">
-                                    +
-                                </span>
-
-
-                                <div>
-
-                                    <strong>
-                                        Agendar aula
-                                    </strong>
-
-                                    <span>
-                                        Escolha uma data e horário
-                                    </span>
-
-                                </div>
-
-
-                                <span class="quick-arrow">
-                                    →
-                                </span>
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="quick-action"
-                                data-action="lessons"
-                            >
-
-                                <span class="quick-action-icon purple">
-                                    □
-                                </span>
-
-
-                                <div>
-
-                                    <strong>
-                                        Minhas aulas
-                                    </strong>
-
-                                    <span>
-                                        Consulte seus agendamentos
-                                    </span>
-
-                                </div>
-
-
-                                <span class="quick-arrow">
-                                    →
-                                </span>
-
-                            </button>
-
-
-                            <button
-                                type="button"
-                                class="quick-action"
-                                data-action="progress"
-                            >
-
-                                <span class="quick-action-icon green">
-                                    ◔
-                                </span>
-
-
-                                <div>
-
-                                    <strong>
-                                        Meu progresso
-                                    </strong>
-
-                                    <span>
-                                        Veja sua evolução
-                                    </span>
-
-                                </div>
-
-
-                                <span class="quick-arrow">
-                                    →
-                                </span>
-
-                            </button>
-
-
-                        </div>
-
-
-                    </div>
-
-
-                </div>
-
-
-                <!-- =================================
-                     AGENDA RECENTE
-                     ================================= -->
-
-                <div class="recent-lessons-card">
-
-
-                    <div class="card-header">
-
-
-                        <div>
-
-                            <span class="card-eyebrow">
-                                AGENDA
-                            </span>
-
-                            <h3>
-                                Próximas aulas
-                            </h3>
-
-                        </div>
-
-
-                        <button
-                            type="button"
-                            class="text-button"
-                            id="view-all-lessons"
-                        >
-                            Ver todas
-                            <span>→</span>
-                        </button>
-
-
-                    </div>
-
-
-                    <div
-                        class="lessons-list"
-                        id="lessons-list"
-                    ></div>
-
-                </div>
-
-
-                    
-                                <!-- =================================
-                     PROGRESSO DA HABILITAÇÃO
-                     ================================= -->
-
-                <div class="progress-section">
-
-                    <div class="progress-card">
-
-                        <div class="card-header">
-
-                            <div>
-
-                                <span class="card-eyebrow">
-                                    SEU PROGRESSO
-                                </span>
-
-                                <h3>
-                                    Evolução da sua habilitação
-                                </h3>
-
-                            </div>
-
-                            <span
-                                class="progress-number"
-                                id="progress-number"
-                            >
-                                75%
-                            </span>
-
-                        </div>
-
-
-                        <div class="progress-bar-container">
-
-                            <div
-                                class="progress-bar"
-                                id="progress-bar"
-                                style="width: 75%;"
-                            ></div>
-
-                        </div>
-
-
-                        <div class="progress-footer">
-
-                            <span>
-                                Você está no caminho certo!
-                            </span>
-
-                            <strong id="progress-cheer">
-                                Continue assim 🚗
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- =============================
-                         INFORMAÇÕES DA HABILITAÇÃO
-                         ============================= -->
-
-                    <div class="license-card">
-
-                        <div class="license-icon">
-                            🚘
-                        </div>
-
-
-                        <div class="license-info">
-
-                            <span>
-                                SUA CATEGORIA
-                            </span>
-
-                            <strong id="license-category">
-                                Categoria B
-                            </strong>
-
-                            <small>
-                                Formação para dirigir carros
-                            </small>
-
-                        </div>
-
-
-                        <span
-                            class="license-status"
-                            id="license-status"
-                        >
-                            Em andamento
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <!-- =================================
-                     AVISO
-                     ================================= -->
-
-                <div class="dashboard-notice" id="dashboard-notice">
-
-                    <div class="notice-icon">
-                        !
-                    </div>
-
-
-                    <div class="notice-content">
-
-                        <strong>
-                            Lembrete importante
-                        </strong>
-
-                        <span>
-                            Chegue com pelo menos 10 minutos
-                            de antecedência para sua próxima aula.
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-            </section>
+<svg aria-hidden="true" width="0" height="0" style="position:absolute"><defs>
+<symbol id="db-car" viewBox="0 0 24 24"><path d="m5 7 2-4h10l2 4 2 3v8h-3v-2H6v2H3v-8l2-3Zm0 0h14M3 11h18M7 13v1m10-1v1"/></symbol>
+<symbol id="db-moto" viewBox="0 0 32 26"><circle cx="6" cy="19" r="4.5"/><circle cx="26" cy="19" r="4.5"/><path d="M2 11h7m-3 8 5-7h9m-1-8h4l3 15m-4-11h4M17 20h6M10 19h7"/><path d="M10 10c3-4 7-4 10 0l1 3H10Z" fill="currentColor" stroke-linejoin="round"/><path d="M12 14h6l1 5h-8Z" fill="currentColor" stroke-linejoin="round"/><path d="M2 14c2-2 5-2 7-1m14 1c2-2 5-2 7 0"/></symbol>
+<symbol id="db-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 2v6m10-6v6M3 11h18m-13 4h3m3 0h2"/></symbol>
+<symbol id="db-chart" viewBox="0 0 24 24"><path d="M4 3v17h17M8 15l4-5 4 2 5-7"/></symbol>
+</defs></svg>
+<div class="dashboard-section-heading"><div><span class="card-eyebrow">Seu saldo de aulas</span><h2>Aulas disponíveis</h2></div><p id="creditos-resumo">Consulte seus créditos por categoria.</p></div>
+<div class="summary-grid"><article class="summary-card credit-card"><div class="credit-heading"><div><span>Moto</span><h2>Categoria A</h2></div></div><div class="credit-value"><strong id="credito-A">—</strong><span>aulas disponíveis</span></div><p id="credito-A-detalhe">Saldo ainda não informado.</p></article><article class="summary-card credit-card"><div class="credit-heading"><div><span>Carro</span><h2>Categoria B</h2></div></div><div class="credit-value"><strong id="credito-B">—</strong><span>aulas disponíveis</span></div><p id="credito-B-detalhe">Saldo ainda não informado.</p></article></div>
+<div class="dashboard-grid">
+<div class="dashboard-stack">
+<article class="next-lesson-card"><div class="card-header"><div><span class="card-eyebrow">Seu planejamento</span><h3>Sua próxima aula prática</h3></div><span id="next-lesson-status" class="lesson-status" hidden></span></div><div id="proxima-aula-conteudo" class="next-class-state"><p>Você ainda não possui aulas agendadas.</p><a href="agendamento.html">Agendar aula →</a></div></article>
+<article class="progress-card"><div class="card-header"><h3>Seu progresso</h3><span id="progress-number" class="progress-number">Ainda não iniciado</span></div><div class="progress-bar-container" role="progressbar" aria-label="Progresso das aulas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar" id="progress-bar" style="width:0%"></div></div><p id="progress-description">Sua evolução aparecerá conforme as aulas forem concluídas.</p></article>
+</div>
+<article class="quick-actions-card"><div class="card-header"><h3>Acesso rápido</h3></div><div class="quick-actions">
+<a class="quick-action" href="agendamento.html"><svg aria-hidden="true" class="dashboard-icon"><use href="#db-calendar"/></svg><div><strong>Agendar aula</strong><span>Escolha sua próxima aula</span></div><span aria-hidden="true">→</span></a>
+<a class="quick-action" href="minhas-aulas.html"><svg aria-hidden="true" class="dashboard-icon"><use href="#db-calendar"/></svg><div><strong>Minhas aulas</strong><span>Consulte sua agenda e histórico</span></div><span aria-hidden="true">→</span></a>
+<a class="quick-action" href="meu-progresso.html"><svg aria-hidden="true" class="dashboard-icon"><use href="#db-chart"/></svg><div><strong>Meu progresso</strong><span>Acompanhe as aulas concluídas</span></div><span aria-hidden="true">→</span></a>
+</div></article></div>
+<div id="dashboard-notice" class="dashboard-notice" role="status" hidden></div>
+</section>
 
 
             <!-- =====================================
@@ -1045,7 +360,7 @@
          JAVASCRIPT
          ========================================= -->
 
-    <script type="module" src="js/dashboard.js"></script>
+    <script type="module" src="js/aluno.js"></script>
 
 </body>
 

@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 
 <head>
+    <script src="js/tema-aluno.js"></script>
+    <script src="js/sidebar-aluno.js" defer></script>
 
     <meta charset="UTF-8">
 
@@ -10,7 +12,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Pacotes | SIPA</title>
+    <title>Pacotes adicionais | SIPA</title>
 
     <link rel="stylesheet" href="css/meu-progresso.css">
 
@@ -49,10 +51,11 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
 
+    <link rel="stylesheet" href="css/tema-aluno.css">
 </head>
 
 
-<body>
+<body data-sipa-aluno>
 
 
 <div class="progress-layout">
@@ -124,29 +127,10 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                🏠
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Início
-            </span>
-
-        </a>
-
-
-        <!-- MINHAS AULAS -->
-        <a
-            href="minhas-aulas.html"
-            class="sipa-sidebar-link"
-        >
-
-            <span class="sipa-sidebar-icon">
-                📚
-            </span>
-
-            <span>
-                Minhas aulas
             </span>
 
         </a>
@@ -158,12 +142,25 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                📅
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Agendar aula
+            </span>
+
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
             </span>
 
         </a>
@@ -175,9 +172,7 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                ⏱️
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu progresso
@@ -192,12 +187,10 @@
             class="sipa-sidebar-link active"
         >
 
-            <span class="sipa-sidebar-icon">
-                📦
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
-                Pacotes
+                Pacotes adicionais
             </span>
 
         </a>
@@ -215,9 +208,7 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                👤
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu perfil
@@ -257,9 +248,7 @@
             class="sipa-sidebar-logout"
         >
 
-            <span>
-                ↪
-            </span>
+            <span></span>
 
             Sair da conta
 
@@ -275,7 +264,7 @@
          CONTEÚDO PRINCIPAL
          ===================================== -->
 
-    <main class="progress-main">
+    <main class="progress-main additional-packages">
 
 
         <!-- =================================
@@ -283,152 +272,45 @@
              ================================= -->
 
         <header class="progress-header">
-
-
             <div class="progress-header-text">
-
-                <span class="progress-eyebrow">
-                    PACOTES
-                </span>
-
-                <h1>
-                    Seus pacotes de aulas
-                </h1>
-
-                <p>
-                    Informe o pacote que você comprou. A autoescola confirma
-                    e as aulas aparecem no seu painel.
-                </p>
-
+                <span class="progress-eyebrow">AULAS ADICIONAIS</span>
+                <h1>Pacotes adicionais</h1>
+                <p>Precisa de mais aulas práticas? Consulte nossos pacotes adicionais e continue sua preparação com tranquilidade.</p>
             </div>
-
-
-            <!-- BOTÃO -->
-
-            <a
-                href="agendamento.html"
-                class="progress-action-button"
-            >
-
-                <span>
-                    +
-                </span>
-
-                Agendar nova aula
-
-            </a>
-
-
         </header>
 
-
-
-        <!-- =====================================
-             SEUS PEDIDOS
-             ===================================== -->
-
-        <section class="progress-details">
-
-
-            <div class="progress-section-header">
-
-                <div>
-
-                    <span class="progress-eyebrow">
-                        CONTRATAÇÕES
-                    </span>
-
-                    <h2>
-                        Seus pedidos
-                    </h2>
-
-                </div>
-
+        <section class="additional-hero" aria-labelledby="additional-title">
+            <svg class="additional-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 2v6m10-6v6M3 11h18m-13 4h3m3 0h2"/></svg>
+            <div>
+                <h2 id="additional-title">Precisa de mais aulas práticas?</h2>
+                <p>Se você deseja reforçar sua preparação, ganhar mais confiança ao dirigir ou continuar praticando, nossa equipe pode orientar você sobre os pacotes de aulas adicionais disponíveis.</p>
+                <a class="reception-link" id="falar-recepcao" href="https://wa.me/55227998713181?text=Ol%C3%A1!%20Sou%20aluno%20da%20autoescola%20e%20gostaria%20de%20saber%20mais%20sobre%20os%20pacotes%20de%20aulas%20pr%C3%A1ticas%20adicionais.%20Poderiam%20me%20informar%20as%20op%C3%A7%C3%B5es%20dispon%C3%ADveis%2C%20os%20valores%20e%20as%20condi%C3%A7%C3%B5es%20de%20contrata%C3%A7%C3%A3o%3F" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-2 2V11.5a9.5 9.5 0 0 1 19 0Z"/><path d="M7 10h10M7 14h6"/></svg>
+                    Falar com a recepção
+                </a>
+                <small class="reception-note">Atendimento pelo WhatsApp · abre em uma nova aba.</small>
             </div>
-
-
-            <!-- O JS cria um card por pedido -->
-
-            <div
-                class="pedidos-lista"
-                id="pedidos-lista"
-            ></div>
-
-
         </section>
 
-
-
-        <!-- =====================================
-             ESCOLHER PACOTE
-             ===================================== -->
-
-        <section class="progress-details">
-
-
-            <div class="progress-section-header">
-
-                <div>
-
-                    <span class="progress-eyebrow">
-                        VITRINE
-                    </span>
-
-                    <h2>
-                        Escolher pacote
-                    </h2>
-
-                </div>
-
-            </div>
-
-
-            <p class="pacotes-ajuda">
-                Marque o pacote que você comprou na autoescola (um por categoria).
-            </p>
-
-
-            <!-- O JS monta os cards da vitrine -->
-
-            <div id="pacotes-escolha"></div>
-
-
-            <!-- MENSAGEM DO ENVIO -->
-
-            <div
-                id="escolha-message"
-                class="pacotes-mensagem"
-                hidden
-            ></div>
-
-
-            <div class="pacotes-acoes">
-
-                <button
-                    type="button"
-                    id="confirmar-pacote"
-                    class="progress-action-button pacotes-confirmar"
-                    disabled
-                >
-
-                    <span>
-                        ✓
-                    </span>
-
-                    Confirmar pacote
-
-                </button>
-
-            </div>
-
-
+        <section class="additional-how" aria-labelledby="additional-how-title">
+            <h2 id="additional-how-title">Como solicitar aulas adicionais?</h2>
+            <ol class="additional-steps">
+                <li><span class="additional-step-number" aria-hidden="true">01</span><h3>Entre em contato</h3><p>Converse com nossa recepção e informe que deseja adquirir aulas práticas adicionais.</p></li>
+                <li><span class="additional-step-number" aria-hidden="true">02</span><h3>Consulte as opções</h3><p>Nossa equipe apresentará os pacotes disponíveis, a quantidade de aulas, os valores e as condições de contratação.</p></li>
+                <li><span class="additional-step-number" aria-hidden="true">03</span><h3>Confirme com a autoescola</h3><p>Escolha a opção mais adequada para você e finalize a contratação diretamente com nossa equipe.</p></li>
+            </ol>
         </section>
 
-
-
-        <!-- =====================================
-             RODAPÉ
-             ===================================== -->
+        <section class="additional-information" aria-labelledby="additional-information-title">
+            <h2 id="additional-information-title">Informações importantes</h2>
+            <ul>
+                <li>Os pacotes disponíveis podem variar conforme a categoria de habilitação.</li>
+                <li>Os valores e as condições são informados diretamente pela recepção.</li>
+                <li>A disponibilidade de horários depende da agenda da unidade, dos instrutores e dos veículos.</li>
+                <li>A contratação de aulas adicionais deve ser confirmada pela autoescola.</li>
+                <li>Após o devido registro no sistema, as aulas adquiridas deverão aparecer no saldo do aluno.</li>
+            </ul>
+        </section>
 
         <footer class="progress-footer">
 
@@ -454,7 +336,7 @@
      JAVASCRIPT
      ===================================== -->
 
-<script type="module" src="js/pacotes.js"></script>
+<script type="module" src="js/aluno.js"></script>
 
 
 </body>
