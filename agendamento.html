@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 
 <head>
+    <script src="js/tema-aluno.js"></script>
+    <script src="js/sidebar-aluno.js" defer></script>
 
     <meta charset="UTF-8">
 
@@ -52,10 +54,12 @@
     href="css/sidebar.css"
 >
 
+    <link rel="stylesheet" href="css/tema-aluno.css">
 </head>
 
 
-<body>
+<body data-sipa-aluno>
+<svg width="0" height="0" class="booking-symbols" aria-hidden="true" focusable="false"><defs><symbol id="booking-car" viewBox="0 0 24 24"><path d="m5 7 2-4h10l2 4 2 3v8h-3v-2H6v2H3v-8l2-3Zm0 0h14M3 11h18M7 13v1m10-1v1"/></symbol><symbol id="booking-motorcycle" viewBox="0 0 32 26"><circle cx="6" cy="19" r="4.5"/><circle cx="26" cy="19" r="4.5"/><path d="M2 11h7m-3 8 5-7h9m-1-8h4l3 15m-4-11h4M17 20h6M10 19h7"/><path d="M10 10c3-4 7-4 10 0l1 3H10Z" fill="currentColor" stroke-linejoin="round"/><path d="M12 14h6l1 5h-8Z" fill="currentColor" stroke-linejoin="round"/><path d="M2 14c2-2 5-2 7-1m14 1c2-2 5-2 7 0"/></symbol><symbol id="booking-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol><symbol id="booking-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol><symbol id="booking-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol><symbol id="booking-previous" viewBox="0 0 24 24"><path d="m14 5-7 7 7 7"/></symbol><symbol id="booking-next" viewBox="0 0 24 24"><path d="m10 5 7 7-7 7"/></symbol></defs></svg>
 
 
     <!-- =========================================
@@ -128,17 +132,8 @@
             href="dashboard.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">🏠</span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
             Início
-        </a>
-
-
-        <a
-            href="minhas-aulas.html"
-            class="sipa-sidebar-link"
-        >
-            <span class="sipa-sidebar-icon">📚</span>
-            Minhas aulas
         </a>
 
 
@@ -146,8 +141,17 @@
             href="agendamento.html"
             class="sipa-sidebar-link active"
         >
-            <span class="sipa-sidebar-icon">📅</span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
             Agendar aula
+        </a>
+
+
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+            Minhas aulas
         </a>
 
 
@@ -155,7 +159,7 @@
             href="meu-progresso.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">⏱️</span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
             Meu progresso
         </a>
 
@@ -164,8 +168,8 @@
             href="pacotes.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">📦</span>
-            Pacotes
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+            Pacotes adicionais
         </a>
 
 
@@ -178,7 +182,7 @@
             href="meu-perfil.html"
             class="sipa-sidebar-link"
         >
-            <span class="sipa-sidebar-icon">👤</span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
             Meu perfil
         </a>
 
@@ -213,7 +217,7 @@
             id="booking-logout"
             class="sipa-sidebar-logout"
         >
-            <span>↪</span>
+            <span></span>
             Sair da conta
         </button>
 
@@ -243,9 +247,7 @@
                         id="booking-mobile-menu"
                         class="booking-mobile-menu"
                         aria-label="Abrir menu"
-                    >
-                        ☰
-                    </button>
+                    ><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-menu"/></svg></button>
 
 
                     <div>
@@ -259,8 +261,7 @@
                         </h1>
 
                         <p>
-                            Escolha a categoria, a data e o horário
-                            que melhor se encaixam na sua rotina.
+                            Escolha a categoria, a unidade e os horários disponíveis.
                         </p>
 
                     </div>
@@ -284,91 +285,9 @@
             </header>
 
 
-            <!-- =================================
-                 INDICADOR DE ETAPAS
-                 ================================= -->
-
-            <div class="booking-steps">
 
 
-                <div
-                    class="booking-step active"
-                    data-step="1"
-                >
 
-                    <span class="step-number">
-                        1
-                    </span>
-
-                    <div>
-
-                        <strong>
-                            Categoria
-                        </strong>
-
-                        <span>
-                            Tipo de aula
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <span class="step-line"></span>
-
-
-                <div
-                    class="booking-step"
-                    data-step="2"
-                >
-
-                    <span class="step-number">
-                        2
-                    </span>
-
-                    <div>
-
-                        <strong>
-                            Data e horário
-                        </strong>
-
-                        <span>
-                            Escolha seu horário
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <span class="step-line"></span>
-
-
-                <div
-                    class="booking-step"
-                    data-step="3"
-                >
-
-                    <span class="step-number">
-                        3
-                    </span>
-
-                    <div>
-
-                        <strong>
-                            Confirmação
-                        </strong>
-
-                        <span>
-                            Revise seu agendamento
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
 
 
             <!-- =================================
@@ -388,19 +307,11 @@
                     <div class="booking-card-header">
 
                         <div>
-
-                            <span class="booking-card-eyebrow">
-                                ETAPA 01
-                            </span>
-
-                            <h2>
-                                Qual aula você deseja agendar?
+<h2>
+                                Categoria
                             </h2>
 
-                            <p>
-                                Selecione a categoria da aula disponível
-                                para sua formação.
-                            </p>
+
 
                         </div>
 
@@ -418,16 +329,12 @@
                             data-category="B"
                         >
 
-                            <div class="category-option-icon">
-                                🚗
-                            </div>
+                            <span class="category-option-icon"><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-car"/></svg></span>
 
 
                             <div class="category-option-info">
 
-                                <strong>
-                                    Categoria B
-                                </strong>
+                                <strong>Carro — Categoria B</strong>
 
                                 <span>
                                     Aula prática de carro
@@ -436,9 +343,7 @@
                             </div>
 
 
-                            <span class="category-option-check">
-                                ✓
-                            </span>
+                            <span class="category-option-check"><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-check"/></svg></span>
 
                         </button>
 
@@ -451,16 +356,12 @@
                             data-category="A"
                         >
 
-                            <div class="category-option-icon motorcycle">
-                                🏍️
-                            </div>
+                            <span class="category-option-icon motorcycle"><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-motorcycle"/></svg></span>
 
 
                             <div class="category-option-info">
 
-                                <strong>
-                                    Categoria A
-                                </strong>
+                                <strong>Moto — Categoria A</strong>
 
                                 <span>
                                     Aula prática de motocicleta
@@ -469,9 +370,7 @@
                             </div>
 
 
-                            <span class="category-option-check">
-                                ✓
-                            </span>
+                            <span class="category-option-check"><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-check"/></svg></span>
 
                         </button>
 
@@ -481,49 +380,12 @@
 
                     <!-- INFORMAÇÃO DO ALUNO -->
 
-                    <div class="booking-student-info">
-
-    <div class="student-info-icon">
-        ✓
+                    <div class="booking-student-info" aria-live="polite">
+    <div class="booking-balance-main"><span id="booking-package-info">Consultando saldo…</span>
+        <button type="button" id="booking-retry" class="booking-retry" hidden>Tentar de novo</button>
+        <select id="booking-contratacao" aria-label="Pacote contratado" style="display:none"></select>
     </div>
-
-    <div>
-        <strong>
-            Seu pacote de aulas
-        </strong>
-
-        <span id="booking-package-info">
-            Carregando informações...
-        </span>
-
-        <button
-            type="button"
-            id="booking-retry"
-            class="booking-retry"
-            hidden
-        >
-            Tentar de novo
-        </button>
-
-        <select
-            id="booking-contratacao"
-            aria-label="Pacote contratado"
-            style="display: none; width: 100%; margin-top: 4px; padding: 4px;"
-        ></select>
-    </div>
-
-    <div class="booking-selection-counter">
-
-        <span>
-            Aulas selecionadas
-        </span>
-
-        <strong id="selected-lessons-count">
-            0
-        </strong>
-
-    </div>
-
+    <div class="booking-selection-counter"><span>Selecionadas:</span><strong id="selected-lessons-count">0</strong></div>
 </div>
 
 
@@ -538,30 +400,16 @@
                     <div class="booking-card-header">
 
                         <div>
-
-                            <span class="booking-card-eyebrow">
-                                ETAPA 02
-                            </span>
-
-                            <h2>
-                                Escolha a data e o horário
+<h2>
+                                Unidade e horários
                             </h2>
 
-                            <p>
-                                Selecione um dia e veja os horários
-                                disponíveis para sua aula.
-                            </p>
+
 
                         </div>
 
 
-                        <div class="availability-status">
-
-                            <span class="availability-dot"></span>
-
-                            Horários disponíveis
-
-                        </div>
+                        <p class="availability-status" aria-live="polite" hidden></p>
 
                     </div>
 
@@ -575,7 +423,12 @@
 
                         <!-- CALENDÁRIO -->
 
-                        <div class="calendar-area">
+                        <div class="schedule-calendar-column"><div id="booking-unit-picker"><div class="booking-unit-local"><label for="booking-unidade">Unidade da aula</label><select
+                                    id="booking-unidade"
+                                    aria-label="Unidade das aulas"
+                                    style="width: 100%; margin-top: 4px; padding: 4px;"
+                                    hidden
+                                ></select><span id="booking-unit-current"></span></div></div><div class="calendar-area">
 
 
                             <div class="calendar-header">
@@ -585,9 +438,7 @@
                                     class="calendar-navigation"
                                     id="previous-month"
                                     aria-label="Mês anterior"
-                                >
-                                    ←
-                                </button>
+                                ><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-previous"/></svg></button>
 
 
                                 <div class="calendar-month">
@@ -608,9 +459,7 @@
                                     class="calendar-navigation"
                                     id="next-month"
                                     aria-label="Próximo mês"
-                                >
-                                    →
-                                </button>
+                                ><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-next"/></svg></button>
 
                             </div>
 
@@ -663,9 +512,20 @@
                                 -->
 
                             </div>
+                            <ul class="calendar-legend" aria-label="Legenda do calendário">
+                                <li><span class="calendar-key" aria-hidden="true"></span>Disponível</li>
+                                <li><span class="calendar-key calendar-key-selected" aria-hidden="true"></span>Selecionado</li>
+                                <li><span class="calendar-key calendar-key-blocked" aria-hidden="true"></span>Indisponível</li>
+                                <li><span class="calendar-key calendar-key-no-slots" aria-hidden="true"></span>Sem horários</li>
+                            </ul>
+                            <details class="calendar-reasons">
+                                <summary>Consultar motivos das datas bloqueadas</summary>
+                                <ul id="calendar-block-reasons"></ul>
+                            </details>
 
 
-                        </div>
+
+                        </div></div>
 
 
                         <!-- =================================
@@ -731,13 +591,8 @@
                     <div class="booking-card-header">
 
                         <div>
-
-                            <span class="booking-card-eyebrow">
-                                ETAPA 03
-                            </span>
-
-                            <h2>
-                                Confira seu agendamento
+<h2>
+                                Revisão e confirmação
                             </h2>
 
                             <p>
@@ -754,9 +609,7 @@
 
                         <div class="summary-item">
 
-                            <span class="summary-item-icon">
-                                🚗
-                            </span>
+                            <span class="summary-item-icon"><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-car"/></svg></span>
 
                             <div>
 
@@ -775,9 +628,7 @@
 
                         <div class="summary-item">
 
-                            <span class="summary-item-icon">
-                                ◎
-                            </span>
+                            <span class="summary-item-icon"><svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#booking-pin"/></svg></span>
 
                             <div>
 
@@ -789,12 +640,7 @@
                                     Não selecionada
                                 </strong>
 
-                                <select
-                                    id="booking-unidade"
-                                    aria-label="Unidade das aulas"
-                                    style="width: 100%; margin-top: 4px; padding: 4px;"
-                                    hidden
-                                ></select>
+
 
                             </div>
 
@@ -940,7 +786,7 @@
                     ></span>
 
                     <span class="footer-status">
-                        ● Sistema online
+                        Acesso autenticado
                     </span>
 
                 </div>
@@ -958,9 +804,7 @@
          JAVASCRIPT
          ========================================= -->
 
-    <script
-        type="module" src="js/agendamento.js"
-    ></script>
+    <script type="module" src="js/aluno.js"></script>
 
 
 </body>

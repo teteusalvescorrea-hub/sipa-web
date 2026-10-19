@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 
 <head>
+    <script src="js/tema-aluno.js"></script>
+    <script src="js/sidebar-aluno.js" defer></script>
 
     <meta charset="UTF-8">
 
@@ -16,6 +18,7 @@
 
     <link rel="stylesheet" href="css/sidebar.css">
 
+    <link rel="stylesheet" href="css/tema-aluno.css">
 </head>
 
 
@@ -52,7 +55,7 @@
 </head>
 
 
-<body>
+<body data-sipa-aluno>
 
 
 <div class="progress-layout">
@@ -124,29 +127,10 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                🏠
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Início
-            </span>
-
-        </a>
-
-
-        <!-- MINHAS AULAS -->
-        <a
-            href="minhas-aulas.html"
-            class="sipa-sidebar-link"
-        >
-
-            <span class="sipa-sidebar-icon">
-                📚
-            </span>
-
-            <span>
-                Minhas aulas
             </span>
 
         </a>
@@ -158,12 +142,25 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                📅
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Agendar aula
+            </span>
+
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
             </span>
 
         </a>
@@ -175,9 +172,7 @@
             class="sipa-sidebar-link active"
         >
 
-            <span class="sipa-sidebar-icon">
-                ⏱️
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu progresso
@@ -192,12 +187,10 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                📦
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
-                Pacotes
+                Pacotes adicionais
             </span>
 
         </a>
@@ -215,9 +208,7 @@
             class="sipa-sidebar-link"
         >
 
-            <span class="sipa-sidebar-icon">
-                👤
-            </span>
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
 
             <span>
                 Meu perfil
@@ -257,9 +248,7 @@
             class="sipa-sidebar-logout"
         >
 
-            <span>
-                ↪
-            </span>
+            <span></span>
 
             Sair da conta
 
@@ -734,7 +723,7 @@
      JAVASCRIPT
      ===================================== -->
 
-<script type="module" src="js/meu-progresso.js"></script>
+<script type="module" src="js/aluno.js"></script>
 
 
 </body>

@@ -3,6 +3,7 @@
    PARTE 1 — CARREGAR DADOS DO ALUNO
    ========================================= */
 
+import { formatarCpf } from './modules/essencial/utils/formatacao.js';
 import { exigirLogin } from "./modules/essencial/utils/sessao.js";
 import { sair } from "./modules/essencial/service/authService.js";
 import { obterAlunoLogado } from "./modules/alunos/services/alunos.service.js";
@@ -73,42 +74,6 @@ const profileSchool =
 /* =========================================
    FORMATAR CPF
    ========================================= */
-
-function formatarCpf(cpf) {
-
-    if (!cpf) {
-
-        return "-";
-
-    }
-
-
-    const numero =
-        String(cpf).replace(
-            /\D/g,
-            ""
-        );
-
-
-    if (numero.length !== 11) {
-
-        return cpf;
-
-    }
-
-
-    return (
-        numero.substring(0, 3) +
-        "." +
-        numero.substring(3, 6) +
-        "." +
-        numero.substring(6, 9) +
-        "-" +
-        numero.substring(9, 11)
-    );
-
-}
-
 
 /* =========================================
    FORMATAR TELEFONE
@@ -335,8 +300,8 @@ async function carregarPerfil() {
 
     if (profilePackage) {
 
-        profilePackage.textContent =
-            aluno.aulasContratadas;
+        profilePackage.querySelectorAll('strong').forEach(n=>n.textContent='Não informado');
+        profilePackage.nextElementSibling.textContent='Totais por categoria ainda não disponíveis.';
 
     }
 
@@ -347,8 +312,8 @@ async function carregarPerfil() {
 
     if (profileRemaining) {
 
-        profileRemaining.textContent =
-            aluno.aulasRestantes ?? "-";
+        profileRemaining.querySelectorAll('strong').forEach(n=>n.textContent='Não informado');
+        profileRemaining.nextElementSibling.textContent='Saldos por categoria ainda não disponíveis.';
 
     }
 
@@ -357,10 +322,7 @@ async function carregarPerfil() {
        CONSOLE
        ===================================== */
 
-    console.log(
-        "Perfil carregado:",
-        aluno
-    );
+
 
 }
 
@@ -418,3 +380,6 @@ if (exigirLogin(["Aluno"])) {
     carregarAutoescola();
 }
 
+
+// O serviço integrado atual não oferece alteração de senha; a política local não é reutilizada aqui.
+const alterarSenha=document.getElementById('change-password-button');if(alterarSenha){alterarSenha.disabled=true;alterarSenha.title='Alteração de senha indisponível neste ambiente.';const aviso=document.createElement('small');aviso.id='profile-password-availability';aviso.textContent='Alteração de senha ainda indisponível neste ambiente.';alterarSenha.setAttribute('aria-describedby',aviso.id);aviso.style.display='block';alterarSenha.closest('.profile-security-card').querySelector('div').append(aviso);}

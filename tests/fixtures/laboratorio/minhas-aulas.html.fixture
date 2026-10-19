@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <script src="js/tema-aluno.js"></script>
+    <script src="js/sidebar-aluno.js" defer></script>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Minhas Aulas | SIPA</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+    rel="stylesheet"
+    href="css/minhas-aulas.css"
+>
+
+<link rel="stylesheet" href="css/sidebar.css">
+
+    <link rel="stylesheet" href="css/tema-aluno.css">
+</head>
+
+
+<body data-sipa-aluno>
+
+    <div class="lessons-page">
+
+
+        <!-- =====================================
+     SIDEBAR
+===================================== -->
+
+<aside class="sipa-sidebar lessons-sidebar">
+
+    <!-- LOGO -->
+    <a
+        href="dashboard.html"
+        class="sipa-sidebar-logo"
+        aria-label="SIPA"
+    >
+
+        <div class="sipa-sidebar-logo-symbol">
+
+            <svg
+                viewBox="0 0 70 70"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path
+                    d="M52 12H29C17 12 9 20 9 31C9 40 14 46 23 48L42 52C46 53 48 55 48 58C48 61 46 63 41 63H18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+
+                <path
+                    d="M18 58H41C53 58 61 50 61 39C61 30 56 24 47 22L28 18C24 17 22 15 22 12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+
+        </div>
+
+        <div class="sipa-sidebar-logo-text">
+
+            <strong>SIPA</strong>
+
+            <span>
+                SISTEMA INTELIGENTE
+                <br>
+                PARA AGENDAMENTOS
+            </span>
+
+        </div>
+
+    </a>
+
+
+    <!-- MENU -->
+    <nav class="sipa-sidebar-menu">
+
+        <span class="sipa-sidebar-title">
+            MENU
+        </span>
+
+
+        <!-- INÍCIO -->
+        <a
+            href="dashboard.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Início
+            </span>
+        </a>
+
+
+        <!-- AGENDAR AULA -->
+        <a
+            href="agendamento.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Agendar aula
+            </span>
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link active"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
+            </span>
+        </a>
+
+
+        <!-- MEU PROGRESSO -->
+        <a
+            href="meu-progresso.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu progresso
+            </span>
+        </a>
+
+
+        <!-- PACOTES -->
+        <a
+            href="pacotes.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Pacotes adicionais
+            </span>
+        </a>
+
+
+        <!-- CONTA -->
+        <span class="sipa-sidebar-title account">
+            CONTA
+        </span>
+
+
+        <!-- PERFIL -->
+        <a
+            href="meu-perfil.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu perfil
+            </span>
+        </a>
+
+    </nav>
+
+
+    <!-- RODAPÉ -->
+    <div class="sipa-sidebar-bottom">
+
+        <div class="sipa-sidebar-unit">
+
+            <span class="sipa-sidebar-status"></span>
+
+            <div class="sipa-sidebar-unit-text">
+
+                <strong>
+                    SIPA
+                </strong>
+
+                <small>
+                    Atendimento disponível
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- LOGOUT -->
+        <button
+            type="button"
+            id="lessons-logout"
+            class="sipa-sidebar-logout"
+        >
+
+            <span></span>
+
+            Sair da conta
+
+        </button>
+
+    </div>
+
+</aside>
+
+
+        <!-- =====================================
+             CONTEÚDO PRINCIPAL
+             ===================================== -->
+
+        <main class="lessons-main">
+
+
+            <!-- HEADER -->
+
+            <header class="lessons-header">
+
+                <div class="lessons-header-left">
+
+                    <button
+                        type="button"
+                        id="lessons-mobile-menu"
+                        class="lessons-mobile-menu"
+                    >
+                        ☰
+                    </button>
+
+
+                    <div>
+
+                        <span class="lessons-eyebrow">
+                            MINHAS AULAS
+                        </span>
+
+                        <h1>
+                            Minhas aulas
+                        </h1>
+
+                        <p>
+                            Acompanhe seus agendamentos e
+                            consulte os detalhes das suas aulas.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <a
+                    href="agendamento.html"
+                    class="new-lesson-button"
+                >
+
+                    <span>
+                        +
+                    </span>
+
+                    Agendar nova aula
+
+                </a>
+
+            </header>
+
+
+            <!-- =================================
+                 RESUMO
+                 ================================= -->
+
+            <section class="lessons-summary">
+
+
+                <div class="summary-card">
+
+                    <span class="summary-card-icon">
+                        ◷
+                    </span>
+
+                    <div>
+
+                        <span>
+                            PRÓXIMA AULA
+                        </span>
+
+                        <strong id="next-lesson-summary">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span class="summary-card-icon">
+                        ✓
+                    </span>
+
+                    <div>
+
+                        <span>
+                            AULAS AGENDADAS
+                        </span>
+
+                        <strong id="total-lessons">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <span class="summary-card-icon">
+                        ◎
+                    </span>
+
+                    <div>
+
+                        <span>
+                            UNIDADE
+                        </span>
+
+                        <strong>
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- =================================
+                 LISTA
+                 ================================= -->
+
+            <section class="lessons-card">
+
+
+                <div class="lessons-card-header">
+
+                    <div>
+
+                        <span>
+                            AGENDAMENTOS
+                        </span>
+
+                        <h2>
+                            Suas próximas aulas
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="lessons-count"
+                        class="lessons-count"
+                    >
+                        0 aulas
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="lessons-list"
+                    class="lessons-list"
+                >
+
+                    <!-- JavaScript preencherá aqui -->
+
+                </div>
+
+
+            </section>
+
+
+            <!-- =================================
+                 AULAS ANTERIORES (últimos 90 dias) E CANCELADAS
+                 ================================= -->
+
+            <section class="lessons-card lessons-card-past">
+
+                <div class="lessons-card-header">
+
+                    <div>
+
+                        <span>
+                            ÚLTIMOS 90 DIAS E CANCELADAS
+                        </span>
+
+                        <h2>
+                            Aulas anteriores e canceladas
+                        </h2>
+
+                    </div>
+
+                    <span
+                        id="past-lessons-count"
+                        class="lessons-count"
+                    >
+                        0 aulas
+                    </span>
+
+                </div>
+
+                <div
+                    id="past-lessons-list"
+                    class="lessons-list"
+                >
+                </div>
+
+            </section>
+            <!-- FOOTER -->
+
+            <footer class="lessons-footer">
+
+                <span>
+                    SIPA — Sistema Inteligente Para Agendamentos
+                </span>
+
+                <span class="footer-online">
+                    ● Sistema online
+                </span>
+
+            </footer>
+
+
+        </main>
+
+</div>
+
+<script type="module">
+    import { prepararPaginaLocal } from "./js/modules/essencial/components/painelLocal.js";
+    if (!await prepararPaginaLocal("aluno")) await import("./js/minhas-aulas.js");
+</script>
+
+</body>
+
+</html>

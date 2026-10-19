@@ -7,6 +7,7 @@ import { obterToken, limparSessao } from "./sessao.js";
 
 async function requisicao(metodo, rota, corpo) {
 
+    if (!API_URL) throw new ApiErro(0, null);
     const cabecalhos = { "Content-Type": "application/json" };
     const token = obterToken();
 

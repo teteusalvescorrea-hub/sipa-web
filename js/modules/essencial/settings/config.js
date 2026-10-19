@@ -28,4 +28,4 @@ function urlLocal() {
     }
 }
 
-export const API_URL = urlLocal() || AMBIENTES[AMBIENTE].API_URL;
+export const API_URL = (AMBIENTE === "development" ? urlLocal() : null) || AMBIENTES[AMBIENTE].API_URL;

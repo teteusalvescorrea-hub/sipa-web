@@ -198,6 +198,8 @@ function renderizarCalendario() {
     }
 
 
+    document.getElementById("calendar-block-reasons")?.replaceChildren();
+
     /* =====================================
        CRIAR OS DIAS
        ===================================== */
@@ -328,6 +330,20 @@ function renderizarCalendario() {
            ADICIONAR DIA AO CALENDÁRIO
            ================================= */
 
+        elementoDia.setAttribute("aria-label", dataDoDia.split("-").reverse().join("/") + (dataPassada ? " · Data passada · agendamento indisponível" : " · Disponível para consulta"));
+        elementoDia.setAttribute("aria-pressed", String(elementoDia.classList.contains("selected")));
+        if (ehHoje) elementoDia.setAttribute("aria-current", "date");
+        if (dataPassada) {
+            elementoDia.classList.add("calendar-blocked");
+            const numero = document.createElement("span"); numero.className = "calendar-day-number";
+            numero.textContent = elementoDia.textContent; elementoDia.replaceChildren(numero);
+            const x = document.createElement("span"); x.className = "calendar-block-mark";
+            x.textContent = ""; x.setAttribute("aria-hidden", "true"); elementoDia.append(x);
+        }
+        if (dataPassada) {
+            const motivo = document.createElement("li"); motivo.textContent = elementoDia.getAttribute("aria-label");
+            document.getElementById("calendar-block-reasons")?.append(motivo);
+        }
         calendarDays.appendChild(
             elementoDia
         );
@@ -927,8 +943,12 @@ function mostrarUnidade() {
     const unidade = unidadeDaCategoria(categoriaSelecionada);
     const escolher = unidades.length > 1;
 
-    summaryUnit.hidden = escolher;
+    summaryUnit.hidden = false;
+    summaryUnit.textContent = textoDaUnidade(unidade);
     unidadeSelect.hidden = !escolher;
+    const unidadeVisivel = document.getElementById("booking-unit-current");
+    unidadeVisivel.textContent = textoDaUnidade(unidade);
+    unidadeVisivel.hidden = escolher;
 
     if (escolher) {
         unidadeSelect.replaceChildren(new Option("Escolha a unidade", ""));

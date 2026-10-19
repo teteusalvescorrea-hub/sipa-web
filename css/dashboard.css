@@ -2184,3 +2184,75 @@ a {
         padding: 14px;
     }
 }
+/* Dashboard do aluno: créditos, próxima aula e progresso com hierarquia única. */
+.dashboard-content [hidden] { display: none !important; }
+.dashboard-page [hidden] { display: none !important; }
+.dashboard-header .header-profile-info strong { font-size: 13px; }
+.dashboard-header .header-profile-info span { font-size: 11px; line-height: 1.6; }
+.dashboard-header .header-greeting > span { font-size: 11px; }
+.dashboard-page .dashboard-footer { font-size: 12px; }
+.dashboard-content { display: grid; gap: 22px; margin-top: 26px; }
+.dashboard-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.dashboard-section-heading h2 { font-size: 23px; color: #16324f; margin: 6px 0 0; }
+.dashboard-section-heading p { font-size: 13px; line-height: 1.7; color: #607b99; max-width: 340px; margin: 0; }
+.dashboard-content .card-eyebrow { font-size: 11px; letter-spacing: .08em; }
+.dashboard-content .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin: 0; }
+.dashboard-content .credit-card { display: block; padding: 24px; min-height: 0; }
+.credit-heading { display: flex; gap: 14px; align-items: center; }
+.dashboard-icon { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; color: #1676c5; flex-shrink: 0; }
+.credit-heading span { font-size: 13px; color: #607b99; }
+.credit-heading h2 { font-size: 18px; color: #16324f; margin: 3px 0 0; }
+.credit-value { display: flex; gap: 12px; align-items: baseline; margin-top: 22px; }
+.credit-value strong { font-size: 42px; font-weight: 700; line-height: 1.1; color: #16324f; }
+.credit-value span { font-size: 14px; color: #456582; }
+.credit-card > p { font-size: 12px; line-height: 1.8; color: #607b99; margin: 14px 0 0; }
+.dashboard-content .dashboard-grid { margin: 0; gap: 18px; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr); }
+.dashboard-content .next-lesson-card, .dashboard-content .quick-actions-card, .dashboard-content .progress-card { padding: 24px; }
+.dashboard-content .card-header h3 { font-size: 18px; line-height: 1.4; }
+.next-class-state { margin-top: 24px; min-height: 170px; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+.next-class-state > p { font-size: 16px; line-height: 1.7; color: #456582; max-width: 360px; }
+.next-class-state a { color: #1676c5; font-size: 14px; text-decoration: none; width: fit-content; }
+.next-class-state a:hover { text-decoration: underline; }
+.next-class-details { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; margin: 0; }
+.next-class-details dt { font-size: 12px; color: #607b99; margin-bottom: 5px; }
+.next-class-details dd { font-size: 15px; color: #16324f; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+.dashboard-content .lesson-status { font-size: 12px; padding: 7px 10px; }
+.dashboard-content .quick-actions { gap: 10px; margin-top: 18px; }
+.dashboard-content .quick-action { display: flex; gap: 13px; padding: 14px; text-decoration: none; color: #16324f; min-height: 72px; }
+.dashboard-content .quick-action strong { font-size: 14px; line-height: 1.5; }
+.dashboard-content .quick-action div { flex: 1; min-width: 0; }
+.dashboard-content .quick-action div > span { font-size: 12px; line-height: 1.6; }
+.dashboard-content .quick-action:hover { background: #e6f0fa; border-color: #83b3d7; transform: translateY(-1px); }
+.dashboard-content a:focus-visible, .dashboard-content button:focus-visible, .dashboard-test-setup summary:focus-visible { outline: 3px solid #2388d9; outline-offset: 3px; }
+.dashboard-content .progress-section { margin: 0; gap: 18px; grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr); }
+.dashboard-content .progress-number { font-size: 14px; white-space: normal; }
+.dashboard-content .progress-bar-container { margin: 24px 0 16px; }
+.dashboard-content .progress-card p { font-size: 13px; line-height: 1.8; color: #607b99; }
+.dashboard-content .license-card { padding: 24px; gap: 16px; }
+.dashboard-content .license-info span { font-size: 12px; text-transform: none; }
+.dashboard-content .license-info strong { font-size: 22px; margin: 8px 0; }
+.dashboard-content .license-info small { font-size: 13px; line-height: 1.7; }
+.dashboard-content .dashboard-notice { margin: 0; padding: 16px; font-size: 13px; line-height: 1.7; color: #456582; }
+.dashboard-test-setup { border-top: 1px solid #cbddec; padding-top: 18px; font-size: 12px; color: #607b99; line-height: 1.8; }
+.dashboard-test-setup summary { cursor: pointer; width: fit-content; }
+.dashboard-test-setup p { margin-top: 10px; }
+.dashboard-test-setup button { margin-top: 12px; padding: 10px 14px; border: 1px solid #bdd3e7; border-radius: 8px; background: #edf5fc; color: #12578f; font: inherit; cursor: pointer; }
+.dashboard-test-setup button:disabled { opacity: .6; cursor: default; }
+@media (max-width: 1000px) { .dashboard-content .dashboard-grid, .dashboard-content .progress-section { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+    .dashboard-content { gap: 18px; }
+    .dashboard-page .sipa-sidebar { position: fixed; top: 0; bottom: 0; left: 0; width: 248px; height: 100dvh; z-index: 100; transform: translateX(-100%); transition: transform .2s ease; }
+    .dashboard-page .sipa-sidebar.mobile-open { transform: translateX(0); }
+    .dashboard-page .dashboard-main { width: 100%; min-width: 0; margin-left: 0; }
+    .dashboard-section-heading { align-items: start; flex-direction: column; gap: 10px; }
+    .dashboard-content .summary-grid { grid-template-columns: 1fr; }
+    .dashboard-content .credit-card, .dashboard-content .next-lesson-card, .dashboard-content .quick-actions-card, .dashboard-content .progress-card, .dashboard-content .license-card { padding: 20px; }
+    .next-class-details { grid-template-columns: 1fr; }
+    .dashboard-header .header-greeting h1 { font-size: 23px; }
+}
+/* Uma coluna independente evita que a altura dos atalhos afaste o progresso. */
+.dashboard-content .dashboard-stack { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.dashboard-content .dashboard-stack > article { margin: 0; }
+.dashboard-content .dashboard-test-setup { border: 1px solid #cbddec; background: #f5f9fd; border-radius: 10px; padding: 16px; }
+.dashboard-test-setup .test-account-summary { font-size: 13px; overflow-wrap: anywhere; }
+.dashboard-test-setup summary { font-size: 14px; color: #12578f; font-weight: 600; }
