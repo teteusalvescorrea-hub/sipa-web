@@ -6,7 +6,9 @@ O sistema foi desenvolvido com foco em organização, praticidade e controle dos
 
 ## Acesse o sistema
 
-[**Acessar o SIPA**](https://teteusalvescorrea-hub.github.io/SIPA/)
+[**Acessar o SIPA**](https://teteusalvescorrea-hub.github.io/sipa-web/)
+
+O site publica a branch `prod`. As telas ligadas na API só funcionam no site depois que a API estiver num servidor; até lá, rode local (veja abaixo).
 
 ## Funcionalidades
 
@@ -33,19 +35,21 @@ O sistema foi desenvolvido com foco em organização, praticidade e controle dos
 - HTML5
 - CSS3
 - JavaScript
-- LocalStorage
-- SessionStorage
+- Módulos ES (`js/modules`, no padrão de pastas do front do Simplea)
+- API do SIPA em .NET 10 (repositório `sipa-api`)
 - Font Awesome
 
 ## Estrutura do projeto
 
 ```text
-SIPA/
+sipa-web/
 │
 ├── assets/
 ├── css/
+├── docs/
 ├── js/
 ├── agendamento.html
+├── autoescola.html      # login com CNPJ: pacotes à venda e pedidos dos alunos
 ├── cadastro.html
 ├── dashboard.html
 ├── index.html
@@ -53,4 +57,10 @@ SIPA/
 ├── meu-perfil.html
 ├── meu-progresso.html
 ├── minhas-aulas.html
+├── pacotes.html
 └── README.md
+
+## Rodar local
+
+- Banco (Docker), API em `http://localhost:5080` e front em `http://localhost:5500`: veja `js/README.md`.
+- Como ligar uma tela numa rota da API: `docs/como-integrar-uma-api.md`.

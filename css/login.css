@@ -1752,6 +1752,14 @@ body.login-page {
     border: 1px solid rgba(217,83,83,.15) !important;
 }
 
+.form-message.info {
+    color: #2f6fd6 !important;
+}
+
+.form-message.success {
+    color: #23944a !important;
+}
+
 
 /* =========================================================
    CAMPOS
@@ -1959,4 +1967,29 @@ body.login-page {
     font-size: 10px !important;
     font-weight: 500;
     line-height: 1.2;
+}
+/* =========================================
+   ETAPA DO PACOTE (DEPOIS DO CADASTRO)
+   ========================================= */
+
+/* O hidden vence o display das classes (form, seletor e etapa). */
+.login-card [hidden] {
+    display: none !important;
+}
+
+.pacote-step .form-message {
+    white-space: pre-line;
+}
+
+/* Mais forte que o .pacotes-escolha do pacotes.css (carregado depois). */
+.pacote-step .pacote-step-lista {
+    margin-top: 18px;
+}
+
+.pacote-step-acoes {
+    margin-top: 20px;
+
+    display: grid;
+
+    gap: 10px;
 }

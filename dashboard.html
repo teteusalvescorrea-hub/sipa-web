@@ -189,6 +189,23 @@
         </a>
 
 
+        <!-- PACOTES -->
+        <a
+            href="pacotes.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon">
+                📦
+            </span>
+
+            <span>
+                Pacotes
+            </span>
+
+        </a>
+
+
         <!-- CONTA -->
         <span class="sipa-sidebar-title account">
             CONTA
@@ -224,7 +241,7 @@
             <div class="sipa-sidebar-unit-text">
 
                 <strong>
-                    Unidade Centro
+                    SIPA
                 </strong>
 
                 <small>
@@ -353,6 +370,44 @@
 
 
                 <!-- =================================
+                     AVISO DO PACOTE
+                     (o JS preenche e mostra quando
+                     não há aulas para agendar)
+                     ================================= -->
+
+                <div
+                    class="package-alert"
+                    id="package-alert"
+                    hidden
+                >
+
+                    <div class="notice-icon">
+                        !
+                    </div>
+
+
+                    <div class="notice-content">
+
+                        <strong id="package-alert-title"></strong>
+
+                        <span id="package-alert-text"></span>
+
+                    </div>
+
+
+                    <a
+                        href="pacotes.html"
+                        class="package-alert-button"
+                        id="package-alert-button"
+                    >
+                        Escolher pacote
+                        <span>→</span>
+                    </a>
+
+                </div>
+
+
+                <!-- =================================
                      BANNER DE BOAS-VINDAS
                      ================================= -->
 
@@ -401,7 +456,7 @@
                                 Seu progresso
                             </strong>
 
-                            <span>
+                            <span id="welcome-progress-message">
                                 Você está indo muito bem!
                             </span>
 
@@ -528,7 +583,7 @@
                             </div>
 
 
-                            <span class="lesson-status">
+                            <span class="lesson-status" id="next-lesson-status">
                                 Confirmada
                             </span>
 
@@ -599,10 +654,10 @@
                                     <div>
 
                                         <span>
-                                            CATEGORIA
+                                            VEÍCULO
                                         </span>
 
-                                        <strong id="next-lesson-category">
+                                        <strong id="next-lesson-vehicle">
                                             B
                                         </strong>
 
@@ -620,7 +675,7 @@
                                     <div>
 
                                         <span>
-                                            INSTRUTOR
+                                            MOTORISTA
                                         </span>
 
                                         <strong id="next-lesson-instructor">
@@ -826,10 +881,11 @@
 
 
                     <div
-    class="lessons-list"
-    id="lessons-list"
->
-</div>
+                        class="lessons-list"
+                        id="lessons-list"
+                    ></div>
+
+                </div>
 
 
                     
@@ -882,7 +938,7 @@
                                 Você está no caminho certo!
                             </span>
 
-                            <strong>
+                            <strong id="progress-cheer">
                                 Continue assim 🚗
                             </strong>
 
@@ -919,7 +975,10 @@
                         </div>
 
 
-                        <span class="license-status">
+                        <span
+                            class="license-status"
+                            id="license-status"
+                        >
                             Em andamento
                         </span>
 
@@ -932,7 +991,7 @@
                      AVISO
                      ================================= -->
 
-                <div class="dashboard-notice">
+                <div class="dashboard-notice" id="dashboard-notice">
 
                     <div class="notice-icon">
                         !
@@ -986,8 +1045,7 @@
          JAVASCRIPT
          ========================================= -->
 
-    <script src="js/dados.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
 
 </body>
 

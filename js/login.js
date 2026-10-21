@@ -1,4 +1,11 @@
-"use strict";
+import { login } from "./modules/essencial/service/authService.js";
+import { limparSessao } from "./modules/essencial/utils/sessao.js";
+import { cadastrarAluno } from "./modules/alunos/services/alunos.service.js";
+import {
+    montarEscolhaDePacotes,
+    resumoDoEnvio
+} from "./modules/pacotes/components/escolhaDePacotes.js";
+
 
 /* =========================================
    ELEMENTOS
@@ -13,6 +20,9 @@ const registerPanel = document.getElementById("register-panel");
 const loginForm = document.getElementById("login-form");
 const cadastroForm = document.getElementById("cadastroForm");
 
+const loginSubmit = document.getElementById("login-submit");
+const cadastroSubmit = cadastroForm?.querySelector('button[type="submit"]');
+
 const loginCpf = document.getElementById("login-cpf");
 const loginPassword = document.getElementById("login-password");
 const loginMessage = document.getElementById("login-message");
@@ -21,7 +31,6 @@ const cadastroMessage = document.getElementById("cadastro-message");
 
 const passwordToggle = document.getElementById("password-toggle");
 const forgotPassword = document.getElementById("forgot-password");
-const googleLogin = document.getElementById("google-login");
 
 const bottomRegisterButton = document.getElementById("bottom-register-button");
 const bottomLoginButton = document.getElementById("bottom-login-button");
@@ -101,12 +110,12 @@ function limparMensagens() {
 
     if (loginMessage) {
         loginMessage.textContent = "";
-        loginMessage.className = "login-message";
+        loginMessage.className = "form-message";
     }
 
     if (cadastroMessage) {
         cadastroMessage.textContent = "";
-        cadastroMessage.className = "cadastro-message";
+        cadastroMessage.className = "form-message";
     }
 
     limparErrosCadastro();
@@ -161,6 +170,42 @@ function mostrarErroCampo(campo, mensagem) {
     mensagemErro.textContent = mensagem;
 
     campoContainer.appendChild(mensagemErro);
+}
+
+
+/* =========================================
+   MOSTRAR ERRO DA API NO CAMPO
+   ========================================= */
+
+function mostrarErroDaApi(mensagem) {
+
+    const texto = mensagem.toLowerCase();
+
+    const camposPorPalavra = [
+        ["cpf", cadastroCpf],
+        ["nome", cadastroNome],
+        ["e-mail", cadastroEmail],
+        ["telefone", cadastroTelefone],
+        ["categoria", cadastroCategoria],
+        ["senha", cadastroSenha]
+    ];
+
+    const encontrado = camposPorPalavra.find(
+        ([palavra]) => texto.includes(palavra)
+    );
+
+
+    if (encontrado) {
+
+        mostrarErroCampo(encontrado[1], mensagem);
+
+        return;
+    }
+
+
+    cadastroMessage.textContent = mensagem;
+
+    cadastroMessage.classList.add("error");
 }
 
 
@@ -251,13 +296,44 @@ function formatarCPF(valor) {
 
 
 /* =========================================
-   CPF DO LOGIN
+   CPF OU CNPJ DO LOGIN
+   O CNPJ novo tem letras nas 12 primeiras posições.
    ========================================= */
+
+function limparDocumento(valor) {
+    return valor.replace(/[^0-9A-Za-z]/g, "").toUpperCase().substring(0, 14);
+}
+
+
+function formatarDocumento(valor) {
+
+    const documento = limparDocumento(valor);
+
+    if (documento.length <= 11 && /^\d*$/.test(documento)) {
+        return formatarCPF(documento);
+    }
+
+    return documento.replace(
+        /^(\w{2})(\w{0,3})(\w{0,3})(\w{0,4})(\w{0,2})$/,
+        function (_, p1, p2, p3, p4, p5) {
+
+            let resultado = p1;
+
+            resultado += p2 ? `.${p2}` : "";
+            resultado += p3 ? `.${p3}` : "";
+            resultado += p4 ? `/${p4}` : "";
+            resultado += p5 ? `-${p5}` : "";
+
+            return resultado;
+        }
+    );
+}
+
 
 if (loginCpf) {
 
     loginCpf.addEventListener("input", function () {
-        this.value = formatarCPF(this.value);
+        this.value = formatarDocumento(this.value);
     });
 }
 
@@ -286,7 +362,6 @@ const cadastroNome = document.getElementById("nome");
 const cadastroEmail = document.getElementById("email");
 const cadastroTelefone = document.getElementById("telefone");
 const cadastroCategoria = document.getElementById("categoria");
-const cadastroPacote = document.getElementById("pacote");
 const cadastroSenha = document.getElementById("senha");
 const cadastroConfirmarSenha = document.getElementById("confirmarSenha");
 
@@ -295,7 +370,6 @@ ativarRemocaoDeErro(cadastroNome);
 ativarRemocaoDeErro(cadastroEmail);
 ativarRemocaoDeErro(cadastroTelefone);
 ativarRemocaoDeErro(cadastroCategoria);
-ativarRemocaoDeErro(cadastroPacote);
 ativarRemocaoDeErro(cadastroSenha);
 ativarRemocaoDeErro(cadastroConfirmarSenha);
 
@@ -383,22 +457,25 @@ if (passwordToggle && loginPassword) {
 
 if (loginForm) {
 
-    loginForm.addEventListener("submit", function (event) {
+    loginForm.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
         limparMensagens();
 
-        const cpf = loginCpf.value.replace(/\D/g, "");
-        const senha = loginPassword.value.trim();
+        const documento = limparDocumento(loginCpf.value);
+
+        const senha = loginPassword.value;
 
 
-        /* CPF */
+        /* CPF (aluno e motorista) OU CNPJ (autoescola) */
 
-        if (cpf.length !== 11) {
+        const cpfValido = documento.length === 11 && /^\d+$/.test(documento);
+
+        if (!cpfValido && documento.length !== 14) {
 
             loginMessage.textContent =
-                "Digite um CPF com 11 números.";
+                "Digite um CPF com 11 números ou um CNPJ com 14 caracteres.";
 
             loginMessage.classList.add("error");
 
@@ -419,41 +496,51 @@ if (loginForm) {
         }
 
 
-        /* BUSCA ALUNO */
+        /* LOGIN */
 
-        const alunoEncontrado = buscarAlunoPorCpf(cpf);
+        let resposta;
 
+        loginSubmit.disabled = true;
 
-        if (!alunoEncontrado) {
+        try {
+
+            resposta = await login(documento, senha);
+
+        } catch (erro) {
 
             loginMessage.textContent =
-                "CPF não encontrado. Faça seu cadastro.";
+                erro.message;
 
             loginMessage.classList.add("error");
 
             return;
+
+        } finally {
+
+            loginSubmit.disabled = false;
         }
 
 
-        /* SENHA INCORRETA */
+        /* TELA DE CADA PERFIL (O MOTORISTA AINDA NÃO TEM) */
 
-        if (alunoEncontrado.senha !== senha) {
+        const telaDoPerfil = {
+            Aluno: "dashboard.html",
+            Autoescola: "autoescola.html"
+        };
+
+        const tela = telaDoPerfil[resposta.perfil.descricao];
+
+        if (!tela) {
+
+            limparSessao();
 
             loginMessage.textContent =
-                "Senha incorreta.";
+                "A tela do motorista ainda está em construção.";
 
-            loginMessage.classList.add("error");
+            loginMessage.classList.add("info");
 
             return;
         }
-
-
-        /* SALVA ALUNO LOGADO */
-
-        sessionStorage.setItem(
-            "sipaAluno",
-            JSON.stringify(alunoEncontrado)
-        );
 
 
         loginMessage.textContent =
@@ -462,11 +549,9 @@ if (loginForm) {
         loginMessage.classList.add("success");
 
 
-        /* DASHBOARD */
-
         setTimeout(function () {
 
-            window.location.href = "dashboard.html";
+            window.location.href = tela;
 
         }, 700);
 
@@ -480,11 +565,11 @@ if (loginForm) {
 
 if (cadastroForm) {
 
-    cadastroForm.addEventListener("submit", function (event) {
+    cadastroForm.addEventListener("submit", async function (event) {
 
         event.preventDefault();
 
-        limparErrosCadastro();
+        limparMensagens();
 
 
         /* =====================================
@@ -500,8 +585,6 @@ if (cadastroForm) {
         const telefone = cadastroTelefoneInput.value.replace(/\D/g, "");
 
         const categoria = cadastroCategoria.value;
-
-        const pacote = Number(cadastroPacote.value);
 
         const senha = cadastroSenha.value;
 
@@ -587,21 +670,6 @@ if (cadastroForm) {
 
 
         /* =====================================
-           PACOTE
-           ===================================== */
-
-        if (![2, 5, 10, 15, 20].includes(pacote)) {
-
-            mostrarErroCampo(
-                cadastroPacote,
-                "Selecione um pacote válido."
-            );
-
-            formularioValido = false;
-        }
-
-
-        /* =====================================
            SENHA
            ===================================== */
 
@@ -641,112 +709,195 @@ if (cadastroForm) {
 
 
         /* =====================================
-           BUSCA ALUNOS
+           CADASTRO
            ===================================== */
 
-        const alunos = obterAlunosSipa();
+        const categoriasDaApi = {
+            A: [1],
+            B: [2],
+            AB: [1, 2]
+        };
 
 
-        /* =====================================
-           CPF DUPLICADO
-           ===================================== */
+        /* O botão fica travado até o login da conta nova. */
+        cadastroSubmit.disabled = true;
 
-        const cpfExiste = alunos.some(
-            aluno => aluno.cpf === cpf
-        );
+        try {
 
+            await cadastrarAluno({
+                nome: nome,
+                cpf: cpf,
+                email: email,
+                telefone: telefone,
+                categorias: categoriasDaApi[categoria],
+                senha: senha
+            });
 
-        if (cpfExiste) {
+        } catch (erro) {
 
-            mostrarErroCampo(
-                cadastroCpf,
-                "Este CPF já está cadastrado."
-            );
+            cadastroSubmit.disabled = false;
+
+            const erros =
+                erro.erros ?? [erro.message || "Erro inesperado. Tente de novo."];
+
+            erros.forEach(mostrarErroDaApi);
 
             return;
         }
 
 
         /* =====================================
-           GERA ID
+           ENTRA COM A CONTA NOVA
            ===================================== */
 
-        const ids = alunos.map(
-            aluno => Number(aluno.id) || 0
-        );
+        try {
 
-        const maiorId =
-            ids.length > 0
-                ? Math.max(...ids)
-                : 0;
+            await login(cpf, senha);
 
-        const novoId = maiorId + 1;
+        } catch {
 
+            cadastroSubmit.disabled = false;
 
-        /* =====================================
-           NOVO ALUNO
-           ===================================== */
+            voltarParaLogin(cpf);
 
-        const novoAluno = {
-
-            id: novoId,
-
-            nome: nome,
-
-            cpf: cpf,
-
-            senha: senha,
-
-            categoria: categoria,
-
-            pacote: pacote,
-
-            aulasRestantes: pacote,
-
-            email: email,
-
-            telefone: telefone
-        };
+            return;
+        }
 
 
-        /* =====================================
-           SALVA
-           ===================================== */
+        cadastroSubmit.disabled = false;
 
-        alunos.push(novoAluno);
-
-        salvarAlunosSipa(alunos);
-
-
-        /* =====================================
-           SUCESSO
-           ===================================== */
-
-        cadastroMessage.textContent =
-            "Cadastro realizado com sucesso!";
-
-        cadastroMessage.classList.add("success");
-
-
-        cadastroForm.reset();
-
-
-        /* =====================================
-           VOLTA PARA LOGIN
-           ===================================== */
-
-        setTimeout(function () {
-
-            mostrarLogin();
-
-            loginCpf.value = formatarCPF(cpf);
-
-            loginPassword.focus();
-
-        }, 1000);
+        mostrarEtapaPacote(categoriasDaApi[categoria]);
 
     });
 }
+
+
+/* =========================================
+   LOGIN DEPOIS DO CADASTRO FALHOU:
+   VOLTA PARA O LOGIN COM O CPF
+   ========================================= */
+
+function voltarParaLogin(cpf) {
+
+    cadastroMessage.textContent =
+        "Cadastro realizado com sucesso!";
+
+    cadastroMessage.classList.add("success");
+
+
+    cadastroForm.reset();
+
+
+    setTimeout(function () {
+
+        mostrarLogin();
+
+        loginCpf.value = formatarCPF(cpf);
+
+        loginPassword.focus();
+
+    }, 1000);
+}
+
+
+/* =========================================
+   ETAPA DO PACOTE (DEPOIS DO CADASTRO)
+   ========================================= */
+
+const accessSwitch = document.querySelector(".access-switch");
+const pacoteStep = document.getElementById("pacote-step");
+const pacoteEscolha = document.getElementById("pacote-escolha");
+const pacoteMessage = document.getElementById("pacote-message");
+const pacoteConfirmar = document.getElementById("pacote-confirmar");
+const pacoteDepois = document.getElementById("pacote-depois");
+
+let escolhaDePacotes = null;
+let indoParaPainel = false;
+
+
+function irParaPainel() {
+
+    window.location.href = "dashboard.html";
+}
+
+
+/* categorias: [1], [2] ou [1, 2] */
+function mostrarEtapaPacote(categorias) {
+
+    limparMensagens();
+
+    cadastroForm.reset();
+
+
+    /* Fica só a etapa do pacote no painel de cadastro. */
+    accessSwitch.hidden = true;
+
+    Array.from(registerPanel.children).forEach(function (filho) {
+        filho.hidden = filho !== pacoteStep;
+    });
+
+
+    escolhaDePacotes = montarEscolhaDePacotes(
+        pacoteEscolha,
+        categorias,
+        { botao: pacoteConfirmar }
+    );
+
+    pacoteStep.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+
+pacoteConfirmar.addEventListener("click", async function () {
+
+    if (!escolhaDePacotes || indoParaPainel) {
+        return;
+    }
+
+    pacoteMessage.replaceChildren();
+
+
+    /* Sair no meio do envio deixaria pedido sem aviso. */
+    pacoteDepois.disabled = true;
+
+    const resultados = await escolhaDePacotes.enviar();
+
+    if (!resultados) {
+        pacoteDepois.disabled = false;
+        return;
+    }
+
+
+    /* Falhou algum: mostra e deixa tentar de novo (os enviados não voltam). */
+
+    const falhas = resultados.filter((resultado) => !resultado.ok);
+
+    if (falhas.length > 0) {
+
+        const enviados = resultados
+            .filter((resultado) => resultado.ok)
+            .map((resultado) => resultado.pacote);
+
+        pacoteMessage.replaceChildren(...resumoDoEnvio(enviados, falhas));
+
+        pacoteDepois.disabled = false;
+
+        return;
+    }
+
+
+    /* Tudo enviado: "Escolher depois" continua travado. */
+
+    indoParaPainel = true;
+
+    pacoteMessage.replaceChildren(
+        ...resumoDoEnvio(escolhaDePacotes.enviados(), [])
+    );
+
+    setTimeout(irParaPainel, 2000);
+});
+
+
+pacoteDepois.addEventListener("click", irParaPainel);
 
 
 /* =========================================
@@ -768,22 +919,6 @@ if (forgotPassword) {
 }
 
 
-/* =========================================
-   LOGIN COM GOOGLE
-   ========================================= */
-
-if (googleLogin) {
-
-    googleLogin.addEventListener("click", function () {
-
-        loginMessage.textContent =
-            "Login com Google disponível em uma futura versão.";
-
-        loginMessage.classList.add("info");
-
-    });
-}
-
 
 /* =========================================
    ABRIR CADASTRO PELO LINK
@@ -795,4 +930,17 @@ const parametrosUrl =
 if (parametrosUrl.get("cadastro") === "true") {
 
     mostrarCadastro();
+}
+
+
+/* =========================================
+   SESSÃO EXPIRADA (401 NA API)
+   ========================================= */
+
+if (parametrosUrl.get("sessao") === "expirada" && loginMessage) {
+
+    loginMessage.textContent =
+        "Sua sessão expirou. Entre de novo.";
+
+    loginMessage.classList.add("info");
 }

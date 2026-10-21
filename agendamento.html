@@ -160,6 +160,15 @@
         </a>
 
 
+        <a
+            href="pacotes.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon">📦</span>
+            Pacotes
+        </a>
+
+
         <span class="sipa-sidebar-title account">
             CONTA
         </span>
@@ -179,19 +188,20 @@
     <!-- PARTE INFERIOR -->
     <div class="sipa-sidebar-bottom">
 
-        <div class="sipa-sidebar-unit">
+        <!-- Unidade das aulas: o JS preenche e mostra -->
+        <div
+            class="sipa-sidebar-unit"
+            id="sidebar-unit"
+            hidden
+        >
 
             <span class="sipa-sidebar-status"></span>
 
             <div class="sipa-sidebar-unit-text">
 
-                <strong>
-                    Unidade Centro
-                </strong>
+                <strong id="sidebar-unit-name"></strong>
 
-                <small>
-                    Atendimento disponível
-                </small>
+                <small id="sidebar-unit-school"></small>
 
             </div>
 
@@ -485,6 +495,21 @@
         <span id="booking-package-info">
             Carregando informações...
         </span>
+
+        <button
+            type="button"
+            id="booking-retry"
+            class="booking-retry"
+            hidden
+        >
+            Tentar de novo
+        </button>
+
+        <select
+            id="booking-contratacao"
+            aria-label="Pacote contratado"
+            style="display: none; width: 100%; margin-top: 4px; padding: 4px;"
+        ></select>
     </div>
 
     <div class="booking-selection-counter">
@@ -751,48 +776,6 @@
                         <div class="summary-item">
 
                             <span class="summary-item-icon">
-                                ◫
-                            </span>
-
-                            <div>
-
-                                <span>
-                                    DATA
-                                </span>
-
-                                <strong id="summary-date">
-                                    Não selecionada
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="summary-item">
-
-                            <span class="summary-item-icon">
-                                ◷
-                            </span>
-
-                            <div>
-
-                                <span>
-                                    HORÁRIO
-                                </span>
-
-                                <strong id="summary-time">
-                                    Não selecionado
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="summary-item">
-
-                            <span class="summary-item-icon">
                                 ◎
                             </span>
 
@@ -802,11 +785,38 @@
                                     UNIDADE
                                 </span>
 
-                                <strong>
-                                    Centro
+                                <strong id="summary-unit">
+                                    Não selecionada
                                 </strong>
 
+                                <select
+                                    id="booking-unidade"
+                                    aria-label="Unidade das aulas"
+                                    style="width: 100%; margin-top: 4px; padding: 4px;"
+                                    hidden
+                                ></select>
+
                             </div>
+
+                        </div>
+
+
+                        <!-- AULAS DO LOTE -->
+
+                        <div class="summary-lessons">
+
+                            <span class="summary-lessons-title">
+                                AULAS SELECIONADAS
+                            </span>
+
+                            <ul
+                                class="summary-lessons-list"
+                                id="summary-lessons"
+                            >
+                                <li class="summary-lessons-empty">
+                                    Nenhuma aula selecionada
+                                </li>
+                            </ul>
 
                         </div>
 
@@ -831,7 +841,7 @@
                         <div class="instructor-info">
 
                             <span>
-                                INSTRUTOR
+                                MOTORISTA
                             </span>
 
                             <strong id="selected-instructor">
@@ -839,8 +849,15 @@
                             </strong>
 
                             <small id="selected-vehicle">
-                                Veículo disponível conforme a categoria
+                                Escolha a data e o horário da aula
                             </small>
+
+                            <select
+                                id="motorista-select"
+                                aria-label="Motorista da aula"
+                                style="width: 100%; margin-top: 4px; padding: 4px;"
+                                disabled
+                            ></select>
 
                         </div>
 
@@ -917,9 +934,10 @@
 
                 <div>
 
-                    <span>
-                        Unidade Centro
-                    </span>
+                    <span
+                        id="footer-unit"
+                        hidden
+                    ></span>
 
                     <span class="footer-status">
                         ● Sistema online
@@ -941,7 +959,7 @@
          ========================================= -->
 
     <script
-        src="js/agendamento.js"
+        type="module" src="js/agendamento.js"
     ></script>
 
 
