@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ambienteLocalPermitido, demonstracaoSolicitada, enderecoSemDemonstracao } from "../js/modules/operador/demo/modoDemonstracao.js";
+import { ambienteLocalPermitido, demonstracaoSolicitada, enderecoSemDemonstracao } from "../dev/operador/modoDemonstracao.js";
 
 test("demonstração exige ativação explícita em loopback HTTP(S)", () => {
     for (const host of ["localhost", "127.0.0.1", "[::1]"]) {

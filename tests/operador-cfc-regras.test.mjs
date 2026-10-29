@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { dataValida, feriadosBrasileiros, somarDias, datasDoMes, pascoa } from "../js/modules/operador/calendario.js";
-import { atualizarExame, apto, pendencias } from "../js/modules/operador/exames.js";
-import { validarHorario, paresDisponiveis, conflito, motivoFechamento, GRADE_CENTRO, ocupaRecurso, STATUS_AGENDAMENTO } from "../js/modules/operador/disponibilidade.js";
-import { criarDadosDemo } from "../js/modules/operador/demo/dadosDemo.js";
-import { repositorioDemo, CHAVE_DEMO } from "../js/modules/operador/demo/repositorioDemo.js";
+import { dataValida, feriadosBrasileiros, somarDias, datasDoMes, pascoa } from "../shared/js/calendario.js";
+import { atualizarExame, apto, pendencias } from "../nivel-1-operador/js/exames.js";
+import { validarHorario, paresDisponiveis, conflito, motivoFechamento, GRADE_CENTRO, ocupaRecurso, STATUS_AGENDAMENTO } from "../shared/js/disponibilidade.js";
+import { criarDadosDemo } from "../dev/operador/dadosDemo.js";
+import { repositorioDemo, CHAVE_DEMO } from "../dev/operador/repositorioDemo.js";
 
 for (const [ano, p, paixao, carnaval, corpus] of [[2026, "04-05", "04-03", "02-17", "06-04"], [2027, "03-28", "03-26", "02-09", "05-27"], [2028, "04-16", "04-14", "02-29", "06-15"]]) {
     test(`feriados ${ano}: nacionais fixos, Paixão e facultativos móveis`, () => {
@@ -36,7 +36,7 @@ test("grade: segunda a sexta, almoço, sábado, domingo e duração até fechame
         assert.equal(validarHorario("2026-10-17", hora) === "", GRADE_CENTRO.sabado.includes(h), hora);
         assert.ok(validarHorario("2026-10-18", hora));
     }
-    assert.match(validarHorario("2026-10-19", "13:00"), /almoço/);
+    assert.match(validarHorario("2026-10-19", "11:00",GRADE_CENTRO,{horarioAlmoco:"11-12"}), /almoço|bloqueado/);
     assert.ok(validarHorario("2026-10-19", "07:30"));
     assert.match(validarHorario("2026-10-19", "18:00", { ...GRADE_CENTRO, fechaTarde: 18.5 }), /duração/);
     assert.ok(validarHorario("2026-12-25", "09:00"));

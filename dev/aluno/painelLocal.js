@@ -1,0 +1,710 @@
+import {apresentarAgendamento,apresentarAulas,apresentarProgresso,apresentarPerfil} from '../../aluno/js/components/painelAluno.js';
+import {localDaAula,linkLocalizacaoUnidade,orientacoesComparecimento} from '../../shared/components/localAula.js';
+import { calcularPrazoCancelamento, identificarMotivo } from '../../aluno/js/domain/agendamentoAluno.js';
+import { montarAgendamentoAutomatico, montarAntecipacaoAluno } from '../../aluno/js/components/preferenciasAluno.js';
+import { obterUnidadeInstitucional } from '../../shared/js/catalogoUnidades.js';
+import { formatarCpf } from '../../shared/js/formatacao.js';
+import {desenvolvimentoAtivo} from '../../shared/js/ambiente.js';
+// Entrada local das páginas existentes. Não altera sessão/JWT nem serviços reais.
+import { ambienteAtual, criarServicoLocal, MOTIVOS_CANCELAMENTO_LOCAL, progressoPorCategoria, UNIDADES_LOCAIS, normalizarUnidadeLocal, nomeUnidadeLocal } from './authLocal.js';
+export async function montarAcessoLocal(servico) {
+    const login=document.getElementById('login-form');
+    const ferramentas=document.createElement('div');ferramentas.className='local-login-tools';
+    ferramentas.innerHTML='<label for="ambiente-teste">Qual ambiente deseja acessar?</label><select id="ambiente-teste"><option value="aluno">Aluno</option><option value="instrutor">Instrutor</option><option value="adm1">Administrador Nível 1</option><option value="adm2">Administrador Nível 2</option><option value="adm3">Administrador Nível 3</option><option value="adm4">Administrador Nível 4</option></select><small>Seleção temporária · testes locais</small><button type="button" id="configurar-local" hidden>Configurar acesso local</button><button type="button" id="sair-ambiente" hidden>Sair da sessão local</button><p id="perfil-pendente" role="status" hidden></p>';
+    login.querySelector('#login-submit').before(ferramentas);
+    const ambiente=ferramentas.querySelector('select'), pendencia=ferramentas.querySelector('#perfil-pendente'), sair=ferramentas.querySelector('#sair-ambiente');
+    sair.hidden=!await servico.sessao();
+    ambiente.onchange=()=>{pendencia.hidden=true;pendencia.textContent='';};
+    sair.onclick=async()=>{try{await servico.sair();location.reload();}catch(erro){pendencia.textContent=erro.message;pendencia.hidden=false;}};
+    function formularioDialogo(titulo, conteudo) {
+        const dialog = document.createElement("dialog"); dialog.className = "login-dialog";
+        dialog.innerHTML = `<h2>${titulo}</h2><form class="local-form">${conteudo}<p class="local-feedback" role="alert"></p><button type="submit">Confirmar</button><button type="button" data-cancelar>Cancelar</button></form>`;
+        const h = dialog.querySelector("h2"); h.id = `local-dialog-${crypto.randomUUID()}`; dialog.setAttribute("aria-labelledby", h.id);
+        dialog.querySelector("[data-cancelar]").onclick = () => dialog.close(); dialog.addEventListener("close", () => dialog.remove()); document.body.append(dialog); dialog.showModal(); return dialog;
+    }
+    const configurar = ferramentas.querySelector("#configurar-local"); configurar.hidden = await servico.contaConfigurada();
+    configurar.addEventListener("click", () => {
+        const dialog = formularioDialogo("Configurar acesso local", '<p>Defina manualmente o identificador fictício e uma senha provisória de teste. Nada será enviado à API.</p><label>Identificador (11 dígitos)<input name="identificador" inputmode="numeric" pattern="[0-9]{11}" maxlength="11" required autocomplete="off"></label><label>Senha provisória (exatamente 6 caracteres)<input name="senha" type="password" minlength="6" maxlength="6" required autocomplete="new-password"></label>');
+        dialog.querySelector("form").onsubmit = async event => {
+            event.preventDefault(); const form = event.target, botao = form.querySelector('[type="submit"]'); if (botao.disabled) return; botao.disabled = true;
+            try { await servico.configurar(form.elements.identificador.value, form.elements.senha.value); configurar.hidden = true; dialog.close(); const msg = document.getElementById("login-message"); msg.textContent = "Conta local criada. Entre para trocar sua senha provisória."; msg.className = "form-message visible success"; } catch (erro) { form.querySelector('[role="alert"]').textContent = erro.message || "Falha no armazenamento local."; } finally { botao.disabled = false; }
+        };
+    });
+    return {
+        async abrir() {
+            if(!await servico.sessao())throw new Error('Entre novamente no ambiente local.');
+            const destinos={aluno:'dashboard.html',adm1:'operador-cfc.html'};
+            if(!Object.hasOwn(destinos,ambiente.value)){pendencia.textContent='Este ambiente está em desenvolvimento.';pendencia.hidden=false;sair.hidden=false;return;}
+            await servico.selecionarInterface(ambiente.value);
+            location.assign(destinos[ambiente.value]);
+        },
+        trocar(identificador) {
+            const dialog = formularioDialogo("Troque sua senha provisória", '<p>A sessão local só será criada depois da troca. Use exatamente 6 caracteres; senhas somente numéricas são permitidas neste ambiente de testes.</p><label>Senha provisória<input name="anterior" type="password" required autocomplete="current-password"></label><label>Nova senha<input name="nova" type="password" minlength="6" maxlength="6" required autocomplete="new-password"></label><label>Confirme a nova senha<input name="confirmacao" type="password" minlength="6" maxlength="6" required autocomplete="new-password"></label>');
+            dialog.querySelector("form").onsubmit = async event => {
+                event.preventDefault(); const form = event.target, botao = form.querySelector('[type="submit"]'); if (botao.disabled) return; botao.disabled = true;
+                try { if (form.elements.nova.value !== form.elements.confirmacao.value) throw new Error("A confirmação não confere."); await servico.trocarSenha(identificador, form.elements.anterior.value, form.elements.nova.value); dialog.close(); document.getElementById("login-password").value = ""; const msg = document.getElementById("login-message"); msg.textContent = "Senha atualizada. Entre com a nova senha."; msg.className = "form-message visible success"; } catch (erro) { form.querySelector('[role="alert"]').textContent = erro.message || "Falha no armazenamento local."; } finally { botao.disabled = false; }
+            };
+        },
+    };
+}
+
+// Gate anterior ao carregamento dos módulos reais: evita tanto chamadas HTTP
+// quanto handlers de escrita da API no contexto demonstrativo. Não é fallback.
+export async function prepararPaginaLocal(interfaceEsperada,servicoInjetado) {
+    if (interfaceEsperada === "aluno" && !document.querySelector('#mobile-menu-button,[id$="-mobile-menu"]')) {
+        const botao = document.createElement("button"); botao.type = "button"; botao.className = "student-menu-toggle"; botao.textContent = "Menu"; botao.setAttribute("aria-expanded", "false");
+        botao.onclick = () => { const aberta = document.querySelector(".sipa-sidebar").classList.toggle("mobile-open"); botao.setAttribute("aria-expanded", String(aberta)); };
+        document.querySelector("main header")?.prepend(botao);
+    }
+    if (interfaceEsperada === "adm1" && new URL(location.href).searchParams.get("demo") === "1") return false;
+    try {
+        if (servicoInjetado?!desenvolvimentoAtivo():ambienteAtual() !== "local") return false;
+        const servico = servicoInjetado || await criarServicoLocal(), sessao = await servico.sessao();
+        if (!sessao || sessao.interface !== interfaceEsperada) {
+            location.replace("/login.html"); return true;
+        }
+        const registros = await servico.registros();
+        if (interfaceEsperada === "adm1") await montarOperadorLocal(registros);
+        else {
+            await montarAlunoLocal(registros, sessao, servico);
+            if (location.pathname.endsWith("/aluno/html/dashboard.html")) {
+                document.body.dataset.sipaLocalInicializando = "aluno";
+                const { iniciarDashboardLocal } = await import('./dashboardLocal.js');
+                await iniciarDashboardLocal(servico);
+                delete document.body.dataset.sipaLocalInicializando;
+            }
+        }
+        montarNavegacaoLocal(servico, interfaceEsperada);
+        document.body.dataset.sipaLocal = interfaceEsperada;
+        return true;
+    } catch (erro) {
+        // Uma falha local interrompe a entrada; nunca carrega serviços reais.
+        const aviso = document.createElement("p"); aviso.role = "alert";
+        aviso.textContent = `Não foi possível abrir o ambiente local: ${erro.message || "verifique o armazenamento do navegador."}`;
+        document.body.replaceChildren(aviso);
+        const voltar = document.createElement("a"); voltar.href = "/login.html"; voltar.textContent = "Voltar ao login"; document.body.append(voltar);
+        return true;
+    }
+}
+
+function montarNavegacaoLocal(servico, interfaceLocal) {
+    const faixa = document.createElement("nav"); faixa.className = "sipa-local-navigation"; faixa.setAttribute("aria-label", "Navegação de desenvolvimento");
+    const titulo = document.createElement("strong"); titulo.textContent = `Ambiente local · ${interfaceLocal === "adm1" ? "Operador de CFC" : "Aluno"}`;
+    const trocar = document.createElement("a"); trocar.href = "/login.html"; trocar.textContent = "Trocar ambiente de testes";
+    const sair = document.createElement("button"); sair.type = "button"; sair.textContent = "Sair";
+    async function encerrar() {
+        try { await servico.sair(); location.assign("/login.html"); }
+        catch (erro) { const aviso = document.createElement("p"); aviso.role = "alert"; aviso.textContent = erro.message; faixa.append(aviso); }
+    }
+    sair.onclick = encerrar; 
+    
+    document.querySelectorAll('#logout-button,[id$="-logout"],[data-op-sair]').forEach(b => b.addEventListener("click", encerrar));
+    document.querySelectorAll('#mobile-menu-button,[id$="-mobile-menu"]').forEach(b => b.addEventListener("click", () => {
+        const sidebar = document.querySelector(".sipa-sidebar"); sidebar?.classList.toggle("mobile-open");
+        b.setAttribute("aria-expanded", String(sidebar?.classList.contains("mobile-open")));
+    }));
+}
+
+async function montarAlunoLocal(registros, sessao, servico) {
+    // Conteúdo estático informativo; a sessão já foi validada em prepararPaginaLocal.
+    if (location.pathname.endsWith("/aluno/html/pacotes.html")) return;
+    const aluno = registros.find(r => r.tipo === "aluno" && r.documento === sessao.identificador);
+    const texto = (id, valor) => { const node = document.getElementById(id); if (node) node.textContent = valor; };
+    // Neutraliza os exemplos estáticos do HTML antes de apresentar estados vazios.
+    document.querySelectorAll("main [id]").forEach(node => {
+        if (["SPAN", "STRONG", "SMALL", "TIME", "H2"].includes(node.tagName) && !node.children.length) node.textContent = "—";
+    });
+    for (const id of ["student-name", "header-student-name", "profile-name", "profile-full-name"]) texto(id, aluno?.nome || "Aluno · sem cadastro vinculado");
+    texto("profile-cpf", formatarCpf(aluno?.documento));
+    for (const id of ["student-initial", "profile-avatar"]) texto(id, aluno?.nome?.slice(0, 1) || "—");
+    for (const id of ["progress-percent", "progress-number", "progress-percentage", "progress-bar-percentage"]) texto(id, "Sem dados");
+    for (const id of ["progress-bar", "progress-fill"]) { const node = document.getElementById(id); if (node) node.style.width = "0%"; }
+    document.querySelectorAll(".progress-circle").forEach(node => { node.style.background = "#edf5fc"; });
+    document.querySelectorAll(".notification-badge").forEach(node => { node.hidden = true; });
+    texto("welcome-progress-message", "Nenhum progresso local informado."); texto("progress-message", "Nenhum histórico local disponível.");
+    texto("license-status", "Sem dados de habilitação"); texto("progress-cheer", "");
+    for (const id of ["remaining-lessons", "completed-lessons", "total-lessons", "lessons-count", "past-lessons-count", "package-lessons", "scheduled-lessons"]) texto(id, "0");
+    texto("next-lesson-status", "Sem aula confirmada"); texto("next-lesson-summary", "Nenhuma aula confirmada localmente");
+    texto("booking-package-info", "Nenhum pacote local disponível para agendamento."); texto("calendar-month", "Calendário aguardando dados locais");
+    texto("selected-date-label", "Nenhuma data selecionada");
+    const aulas = aluno ? registros.filter(r => r.tipo === "aula" && r.aluno === aluno.id) : [];
+    for (const id of ["lessons-list", "past-lessons-list", "pedidos-lista", "pacotes-escolha", "progress-packages", "time-slots", "calendar-days"]) {
+        const lista = document.getElementById(id); if (!lista) continue;
+        lista.replaceChildren(); const vazio = document.createElement("p"); vazio.className = "sipa-local-empty";
+        vazio.textContent = "Nenhum registro disponível neste contexto local."; lista.append(vazio);
+        if (id === "lessons-list" && aulas.length) {
+            lista.replaceChildren();
+            for (const aula of aulas) { const item = document.createElement("p"); item.className = "sipa-local-empty"; item.textContent = `${aula.nome} · ${new Date(aula.inicio).toLocaleString("pt-BR")} · registro local, sem situação informada`; lista.append(item); }
+        }
+    }
+    document.querySelectorAll("main button:not(.sipa-theme-toggle),main input,main select").forEach(controle => {
+        // Menu e navegação são habilitados abaixo; operações sem serviço local
+        // não simulam sucesso e não carregam os handlers HTTP da página real.
+        controle.disabled = true; controle.title = "Recurso ainda sem integração local.";
+    });
+    document.querySelectorAll('#mobile-menu-button,[id$="-mobile-menu"],.student-menu-toggle').forEach(b => { b.disabled = false; b.removeAttribute("title"); });
+    const destinos = { schedule: "agendamento.html", lessons: "minhas-aulas.html", progress: "meu-progresso.html", profile: "meu-perfil.html", packages: "pacotes.html" };
+    document.querySelectorAll("[data-action]").forEach(b => {
+        if (!Object.hasOwn(destinos, b.dataset.action)) return;
+        b.disabled = false; b.removeAttribute("title"); b.onclick = () => location.assign(destinos[b.dataset.action]);
+    });
+    const todas = document.getElementById("view-all-lessons"); if (todas) { todas.disabled = false; todas.onclick = () => location.assign("minhas-aulas.html"); }
+    const aviso = document.getElementById("dashboard-notice") || document.createElement("section");
+    aviso.className = "sipa-local-empty";
+    aviso.textContent = "Visualização local. As páginas e menus estão disponíveis; agendar, contratar pacotes, alterar perfil e consultar progresso validado aguardam integração. Nenhuma operação foi enviada.";
+    if (!aviso.isConnected) document.querySelector("main").append(aviso);
+    const alertaPacote = document.getElementById("package-alert"); if (alertaPacote) alertaPacote.hidden = true;
+    if (!location.pathname.endsWith("/aluno/html/dashboard.html")) {
+        const dados = await servico.dadosAlunoLocal();
+        aviso.hidden = true;
+        if (location.pathname.endsWith("/aluno/html/agendamento.html")) {
+            await apresentarAgendamento(servico, dados);
+            if(servico.capacidades?.configuracaoRecursos!==false){const diagnostico=document.createElement('details');diagnostico.className='booking-diagnostics';const titulo=document.createElement('summary');titulo.textContent='Ferramentas de desenvolvimento';diagnostico.append(titulo);document.querySelector('.booking-footer').before(diagnostico);
+            await montarConfiguracaoRecursosLocais(servico,diagnostico,()=>window.dispatchEvent(new Event('sipa-recursos-atualizados')));}
+        }
+        else if (location.pathname.endsWith("/aluno/html/minhas-aulas.html")) {await apresentarAulas(servico, dados);await montarAntecipacaoAluno(servico);}
+        else if(location.pathname.endsWith("/aluno/html/meu-progresso.html")) apresentarProgresso(dados);
+        else { apresentarPerfil(dados); if(location.pathname.endsWith("/aluno/html/meu-perfil.html")) { montarSenhaPerfilLocal(servico); await montarAntecipacaoAluno(servico); if((await servico.sessao())?.demonstracaoLivre){const b=document.getElementById('change-password-button');if(b){b.disabled=true;b.title='Senha indisponivel no login livre; nenhuma senha foi armazenada.';}} } }
+    }
+}
+
+function preencherProgressoAlunoLocal(dados){
+    const resumo=progressoPorCategoria(dados.credito,dados.aulas),overview=document.querySelector('.progress-overview');overview.replaceChildren();
+    for(const categoria of ['A','B','D']){
+        const c=resumo.categorias[categoria],card=document.createElement('article');card.className='progress-card category-progress-card';card.dataset.categoriaProgresso=categoria;
+        const h=document.createElement('h2');h.textContent=(categoria==='A'?'Moto':'Carro')+' — Categoria '+categoria;const dl=document.createElement('dl');
+        for(const [campo,label,valor] of [['contratadas','Aulas contratadas',dados.credito?c.total:'—'],['disponiveis','Aulas disponíveis',dados.credito?(c.disponiveis??'A conferir'):'—'],['agendadas','Aulas agendadas',c.reservadas],['concluidas','Aulas concluídas',c.realizadas]]){const div=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=String(valor);dd.dataset.metrica=campo;div.append(dt,dd);dl.append(div);}card.append(h,dl);overview.append(card);
+    }
+    const detalhes=document.querySelector('.progress-details');detalhes.replaceChildren();const vinculo=document.createElement('p');vinculo.className='progress-link-unit';vinculo.textContent='Unidade de vínculo: '+nomeUnidadeLocal(dados.aluno?.unidade)+'. As aulas podem ocorrer em outras unidades.';detalhes.append(vinculo);
+    const evolucao=document.querySelector('.progress-bar-section');evolucao.replaceChildren();
+    for(const categoria of ['B','A']){const c=resumo.categorias[categoria],card=document.createElement('article');card.className='category-evolution';card.dataset.evolucao=categoria;const h=document.createElement('h2');h.textContent='Seu avanço nas aulas de '+(categoria==='B'?'carro':'moto');const rotulo=document.createElement('p');rotulo.textContent='Categoria '+categoria+' · '+c.realizadas+' de '+(dados.credito?c.total:'total não informado')+' aulas concluídas';const percentual=document.createElement('strong');percentual.textContent=c.percentual==null?(c.total?'Histórico a conferir':'Sem contratação informada'):c.percentual+'%';percentual.dataset.percentual=categoria;
+        const barra=document.createElement('div');barra.className='category-progress-track';barra.setAttribute('role','progressbar');barra.setAttribute('aria-label','Evolução da Categoria '+categoria);barra.setAttribute('aria-valuemin','0');barra.setAttribute('aria-valuemax','100');if(c.percentual!=null)barra.setAttribute('aria-valuenow',String(c.percentual));barra.setAttribute('aria-valuetext',percentual.textContent);const fill=document.createElement('span');fill.style.width=(c.percentual??0)+'%';barra.append(fill);card.append(h,rotulo,percentual,barra);evolucao.append(card);
+    }
+    document.querySelector('#progress-packages').closest('.progress-details').hidden=true;
+}
+
+function preencherDadosAlunoLocal(dados) {
+    const { aluno, resumo, credito } = dados;
+    const texto = (id, valor) => { const n = document.getElementById(id); if (n) n.textContent = valor; };
+    const disponiveis = Object.values(resumo.categorias).reduce((s, c) => s + (c.disponiveis || 0), 0), reservadas = Object.values(resumo.categorias).reduce((s, c) => s + c.reservadas, 0);
+    const categorias = ["A", "B", "D"].filter(c => resumo.categorias[c].total > 0).join(" e ");
+    for (const id of ["profile-name", "profile-full-name"]) texto(id, aluno?.nome || "Cadastro ainda não vinculado");
+    texto("profile-avatar", aluno?.nome?.charAt(0) || "—"); texto("profile-cpf", formatarCpf(aluno?.documento));
+    texto("profile-email", aluno?.email || "Não cadastrado"); texto("profile-phone", aluno?.telefone || "Não cadastrado");
+    for (const id of ["profile-category", "profile-course-category", "student-category"]) texto(id, categorias || "Não informadas");
+    for (const id of ["profile-school", "student-school"]) texto(id, aluno?.unidade || "Não informada");
+    const vinculo = document.getElementById("profile-school");
+    if (vinculo) {
+        const informado = aluno?.unidade && aluno.unidade !== "Não informada";
+        vinculo.textContent = informado ? nomeUnidadeLocal(aluno.unidade) : "Unidade ainda não vinculada";
+        vinculo.closest(".profile-info-card").querySelector("span").textContent = "Unidade de vínculo";
+        vinculo.closest(".profile-info-card").querySelector("small").textContent = informado ? `Aluno vinculado à ${nomeUnidadeLocal(aluno.unidade)}. Suas aulas podem ocorrer em outras unidades.` : "Configure o vínculo da sua conta local no dashboard.";
+    }
+    for (const id of ["progress-package-label"]) texto(id, credito ? "Créditos locais de teste · sem compra comercial" : "Nenhum pacote local cadastrado");
+    for (const id of ["remaining-lessons"]) texto(id, String(disponiveis));
+    for(const categoria of ['A','B','D']){const c=resumo.categorias[categoria],total=document.querySelector('[data-perfil-total="'+categoria+'"]'),saldo=document.querySelector('[data-perfil-disponivel="'+categoria+'"]');if(total)total.textContent=credito?String(c.total)+' aulas':'Não informado';if(saldo)saldo.textContent=credito?(c.disponiveis==null?'A conferir':c.disponiveis+' aulas'):'Não informado';}
+    texto("package-lessons", String(resumo.total)); texto("completed-lessons", String(resumo.realizadas)); texto("scheduled-lessons", String(reservadas));
+    texto("progress-percentage", resumo.percentual == null ? "—" : `${resumo.percentual}%`);
+    texto("progress-bar-percentage", resumo.percentual == null ? "Ainda não iniciado" : `${resumo.percentual}%`);
+    texto("progress-message", resumo.realizadas ? `${resumo.realizadas} aulas concluídas · ${reservadas} reservadas` : "Sua evolução começa com as aulas concluídas.");
+    const barra = document.getElementById("progress-fill"); if (barra) barra.style.width = `${resumo.percentual || 0}%`;
+    for (const id of ["progress-packages", "pedidos-lista"]) {
+        const node = document.getElementById(id); if (!node) continue; node.replaceChildren();
+        const p = document.createElement("p"); p.className = "sipa-local-empty";
+        p.textContent = credito ? `Créditos de testes: Categoria A · ${resumo.categorias.A.disponiveis ?? "a conferir"} disponíveis; Categoria B · ${resumo.categorias.B.disponiveis ?? "a conferir"} disponíveis. Não representam uma compra.` : "Nenhum crédito ou pacote local configurado."; node.append(p);
+    }
+    const escolha = document.getElementById("pacotes-escolha"); if (escolha) escolha.textContent = "Pacotes comerciais e contratações aguardam integração. Nenhum preço ou compra foi simulado.";
+}
+
+function montarSenhaPerfilLocal(servico){
+    const botao=document.getElementById('change-password-button');if(!botao)return;botao.disabled=false;botao.removeAttribute('title');
+    botao.onclick=()=>{
+        if(document.querySelector('.profile-password-dialog'))return;
+        const d=document.createElement('dialog');d.className='profile-password-dialog';d.setAttribute('aria-labelledby','profile-password-title');d.setAttribute('aria-describedby','profile-password-description');
+        d.innerHTML='<header><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg><h2 id="profile-password-title">Alterar senha</h2></header><p id="profile-password-description">Para sua segurança, informe sua senha atual e escolha uma nova senha para acessar sua conta.</p><form novalidate><div data-password-fields></div><small>Ambiente local de testes: a nova senha deve ter exatamente 6 caracteres.</small><p data-password-feedback role="status"></p><footer><button type="button" data-password-cancel>Cancelar</button><button type="submit" data-password-submit disabled>Confirmar alteração</button></footer></form>';
+        const politica=servico.politicaSenhaLocal||{minimo:6,maximo:6};d.querySelector('small').textContent='A nova senha deve ter de '+politica.minimo+' a '+politica.maximo+' caracteres.';const form=d.querySelector('form'),enviar=d.querySelector('[data-password-submit]'),cancelar=d.querySelector('[data-password-cancel]'),feedback=d.querySelector('[data-password-feedback]');let processando=false;
+        const eye='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        for(const [nome,label,placeholder,auto] of [['atual','Senha atual','Digite sua senha atual','current-password'],['nova','Nova senha','Digite a nova senha','new-password'],['confirmacao','Confirmar nova senha','Digite novamente a nova senha','new-password']]){const box=document.createElement('div');box.className='profile-password-field';const l=document.createElement('label');l.htmlFor='profile-password-'+nome;l.textContent=label;const wrap=document.createElement('div'),input=document.createElement('input'),mostrar=document.createElement('button');wrap.className='profile-password-input';input.id=l.htmlFor;input.name=nome;input.type='password';input.required=true;input.placeholder=placeholder;input.autocomplete=auto;input.setAttribute('aria-describedby','profile-password-feedback');mostrar.type='button';mostrar.className='profile-password-visibility';mostrar.setAttribute('aria-label','Mostrar '+label.toLowerCase());mostrar.setAttribute('aria-pressed','false');mostrar.innerHTML=eye;mostrar.onclick=()=>{const visivel=input.type==='password';input.type=visivel?'text':'password';mostrar.setAttribute('aria-pressed',String(visivel));mostrar.setAttribute('aria-label',(visivel?'Ocultar ':'Mostrar ')+label.toLowerCase());};wrap.append(input,mostrar);box.append(l,wrap);d.querySelector('[data-password-fields]').append(box);}
+        feedback.id='profile-password-feedback';
+        const campos=()=>({atual:form.elements.atual.value,nova:form.elements.nova.value,confirmacao:form.elements.confirmacao.value});
+        function validar(){const v=campos();if(!v.atual)return 'Informe sua senha atual.';if(!v.nova)return 'Informe uma nova senha.';if(v.nova.length<politica.minimo||v.nova.length>politica.maximo)return 'A nova senha deve ter de '+politica.minimo+' a '+politica.maximo+' caracteres.';if(!v.confirmacao||v.confirmacao!==v.nova)return 'A confirmação não corresponde à nova senha.';if(v.nova===v.atual)return 'A nova senha deve ser diferente da senha atual.';return '';}
+        form.oninput=()=>{const erro=validar();enviar.disabled=processando||!!erro;feedback.textContent=erro;feedback.setAttribute('role','status');};
+        cancelar.onclick=()=>d.close();d.oncancel=e=>{if(processando)e.preventDefault();};
+        form.onsubmit=async e=>{e.preventDefault();if(processando)return;const erro=validar();if(erro){feedback.textContent=erro;feedback.setAttribute('role','alert');return;}processando=true;enviar.disabled=true;cancelar.disabled=true;enviar.textContent='Salvando…';d.setAttribute('aria-busy','true');form.querySelectorAll('input,.profile-password-visibility').forEach(n=>n.disabled=true);try{await servico.alterarSenhaLocal(campos());d.close();let sucesso=document.getElementById('profile-password-success');if(!sucesso){sucesso=document.createElement('p');sucesso.id='profile-password-success';sucesso.setAttribute('role','status');botao.closest('.profile-security-card').after(sucesso);}sucesso.textContent='Senha alterada com sucesso!';}catch(erro){feedback.textContent=erro.codigo?.startsWith('senha_local_')?erro.message:'Não foi possível salvar a senha. Sua senha anterior foi mantida. Tente novamente.';feedback.setAttribute('role','alert');}finally{processando=false;enviar.textContent='Confirmar alteração';cancelar.disabled=false;form.querySelectorAll('input,.profile-password-visibility').forEach(n=>n.disabled=false);enviar.disabled=!!validar();d.removeAttribute('aria-busy');}};
+        d.onclose=()=>{form.querySelectorAll('input').forEach(n=>{n.value='';n.type='password';});d.remove();botao.focus();};document.body.append(d);d.showModal();form.elements.atual.focus({preventScroll:true});d.scrollTop=0;
+    };
+}
+
+
+
+function abrirCancelamentoAlunoLocal(aula,dados,origem,aoConfirmar){
+    if(origem.disabled)return;
+    origem.disabled=true;
+    const d=document.createElement('dialog');d.className='lesson-cancel-dialog';d.setAttribute('aria-labelledby','lesson-cancel-title');d.setAttribute('aria-describedby','lesson-cancel-description');
+    d.innerHTML='<header><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3h.01"/></svg><h2 id="lesson-cancel-title" tabindex="-1">Cancelar aula?</h2></header><p id="lesson-cancel-description">Confira a aula antes de confirmar o cancelamento.</p><dl class="lesson-cancel-summary"></dl><div class="lesson-cancel-reason"><label for="lesson-cancel-reason">Motivo do cancelamento <span>(obrigatório)</span></label><select id="lesson-cancel-reason" required aria-describedby="lesson-cancel-hint"><option value="">Selecione um motivo</option></select><small id="lesson-cancel-hint">Selecione o motivo do cancelamento para continuar.</small></div><aside class="lesson-cancel-policy" aria-label="Política de cancelamento"><p></p></aside><aside class="lesson-cancel-policy" data-health-guidance hidden><strong>Apresentação de atestado médico</strong><p>Se possuir um atestado médico válido, apresente-o à recepção em até 72 horas após o cancelamento. A devolução do crédito dependerá de análise e aprovação.</p><p data-health-deadline></p><a href="https://wa.me/55227998713181" target="_blank" rel="noopener noreferrer">Falar com a recepção</a></aside><label class="cancel-consent" hidden><input type="checkbox" data-cancel-consent> Compreendi que o horário será liberado e o crédito ficará retido, com registro de falta. Uma justificativa de saúde dependerá de aprovação da recepção.</label><p data-cancel-error role="alert"></p><footer><button type="button" data-cancel-back>Voltar / Fechar</button><button type="button" data-cancel-confirm disabled>Confirmar cancelamento</button></footer>';
+    const data=v=>new Date(v).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}),hora=v=>new Date(v).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+    const estados={1:'Confirmada',3:'Reservada · aguardando aceite',4:'Recusada'};
+    for(const [label,valor] of [['Data',data(aula.inicio)],['Horário',hora(aula.inicio)+(aula.fim?' às '+hora(aula.fim):'')],['Categoria',aula.categoria||'Não informada'],['Unidade',nomeUnidadeLocal(aula.unidade)],['Instrutor',dados.registros.find(r=>r.id===aula.instrutor)?.nome||'Não informado'],['Veículo',dados.registros.find(r=>r.id===aula.veiculo)?.nome||'Não informado'],['Status atual',estados[aula.status]||'Não informado']]){const campo=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=valor;campo.append(dt,dd);d.querySelector('dl').append(campo);}
+    let salvando=false;
+    const voltar=d.querySelector('[data-cancel-back]'),confirmar=d.querySelector('[data-cancel-confirm]'),erro=d.querySelector('[data-cancel-error]');
+    const motivo=d.querySelector('#lesson-cancel-reason');
+    motivo.append(...MOTIVOS_CANCELAMENTO_LOCAL.map(m=>new Option(m,m)));
+    const consentimento=d.querySelector('[data-cancel-consent]');
+    function atualizarPolitica(){
+        const prazo=calcularPrazoCancelamento(aula,dados.registros),semPenalidade=prazo.dentroPrazo||prazo.semConsumoOriginal,saude=identificarMotivo(motivo.value)?.id==='saude';
+        const aviso=d.querySelector('.lesson-cancel-policy');aviso.dataset.penalidade=String(!semPenalidade);
+        aviso.querySelector('p').textContent=prazo.semConsumoOriginal?'Esta reserva pendente já expirou. Não há consumo adicional de crédito.':prazo.dentroPrazo?'Cancelamento dentro do prazo. O crédito desta aula será devolvido ao seu saldo.':'Cancelamento fora do prazo. Se você continuar, o crédito não será devolvido automaticamente ao saldo.';
+        consentimento.parentElement.hidden=semPenalidade;
+        consentimento.parentElement.lastChild.textContent=' Estou ciente de que este cancelamento está fora do prazo e que o crédito não será devolvido automaticamente.';
+        d.querySelector('[data-health-guidance]').hidden=semPenalidade||!saude;
+        d.querySelector('[data-health-deadline]').textContent=semPenalidade?'Este cancelamento não depende de atestado para tratar o crédito.':'Prazo previsto para apresentação: '+new Date(Date.now()+72*3600000).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})+'. O prazo definitivo será registrado ao confirmar.';
+        confirmar.disabled=salvando||!MOTIVOS_CANCELAMENTO_LOCAL.includes(motivo.value)||(!semPenalidade&&!consentimento.checked);
+    }
+    motivo.onchange=()=>{erro.textContent='';atualizarPolitica();};consentimento.onchange=atualizarPolitica;atualizarPolitica();
+    voltar.onclick=()=>d.close();
+    d.addEventListener('cancel',e=>{if(salvando)e.preventDefault();});
+    confirmar.onclick=async()=>{if(salvando)return;if(!MOTIVOS_CANCELAMENTO_LOCAL.includes(motivo.value)){erro.textContent='Selecione o motivo do cancelamento para continuar.';motivo.focus();return;}salvando=true;confirmar.disabled=true;voltar.disabled=true;motivo.disabled=true;d.setAttribute('aria-busy','true');erro.textContent='';try{await aoConfirmar(motivo.value,{aceitarConsequencias:consentimento.checked});d.close();}catch(e){erro.textContent=e.message||'Não foi possível cancelar a aula. Tente novamente.';}finally{salvando=false;atualizarPolitica();voltar.disabled=false;motivo.disabled=false;d.removeAttribute('aria-busy');}};
+    d.addEventListener('close',()=>{d.remove();if(origem.isConnected){origem.disabled=false;origem.focus();}else document.querySelector('#local-lesson-tabs [aria-pressed="true"]')?.focus();},{once:true});
+    document.body.append(d);d.showModal();d.querySelector('h2').focus({preventScroll:true});d.scrollTop=0;
+}
+
+async function listarAulasAlunoLocal(servico,dados){
+    const estado={1:'Confirmada',2:'Cancelada',3:'Reservada · aguardando aceite',4:'Recusada',5:'Concluída',6:'Falta'},agora=Date.now();
+    const futuras=dados.aulas.filter(a=>a.status===1&&Date.parse(a.inicio)>agora).sort((a,b)=>Date.parse(a.inicio)-Date.parse(b.inicio));
+    const passadas=dados.aulas.filter(a=>!futuras.includes(a)).sort((a,b)=>Date.parse(b.inicio)-Date.parse(a.inicio));
+    const canceladas=passadas.filter(a=>a.status===2),historico=passadas.filter(a=>a.status!==2);
+    document.getElementById('local-lesson-tabs')?.remove();
+    const tabs=document.createElement('div');tabs.id='local-lesson-tabs';tabs.className='local-lesson-tabs';tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Visualização das aulas');
+    const principal=document.getElementById('lessons-list').closest('section')||document.getElementById('lessons-list').parentElement;
+    const anterior=document.getElementById('past-lessons-list').closest('section')||document.getElementById('past-lessons-list').parentElement;
+    principal.before(tabs);
+    for(const [valor,nome] of [['confirmadas','Aulas confirmadas'],['canceladas','Aulas canceladas'],['historico','Histórico e outros estados']]){const b=document.createElement('button');b.type='button';b.textContent=nome;b.dataset.vista=valor;b.setAttribute('aria-pressed',String(valor==='confirmadas'));b.onclick=()=>{tabs.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));principal.hidden=valor!=='confirmadas';anterior.hidden=valor==='confirmadas';const limpeza=document.getElementById('cleanup-cancelamentos');if(limpeza)limpeza.hidden=valor!=='canceladas';document.querySelectorAll('#past-lessons-list [data-aula-local]').forEach(n=>n.hidden=valor==='canceladas'?n.dataset.status!=='2':n.dataset.status==='2');const h=anterior.querySelector('h2');if(h)h.textContent=valor==='canceladas'?'Aulas canceladas':'Histórico e outros estados';const legenda=anterior.querySelector('.lessons-card-header > div > span');if(legenda)legenda.textContent=valor==='canceladas'?'HISTÓRICO DE CANCELAMENTOS':'REGISTROS PRESERVADOS';document.getElementById('past-lessons-count').textContent=String((valor==='canceladas'?canceladas:historico).length);const vazio=anterior.querySelector('.local-view-empty');if(vazio)vazio.remove();if(!(valor==='canceladas'?canceladas:historico).length){const p=document.createElement('p');p.className='local-view-empty';p.textContent='Nenhuma aula nesta visualização.';anterior.append(p);}};tabs.append(b);}
+    document.getElementById('lesson-attendance')?.remove();if(futuras.length){const aviso=orientacoesComparecimento(true);aviso.id='lesson-attendance';document.getElementById('lessons-list').before(aviso);}
+    principal.hidden=false;anterior.hidden=true;const h=principal.querySelector('h2');if(h)h.textContent='Minhas aulas confirmadas';
+    const dataHora=v=>new Date(v).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'});
+    for(const [id,aulas] of [['lessons-list',futuras],['past-lessons-list',passadas]]){
+        const lista=document.getElementById(id);lista.replaceChildren();
+        if(!aulas.length){const p=document.createElement('p');p.className='sipa-local-empty';p.textContent=id==='lessons-list'?'Você ainda não possui aulas futuras confirmadas.':'';lista.append(p);}
+        for(const aula of aulas){
+            const card=document.createElement('article');card.className='student-local-lesson';card.dataset.aulaLocal=aula.id;card.dataset.status=aula.status;
+            const cabecalho=document.createElement('div');cabecalho.className='local-lesson-heading';const h=document.createElement('h3');h.textContent=dataHora(aula.inicio)+(aula.fim?' às '+new Date(aula.fim).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}):'');const situacao=document.createElement('strong');situacao.className='local-lesson-status';situacao.textContent=estado[aula.status]||'Situação não informada';cabecalho.append(h,situacao);
+            const infos=document.createElement('dl');infos.className='local-lesson-fields';
+            for(const [rotulo,valor] of [['Categoria',aula.categoria||'Não informada'],['Unidade',nomeUnidadeLocal(aula.unidade)],['Instrutor',dados.registros.find(r=>r.id===aula.instrutor)?.nome||'Não informado'],['Veículo',dados.registros.find(r=>r.id===aula.veiculo)?.nome||'Não informado']]){
+                const campo=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=rotulo;dd.textContent=valor;campo.append(dt,dd);infos.append(campo);
+            }
+            const detalhes=document.createElement('details');detalhes.className='local-lesson-history';const resumo=document.createElement('summary');resumo.textContent='Detalhes e histórico';detalhes.append(resumo);
+            const local=document.createElement('div'),tituloLocal=document.createElement('h4');tituloLocal.textContent='Local da aula';local.append(tituloLocal,localDaAula(aula.unidade));if(!futuras.includes(aula))detalhes.append(local);
+            const textoDetalhe=valor=>{const p=document.createElement('p');p.textContent=valor;detalhes.append(p);};
+            const consome=(aula.status===2&&aula.cancelamento?.credito==='retido')||[1,5,6].includes(aula.status)||([3,4].includes(aula.status)&&Date.parse(aula.inicio)>agora);
+            textoDetalhe('Crédito: '+(consome?'contabilizado no saldo atual conforme a situação da aula.':'não contabiliza consumo no saldo atual.'));
+            if(aula.cancelamento){
+                const c=aula.cancelamento;textoDetalhe('Cancelamento: '+(c.dentroPrazo?'dentro':'fora')+' do prazo de 48 horas úteis · Crédito '+c.credito+' · Frequência: '+({cancelada:'cancelada',falta:'falta',justificativa_pendente:'justificativa pendente'})[c.frequencia]+'.');
+                if(c.justificativa){const j=c.justificativa;const estado=j.estado==='aguardando_apresentacao'&&Date.now()>Date.parse(j.prazoApresentacao)?'Prazo encerrado para apresentação':({aguardando_apresentacao:'Aguardando apresentação do atestado',aguardando_analise:'Aguardando análise da recepção',aprovado:'Aprovado',rejeitado:'Rejeitado',prazo_encerrado:'Prazo encerrado'})[j.estado]||'Estado da justificativa não informado';textoDetalhe('Justificativa: '+estado+' · Prazo: '+dataHora(j.prazoApresentacao)+'. Nenhuma aprovação automática.');const contato=document.createElement('a');contato.href='https://wa.me/55227998713181?text=Ol%C3%A1!%20Gostaria%20de%20orienta%C3%A7%C3%B5es%20da%20recep%C3%A7%C3%A3o.';contato.target='_blank';contato.rel='noopener noreferrer';contato.textContent='Falar com a recepção';detalhes.append(contato);}
+            }
+            if(aula.motivoCancelamento)textoDetalhe('Motivo do cancelamento: '+aula.motivoCancelamento);
+            const eventos=Array.isArray(aula.historico)?aula.historico:[],cancelamento=[...eventos].reverse().find(e=>e.status===2&&e.em);
+            if(cancelamento)textoDetalhe('Cancelamento registrado em '+dataHora(cancelamento.em)+'.');
+            if(eventos.length){const ul=document.createElement('ul');for(const evento of eventos){const li=document.createElement('li');li.textContent=(estado[evento.status]||'Atualização registrada')+(evento.em?' · '+dataHora(evento.em):'')+(evento.motivo?' · Motivo: '+evento.motivo:'');ul.append(li);}detalhes.append(ul);}else textoDetalhe('Nenhuma alteração adicional registrada.');
+            card.append(cabecalho,infos);if(futuras.includes(aula)){const local=localDaAula(aula.unidade,false);local.classList.add('confirmed-lesson-location');card.append(local);}card.append(detalhes);
+            if([1,3,4].includes(aula.status)){
+                const cancelar=document.createElement('button');cancelar.type='button';cancelar.className='local-lesson-cancel';cancelar.textContent='Cancelar aula';cancelar.disabled=aula.status===1&&!(Date.parse(aula.inicio)>Date.now());
+                if(cancelar.disabled)cancelar.title='Aulas confirmadas já iniciadas não podem ser canceladas localmente.';
+                cancelar.onclick=()=>abrirCancelamentoAlunoLocal(aula,dados,cancelar,async (motivo,opcoes)=>{await servico.cancelarReservaLocal(aula.id,motivo,opcoes);await listarAulasAlunoLocal(servico,await servico.dadosAlunoLocal());});card.append(cancelar);
+            }
+            lista.append(card);
+        }
+    }
+    const texto=(id,v)=>{const n=document.getElementById(id);if(n)n.textContent=v;};texto('total-lessons',String(futuras.length));texto('lessons-count',String(futuras.length));texto('past-lessons-count',String(passadas.length));texto('next-lesson-summary',futuras.length?dataHora(futuras[0].inicio):'Nenhuma aula agendada');
+    const campo=document.querySelector('.lessons-summary .summary-card:last-child > div');if(campo){campo.querySelector('span').textContent='Unidade da próxima aula';campo.querySelector('strong').textContent=futuras.length?nomeUnidadeLocal(futuras[0].unidade):'Nenhuma aula agendada';}
+    await montarLimpezaCancelamentos(servico,dados,anterior);
+}
+
+function baixarBackupCancelamentos(backup){
+    const url=URL.createObjectURL(new Blob([JSON.stringify(backup,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='sipa-cancelamentos-teste-'+backup.criadoEm.replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function montarLimpezaCancelamentos(servico,dados,destino){
+    document.getElementById('cleanup-cancelamentos')?.remove();
+    const plano=await servico.planoCancelamentosTeste(),box=document.createElement('details');box.id='cleanup-cancelamentos';box.className='local-cancel-cleanup';box.hidden=true;
+    const summary=document.createElement('summary');summary.textContent='Limpar cancelamentos de teste · somente desenvolvimento local';box.append(summary);
+    const aviso=document.createElement('p');aviso.textContent='Conta local: '+(dados.aluno?.nome||'sem aluno vinculado')+'. '+plano.candidatos.length+' cancelamento(s) identificado(s). Não é possível certificar automaticamente a origem de teste. Selecione somente os registros descartáveis que você reconhece; nenhum vem marcado.';box.append(aviso);
+    const lista=document.createElement('div');lista.className='cleanup-candidates';const selecionados=new Map();
+    const revisar=document.createElement('button');revisar.type='button';revisar.textContent='Revisar seleção (0)';revisar.disabled=true;
+    for(const c of plano.candidatos){const label=document.createElement('label'),input=document.createElement('input'),texto=document.createElement('span');input.type='checkbox';input.disabled=!c.elegivel;input.dataset.cancelamento=c.registro.id;texto.textContent=new Date(c.registro.inicio).toLocaleString('pt-BR')+' · Categoria '+(c.registro.categoria||'não informada')+' · '+nomeUnidadeLocal(c.registro.unidade)+' · '+c.registro.id+' — '+c.motivo;input.onchange=()=>{if(input.checked)selecionados.set(c.registro.id,c.registro);else selecionados.delete(c.registro.id);revisar.disabled=!selecionados.size;revisar.textContent='Revisar seleção ('+selecionados.size+')';};label.append(input,texto);lista.append(label);}box.append(lista,revisar);
+    const protegidos=plano.candidatos.filter(c=>!c.elegivel).map(c=>c.registro);
+    if(protegidos.length){const exportar=document.createElement('button');exportar.type='button';exportar.textContent='Baixar registros protegidos para revisão';exportar.onclick=()=>baixarBackupCancelamentos({formato:'sipa-revisao-cancelamentos-v1',criadoEm:new Date().toISOString(),alunoId:plano.alunoId,registros:protegidos});box.append(exportar);}
+    // Backups duráveis continuam disponíveis mesmo se o download automático for bloqueado.
+    for(let n=0;n<localStorage.length;n++){const chave=localStorage.key(n);if(!chave?.startsWith('sipa.dev.backup.cancelamentos.'))continue;try{const backup=JSON.parse(localStorage.getItem(chave));if(backup.alunoId!==plano.alunoId)continue;const b=document.createElement('button');b.type='button';b.textContent='Baixar backup de '+new Date(backup.criadoEm).toLocaleString('pt-BR');b.onclick=()=>baixarBackupCancelamentos(backup);box.append(b);}catch{}}
+    revisar.onclick=()=>{const registros=[...selecionados.values()],d=document.createElement('dialog');d.className='lesson-cancel-dialog';d.setAttribute('aria-label','Confirmar limpeza de cancelamentos de teste');d.innerHTML='<h2 tabindex="-1">Excluir cancelamentos de teste?</h2><p data-cleanup-count></p><ul class="cleanup-review"></ul><label class="cleanup-consent"><input type="checkbox" data-cleanup-consent> Confirmo que estes registros foram criados exclusivamente para testes e são descartáveis.</label><p>Esta operação removerá somente os registros locais de teste selecionados. Não haverá devolução ou alteração automática de créditos. O consumo e eventuais justificativas serão preservados para manter a consistência.</p><button type="button" data-cleanup-backup>Baixar backup dos registros selecionados</button><p data-cleanup-error role="alert"></p><footer><button type="button" data-cleanup-back autofocus>Voltar sem excluir</button><button type="button" data-cleanup-confirm disabled>Confirmar exclusão</button></footer>';
+        d.querySelector('[data-cleanup-count]').textContent=registros.length+' registro(s) cancelado(s) da sua conta serão removidos. Confira cada um:';
+        for(const r of registros){const li=document.createElement('li');li.textContent=new Date(r.inicio).toLocaleString('pt-BR')+' · Categoria '+r.categoria+' · '+nomeUnidadeLocal(r.unidade)+(r.cancelamento?.credito==='retido'?' · Crédito retido — consumo preservado':'');d.querySelector('ul').append(li);}
+        d.querySelector('[data-cleanup-backup]').onclick=()=>baixarBackupCancelamentos({formato:'sipa-cancelamentos-teste-v1',criadoEm:new Date().toISOString(),alunoId:plano.alunoId,registros,credito:dados.credito,referencias:dados.registros.filter(r=>registros.some(a=>[a.aluno,a.instrutor,a.veiculo].includes(r.id)))});
+        const ok=d.querySelector('[data-cleanup-confirm]'),voltar=d.querySelector('[data-cleanup-back]'),consent=d.querySelector('[data-cleanup-consent]');let ocupado=false;consent.onchange=()=>ok.disabled=ocupado||!consent.checked;voltar.onclick=()=>d.close();d.oncancel=e=>{if(ocupado)e.preventDefault();};
+        ok.onclick=async()=>{if(ocupado||!consent.checked)return;ocupado=true;ok.disabled=true;voltar.disabled=true;consent.disabled=true;try{const r=await servico.limparCancelamentosTeste({ids:registros.map(a=>a.id),registrosConfirmados:registros,confirmarTestes:true});baixarBackupCancelamentos(r.backup);await listarAulasAlunoLocal(servico,await servico.dadosAlunoLocal());document.querySelector('[data-vista=canceladas]').click();const atualizado=document.getElementById('cleanup-cancelamentos');atualizado.open=true;const msg=document.createElement('p');msg.setAttribute('role','status');msg.textContent='Cancelamentos de teste excluídos com sucesso. '+r.removidos+' registro(s). Backup preservado.';atualizado.prepend(msg);d.close();}catch(e){d.querySelector('[data-cleanup-error]').textContent=e.message;}finally{ocupado=false;ok.disabled=!consent.checked;voltar.disabled=false;consent.disabled=false;}};
+        d.onclose=()=>{d.remove();(revisar.isConnected?revisar:document.querySelector('[data-vista=canceladas]'))?.focus();};document.body.append(d);d.showModal();d.querySelector('h2').focus({preventScroll:true});d.scrollTop=0;};
+    destino.append(box);
+}
+
+async function iniciarReservaAlunoLocal(servico, inicial) {
+    const [{hojeBrasil,somarDias,diaSemana,formatarData},{motivoFechamento},{calcularHorariosLocais}] = await Promise.all([import('../../shared/js/calendario.js'),import('../../shared/js/disponibilidade.js'),import('./authLocal.js')]);
+    let dados=inicial,categoria='B',data='',mes=hojeBrasil().slice(0,7)+'-01',ocupada=false,trocando=false,revisao=0,revisaoCalendario=0,ativa=null,operacaoId=crypto.randomUUID();
+    const selecoes=new Map(),$=s=>document.querySelector(s),texto=(id,v)=>{const n=document.getElementById(id);if(n)n.textContent=v;};
+    const contadorData=document.createElement('p');contadorData.className='time-selection-summary';contadorData.id='time-selection-summary';contadorData.hidden=true;contadorData.setAttribute('aria-live','polite');$('.time-area').append(contadorData);
+    const unidade=$('#booking-unidade'),motorista=$('#motorista-select'),confirmar=$('#confirm-booking'),feedback=$('#booking-message');
+    const chave=(dia,hora)=>[categoria,unidade.value,dia,hora].join('|');
+    const ordenadas=()=>[...selecoes.values()].sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
+    const alterar=()=>{operacaoId=crypto.randomUUID();};
+    function mensagem(v){feedback.textContent=v;feedback.style.display='block';feedback.setAttribute('role','status');}
+    unidade.replaceChildren(...UNIDADES_LOCAIS.map(u=>new Option(nomeUnidadeLocal(u),u)));
+    const vinculo=normalizarUnidadeLocal(dados.aluno?.unidade);
+    if(UNIDADES_LOCAIS.includes(vinculo))unidade.value=vinculo;
+    else unidade.prepend(new Option('Selecione uma unidade','',true,true));
+    let unidadeAtual=unidade.value;
+    unidade.hidden=false;unidade.required=true;unidade.disabled=false;unidade.style.display='block';
+    const campo=document.createElement('div');campo.className='booking-unit-local';const label=document.createElement('label');label.htmlFor=unidade.id;label.textContent='Unidade da aula';const enderecoSelecionado=document.createElement('div');enderecoSelecionado.id='booking-unit-address';enderecoSelecionado.setAttribute('aria-live','polite');campo.append(label,unidade,enderecoSelecionado);const enderecoResumo=document.createElement('div');enderecoResumo.id='summary-unit-address';$('#summary-unit').parentElement.append(enderecoResumo);$('#booking-unit-picker').replaceChildren(campo);
+    confirmar.textContent='Confirmar agendamentos';
+    $('.confirmation-card .booking-card-header h2').textContent='Revisão e confirmação';
+    $('.booking-warning p').textContent='Após confirmar, as aulas válidas serão confirmadas e os créditos correspondentes serão utilizados.';
+    function pintar(){document.querySelectorAll('#time-slots button').forEach(b=>{const selecionada=selecoes.has(chave(data,b.dataset.hora));b.classList.toggle('selected',selecionada);b.setAttribute('aria-pressed',String(selecionada));b.disabled=ocupada||(!selecionada&&selecoes.size>=(dados.resumo.categorias[categoria].disponiveis||0));});}
+    // A seleção local usa apenas pares devolvidos pelo serviço, sem liberar recursos por conta própria.
+    motorista.closest('.instructor-preview').hidden=true;
+    function recursos(){}
+    async function escolherRecursos(item,origem){
+        const itens=Array.isArray(item)?item:[item],emLote=itens.length>1;item=itens[0];
+        if(!item)return;
+        const d=document.createElement('dialog');d.className='booking-local-dialog booking-resource-dialog';d.setAttribute('aria-labelledby','resource-dialog-title');
+        d.innerHTML='<h2 id="resource-dialog-title">Escolha o instrutor e o veículo</h2><p data-contexto></p><h3>Instrutores disponíveis</h3><div data-instrutores class="resource-options"></div><h3>Veículo</h3><div data-veiculos class="resource-options"></div><p data-erro role="status"></p><div class="booking-dialog-actions"><button type="button" data-confirmar disabled>Confirmar seleção</button><button type="button" data-cancelar>Cancelar</button></div>';
+        d.querySelector('[data-contexto]').textContent='Categoria '+categoria+' · '+nomeUnidadeLocal(unidade.value)+' · '+formatarData(item.data)+' · '+item.hora+' às '+item.fim;
+        if(emLote){d.querySelector('h2').textContent='Instrutor e veículo para todas as aulas';d.querySelector('[data-contexto]').textContent=itens.length+' aulas · Categoria '+categoria+' · '+nomeUnidadeLocal(unidade.value);const lista=document.createElement('ul');lista.className='booking-batch-dates';for(const i of itens){const li=document.createElement('li');li.textContent=formatarData(i.data)+' · '+i.hora+' às '+i.fim;lista.append(li);}d.querySelector('[data-contexto]').after(lista);}
+        let pares=[],paresPorAula=[],instrutor=item.par?.instrutorId,veiculo=item.par?.veiculoId;
+        const ok=d.querySelector('[data-confirmar]'),erro=d.querySelector('[data-erro]');
+        // Placa apenas visual do laboratório; não altera o documento nem o cadastro persistido.
+        function placaVisual(registro){
+            const cadastrada=String(registro?.placa||registro?.documento||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+            if(/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(cadastrada))return 'Placa: '+cadastrada;
+            let hash=0;for(const letra of String(registro?.id||''))hash=(Math.imul(hash,31)+letra.charCodeAt(0))>>>0;
+            const letras='ABCDEFGHIJKLMNOPQRSTUVWXYZ';let n=hash;
+            const proximo=base=>{const valor=n%base;n=Math.floor(n/base);return valor;};
+            const placa=letras[proximo(26)]+letras[proximo(26)]+letras[proximo(26)]+proximo(10)+letras[proximo(26)]+String(proximo(100)).padStart(2,'0');
+            return 'Placa: '+placa+' · fictícia, somente visual';
+        }
+        function opcoes(tipo,ids,atual,selecionar){const lista=d.querySelector('[data-'+tipo+']');lista.replaceChildren();for(const id of new Set(ids)){const r=dados.registros.find(r=>r.id===id),b=document.createElement('button');b.type='button';b.dataset.recurso=id;b.setAttribute('aria-pressed',String(id===atual));const nome=document.createElement('strong'),info=document.createElement('span');nome.textContent=r?.nome||id;info.textContent=tipo==='veiculos'?placaVisual(r):[nomeUnidadeLocal(unidade.value),'Categoria '+categoria,'Disponível nesta consulta'].join(' · ');b.append(nome,info);b.onclick=()=>selecionar(id);lista.append(b);}}
+        function pintarModal(){opcoes('instrutores',pares.map(p=>p.instrutorId),instrutor,id=>{instrutor=id;veiculo=null;pintarModal();});opcoes('veiculos',pares.filter(p=>p.instrutorId===instrutor).map(p=>p.veiculoId),veiculo,id=>{veiculo=id;pintarModal();});ok.disabled=!pares.some(p=>p.instrutorId===instrutor&&p.veiculoId===veiculo);}
+        async function consultar(){
+            const consultas=await Promise.all(itens.map(i=>servico.consultarRecursosLocal({categoria,data:i.data,unidade:unidade.value})));
+            paresPorAula=consultas.map((c,n)=>c.horarios.find(h=>h.hora===itens[n].hora)?.pares||[]);
+            // A seleção em lote exige o mesmo par válido em cada aula; nada é aplicado parcialmente.
+            pares=paresPorAula[0].filter(p=>paresPorAula.every(lista=>lista.some(q=>q.instrutorId===p.instrutorId&&q.veiculoId===p.veiculoId)));
+            const semRecursos=itens.filter((i,n)=>!paresPorAula[n].length);
+            erro.textContent=pares.length?'':emLote?(semRecursos.length?'Recursos indisponíveis em: '+semRecursos.map(i=>formatarData(i.data)+' às '+i.hora).join('; ')+'. Nenhuma escolha foi alterada.':'Não há um mesmo instrutor e veículo disponível para todas as aulas. Configure as aulas individualmente. Nenhuma escolha foi alterada.'):(consultas[0].mensagem||'Recursos indisponíveis neste horário.');
+            pintarModal();
+        }
+        d.querySelector('[data-cancelar]').onclick=()=>d.close();
+        ok.onclick=async()=>{ok.disabled=true;try{await consultar();if(!pares.some(p=>p.instrutorId===instrutor&&p.veiculoId===veiculo)){if(pares.length)erro.textContent='A disponibilidade mudou. Escolha novamente os recursos.';return;}itens.forEach((i,n)=>{i.pares=paresPorAula[n];i.par={instrutorId:instrutor,veiculoId:veiculo};});alterar();resumo();d.close();}catch(e){erro.textContent=e.message;}};
+        d.addEventListener('close',()=>{d.remove();(origem.isConnected?origem:document.querySelector('#summary-lessons button'))?.focus();},{once:true});document.body.append(d);d.showModal();
+        try{await consultar();d.querySelector('[data-instrutores] button')?.focus();}catch(e){erro.textContent=e.message;}
+    }
+    function resumo(){
+        const saldo=dados.resumo.categorias[categoria];texto('summary-category',(categoria==='A'?'Moto':'Carro')+' · Categoria '+categoria);texto('summary-unit',unidade.value?nomeUnidadeLocal(unidade.value):'Selecione uma unidade');
+        contadorData.hidden=!data;contadorData.textContent=[...selecoes.values()].filter(i=>i.data===data).length+' selecionada(s) nesta data · '+selecoes.size+' no total';
+        texto('selected-lessons-count',String(selecoes.size));texto('booking-package-info','Saldo disponível: '+(saldo.disponiveis??'a conferir')+' aulas');
+        enderecoSelecionado.replaceChildren(...(unidade.value?[localDaAula(unidade.value)]:[]));enderecoResumo.replaceChildren(...(unidade.value?[localDaAula(unidade.value,false)]:[]));
+        const lista=$('#summary-lessons');lista.replaceChildren();
+        if(!selecoes.size){const li=document.createElement('li');li.textContent='Selecione horários em uma ou mais datas. Clique novamente para desmarcar.';lista.append(li);}
+        for(const item of ordenadas()){
+            const li=document.createElement('li');li.className='booking-pending-row';li.dataset.selecao=item.chave;
+            const info=document.createElement('div'),titulo=document.createElement('strong'),detalhe=document.createElement('span');titulo.textContent=formatarData(item.data)+' · '+item.hora+' às '+item.fim+' · Categoria '+categoria;
+            detalhe.textContent=nomeUnidadeLocal(unidade.value)+' · '+(item.par?((dados.registros.find(r=>r.id===item.par.instrutorId)?.nome||'Instrutor')+' · '+(dados.registros.find(r=>r.id===item.par.veiculoId)?.nome||'Veículo')):'Escolha instrutor e veículo para esta aula');info.append(titulo,detalhe);
+            const editar=document.createElement('button');editar.type='button';editar.textContent='Selecionar instrutor';editar.disabled=ocupada;editar.onclick=()=>{if(!ocupada)escolherRecursos(item,editar);};
+            const remover=document.createElement('button');remover.type='button';remover.textContent='Remover';remover.setAttribute('aria-label','Remover aula de '+formatarData(item.data)+' às '+item.hora);remover.disabled=ocupada;remover.onclick=()=>{if(ocupada)return;selecoes.delete(item.chave);if(ativa===item.chave)ativa=null;alterar();pintar();recursos();resumo();};li.append(info,editar,remover);lista.append(li);
+        }
+        document.getElementById('booking-batch-resources')?.remove();
+        if(selecoes.size>=2){const aplicar=document.createElement('button');aplicar.type='button';aplicar.id='booking-batch-resources';aplicar.className='booking-batch-action';aplicar.textContent='Aplicar o mesmo instrutor e veículo em todas as aulas';aplicar.disabled=ocupada;aplicar.onclick=()=>{if(!ocupada)escolherRecursos(ordenadas(),aplicar);};lista.after(aplicar);}
+        confirmar.disabled=ocupada||!selecoes.size||!unidade.value||!dados.aluno||!(saldo.disponiveis>=selecoes.size)||ordenadas().some(i=>!i.par);
+        unidade.disabled=ocupada;
+        document.querySelectorAll('.category-option').forEach(b=>{b.disabled=ocupada;b.classList.toggle('selected',b.dataset.category===categoria);b.setAttribute('aria-pressed',String(b.dataset.category===categoria));b.querySelector('.category-option-info span').textContent=(dados.resumo.categorias[b.dataset.category].disponiveis??'A conferir')+' aulas disponíveis';});
+        pintar();
+    }
+    async function horarios(){
+        const versao=++revisao;texto('selected-date-label',data?formatarData(data):'Selecione uma data');$('#time-slots').replaceChildren();
+        let consulta;try{consulta=await servico.consultarRecursosLocal({categoria,data,unidade:unidade.value});}catch(e){if(versao===revisao)mensagem('Erro ao consultar recursos locais: '+e.message);return;}
+        if(versao!==revisao)return;
+        const lista=$('#time-slots');
+        $('.availability-status').hidden=!data;$('.availability-status').textContent=data?(consulta.horarios.length+' horários disponíveis'):'';
+        if(!consulta.horarios.length&&(data||!consulta.contagem.instrutores||!consulta.contagem.veiculos)){const p=document.createElement('p');p.className='sipa-local-empty';p.textContent=consulta.mensagem;lista.append(p);}
+        else if(!data){const vazio=document.createElement('div');vazio.className='empty-time-state';vazio.innerHTML='<svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><p>Escolha uma data no calendário para consultar os horários.</p>';lista.append(vazio);}
+        for(const h of consulta.horarios){
+            const b=document.createElement('button');b.type='button';b.className='time-slot';b.textContent=h.hora;b.dataset.hora=h.hora;
+            b.onclick=()=>{
+                if(ocupada)return;const id=chave(data,h.hora);
+                if(selecoes.has(id)){selecoes.delete(id);if(ativa===id)ativa=null;}
+                else{if(selecoes.size>=(dados.resumo.categorias[categoria].disponiveis||0)){mensagem('O número de escolhas atingiu os créditos disponíveis desta categoria.');return;}selecoes.set(id,{chave:id,data,hora:h.hora,fim:h.fim,pares:h.pares,par:null});ativa=id;}
+                alterar();recursos();resumo();
+            };lista.append(b);
+        }
+        if(!selecoes.has(ativa)||selecoes.get(ativa).data!==data)ativa=ordenadas().find(i=>i.data===data)?.chave||null;
+        const item=selecoes.get(ativa);if(item){const atual=consulta.horarios.find(h=>h.hora===item.hora);item.pares=atual?.pares||[];if(item.par&&!item.pares.some(p=>p.instrutorId===item.par.instrutorId&&p.veiculoId===item.par.veiculoId)){item.par=null;alterar();}}
+        recursos();resumo();
+    }
+    async function calendario() {
+        const versao = ++revisaoCalendario;
+        const grade = $("#calendar-days"); grade.replaceChildren();
+        texto("calendar-month", new Date(`${mes}T12:00:00Z`).toLocaleDateString("pt-BR", { timeZone: "UTC", month: "long", year: "numeric" }));
+        const inicio = somarDias(mes, -diaSemana(mes)), hoje = hojeBrasil();
+        // Mesmas fontes de bloqueio integral consultadas por calcularHorariosLocais.
+        const recursosDaUnidade = dados.registros.filter(r => ["instrutor", "veiculo"].includes(r.tipo) && normalizarUnidadeLocal(r.unidade) === normalizarUnidadeLocal(unidade.value));
+        const fechamentoCadastrado = iso => recursosDaUnidade.some(r => (r.feriadosUnidade || []).includes(iso))
+            ? "Feriado cadastrado da unidade" : recursosDaUnidade.some(r => (r.bloqueiosUnidade || []).some(b => b.data === iso && !b.inicio))
+                ? "Bloqueio integral cadastrado da unidade" : "";
+        const dias = await Promise.all(Array.from({ length: 42 }, async (_, i) => {
+            const iso = somarDias(inicio, i), fora = iso.slice(0, 7) !== mes.slice(0, 7), fechado = motivoFechamento(iso) || fechamentoCadastrado(iso), passado = iso < hoje;
+            const livres = fora || fechado || passado ? [] : await calcularHorariosLocais(dados, { categoria, data: iso, unidade: unidade.value });
+            const b = document.createElement("button"); b.type = "button"; b.textContent = String(Number(iso.slice(-2))); b.dataset.dataLocal = iso;
+            b.disabled = fora || !!fechado || passado; b.className = "calendar-day"; b.classList.toggle("selected", iso === data); b.classList.toggle("sem-disponibilidade", !livres.length); b.dataset.disponivel = String(livres.length > 0 && dados.resumo.categorias[categoria].disponiveis > 0);
+            // Apresentação dos bloqueios existentes; não cria novas restrições.
+            const motivos = [passado && "Data passada", fechado, fora && "Fora do mês exibido"].filter(Boolean);
+            const bloqueado = passado || !!fechado;
+            b.classList.toggle("calendar-blocked", bloqueado);
+            if (bloqueado) {
+            const numero = document.createElement("span"); numero.className = "calendar-day-number";
+            numero.textContent = b.textContent; b.replaceChildren(numero);
+                const x = document.createElement("span"); x.className = "calendar-block-mark";
+                x.textContent = ""; x.setAttribute("aria-hidden", "true"); b.append(x);
+            }
+            const descricao = motivos.length ? motivos.join(" · ") + " · agendamento indisponível"
+                : livres.length ? "Disponível para consulta" : "Sem horários com recursos disponíveis · consulte outra data ou unidade";
+            b.title = formatarData(iso) + " · " + descricao;
+            b.setAttribute("aria-label", b.title);
+            b.setAttribute("aria-pressed", String(iso === data));
+            if (iso === hoje) b.setAttribute("aria-current", "date");
+            b.onclick = async () => {
+                if (ocupada || b.disabled) return;
+                data = iso;
+                grade.querySelectorAll("button").forEach(n => {
+                    n.classList.toggle("selected", n === b); n.setAttribute("aria-pressed", String(n === b));
+                });
+                await horarios();
+            };
+            return b;
+        })); if (versao === revisaoCalendario) {
+            grade.replaceChildren(...dias);
+            const lista = document.getElementById("calendar-block-reasons");
+            if (lista) lista.replaceChildren(...dias.filter(b => b.disabled && b.dataset.dataLocal.slice(0, 7) === mes.slice(0, 7)).map(b => {
+                const item = document.createElement("li"); item.textContent = b.title; return item;
+            }));
+        }
+    }
+    document.querySelectorAll('.category-option').forEach(b=>{b.removeAttribute('title');b.onclick=async()=>{
+        if(ocupada||trocando||categoria===b.dataset.category)return;trocando=true;
+        let continuar=true;try{if(selecoes.size)continuar=await confirmarDescarteLocal();}finally{trocando=false;}
+        if(!continuar)return;selecoes.clear();ativa=null;alterar();++revisao;categoria=b.dataset.category;data='';$('#time-slots').replaceChildren();recursos();resumo();await calendario();await horarios();
+    };});
+    for(const [id,delta] of [['previous-month',-1],['next-month',1]]){const b=document.getElementById(id);b.disabled=false;b.onclick=async()=>{if(ocupada)return;const d=new Date(mes+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+delta);if(d.getUTCFullYear()<1900||d.getUTCFullYear()>9998)return;mes=d.toISOString().slice(0,10);await calendario();};}
+    motorista.onchange=()=>{if(ocupada)return;const item=selecoes.get(ativa);if(!item)return;item.par=motorista.value===''?null:item.pares[Number(motorista.value)]||null;alterar();recursos();resumo();};
+    unidade.onchange=async()=>{
+        const nova=unidade.value;unidade.value=unidadeAtual;if(ocupada||trocando||nova===unidadeAtual)return;trocando=true;
+        let continuar=true;try{if(selecoes.size)continuar=await confirmarDescarteLocal();}finally{trocando=false;}
+        if(!continuar)return;selecoes.clear();ativa=null;alterar();++revisao;unidadeAtual=nova;unidade.value=nova;data='';feedback.style.display='none';$('#time-slots').replaceChildren();recursos();resumo();await calendario();await horarios();
+    };
+    confirmar.onclick=async()=>{
+        if(confirmar.disabled||ocupada)return;ocupada=true;resumo();recursos();
+        try{
+            const pedido={categoria,unidade:unidade.value,operacaoId,aulas:ordenadas().map(i=>({data:i.data,hora:i.hora,...i.par}))};
+            const salvas=await servico.reservarAulasLocais(pedido);
+            dados=await servico.dadosAlunoLocal();selecoes.clear();ativa=null;alterar();
+            mensagem((salvas.length===1?'Agendamento confirmado!':'Agendamentos confirmados!')+' '+salvas.length+' aula(s) de '+(salvas[0].categoria==='A'?'moto':'carro')+' na '+nomeUnidadeLocal(salvas[0].unidade)+' · Categoria '+salvas[0].categoria+'. Confirmadas.');
+            mostrarConfirmacaoAulasLocais(salvas,dados,confirmar);
+            try { await calendario(); await horarios(); }
+            catch { mensagem('As aulas foram salvas. Não foi possível atualizar o calendário; consulte Minhas aulas ou recarregue a página.'); }
+        }catch(e){try{dados=await servico.dadosAlunoLocal();}catch{}mensagem(e.message||'Não foi possível gravar as aulas.');feedback.setAttribute('role','alert');feedback.tabIndex=-1;feedback.focus();}
+        finally{ocupada=false;recursos();resumo();}
+    };
+    $('.availability-status').hidden=true;$('.availability-status').textContent='';
+    const diagnostico=document.createElement('details');diagnostico.className='booking-diagnostics';const diagnosticoTitulo=document.createElement('summary');diagnosticoTitulo.textContent='Ferramentas de desenvolvimento';diagnostico.append(diagnosticoTitulo);$('.booking-footer').before(diagnostico);
+    await montarConfiguracaoRecursosLocais(servico,diagnostico,async()=>{++revisao;dados=await servico.dadosAlunoLocal();await calendario();await horarios();});
+    resumo();await calendario();await horarios();
+    await montarAgendamentoAutomatico(servico,async(aulas,origem)=>{
+        dados=await servico.dadosAlunoLocal();selecoes.clear();ativa=null;alterar();
+        mostrarConfirmacaoAulasLocais(aulas,dados,origem);
+        await calendario();await horarios();recursos();resumo();
+    });
+}
+
+async function confirmarDescarteLocal(){
+    return new Promise(resolve=>{
+        const d=document.createElement('dialog');d.className='booking-local-dialog';
+        d.innerHTML='<h2>Descartar aulas selecionadas?</h2><p>Trocar categoria ou unidade remove as escolhas pendentes. Nenhum crédito foi utilizado.</p><div class="booking-dialog-actions"><button type="button" data-manter autofocus>Manter seleção</button><button type="button" data-descartar>Descartar e continuar</button></div>';
+        d.setAttribute('aria-label','Descartar aulas selecionadas');let descartar=false;d.querySelector('[data-manter]').onclick=()=>d.close();d.querySelector('[data-descartar]').onclick=()=>{descartar=true;d.close();};d.addEventListener('close',()=>{d.remove();resolve(descartar);},{once:true});document.body.append(d);d.showModal();
+    });
+}
+function mostrarConfirmacaoAulasLocais(aulas,dados,origem){
+    const d=document.createElement('dialog');d.id='agendamentos-confirmados';d.className='booking-local-dialog';d.setAttribute('aria-labelledby','booking-success-title');
+    const icone=document.createElementNS('http://www.w3.org/2000/svg','svg');icone.setAttribute('viewBox','0 0 24 24');icone.setAttribute('aria-hidden','true');icone.classList.add('booking-success-icon');icone.innerHTML='<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>';
+    const titulo=document.createElement('h2');titulo.id='booking-success-title';titulo.textContent=aulas.length===1?'Agendamento confirmado!':'Agendamentos confirmados!';
+    const descricao=document.createElement('p'),c=aulas[0].categoria;descricao.textContent='Suas aulas foram agendadas com sucesso.';
+    const lista=document.createElement('ul');lista.className='booking-success-list';
+    const data=v=>new Date(v).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}),hora=v=>new Date(v).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});
+    for(const [i,a] of aulas.entries()){const li=document.createElement('li'),titulo=document.createElement('h3'),campos=document.createElement('dl');titulo.textContent='Aula '+String(i+1).padStart(2,'0')+' — '+(a.categoria==='A'?'Moto':'Carro')+' | Categoria '+a.categoria;
+        for(const [label,valor] of [['Data',data(a.inicio)],['Horário',hora(a.inicio)+' às '+hora(a.fim)],['Unidade',nomeUnidadeLocal(a.unidade)],['Endereço',obterUnidadeInstitucional(a.unidade)?.enderecoCompleto||'Não informado'],['Instrutor',dados.registros.find(r=>r.id===a.instrutor)?.nome||'Não informado'],['Veículo',dados.registros.find(r=>r.id===a.veiculo)?.nome||'Não informado'],['Situação',a.status===1?'Confirmada':'Situação registrada: '+a.status]]){const campo=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=valor;if(label==='Endereço')campo.className='booking-success-address';campo.append(dt,dd);campos.append(campo);}li.append(titulo,campos);const mapa=linkLocalizacaoUnidade(a.unidade);if(mapa)li.append(mapa);lista.append(li);}
+    const saldo=document.createElement('p');saldo.textContent='Total de aulas confirmadas: '+aulas.length+' · Créditos utilizados: '+aulas.length+' · Créditos restantes: '+(dados.resumo.categorias[c].disponiveis??'a conferir');
+    const acoes=document.createElement('div');acoes.className='booking-dialog-actions';const ver=document.createElement('a');ver.href='minhas-aulas.html';ver.textContent='Ver minhas aulas';const mais=document.createElement('button');mais.type='button';mais.textContent='Agendar mais aulas';mais.autofocus=true;mais.onclick=()=>d.close();const fechar=document.createElement('button');fechar.type='button';fechar.textContent='Fechar';fechar.onclick=()=>d.close();acoes.append(ver,mais,fechar);d.append(icone,titulo,descricao,lista,saldo,acoes);
+    d.addEventListener('close',()=>{d.remove();(origem.disabled?document.querySelector('.category-option.selected'):origem)?.focus();},{once:true});document.body.append(d);d.showModal();
+}
+
+async function montarConfiguracaoRecursosLocais(servico, destino, aoSalvar) {
+    const detalhes = document.createElement("details"); detalhes.className = "booking-resources-local"; detalhes.id = "configurar-recursos-locais";
+    detalhes.innerHTML = `<summary>Configurar instrutores e veículos de testes · somente ambiente local</summary>
+<p>Registros deste navegador, sem envio à API. Preencha os dados manualmente. Nada é criado ao abrir esta seção. A jornada sempre respeita expediente, almoço, feriados e bloqueios do SIPA.</p>
+<p data-inventario></p><ul data-lista-recursos></ul>
+<div class="local-seed-tools"><p>Dados fictícios para testes: preparar até 24 instrutores e 24 veículos nas seis unidades. Identificadores TST não são CPF ou placas reais. Esta ação não cria aulas nem altera créditos.</p>
+<button type="button" id="preparar-recursos-teste">Preparar dados de teste para agendamentos</button>
+<button type="button" id="backup-recursos-teste">Baixar backup dos registros locais</button>
+<button type="button" id="remover-recursos-teste">Remover recursos fictícios de teste</button>
+<p data-seed-retorno role="status" aria-live="polite"></p><ul data-seed-dependencias></ul></div>
+<form class="local-resource-form">
+<label>Tipo<select name="tipo"><option value="instrutor">Instrutor</option><option value="veiculo">Veículo</option></select></label>
+<label>Cadastro<select name="registro"><option value="">Novo recurso</option></select></label>
+<label>Nome do instrutor ou modelo/identificação do veículo<input name="nome" required maxlength="120" autocomplete="off"></label>
+<label><span data-label-documento>Identificação do instrutor (CPF de testes, 11 dígitos)</span><input name="documento" required maxlength="18" autocomplete="off"></label>
+<label>Unidade<select name="unidade" required></select></label>
+<fieldset data-categorias><legend>Habilitação do instrutor</legend><label><input type="checkbox" name="categoriaA"> A · Moto</label><label><input type="checkbox" name="categoriaB"> B · Carro</label><label><input type="checkbox" name="categoriaD"> D · Ônibus</label></fieldset>
+<label data-categoria-veiculo hidden>Tipo do veículo<select name="categoria"><option value="">Selecione</option><option value="A">A · Moto</option><option value="B">B · Carro</option><option value="D">D · Ônibus</option></select></label><label data-almoco>Horário de almoço<select name="horarioAlmoco"><option value="">Selecione</option><option value="11-12">11:00 e 12:00</option><option value="12-13">12:00 e 13:00</option></select></label>
+<label><input type="checkbox" name="ativo"> Recurso ativo e disponível para oferecer horários</label>
+<fieldset class="resource-week"><legend>Disponibilidade semanal</legend><p>Marque os dias e informe início e fim. Sábado continua limitado a 07h–12h; domingo permanece fechado.</p><div data-jornada></div></fieldset>
+<button type="submit">Salvar recurso local</button><p role="status" aria-live="polite" data-retorno></p></form>`;
+    destino.append(detalhes);
+    detalhes.querySelector("[data-inventario]").before(detalhes.querySelector(".local-seed-tools"));
+    const form = detalhes.querySelector("form"), el = form.elements, retorno = detalhes.querySelector("[data-retorno]"), salvar = form.querySelector('[type="submit"]');
+    let registros = [], salvando = false;
+    const seedRetorno = detalhes.querySelector("[data-seed-retorno]"), dependencias = detalhes.querySelector("[data-seed-dependencias]");
+    function ocupado(valor) {
+        salvando = valor; salvar.disabled = valor;
+        detalhes.querySelectorAll(".local-seed-tools button").forEach(b => { b.disabled = valor; });
+    }
+    detalhes.querySelector("#preparar-recursos-teste").onclick = async () => {
+        if (salvando) return; ocupado(true); dependencias.replaceChildren();
+        try {
+            const resultado = await servico.prepararRecursosTeste();
+            await atualizar(el.registro.value); await aoSalvar();
+            seedRetorno.textContent = `Preparação concluída: ${resultado.instrutoresCriados} instrutores e ${resultado.veiculosCriados} veículos fictícios criados; ${resultado.existentes} já existentes, preservados. Selecione categoria, unidade e data. Créditos e aulas não foram alterados.`;
+        } catch (erro) { seedRetorno.textContent = `Não foi possível preparar os recursos: ${erro.message}`; }
+        finally { ocupado(false); }
+    };
+    detalhes.querySelector("#backup-recursos-teste").onclick = async () => {
+        if (salvando) return; ocupado(true);
+        try {
+            const backup = await servico.backup(), url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }));
+            const link = document.createElement("a"); link.href = url; link.download = "sipa-registros-locais-backup.json"; link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            seedRetorno.textContent = "Backup solicitado para download: registros e créditos locais. Conta, senha e sessão não são exportadas.";
+        } catch (erro) { seedRetorno.textContent = `Não foi possível gerar o backup: ${erro.message}`; }
+        finally { ocupado(false); }
+    };
+    detalhes.querySelector("#remover-recursos-teste").onclick = async () => {
+        if (salvando) return; ocupado(true); dependencias.replaceChildren();
+        try {
+            const plano = await servico.consultarLimpezaRecursosTeste();
+            for (const item of plano.dependencias) { const li = document.createElement("li"); li.textContent = `${item.nome}: preservado por ${item.referencias.join(", ")}`; dependencias.append(li); }
+            if (!plano.removiveis) { seedRetorno.textContent = `Nenhum recurso fictício sem referências para remover. ${plano.preservados} preservados por dependências. Você pode baixar o backup acima. Aulas não serão removidas nem canceladas.`; return; }
+            if (!confirm(`Remover somente os ${plano.removiveis} recursos fictícios sem referências? ${plano.preservados} recursos com dependências serão preservados. Nenhuma aula, conta ou crédito será excluído. Para guardar os registros, cancele e use Baixar backup antes de continuar.`)) { seedRetorno.textContent = "Remoção cancelada. Nenhum registro foi alterado; o backup está disponível acima."; return; }
+            const resultado = await servico.removerRecursosTeste();
+            await atualizar(); await aoSalvar();
+            dependencias.replaceChildren();
+            for (const item of resultado.dependencias) { const li = document.createElement("li"); li.textContent = `${item.nome}: preservado por ${item.referencias.join(", ")}`; dependencias.append(li); }
+            seedRetorno.textContent = `${resultado.removidos} recursos fictícios removidos; ${resultado.preservados} preservados por dependências. Aulas, contas, créditos e recursos manuais foram mantidos. Backup disponível acima. Recursos utilizados por aulas não são removidos por esta ferramenta.`;
+        } catch (erro) { seedRetorno.textContent = `Não foi possível remover os recursos: ${erro.message}`; }
+        finally { ocupado(false); }
+    };
+    for (const nome of UNIDADES_LOCAIS) { const o = document.createElement("option"); o.value = nome; o.textContent = nomeUnidadeLocal(nome); el.unidade.append(o); }
+    for (const [i, nome] of ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"].entries()) {
+        const linha = document.createElement("div"); linha.className = "resource-day"; linha.dataset.dia = i + 1;
+        linha.innerHTML = `<label><input type="checkbox" name="dia${i + 1}"> ${nome}</label><label>Início<input type="time" name="inicio${i + 1}" disabled required></label><label>Fim<input type="time" name="fim${i + 1}" disabled required></label>`;
+        linha.querySelector('[type="checkbox"]').onchange = e => linha.querySelectorAll('[type="time"]').forEach(n => { n.disabled = !e.target.checked; });
+        detalhes.querySelector("[data-jornada]").append(linha);
+    }
+    function preencher() {
+        const item = registros.find(r => r.id === el.registro.value);
+        el.nome.value = item?.nome || ""; el.documento.value = item?.documento || "";
+        el.documento.readOnly = item?.dadosDeTeste === true && !!item?.seedId;
+        detalhes.querySelector("[data-label-documento]").textContent = el.documento.readOnly ? "Identificador sintético de teste (não é CPF ou placa real)" : el.tipo.value === "veiculo" ? "Placa do veículo (7 caracteres)" : "Identificação do instrutor (CPF de testes, 11 dígitos)";
+        el.unidade.value = normalizarUnidadeLocal(item?.unidade || "Cobilândia"); el.ativo.checked = item?.ativo === true && item?.disponivel !== false;
+        el.categoriaA.checked = !!item?.categorias?.includes("A"); el.categoriaB.checked = !!item?.categorias?.includes("B");el.categoriaD.checked=!!item?.categorias?.includes("D");el.horarioAlmoco.value=item?.horarioAlmoco||""; el.categoria.value = item?.categoria || "";
+        for (let dia = 1; dia <= 6; dia++) {
+            const j = item?.disponibilidadeSemanal?.find(j => j.dia === dia);
+            el[`dia${dia}`].checked = !!j; el[`inicio${dia}`].value = j?.inicio || ""; el[`fim${dia}`].value = j?.fim || "";
+            el[`inicio${dia}`].disabled = el[`fim${dia}`].disabled = !j;
+        }
+    }
+    function listarTipo(id = "") {
+        el.registro.replaceChildren(new Option("Novo recurso", ""));
+        for (const r of registros.filter(r => r.tipo === el.tipo.value)) el.registro.append(new Option(`${r.nome} · ${nomeUnidadeLocal(r.unidade)}`, r.id));
+        el.registro.value = id; const veiculo = el.tipo.value === "veiculo";
+        detalhes.querySelector("[data-categorias]").hidden = veiculo; detalhes.querySelector("[data-categoria-veiculo]").hidden = !veiculo; el.categoria.required = veiculo;el.horarioAlmoco.required=!veiculo;detalhes.querySelector("[data-almoco]").hidden=veiculo;
+        detalhes.querySelector("[data-label-documento]").textContent = veiculo ? "Placa do veículo (7 caracteres)" : "Identificação do instrutor (CPF de testes, 11 dígitos)"; preencher();
+    }
+    async function atualizar(id = "") {
+        registros = (await servico.registros()).filter(r => ["instrutor", "veiculo"].includes(r.tipo));
+        detalhes.querySelector("[data-inventario]").textContent = `IndexedDB sipa.dev.local.v1 · registros: ${registros.filter(r => r.tipo === "instrutor").length} instrutor(es), ${registros.filter(r => r.tipo === "veiculo").length} veículo(s).`;
+        const lista = detalhes.querySelector("[data-lista-recursos]"); lista.replaceChildren();
+        for (const r of registros) { const li = document.createElement("li"); li.textContent = `${r.nome} · ${nomeUnidadeLocal(r.unidade)} · ${r.tipo === "instrutor" ? r.categorias?.join("/") || "habilitação não informada" : r.categoria || "categoria não informada"} · ${r.ativo === true && r.disponivel !== false ? "ativo" : "inativo/disponibilidade não informada"} · ${r.disponibilidadeSemanal ? "jornada cadastrada" : "legado: usa expediente do SIPA quando ativo"}`; lista.append(li); }
+        listarTipo(id);
+    }
+    el.tipo.onchange = () => { retorno.textContent = ""; listarTipo(); }; el.registro.onchange = preencher;
+    form.onsubmit = async event => {
+        event.preventDefault(); if (salvando || !form.reportValidity()) return; salvando = true; salvar.disabled = true;
+        try {
+            const jornada = [];
+            for (let dia = 1; dia <= 6; dia++) if (el[`dia${dia}`].checked) jornada.push({ dia, inicio: el[`inicio${dia}`].value, fim: el[`fim${dia}`].value });
+            const item = { tipo: el.tipo.value, nome: el.nome.value.trim(), documento: el.documento.value, unidade: el.unidade.value, ativo: el.ativo.checked, disponivel: el.ativo.checked, disponibilidadeSemanal: jornada };
+            if (el.registro.value) item.id = el.registro.value;
+            if (item.tipo === "instrutor") {item.categorias = [el.categoriaA.checked && "A", el.categoriaB.checked && "B",el.categoriaD.checked&&"D"].filter(Boolean);item.horarioAlmoco=el.horarioAlmoco.value;} else item.categoria = el.categoria.value;
+            await servico.salvarRecursoLocal(item);
+            const doc = item.documento.replace(/[^a-z0-9]/gi, "").toUpperCase();
+            const salvo = (await servico.registros()).find(r => r.tipo === item.tipo && r.documento === doc);
+            await atualizar(salvo?.id); await aoSalvar(); retorno.textContent = "Recurso salvo localmente. Calendário atualizado; selecione novamente data, horário e recursos. Créditos preservados.";
+        } catch (erro) { retorno.textContent = `Não foi possível salvar o recurso: ${erro.message}`; }
+        finally { salvando = false; salvar.disabled = false; }
+    };
+    await atualizar();
+}
+
+async function montarOperadorLocal(registros) {
+    const [{ montarEstruturaOperador }, { montarAgenda }, { montarVisaoGeral }] = await Promise.all([
+        import("../../nivel-1-operador/js/components/painelOperador.js"), import("../../nivel-1-operador/js/components/agendaOperador.js"), import("../../nivel-1-operador/js/components/visaoGeralOperador.js")
+    ]);
+    const raiz = document.getElementById("operador-conteudo");
+    const estado = { alunos: [], recursos: [], aulas: [] };
+    function recursos(tipo = "Todos") {
+        const painel = raiz.querySelector("#op-resource-panel"), titulo = document.createElement("h3"), lista = document.createElement("ul");
+        titulo.dataset.opResourceHeading = ""; titulo.textContent = "Cadastros locais de recursos";
+        const itens = registros.filter(r => ["instrutor", "veiculo"].includes(r.tipo) && (tipo === "Todos" || (tipo === "Veículos" ? r.tipo === "veiculo" : tipo === "Instrutores" && r.tipo === "instrutor")));
+        for (const item of itens) { const li = document.createElement("li"); li.textContent = `${item.nome} · ${item.unidade} · disponibilidade não informada`; lista.append(li); }
+        if (!itens.length) { const li = document.createElement("li"); li.textContent = "Nenhum recurso cadastrado nesta lista local."; lista.append(li); }
+        painel.replaceChildren(titulo, lista);
+    }
+    const nav = montarEstruturaOperador(raiz, document.getElementById("operador-template"), { aoSair: () => {}, aoSelecionarRecurso: recursos });
+    document.getElementById("operador-acesso").hidden = true; raiz.hidden = false;
+    raiz.querySelector(".op-operator-label strong").textContent = "Operador local";
+    raiz.querySelector(".op-operator-label small").textContent = "Nível 1 · testes";
+    raiz.querySelector(".sipa-sidebar-logo").href = "/login.html";
+    montarAgenda(raiz, raiz.querySelector('[data-op-panel="agenda"]'), () => estado);
+    montarVisaoGeral(raiz, raiz.querySelector('[data-op-panel="visao-geral"]'), () => estado, {
+        navegar: nav.navegar, verAluno: () => {}, verAula: () => {}, agendar: () => false
+    });
+    // A grade e suas restrições são as mesmas; sem recursos qualificados não
+    // existem horários liberados. Nenhum seed antigo é carregado ou importado.
+    const alunos = registros.filter(r => r.tipo === "aluno"), tbody = raiz.querySelector(".op-table tbody");
+    const listar = termo => {
+        tbody.replaceChildren();
+        for (const aluno of alunos.filter(a => `${a.nome} ${a.documento}`.toLocaleLowerCase("pt-BR").includes(termo))) {
+            const linha = document.createElement("tr");
+            for (const valor of [`${aluno.nome} · ${aluno.unidade}`, "Não verificado", "Não informados", "Não criado", "Cadastro local preservado"]) {
+                const td = document.createElement("td"); td.textContent = valor; linha.append(td);
+            } tbody.append(linha);
+        }
+        if (!tbody.children.length) { const tr = document.createElement("tr"), td = document.createElement("td"); td.colSpan = 5; td.textContent = "Nenhum aluno cadastrado localmente."; tr.append(td); tbody.append(tr); }
+    };
+    const busca = raiz.querySelector(".op-search input"); busca.disabled = false; busca.oninput = () => listar(busca.value.toLocaleLowerCase("pt-BR")); listar("");
+    const aviso = raiz.querySelector(".op-notice p"); aviso.textContent = "Contexto local sem dados automáticos. Cadastros existentes estão na lista de alunos. Agenda, verificações e acessos aguardam seus vínculos completos; nenhuma consulta ao ICFC é realizada.";
+    const pendente = raiz.querySelector("#alunos-pendente"); if (pendente) pendente.textContent = "Cadastros manuais preservados. Verificações e acessos não foram executados.";
+    recursos();
+}

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <script src="../../shared/js/tema.js"></script>
+    <script src="../js/tema-aluno.js"></script>
+    <script src="../js/sidebar-aluno.js" defer></script>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Meu Progresso | SIPA</title>
+
+    <link rel="stylesheet" href="../css/meu-progresso.css">
+
+    <link rel="stylesheet" href="../../shared/css/sidebar.css">
+
+    <link rel="stylesheet" href="../css/tema-aluno.css">
+<link rel="stylesheet" href="../../shared/css/escala.css">
+</head>
+
+
+    <!-- =====================================
+         FONTE
+         ===================================== -->
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- =====================================
+         FONT AWESOME
+         ===================================== -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+
+</head>
+
+
+<body data-sipa-escala="aluno" data-sipa-aluno>
+
+
+<div class="progress-layout">
+
+
+    <!-- =====================================
+         SIDEBAR
+         ===================================== -->
+
+    <aside class="sipa-sidebar">
+
+    <!-- LOGO -->
+    <a href="dashboard.html" class="sipa-sidebar-logo">
+
+        <div class="sipa-sidebar-logo-symbol">
+
+            <svg
+                viewBox="0 0 70 70"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path
+                    d="M52 12H29C17 12 9 20 9 31C9 40 14 46 23 48L42 52C46 53 48 55 48 58C48 61 46 63 41 63H18"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+
+                <path
+                    d="M18 58H41C53 58 61 50 61 39C61 30 56 24 47 22L28 18C24 17 22 15 22 12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+
+        </div>
+
+        <div class="sipa-sidebar-logo-text">
+
+            <strong>SIPA</strong>
+
+            <span>
+                SISTEMA INTELIGENTE
+                <br>
+                PARA AGENDAMENTOS
+            </span>
+
+        </div>
+
+    </a>
+
+
+    <!-- MENU -->
+    <nav class="sipa-sidebar-menu">
+
+        <span class="sipa-sidebar-title">
+            MENU
+        </span>
+
+
+        <!-- INÍCIO -->
+        <a
+            href="dashboard.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Início
+            </span>
+
+        </a>
+
+
+        <!-- AGENDAR AULA -->
+        <a
+            href="agendamento.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Agendar aula
+            </span>
+
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
+            </span>
+
+        </a>
+
+
+        <!-- MEU PROGRESSO -->
+        <a
+            href="meu-progresso.html"
+            class="sipa-sidebar-link active"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu progresso
+            </span>
+
+        </a>
+
+
+        <!-- PACOTES -->
+        <a
+            href="pacotes.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Pacotes adicionais
+            </span>
+
+        </a>
+
+
+        <!-- CONTA -->
+        <span class="sipa-sidebar-title account">
+            CONTA
+        </span>
+
+
+        <!-- MEU PERFIL -->
+        <a
+            href="meu-perfil.html"
+            class="sipa-sidebar-link"
+        >
+
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu perfil
+            </span>
+
+        </a>
+
+    </nav>
+
+
+    <!-- RODAPÉ -->
+    <div class="sipa-sidebar-bottom">
+
+        <div class="sipa-sidebar-unit">
+
+            <span class="sipa-sidebar-status"></span>
+
+            <div class="sipa-sidebar-unit-text">
+
+                <strong>
+                    SIPA
+                </strong>
+
+                <small>
+                    Atendimento disponível
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- SAIR -->
+        <button
+            type="button"
+            id="progress-logout"
+            class="sipa-sidebar-logout"
+        >
+
+            <span></span>
+
+            Sair da conta
+
+        </button>
+
+    </div>
+
+</aside>
+
+
+
+    <!-- =====================================
+         CONTEÚDO PRINCIPAL
+         ===================================== -->
+
+    <main class="progress-main">
+
+
+        <!-- =================================
+             CABEÇALHO
+             ================================= -->
+
+        <header class="progress-header">
+
+
+            <div class="progress-header-text">
+
+                <span class="progress-eyebrow">
+                    MEU PROGRESSO
+                </span>
+
+                <h1>
+                    Acompanhe sua evolução
+                </h1>
+
+                <p>
+                    Veja como está seu avanço rumo à sua habilitação.
+                </p>
+
+            </div>
+
+
+            <!-- BOTÃO -->
+
+            <a
+                href="agendamento.html"
+                class="progress-action-button"
+            >
+
+                <span>
+                    +
+                </span>
+
+                Agendar nova aula
+
+            </a>
+
+
+        </header>
+
+
+        <!-- MENSAGEM DE ERRO DA API (o JS preenche) -->
+
+        <p
+            id="progress-error"
+            style="margin-top: 14px; color: #b42318; font-weight: 700;"
+            hidden
+        ></p>
+
+
+
+        <!-- =================================
+             VISÃO GERAL
+             ================================= -->
+
+        <section class="progress-overview">
+
+
+            <!-- =================================
+                 CARD PRINCIPAL
+                 ================================= -->
+
+            <article
+                class="progress-card progress-card-main"
+            >
+
+
+                <div class="progress-card-header">
+
+                    <div>
+
+                        <span class="progress-eyebrow">
+                            SEU PROGRESSO
+                        </span>
+
+                        <h2>
+                            Sua evolução
+                        </h2>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="progress-circle-container">
+
+
+                    <!-- CÍRCULO -->
+
+                    <div
+                        class="progress-circle"
+                        id="progress-circle"
+                    >
+
+                        <div>
+
+                            <strong id="progress-percentage">
+                                0%
+                            </strong>
+
+                            <span>
+                                concluído
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- TEXTO -->
+
+                    <div class="progress-description">
+
+                        <strong id="progress-message">
+                            Continue avançando!
+                        </strong>
+
+                        <span>
+                            Cada aula aproxima você da sua
+                            habilitação.
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </article>
+
+
+
+            <!-- =================================
+                 AULAS REALIZADAS
+                 ================================= -->
+
+            <article class="progress-card">
+
+
+                <div class="progress-card-icon">
+
+                    <i class="fa-solid fa-check"></i>
+
+                </div>
+
+
+                <span class="progress-eyebrow">
+                    AULAS REALIZADAS
+                </span>
+
+
+                <strong
+                    class="progress-number"
+                    id="completed-lessons"
+                >
+                    0
+                </strong>
+
+
+                <span class="progress-card-description">
+                    aulas concluídas
+                </span>
+
+
+            </article>
+
+
+
+            <!-- =================================
+                 AULAS RESTANTES
+                 ================================= -->
+
+            <article class="progress-card">
+
+
+                <div class="progress-card-icon remaining">
+
+                    <i class="fa-regular fa-square"></i>
+
+                </div>
+
+
+                <span class="progress-eyebrow">
+                    AULAS RESTANTES
+                </span>
+
+
+                <strong
+                    class="progress-number"
+                    id="remaining-lessons"
+                >
+                    0
+                </strong>
+
+
+                <span class="progress-card-description">
+                    aulas disponíveis
+                </span>
+
+
+            </article>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             DETALHES DA FORMAÇÃO
+             ===================================== -->
+
+        <section class="progress-details">
+
+
+            <div class="progress-section-header">
+
+                <div>
+
+                    <span class="progress-eyebrow">
+                        SUA FORMAÇÃO
+                    </span>
+
+                    <h2>
+                        Detalhes do seu progresso
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- CARDS -->
+
+            <div class="progress-details-grid">
+
+
+                <!-- PACOTE -->
+
+                <article class="progress-detail-card">
+
+                    <span>
+                        PACOTE CONTRATADO
+                    </span>
+
+                    <strong id="package-lessons">
+                        0
+                    </strong>
+
+                    <small>
+                        aulas práticas
+                    </small>
+
+                </article>
+
+
+
+                <!-- AGENDADAS -->
+
+                <article class="progress-detail-card">
+
+                    <span>
+                        AULAS AGENDADAS
+                    </span>
+
+                    <strong id="scheduled-lessons">
+                        0
+                    </strong>
+
+                    <small>
+                        próximas aulas
+                    </small>
+
+                </article>
+
+
+
+                <!-- CATEGORIA -->
+
+                <article class="progress-detail-card">
+
+                    <span>
+                        CATEGORIA
+                    </span>
+
+                    <strong id="student-category">
+                        -
+                    </strong>
+
+                    <small>
+                        categoria de formação
+                    </small>
+
+                </article>
+
+
+
+                <!-- UNIDADE -->
+
+                <article class="progress-detail-card">
+
+                    <span>
+                        AUTOESCOLA
+                    </span>
+
+                    <strong id="student-school">
+                        —
+                    </strong>
+
+                    <small>
+                        onde você faz as aulas
+                    </small>
+
+                </article>
+
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             EVOLUÇÃO
+             ===================================== -->
+
+        <section class="progress-bar-section">
+
+
+            <div class="progress-section-header">
+
+
+                <div>
+
+                    <span class="progress-eyebrow">
+                        EVOLUÇÃO
+                    </span>
+
+                    <h2>
+                        Seu avanço até aqui
+                    </h2>
+
+                </div>
+
+
+                <strong id="progress-bar-percentage">
+                    0%
+                </strong>
+
+
+            </div>
+
+
+
+            <!-- BARRA -->
+
+            <div class="progress-track">
+
+                <div
+                    class="progress-fill"
+                    id="progress-fill"
+                    style="width: 0%;"
+                ></div>
+
+            </div>
+
+
+
+            <!-- LEGENDA -->
+
+            <div class="progress-bar-labels">
+
+                <span>
+                    Início
+                </span>
+
+                <span id="progress-package-label">
+                    0 aulas
+                </span>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             SEUS PACOTES
+             ===================================== -->
+
+        <section class="progress-details">
+
+
+            <div class="progress-section-header">
+
+                <div>
+
+                    <span class="progress-eyebrow">
+                        SEUS PACOTES
+                    </span>
+
+                    <h2>
+                        Progresso por pacote
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <!-- CARDS (o JS cria um card por pacote) -->
+
+            <div
+                class="progress-details-grid"
+                id="progress-packages"
+            ></div>
+
+
+        </section>
+
+
+
+        <!-- =====================================
+             RODAPÉ
+             ===================================== -->
+
+        <footer class="progress-footer">
+
+            <span>
+                SIPA • Sistema Inteligente Para Agendamentos
+            </span>
+
+            <span class="progress-online">
+                ● Atendimento disponível
+            </span>
+
+        </footer>
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =====================================
+     JAVASCRIPT
+     ===================================== -->
+
+<script type="module" src="../js/entrada.js"></script>
+
+
+</body>
+
+</html>

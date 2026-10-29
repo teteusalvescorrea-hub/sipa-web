@@ -1,0 +1,21 @@
+import {validarCpfLocal} from './agenda-recepcao.browser.steps.mjs';
+export async function validarMascaraCpf(ctx){
+ const {evaluate,waitFor,check,navigate,send}=ctx;
+ await navigate('/login.html?ambiente=local',"!!document.querySelector('#ambiente-teste')");
+ await check("document.querySelector('#login-cpf').maxLength===14&&document.querySelector('#login-cpf').inputMode==='numeric'",'Login local conserva limite 14 e teclado numerico');
+ await evaluate("document.querySelector('#login-cpf').focus()");
+ const esperados=['1','12','123','123.4','123.45','123.456','123.456.7','123.456.78','123.456.789','123.456.789-0','123.456.789-09'];
+ for(let i=0;i<11;i++){await send('Input.insertText',{text:'12345678909'[i]});await check(`document.querySelector('#login-cpf').value===${JSON.stringify(esperados[i])}`,'Mascara durante digitacao '+(i+1));}
+ await send('Input.insertText',{text:'8'});await check("document.querySelector('#login-cpf').value==='123.456.789-09'",'Decimo segundo numero bloqueado');
+ for(const valor of ['12345678909','123.456.789-09','12345678909123456789','ab123!456@78909xyz']){
+  await evaluate(`var c=document.querySelector('#login-cpf');c.focus();c.select();var dados=new DataTransfer();dados.setData('text/plain',${JSON.stringify(valor)});c.dispatchEvent(new ClipboardEvent('paste',{clipboardData:dados,bubbles:true,cancelable:true}))`);
+  await check("document.querySelector('#login-cpf').value==='123.456.789-09'",'Colagem normalizada '+valor.length);
+ }
+ await evaluate("var c=document.querySelector('#login-cpf');c.value='';c.focus()");await send('Input.insertText',{text:'abc!'});await check("document.querySelector('#login-cpf').value===''",'Letras e simbolos descartados');
+ await send('Input.insertText',{text:'12345678909'});await evaluate("var c=document.querySelector('#login-cpf');c.setSelectionRange(4,5)");await send('Input.insertText',{text:'9'});await check("document.querySelector('#login-cpf').value==='123.956.789-09'",'Edicao no meio preserva os demais numeros');
+ await evaluate("var c=document.querySelector('#login-cpf');c.setSelectionRange(4,4)");await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Backspace',code:'Backspace',windowsVirtualKeyCode:8});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Backspace',code:'Backspace',windowsVirtualKeyCode:8});await check("document.querySelector('#login-cpf').value.replace(/\\D/g,'').length===10",'Apagar junto ao ponto remove numero sem prender cursor');
+ for(const valor of ['','123']){await evaluate(`document.querySelector('#login-cpf').value=${JSON.stringify(valor)};document.querySelector('#login-password').value='teste';document.querySelector('#login-form').requestSubmit()`);await check("document.querySelector('#login-message').textContent.includes('11')&&location.pathname==='/login.html'",'CPF vazio ou incompleto nao autentica '+valor.length);}
+ await send('Emulation.setDeviceMetricsOverride',{width:390,height:900,deviceScaleFactor:1,mobile:true});await evaluate("var c=document.querySelector('#login-cpf');c.value='';c.focus()");await send('Input.insertText',{text:'11111111111'});await check("document.querySelector('#login-cpf').value==='111.111.111-11'&&document.documentElement.scrollWidth<=innerWidth+1",'Mascara e layout em dispositivo movel');
+ await validarCpfLocal(ctx);
+ await navigate('/login.html?ambiente=local',"!!document.querySelector('#conta-aluno-cadastrada')");await evaluate("document.querySelector('#conta-aluno-cadastrada').checked=true;document.querySelector('#login-cpf').value='111.111.111-11';document.querySelector('#login-password').value='111111';document.querySelector('#login-form').requestSubmit()");await waitFor(()=>evaluate("document.querySelector('[data-definir-senha-recepcao]')?.open"),'CPF ficticio autentica sem digitos verificadores');await evaluate("var f=document.querySelector('[data-definir-senha-recepcao] form');f.elements.nova.value='abcd';f.elements.confirmacao.value='abcd';f.requestSubmit()");await waitFor(()=>evaluate("document.body.dataset.sipaOrigem==='recepcao'"),'Painel apos login ficticio');await check("document.querySelector('#student-name').textContent==='Aluno'",'Conta ficticia criada pela Recepcao continua autenticando com CPF pontuado');
+}

@@ -1,0 +1,9 @@
+.medical-situation { display:inline-flex; align-items:center; padding:4px 8px; border:1px solid #b4c6d6; border-radius:6px; font-size:12px; font-weight:600; line-height:1.45; max-width:260px; color:#395368; background:#f0f4f8; }
+.medical-situation[data-medical-situation=recepcao] { background:#fff5d9; color:#725000; border-color:#d7b962; }
+.medical-situation[data-medical-situation=gerencia] { background:#eaf3ff; color:#174e88; border-color:#9cbfe2; }
+.medical-situation[data-medical-situation=aprovado] { background:#ecf8ef; color:#22653a; border-color:#96c7a5; }
+.medical-situation[data-medical-situation=rejeitado] { background:#fff0f0; color:#9b3030; border-color:#d9a1a1; }
+html[data-theme=dark] .medical-situation[data-medical-situation=recepcao] { background:#43391e; color:#ffe4a2; border-color:#8d7946; }
+html[data-theme=dark] .medical-situation[data-medical-situation=gerencia] { background:#203b56; color:#acd6ff; border-color:#577da1; }
+html[data-theme=dark] .medical-situation[data-medical-situation=aprovado] { background:#203f31; color:#a7e4bb; border-color:#4e8863; }
+html[data-theme=dark] .medical-situation[data-medical-situation=rejeitado] { background:#482c35; color:#ffc0c0; border-color:#a56570; }

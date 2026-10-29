@@ -1,3 +1,4 @@
+@import url('../shared/css/legibilidade.css');
 /* =========================================
    SIPA — CADASTRO
    ========================================= */
@@ -284,7 +285,7 @@ body.cadastro-page {
 
     margin: 0;
 
-    color: #7d91b1;
+    color: var(--sipa-texto-neutro);
 
     font-size: 14px;
 
@@ -375,7 +376,7 @@ body.cadastro-page {
 
     display: block;
 
-    color: #617594;
+    color: var(--sipa-texto-neutro);
 
     font-size: 10px;
 
@@ -393,7 +394,7 @@ body.cadastro-page {
 
     z-index: 2;
 
-    color: #506481;
+    color: var(--sipa-texto-neutro);
 
     font-size: 10px;
 
@@ -507,7 +508,7 @@ body.cadastro-page {
 
     margin: 7px 0 0;
 
-    color: #6e84a4;
+    color: var(--sipa-texto-neutro);
 
     font-size: 11px;
 
@@ -638,7 +639,7 @@ body.cadastro-page {
 
     margin-top: 2px;
 
-    color: #536a8b;
+    color: var(--sipa-texto-neutro);
 
     font-size: 8px;
 
@@ -772,7 +773,7 @@ body.cadastro-page {
 
 .cadastro-input-wrapper input::placeholder {
 
-    color: #435875;
+    color: var(--sipa-texto-neutro);
 
 }
 
@@ -817,7 +818,7 @@ body.cadastro-page {
 
     width: auto !important;
 
-    color: #45617f !important;
+    color: var(--sipa-texto-neutro) !important;
 
     font-size: 9px !important;
 
@@ -932,7 +933,7 @@ body.cadastro-page {
     border-top: 1px solid
         rgba(83, 127, 179, 0.10);
 
-    color: #607693;
+    color: var(--sipa-texto-neutro);
 
     font-size: 10px;
 

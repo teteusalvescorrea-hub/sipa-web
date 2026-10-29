@@ -1,0 +1,20 @@
+/* Cores de texto neutro. Estados funcionais e propriedades graficas mantem suas cores. */
+:root{--sipa-texto-neutro:#000000;--sipa-texto-claro:#f4f7fb}
+html[data-theme=dark]{--sipa-texto-neutro:#f4f7fb}
+/* Estas paginas conservam superficies claras independentemente do tema dos paineis. */
+body:is(.login-page,.cadastro-page){--sipa-texto-neutro:#000000}
+:where(input,textarea)::placeholder{color:var(--sipa-texto-neutro);opacity:1}
+.op-header-context{margin-left:auto;display:flex;align-items:center;justify-content:flex-end;gap:12px;min-width:0;flex-wrap:wrap}
+button.sipa-theme-control{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:8px 11px;border:1px solid var(--op-line,#8ba5bd);border-radius:8px;background:transparent;color:var(--sipa-texto-neutro);font:inherit;font-size:12px;cursor:pointer}
+button.sipa-theme-control svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+button.sipa-theme-control:hover{border-color:var(--in-blue,var(--progress-blue,#1769aa))}
+button.sipa-theme-control:focus-visible{outline:2px solid #2388d9;outline-offset:3px}
+@media(prefers-reduced-motion:no-preference){button.sipa-theme-control{transition:color .15s,border-color .15s}}
+.adm-medical-history{margin-top:18px;color:var(--sipa-texto-neutro)}
+.adm-medical-history ol{list-style:none;padding:0;display:grid;gap:10px;margin-top:10px}
+.adm-medical-history li{padding:12px;border:1px solid var(--op-line,#b7c9d9);border-radius:8px;min-width:0}
+.adm-medical-event-heading{display:flex;align-items:baseline;gap:8px 18px;flex-wrap:wrap}
+.adm-medical-event-heading time{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:12px}
+.adm-medical-history dl{display:grid;gap:5px;margin:8px 0 0;font-size:12px;line-height:1.5}
+.adm-medical-history dl>div{display:flex;gap:5px;flex-wrap:wrap}
+.adm-medical-history dt{font-weight:600}.adm-medical-history dt::after{content:':'}.adm-medical-history dd{margin:0;overflow-wrap:anywhere;min-width:0}

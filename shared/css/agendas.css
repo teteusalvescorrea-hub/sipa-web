@@ -1,0 +1,58 @@
+/* Apenas textos neutros de agendas/calendários. Não altera medidas ou estados. */
+:root{
+ --agenda-texto-neutro:#000000;
+ /* Capturadas na raiz para preservar os indicadores de status do Aluno. */
+ --agenda-status-texto:var(--sipa-text);
+ --agenda-status-secundario:var(--sipa-muted);
+}
+html[data-theme=dark]{--agenda-texto-neutro:#f4f7fb}
+
+/* Aluno: variáveis locais; a sidebar e os demais módulos não herdam estas cores. */
+html [data-sipa-aluno] :is(.booking-main,.lessons-main,.next-lesson-card){
+ --sipa-muted:var(--agenda-texto-neutro);
+ --sipa-text:var(--agenda-texto-neutro);
+ --booking-muted:var(--agenda-texto-neutro);
+ --booking-ink:var(--agenda-texto-neutro);
+}
+html [data-sipa-aluno] :is(.calendar-weekdays span,.calendar-month>span,.calendar-legend,.calendar-reasons,.time-slots-header p,.availability-status,
+ .local-lesson-fields dt,.local-lesson-fields dd,.local-lesson-heading h3,.local-lesson-history,.local-lesson-history p,
+ .confirmed-lesson-location p,.confirmed-lesson-location>span,.next-lesson-card .card-eyebrow,.next-class-state p){color:var(--agenda-texto-neutro)!important}
+html [data-sipa-aluno] .local-lesson-status{
+ --sipa-text:var(--agenda-status-texto);
+ --sipa-muted:var(--agenda-status-secundario);
+}
+
+/* Instrutor: somente conteúdo de agenda/aulas, sem recolorir perfil ou sidebar. */
+.in-agenda,.in-card:has(.in-lesson-head),.in-dialog:has(.in-dl){
+ --in-muted:var(--agenda-texto-neutro);
+}
+.in-shell[data-secao=agenda] :is(.in-header h1,.in-header p),
+.in-agenda :is(.in-agenda-date h2,.in-agenda-date p,.in-agenda-summary,.in-agenda-body strong,.in-agenda-meta,.in-category,.in-agenda-note,.in-timeline-end,input,select){color:var(--agenda-texto-neutro)!important}
+.in-agenda .in-slot-time:not(.in-current>.in-slot-time):not(.has-lessons>.in-slot-time){color:var(--agenda-texto-neutro)!important}
+
+/* Recepção, Gerência e Master compartilham a mesma grade. */
+.op-agenda,[data-op-panel=agenda-global],[data-op-panel=antecipacao],[data-op-agendar]{
+ --op-muted:var(--agenda-texto-neutro);
+ --progress-text:var(--agenda-texto-neutro);
+}
+html .op-unidade .op-agenda :is(.op-agenda-nav h2,.op-agenda-veiculo-heading h2,.op-help,.op-day-heading h3,.op-day-heading span,
+ .op-week-hours>*,.op-agenda-slot>time,.op-slot-closed,.op-month-weekday,.op-month-count,.op-month-special,.op-month-event,
+ .op-evento-nome,.op-evento-categoria,.op-agenda-legenda,.op-agenda-filter-panel summary,.op-agenda-filter-panel label,.op-agenda-toolbar>label,.op-agenda-seletor,.op-empty-state,.op-pares-lista){color:var(--agenda-texto-neutro)!important}
+html .op-unidade .op-agenda .op-month-day:not(.op-selected)>strong{color:var(--agenda-texto-neutro)!important}
+html .op-unidade :is([data-op-panel=agenda-global],[data-op-panel=antecipacao],[data-op-agendar]) :is(label,.op-help,.adm-nota,.op-table th,.op-table td){color:var(--agenda-texto-neutro)!important}
+.op-unidade:is([data-op-secao=agenda],[data-op-secao=agenda-global],[data-op-secao=antecipacao]) .op-header :is(h1,[data-op-description]){color:var(--agenda-texto-neutro)!important}
+
+html [data-sipa-aluno] .booking-local-dialog :is(h2,h3,p,dt,dd,li),
+html [data-sipa-aluno] .resource-options button:not([aria-pressed=true]) span{color:var(--agenda-texto-neutro)!important}
+
+html .op-unidade .op-agenda :is(input,select),
+html .op-unidade :is([data-op-panel=agenda-global],[data-op-panel=antecipacao],[data-op-agendar]) :is(input,select){color:var(--agenda-texto-neutro)!important}
+
+/* Divisórias existentes: mesma tinta da Recepção no claro. Não altera
+   espessuras, dimensões, cartões de aulas ou cores de disponibilidade. */
+:root{--agenda-divisoria:#000000}
+html[data-theme=dark]{--agenda-divisoria:#8fa3b8}
+.in-agenda :is(.in-time-slot,.in-slot-time,.in-agenda-summary,.in-timeline-end){border-color:var(--agenda-divisoria)}
+#administracao-root:is([data-op-nivel="2"],[data-op-nivel="3"]) .op-agenda :is(.op-week-grid,.op-agenda-day,.op-agenda-slot,.op-day-heading,.op-week-hours>*,.op-agenda-slot>time,.op-month-grid){border-color:var(--agenda-divisoria)}
+/* No mês, as linhas de 1px são os gaps entre células, não bordas adicionais. */
+#administracao-root:is([data-op-nivel="2"],[data-op-nivel="3"]) .op-agenda .op-month-grid{background:var(--agenda-divisoria)}

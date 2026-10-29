@@ -1,0 +1,50 @@
+import {prepararIntegrado} from '../dev/preparar-integrado.mjs';
+// Fluxo principal do workspace: Live Server real e perfil descartavel.
+import {createRequire} from 'node:module';
+﻿// Servidor, conta e perfil de navegador descartáveis; nenhuma API real é utilizada.
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import http from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
+import {spawn} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const root=await prepararIntegrado(path.join(await fs.mkdtemp(path.join(os.tmpdir(),'sipa-integrado-ui-')),'aplicacao')),artifacts=await fs.mkdtemp(path.join(os.tmpdir(),'sipa-instrutor-ui-')),requests=[];
+const config={settings:{}};
+const extensionRoot=path.join(os.homedir(),'.vscode/extensions');
+const extension=(await fs.readdir(extensionRoot)).filter(n=>n.startsWith('ritwickdey.liveserver-')).sort().at(-1);
+const live=createRequire(import.meta.url)(path.join(extensionRoot,extension,'node_modules/live-server'));
+const server=live.start({root,port:0,host:'127.0.0.1',open:false,logLevel:0,mount:(config.settings['liveServer.settings.mount']||[]).map(([r,f])=>[r,path.resolve(root,f)])});
+await new Promise(r=>live.watcher.once('ready',r));
+const origin='http://127.0.0.1:'+server.address().port,profile=path.join(artifacts,'edge-profile');
+const browser=spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',['--headless=new','--disable-gpu','--no-first-run','--no-default-browser-check','--disable-extensions','--no-proxy-server','--host-resolver-rules=MAP sipa.example 127.0.0.1','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:['ignore','ignore','pipe']});
+let browserLog='';browser.stderr.on('data',b=>{browserLog=(browserLog+b.toString()).slice(-8192);});
+let ws,nextId=0;const pending=new Map(),checks=[],errors=[];
+async function wait(fn,label){const end=Date.now()+25000;while(Date.now()<end){if(await fn())return;await new Promise(r=>setTimeout(r,40));}throw Error('Tempo esgotado: '+label+' '+JSON.stringify(errors));}
+function send(method,params={}){const id=++nextId;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(id);reject(Error('CDP sem resposta: '+method+' '+browserLog));},15000);pending.set(id,{resolve:v=>{clearTimeout(timer);resolve(v);},reject:e=>{clearTimeout(timer);reject(e);}});ws.send(JSON.stringify({id,method,params}));});}
+async function evaluate(expression){let corpo;try{const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;new AsyncFunction('return ('+expression+');');corpo='return ('+expression+');';}catch{corpo=expression;}const r=await send('Runtime.evaluate',{expression:'(async()=>{'+corpo+'})()',awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value;}
+async function check(expression,label){assert.equal(await evaluate(expression),true,label);checks.push(label);}
+async function screenshot(nome){const r=await send('Page.captureScreenshot',{format:'png'});await fs.writeFile(path.join(artifacts,nome),Buffer.from(r.data,'base64'));}
+async function navigate(route,ready){await send('Page.navigate',{url:origin+route});await wait(()=>evaluate(ready),route);}
+async function click(selector){await evaluate('document.querySelector('+JSON.stringify(selector)+').click()');}
+async function mouseClick(selector){const p=await evaluate('(()=>{const n=document.querySelector('+JSON.stringify(selector)+');n.scrollIntoView({block:"center"});const r=n.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()');await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...p});await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...p});}
+async function viewport(width){await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate('new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))');}
+function contraste(){const style=getComputedStyle(document.documentElement),rgb=hex=>(hex.length===4?'#'+[...hex.slice(1)].map(c=>c+c).join(''):hex).match(/[a-f0-9]{2}/gi).map(n=>parseInt(n,16)/255),lum=hex=>rgb(hex).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4).reduce((s,n,i)=>s+n*[.2126,.7152,.0722][i],0),ratio=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);},v=n=>style.getPropertyValue('--in-'+n).trim();return ['bg','card','soft'].every(bg=>['text','muted','blue'].every(fg=>ratio(v(fg),v(bg))>=4.5))&&ratio('#d6e7f6',v('side'))>=4.5&&ratio('#ffffff','#1e73ad')>=4.5&&ratio('#ffffff','#1769aa')>=4.5;}
+try{
+ let port;await wait(async()=>{try{if(browser.exitCode!==null)throw Error('Edge encerrou: '+browserLog);port=Number((await fs.readFile(path.join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0]);return !!port;}catch{return false;}},'Edge');
+ const target=await fetch('http://127.0.0.1:'+port+'/json/new?about:blank',{method:'PUT'}).then(r=>r.json());ws=new WebSocket(target.webSocketDebuggerUrl);await new Promise(r=>ws.addEventListener('open',r,{once:true}));ws.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.method==='Runtime.bindingCalled'&&m.params.name==='__sipaHttpTest')requests.push(m.params.payload);if(m.method==='Network.requestWillBeSent'&&['XHR','Fetch'].includes(m.params.type))requests.push(m.params.request.url);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text);if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')errors.push('console.error');const p=pending.get(m.id);if(!p)return;pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);});ws.addEventListener('close',()=>{for(const p of pending.values())p.reject(Error('Conexao CDP encerrada'));pending.clear();});await send('Page.enable');await send('Runtime.enable');await send('Runtime.addBinding',{name:'__sipaHttpTest'});await send('Network.enable');
+ await send('Page.addScriptToEvaluateOnNewDocument',{source:`const RealDate=Date;const instante=RealDate.parse('2026-10-19T17:00:00-03:00');window.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[instante]));}static now(){return instante;}};window.httpCalls=[];window.fetch=async(...args)=>{__sipaHttpTest(String(args[0]));httpCalls.push(String(args[0]));throw Error('Nenhuma API deve ser chamada neste teste');};window.snapshotAntigo=async()=>{const db=await new Promise((r,j)=>{const p=indexedDB.open('sipa.dev.local.v1');p.onsuccess=()=>r(p.result);p.onerror=()=>j(p.error);});const dados={};for(const store of ['contas','sessoes','registros','creditos'])dados[store]=await new Promise((r,j)=>{const q=db.transaction(store,'readonly').objectStore(store).getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});db.close();return JSON.stringify(dados);};`});
+ await viewport(1366);await navigate('/login.html?ambiente=local',"document.readyState==='complete'&&!!document.querySelector('#login-form')");
+ await check("!document.querySelector('#ambiente-teste')&&!performance.getEntriesByType('resource').some(r=>new URL(r.name).pathname.startsWith('/dev/'))",'Distribuicao integrada nao importa demonstracao mesmo em localhost com query local');
+ await check("document.querySelectorAll('#tipo-acesso option').length===5&&!localStorage.getItem('sipa.acessos.v2')&&!localStorage.getItem('sipa.operador.demo.v2')",'Cinco perfis no login sem criar contas ou cadastros');
+ await evaluate("sessionStorage.setItem('sipa.dev.navegacao.v1',JSON.stringify({origem:'demonstracao-local',perfil:'aluno',nonce:'forjado',expira:Date.now()+3600000}));document.querySelector('#login-cpf').value='1';document.querySelector('#login-password').value='qualquer';document.querySelector('#login-form').requestSubmit()");
+ await wait(()=>evaluate("document.querySelector('#login-message').textContent.length>0"),'CPF integrado invalido');await check("location.pathname==='/login.html'&&!document.querySelector('.in-sidebar,.sipa-sidebar')",'Campos arbitrarios e sessao demo nao concedem acesso integrado');
+ await evaluate("window.chamadaReal=false;window.fetch=async()=>{chamadaReal=true;return new Response(JSON.stringify({detail:'Negado pelo servidor controlado do teste'}),{status:401,headers:{'Content-Type':'application/json'}})};document.querySelector('#login-cpf').value='529.982.247-25';document.querySelector('#login-password').value='senha-arbitraria';document.querySelector('#login-form').requestSubmit()");
+ await wait(()=>evaluate("chamadaReal&&!document.querySelector('#login-submit').disabled"),'Autenticacao delegada a API');await check("location.pathname==='/login.html'&&!document.querySelector('#ambiente-teste')",'Recusa da API permanece no login sem fallback local');
+ for(const route of ['/aluno/html/dashboard.html?dev=true','/instrutor/html/instrutor.html?ambiente=local']){await navigate(route,"location.pathname==='/login.html'&&document.readyState==='complete'");await check("!document.querySelector('#ambiente-teste')",'Painel integrado exige token real '+route);}
+ for(const route of ['/nivel-2-gerencia/html/gerencia.html?ambiente=local','/nivel-3-master/html/master.html?demo=1']){
+  await navigate(route,"document.readyState==='complete'&&document.querySelector('#administracao-root')?.textContent.includes('servidor')");
+  await check("!document.querySelector('[data-op-nav]')&&!performance.getEntriesByType('resource').some(r=>new URL(r.name).pathname.startsWith('/dev/'))",'Painel administrativo integrado nao carrega adaptadores locais '+route);
+ }
+ assert.equal((await fetch(origin+'/dev/login.js')).status,404);checks.push('Modulo de login livre ausente da distribuicao');assert.deepEqual(errors,[]);checks.push('Nenhum erro novo de JavaScript');console.log(JSON.stringify({passed:checks.length,checks,artifacts},null,2));
+}finally{if(ws?.readyState===WebSocket.OPEN){try{await send('Browser.close');}catch{}}browser.kill();live.shutdown();}

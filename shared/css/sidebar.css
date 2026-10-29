@@ -1,0 +1,486 @@
+@import url('./legibilidade.css');
+/* =========================================
+   SIPA — SIDEBAR PADRÃO
+   ========================================= */
+
+.sipa-sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: var(--sipa-sidebar,228px);
+
+    padding: 22px 14px;
+
+    background: #123f68;
+
+    border-right: 1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        8px 0 25px rgba(18,59,99,.12);
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 1000;
+}
+
+
+/* =========================================
+   LOGO
+   ========================================= */
+
+.sipa-sidebar-logo {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 0 8px 20px;
+
+    color: #ffffff;
+
+    background: transparent;
+
+    border-bottom: 1px solid rgba(255,255,255,.25);
+
+    text-decoration: none;
+}
+
+.sipa-sidebar-logo-symbol {
+    width: 34px;
+    height: 34px;
+
+    min-width: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #ffffff;
+
+    background: transparent;
+}
+
+.sipa-sidebar-logo-symbol svg {
+    width: 34px;
+    height: 34px;
+
+    display: block;
+
+    color: #ffffff;
+}
+
+.sipa-sidebar-logo-text {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    color: #ffffff;
+}
+
+.sipa-sidebar-logo-text strong {
+    display: block;
+
+    color: #ffffff;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    line-height: 1;
+}
+
+.sipa-sidebar-logo-text span {
+    display: block;
+
+    margin-top: 6px;
+
+    color: rgba(255,255,255,.72);
+
+    font-size: 6px;
+    font-weight: 700;
+
+    line-height: 1.2;
+
+    letter-spacing: .35px;
+}
+
+
+/* =========================================
+   MENU
+   ========================================= */
+
+.sipa-sidebar-menu {
+    margin-top: 25px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+.sipa-sidebar-title {
+    margin: 0 7px 9px;
+
+    color: rgba(255,255,255,.38);
+
+    font-size: 7px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.sipa-sidebar-title.account {
+    margin-top: 24px;
+}
+
+
+/* =========================================
+   LINKS
+   ========================================= */
+
+.sipa-sidebar-link {
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px 10px;
+
+    border: 1px solid transparent;
+
+    border-radius: 9px;
+
+    color: rgba(255,255,255,.62);
+
+    font-size: 10px;
+    font-weight: 500;
+
+    text-decoration: none;
+
+    transition:
+        background .25s ease,
+        color .25s ease,
+        transform .25s ease;
+}
+
+.sipa-sidebar-link:hover {
+    color: #ffffff;
+
+    background: rgba(255,255,255,.07);
+
+    transform: translateX(2px);
+}
+
+.sipa-sidebar-link.active {
+    color: #ffffff;
+
+    background: #1d72ae;
+
+    border-color: rgba(255,255,255,.10);
+
+    box-shadow:
+        inset 3px 0 0 #2388d9;
+}
+
+
+/* =========================================
+   ÍCONES
+   ========================================= */
+
+.sipa-sidebar-icon {
+    width: 28px;
+    height: 28px;
+
+    min-width: 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    background: rgba(255,255,255,.08);
+
+    font-size: 13px;
+
+    line-height: 1;
+}
+
+.sipa-sidebar-link.active .sipa-sidebar-icon {
+    background: rgba(255,255,255,.12);
+}
+
+
+/* =========================================
+   PARTE INFERIOR
+   ========================================= */
+
+.sipa-sidebar-bottom {
+    margin-top: auto;
+
+    padding-top: 18px;
+
+    border-top: 1px solid rgba(255,255,255,.12);
+}
+
+
+/* =========================================
+   UNIDADE
+   ========================================= */
+
+.sipa-sidebar-unit {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 10px;
+
+    border-radius: 9px;
+
+    background: rgba(255,255,255,.05);
+}
+
+.sipa-sidebar-status {
+    width: 7px;
+    height: 7px;
+
+    min-width: 7px;
+
+    border-radius: 50%;
+
+    background: #32dc8a;
+
+    box-shadow:
+        0 0 0 4px rgba(50,220,138,.07);
+}
+
+.sipa-sidebar-unit-text {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+.sipa-sidebar-unit-text strong {
+    color: #d8e2f1;
+
+    font-size: 8px;
+    font-weight: 600;
+}
+
+.sipa-sidebar-unit-text small {
+    color: #60779b;
+
+    font-size: 7px;
+}
+
+
+/* =========================================
+   SAIR DA CONTA
+   ========================================= */
+
+.sipa-sidebar-logout {
+    width: 100%;
+
+    min-height: 38px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    margin-top: 10px;
+
+    padding: 0 11px;
+
+    border: 0;
+    outline: none;
+
+    border-radius: 10px;
+
+    color: rgba(255,255,255,.55);
+
+    background: transparent;
+
+    font-family: inherit;
+
+    font-size: 9px;
+    font-weight: 500;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+
+    transition:
+        color .25s ease,
+        background .25s ease;
+}
+
+.sipa-sidebar-logout:hover {
+    color: #ffffff;
+
+    background: rgba(255,255,255,.05);
+}
+
+.sipa-sidebar-logout span {
+    color: inherit;
+
+    font-size: 11px;
+}
+
+
+/* =========================================
+   CONTEÚDO DA PÁGINA
+   ========================================= */
+
+.sipa-with-sidebar {
+    margin-left: var(--sipa-sidebar,228px);
+
+    min-height: 100vh;
+}
+
+
+/* =========================================
+   RESPONSIVIDADE
+   ========================================= */
+
+@media (max-width: 760px) {
+
+    .sipa-sidebar {
+        position: relative;
+
+        width: 100%;
+        height: auto;
+
+        min-height: auto;
+
+        border-right: none;
+
+        border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sipa-with-sidebar {
+        margin-left: 0;
+    }
+
+    .sipa-sidebar-bottom {
+        display: none;
+    }
+}
+.sipa-local-navigation { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 20px; padding: 12px 16px; border: 1px solid #cbddec; border-radius: 10px; background: #edf5fc; color: var(--sipa-texto-neutro); font-size: 12px; }
+.sipa-local-navigation a, .sipa-local-navigation button { color: #1676c5; font: inherit; }
+.sipa-local-navigation button { border: 0; padding: 4px; background: transparent; cursor: pointer; }
+.sipa-local-empty { padding: 16px; color: var(--sipa-texto-neutro); font-size: 13px; line-height: 1.7; }
+/* Ambiente do Aluno: escala compartilhada, sem atingir os painéis administrativos. */
+[data-sipa-aluno] { font-size: 14px; line-height: 1.5; }
+[data-sipa-aluno] [hidden] { display: none !important; }
+[data-sipa-aluno] main { min-width: 0; padding: 24px 28px; }
+[data-sipa-aluno] main h1 { font-size: 28px; line-height: 1.25; }
+[data-sipa-aluno] main h2 { font-size: 20px; line-height: 1.4; }
+[data-sipa-aluno] main h3 { font-size: 17px; line-height: 1.4; }
+[data-sipa-aluno] main p { font-size: 14px; line-height: 1.6; }
+[data-sipa-aluno] main :is(.profile-label,.progress-eyebrow,.booking-card-eyebrow,.lessons-eyebrow,.card-eyebrow,.summary-item span,.profile-info-card span,.progress-card-description,.progress-card-description span) { font-size: 12px; line-height: 1.5; }
+[data-sipa-aluno] main header { margin-bottom: 20px; min-height: 0; }
+[data-sipa-aluno] :is(.booking-card,.progress-card,.progress-detail-card,.profile-section,.lessons-summary-card,.lessons-section,.package-card) { padding: 18px; min-height: 0; border-radius: 12px; box-shadow: 0 3px 12px #16324f06; }
+[data-sipa-aluno] :is(.booking-content,.progress-overview,.progress-details-grid,.lessons-summary,.profile-info-grid) { gap: 16px; }
+[data-sipa-aluno] :is(.booking-card-header,.progress-section-header,.profile-section-header) { margin-bottom: 16px; }
+[data-sipa-aluno] :is(.progress-number,.lessons-summary-value,.summary-value) { font-size: 28px; line-height: 1.3; white-space: normal; }
+[data-sipa-aluno] :is(.profile-info-card,.progress-detail-card) { min-height: 0; padding: 14px; }
+[data-sipa-aluno] .profile-info-card strong { font-size: 15px; overflow-wrap: anywhere; }
+[data-sipa-aluno] .profile-info-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+[data-sipa-aluno] .profile-overview { padding: 20px; gap: 16px; margin-bottom: 20px; min-height: 0; }
+[data-sipa-aluno] .profile-avatar { width: 52px; height: 52px; font-size: 22px; flex-shrink: 0; }
+[data-sipa-aluno] .profile-identity h2 { font-size: 24px; }
+[data-sipa-aluno] .profile-section { margin-bottom: 16px; }
+[data-sipa-aluno] .profile-security-card { padding: 14px; }
+[data-sipa-aluno] :is(.profile-footer,.progress-footer,.booking-footer,.lessons-footer,.dashboard-footer) { font-size: 12px; padding: 18px 0; gap: 12px; flex-wrap: wrap; }
+[data-sipa-aluno] .progress-circle { width: 110px; height: 110px; flex-shrink: 0; }
+[data-sipa-aluno] .progress-circle strong { font-size: 22px; }
+[data-sipa-aluno] .progress-circle span { font-size: 12px; }
+[data-sipa-aluno] .progress-circle-container { gap: 18px; padding: 12px 0; }
+[data-sipa-aluno] .progress-bar-section { padding: 18px; margin: 16px 0; }
+[data-sipa-aluno] .progress-card-main { min-height: 0; }
+[data-sipa-aluno] .dashboard-content { gap: 16px; margin-top: 20px; }
+[data-sipa-aluno] .dashboard-content :is(.credit-card,.next-lesson-card,.quick-actions-card,.progress-card,.license-card) { padding: 18px; min-height: 0; }
+[data-sipa-aluno] .dashboard-content :is(.dashboard-grid,.progress-section) { align-items: start; gap: 16px; }
+[data-sipa-aluno] .credit-value { margin-top: 14px; }
+[data-sipa-aluno] .credit-value strong { font-size: 30px; }
+[data-sipa-aluno] .next-class-state { min-height: 0; margin-top: 16px; gap: 12px; }
+[data-sipa-aluno] .dashboard-content .quick-action { padding: 10px 12px; min-height: 54px; }
+[data-sipa-aluno] .dashboard-header .header-profile-info span { font-size: 12px; }
+[data-sipa-aluno] .category-options { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+[data-sipa-aluno] .category-option { min-height: 80px; padding: 14px; gap: 12px; }
+[data-sipa-aluno] .category-option-icon { width: 40px; height: 40px; font-size: 20px; }
+[data-sipa-aluno] .category-option-info strong { font-size: 16px; }
+[data-sipa-aluno] .category-option-info span { font-size: 13px; }
+[data-sipa-aluno] .booking-steps { padding: 14px 18px; margin-bottom: 16px; }
+[data-sipa-aluno] .booking-step strong { font-size: 14px; }
+[data-sipa-aluno] .booking-step span { font-size: 12px; }
+[data-sipa-aluno] .booking-step .step-number { width: 30px; height: 30px; font-size: 14px; }
+[data-sipa-aluno] .schedule-layout { display: grid; grid-template-columns: minmax(260px,1fr) minmax(180px,1fr); gap: 20px; }
+[data-sipa-aluno] :is(.calendar-area,.time-area) { padding: 0; min-width: 0; }
+[data-sipa-aluno] .calendar-header { gap: 10px; margin-bottom: 12px; }
+[data-sipa-aluno] .calendar-month strong { font-size: 16px; }
+[data-sipa-aluno] .calendar-navigation { width: 32px; height: 32px; padding: 4px; font-size: 16px; }
+[data-sipa-aluno] :is(.calendar-days,.calendar-weekdays) { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
+[data-sipa-aluno] .calendar-weekdays span { font-size: 12px; text-align: center; }
+[data-sipa-aluno] .calendar-day { padding: 0; width: 100%; height: 36px; min-height: 0; border: 1px solid transparent; border-radius: 6px; background: #edf5fc; color: var(--sipa-texto-neutro); font-size: 14px; cursor: pointer; }
+[data-sipa-aluno] .calendar-day.sem-disponibilidade { background: #f6f8fa; }
+[data-sipa-aluno] .calendar-day:disabled { color: var(--sipa-texto-neutro); background: #f4f5f7; cursor: default; }
+[data-sipa-aluno] .calendar-day[aria-current=date] { border-color: #1676c5; }
+[data-sipa-aluno] .calendar-day.selected { color: white; background: #1676c5; }
+[data-sipa-aluno] .time-slots { display: grid; grid-template-columns: repeat(auto-fit,minmax(65px,1fr)); gap: 8px; min-height: 0; }
+[data-sipa-aluno] .time-slots .sipa-local-empty { grid-column: 1/-1; padding: 14px; font-size: 14px; }
+[data-sipa-aluno] .time-slot { padding: 8px; min-height: 36px; font-size: 14px; border: 1px solid #cbddec; border-radius: 6px; background: #f5f9fd; color: var(--sipa-texto-neutro); cursor: pointer; }
+[data-sipa-aluno] .time-slot.selected { background: #1676c5; color: white; }
+[data-sipa-aluno] :is(.booking-summary,.summary-item,.instructor-preview) { padding: 14px; min-height: 0; gap: 12px; }
+[data-sipa-aluno] :is(.summary-item strong,.instructor-info strong) { font-size: 15px; }
+[data-sipa-aluno] :is(.summary-lessons-list,.booking-warning,.availability-status,.instructor-info span,.instructor-status) { font-size: 13px; }
+[data-sipa-aluno] select { max-width: 100%; min-width: 0; font-size: 14px; padding: 9px; }
+[data-sipa-aluno] .confirm-booking-button { min-height: 42px; padding: 12px 18px; font-size: 14px; }
+[data-sipa-aluno] .student-local-lesson { padding: 16px; border: 1px solid #d9e5ef; border-radius: 10px; background: white; margin-top: 12px; }
+[data-sipa-aluno] .student-local-lesson p { margin: 6px 0; }
+[data-sipa-aluno] .student-local-lesson button { padding: 8px 12px; margin-top: 10px; border: 1px solid #cbddec; background: #f5f9fd; color: var(--sipa-texto-neutro); border-radius: 6px; font: inherit; cursor: pointer; }
+[data-sipa-aluno] button:disabled { cursor: default; }
+[data-sipa-aluno] .student-menu-toggle { display: none; }
+[data-sipa-aluno] .sipa-local-navigation { margin-bottom: 18px; font-size: 13px; }
+@media (max-width:1100px) {
+ [data-sipa-aluno] .schedule-layout { grid-template-columns: 1fr; }
+ [data-sipa-aluno] .profile-info-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:760px) {
+ [data-sipa-aluno] .sipa-sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 228px; height: 100dvh; transform: translateX(-100%); z-index: 1000; overflow-y: auto; }
+ [data-sipa-aluno] .sipa-sidebar.mobile-open { transform: translateX(0); }
+ [data-sipa-aluno] main { margin-left: 0; width: 100%; padding: 20px 16px; }
+ [data-sipa-aluno] .student-menu-toggle,[data-sipa-aluno] #mobile-menu-button,[data-sipa-aluno] [id$="-mobile-menu"] { display: inline-flex; border: 1px solid #cbddec; background: white; border-radius: 6px; padding: 8px 12px; color: var(--sipa-texto-neutro); }
+ [data-sipa-aluno] main h1 { font-size: 26px; }
+ [data-sipa-aluno] .profile-info-grid { grid-template-columns: 1fr; }
+ [data-sipa-aluno] .category-options { grid-template-columns: 1fr; }
+ [data-sipa-aluno] .booking-card-header { flex-wrap: wrap; gap: 10px; }
+ [data-sipa-aluno] .profile-overview { flex-wrap: wrap; }
+ [data-sipa-aluno] .sipa-local-navigation { flex-wrap: wrap; }
+}
+
+/* Mesmo conjunto vetorial e largura da referência Agendar aula.
+   !important mantém a regra legada de largura de páginas antigas subordinada. */
+[data-sipa-aluno] .sipa-sidebar { width:var(--sipa-sidebar,228px)!important; }
+[data-sipa-aluno] .sipa-sidebar-bottom { display:block; }
+[data-sipa-aluno] .sipa-sidebar .sipa-sidebar-icon { display:grid; place-items:center; width:28px; height:28px; flex:0 0 28px; }
+[data-sipa-aluno] .sipa-sidebar .sipa-nav-icon { display:block; width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+[data-sipa-aluno] .sipa-sidebar-logout > span { display:grid; place-items:center; width:28px; flex:0 0 28px; }
+.sipa-internal-notices{padding:12px 16px;margin:14px 0;border:1px solid #c5d9eb;border-radius:10px;background:#edf5fc;color:var(--sipa-texto-neutro)}.sipa-internal-notices h2{font-size:14px;margin:0 0 8px}.sipa-internal-notices p{font-size:12px;line-height:1.6;margin:6px 0}html[data-theme=dark] .sipa-internal-notices{background:#1d3044;color:var(--sipa-texto-claro);border-color:#3a526b}
+/* Contagem exclusiva de mensagens, sem alterar a altura dos itens do menu. */
+.sipa-sidebar-menu a .sipa-message-count{margin-left:auto;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:26px;height:26px;padding:0 2px;border-radius:50%;background:#137c43;color:#fff;font-size:11px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.sipa-sidebar-menu a .sipa-message-count[hidden]{display:none}

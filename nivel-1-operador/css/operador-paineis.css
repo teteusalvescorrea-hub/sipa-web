@@ -1,0 +1,311 @@
+@import url('../../shared/css/legibilidade.css');
+@import url('../../shared/css/solicitacoesMedicas.css');
+/* Visão geral e agenda. As demais seções mantêm seus componentes e estilos. */
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-notice { display: none; }
+.op-mode-demo[data-op-secao="agenda"] .op-main > .op-demo-feedback:not([data-op-feedback-secao="agenda"]):not([data-op-feedback-global]),
+.op-mode-demo[data-op-secao="visao-geral"] .op-main > .op-demo-feedback:not([data-op-feedback-secao="visao-geral"]):not([data-op-feedback-global]) { display: none; }
+.op-mode-demo[data-op-secao="agenda"] .op-header > button,
+.op-mode-demo[data-op-secao="agenda"] [data-op-description] { display: none; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-demo-banner p { display: none; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-demo-banner { padding: 8px 14px; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-topbar { min-height: 46px; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-header { margin: 18px 0; }
+.op-mode-demo:is([data-op-secao="visao-geral"], [data-op-secao="agenda"]) .op-header h1 { font-size: 27px; }
+.op-mode-demo .op-dashboard .op-dashboard-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.op-dashboard .op-metric-button { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; text-align: left; width: 100%; padding: 12px 14px; transition: border-color .18s; border-radius: 9px; box-shadow: none; }
+.op-dashboard .op-metric-button:hover { border-color: #8bb5d8; background: #f1f7fc; }
+.op-metric-heading { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; font-size: 12px; font-weight: 600; color: var(--sipa-texto-neutro); line-height: 1.5; }
+.op-metric-heading svg { box-sizing: content-box; width: 16px; height: 16px; padding: 4px; border-radius: 6px; color: #1769aa; background: #edf5fc; }
+.op-dashboard .op-metric-button > strong { font-size: 28px; color: var(--sipa-texto-neutro); margin: 0; line-height: 1.1; }
+.op-metric-footer { align-self: end; font-size: 11px; color: #1769aa; line-height: 1.5; white-space: nowrap; }
+.op-proximas { margin-top: 14px; padding: 16px; box-shadow: none; border-radius: 10px; }
+.op-proximas .op-card-heading { align-items: center; margin-bottom: 10px; }
+.op-proximas .op-card-heading h2 { font-size: 15px; }
+.op-proximas .op-card-heading .op-button { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+.op-proximas-lista { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.op-aula-card { min-width: 0; border: 1px solid #c8d9e8; border-left: 3px solid #2388d9; border-radius: 11px; padding: 18px; background: #f7fafd; overflow-wrap: anywhere; }
+.op-aula-card h3 { font-size: 15px; color: var(--sipa-texto-neutro); line-height: 1.5; }
+.op-aula-horario { display: block; font-size: 19px; color: #1769aa; font-weight: 600; margin-top: 9px; }
+.op-aula-data { font-size: 12px; color: var(--sipa-texto-neutro); margin-top: 7px; line-height: 1.7; }
+.op-aula-recursos { margin: 15px 0; padding: 12px 0; border-top: 1px solid #d8e5f0; border-bottom: 1px solid #d8e5f0; font-size: 12px; line-height: 1.9; color: var(--sipa-texto-neutro); }
+.op-aula-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+.op-aula-categoria { font-size: 11px; color: var(--sipa-texto-neutro); }
+.op-aula-footer .op-button { margin-left: auto; font-size: 11px; padding: 8px 12px; min-height: 36px; }
+.op-aula-footer .op-badge, .op-aula-destaque .op-badge { font-size: 10px; }
+.op-aula-lista { display: grid; grid-template-columns: minmax(130px, 1fr) 120px 175px auto; grid-template-areas: "nome horario data acoes" "recursos recursos recursos acoes"; gap: 5px 14px; padding: 10px 12px; border-left-width: 2px; border-radius: 7px; box-shadow: none; }
+.op-aula-lista h3 { grid-area: nome; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.op-aula-lista .op-aula-horario { grid-area: horario; font-size: 13px; margin: 0; align-self: center; }
+.op-aula-lista .op-aula-data { grid-area: data; font-size: 11px; margin: 0; align-self: center; }
+.op-aula-lista .op-aula-recursos { grid-area: recursos; display: flex; gap: 14px; margin: 0; padding: 0; border: 0; font-size: 11px; line-height: 1.6; min-width: 0; }
+.op-aula-lista .op-aula-recursos p { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-aula-lista .op-aula-footer { grid-area: acoes; align-self: center; gap: 8px; flex-wrap: nowrap; }
+.op-aula-lista .op-aula-footer .op-button { min-height: 30px; padding: 5px 8px; font-size: 11px; white-space: nowrap; }
+.op-aula-lista .op-aula-footer .op-badge { padding: 3px 6px; }
+.op-aula-evento { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "nome nome nome" "horario categoria status"; align-items: center; gap: 3px 8px; width: 100%; padding: 7px 10px; text-align: left; border-radius: 6px; border-left-width: 2px; color: var(--sipa-texto-neutro); background: #edf5fc; line-height: 1.35; }
+.op-aula-evento:hover { background: #e3eff9; border-color: #8bb5d8; }
+.op-evento-nome { grid-area: nome; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; }
+.op-evento-horario { grid-area: horario; font-size: 11px; color: #1769aa; white-space: nowrap; }
+.op-evento-categoria { grid-area: categoria; font-size: 10px; color: var(--sipa-texto-neutro); }
+.op-aula-evento .op-badge { grid-area: status; font-size: 10px; padding: 2px 5px; }
+.op-aula-status-1 { background: #e3eff9; color: #12578f; border-color: #bdd3e7; }
+.op-aula-status-3 { background: #f8f0e1; color: #806028; border-color: #e6d9ba; }
+.op-aula-destaque { background: #edf5fc; border: 1px solid #c8d9e8; border-radius: 12px; padding: 22px; }
+.op-aula-destaque h3 { font-size: 24px; margin-top: 8px; overflow-wrap: anywhere; }
+.op-aula-destaque .op-badge { margin-top: 15px; }
+.op-aula-ficha { margin: 18px 0; }
+.op-aula-ficha dd { font-size: 14px; line-height: 1.7; }
+.op-empty-state { padding: 36px 20px; border: 1px dashed #b9cfdf; border-radius: 12px; color: var(--sipa-texto-neutro); background: #eff5fb; text-align: center; font-size: 13px; line-height: 1.8; grid-column: 1 / -1; }
+.op-indicador-resumo { display: flex; align-items: center; gap: 15px; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid #c8d9e8; }
+.op-indicador-resumo strong { color: var(--sipa-texto-neutro); font-size: 32px; }
+.op-indicador-resumo p { font-size: 12px; color: var(--sipa-texto-neutro); }
+.op-indicador-filtros { grid-template-columns: 1fr 200px; }
+.op-indicador-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 20px; }
+.op-indicador-registro { border: 1px solid #c8d9e8; background: #eff5fb; border-radius: 12px; padding: 18px; min-width: 0; }
+.op-indicador-registro h3 { font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+.op-record-meta { color: var(--sipa-texto-neutro); font-size: 12px; line-height: 1.8; margin: 9px 0; overflow-wrap: anywhere; }
+.op-record-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+.op-record-tags .op-badge { white-space: normal; text-align: left; justify-content: start; font-size: 10px; }
+.op-indicador-registro .op-button { margin-top: 9px; }
+.op-pares-lista { padding-left: 15px; margin-top: 12px; color: var(--sipa-texto-neutro); font-size: 12px; line-height: 1.8; }
+.op-booking-resumo { display: grid; gap: 8px; padding: 18px; margin-bottom: 20px; border-radius: 10px; background: #e6f0fa; color: var(--sipa-texto-neutro); }
+.op-booking-resumo strong { font-size: 19px; }
+.op-booking-resumo span { font-size: 12px; }
+.op-booking-feedback { color: #805422; border: 1px solid #e6d9ba; background: #f8f0e1; padding: 13px; border-radius: 8px; font-size: 13px; line-height: 1.7; margin-bottom: 18px; }
+[data-op-agendar] .op-form-fields label { font-size: 13px; }
+[data-op-agendar] .op-form-fields select { font-size: 13px; height: 46px; }
+.op-agenda-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; padding: 6px 0 10px; }
+.op-agenda-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 240px; }
+.op-agenda-nav h2 { font-size: 16px; color: var(--sipa-texto-neutro); line-height: 1.6; margin-left: 8px; text-transform: capitalize; }
+.op-agenda-nav .op-button { font-size: 12px; padding: 9px 12px; }
+.op-agenda-toolbar > label { display: grid; gap: 6px; font-size: 11px; color: var(--sipa-texto-neutro); }
+.op-agenda .op-agenda-modos { display: flex; padding: 4px; border: 1px solid #c8d9e8; border-radius: 10px; background: #eff5fb; gap: 3px; }
+.op-agenda-modos button { min-height: 36px; border: 0; border-radius: 7px; font-size: 12px; }
+.op-agenda-modos button[aria-pressed=true] { background: #1769aa; color: #fff; }
+.op-agenda-filter-panel { padding: 9px 12px; background: #f7fafd; border: 1px solid #c8d9e8; border-radius: 8px; }
+.op-agenda-filter-panel summary { cursor: pointer; font-size: 12px; color: var(--sipa-texto-neutro); font-weight: 600; }
+.op-agenda-filter-panel .op-agenda-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px 0 12px; }
+.op-agenda-filter-panel .op-button { font-size: 11px; }
+.op-agenda-success { margin-top: 16px; padding: 14px; background: #e6f1ed; border: 1px solid #bfd7cd; color: #326750; border-radius: 10px; font-size: 13px; line-height: 1.7; }
+.op-agenda-legenda { display: flex; flex-wrap: wrap; gap: 12px; padding: 10px 0; font-size: 11px; color: var(--sipa-texto-neutro); }
+.op-agenda-legenda span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 3px; margin-right: 7px; background: #b5c7d6; }
+.op-agenda-legenda .op-legenda-livre::before { background: #84ab9d; }
+.op-agenda-legenda .op-legenda-confirmada::before { background: #2388d9; }
+.op-agenda-legenda .op-legenda-aguardando::before { background: #b6975c; }
+.op-agenda-legenda .op-legenda-feriado::before { background: #8e744a; }
+.op-agenda-legenda .op-legenda-facultativo::before { background: #b7cfe4; }
+.op-agenda .op-agenda-day { margin: 0; padding: 0; border: 1px solid #c8d9e8; background: #f7fafd; border-radius: 12px; overflow: hidden; }
+.op-day-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #e6f0fa; border-bottom: 1px solid #c8d9e8; }
+.op-agenda .op-day-heading h3 { font-size: 14px; margin: 0; text-transform: capitalize; }
+.op-day-heading span { color: var(--sipa-texto-neutro); font-size: 12px; }
+.op-agenda .op-agenda-slot { display: grid; grid-template-columns: 56px 1fr; gap: 0; padding: 0; border-bottom: 1px solid #dce6ef; }
+.op-agenda-slot > time { display: flex; align-items: center; justify-content: center; padding: 8px 6px; background: #eff5fb; color: var(--sipa-texto-neutro); font-size: 12px; border-right: 1px solid #dce6ef; }
+.op-slot-conteudo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 6px; padding: 6px 8px; min-width: 0; align-items: center; }
+.op-slot-disponivel { text-align: left; padding: 6px 10px; border: 1px dashed #b2cbdc; background: #f4f8fc; color: #1769aa; border-radius: 5px; display: inline-flex; align-items: center; gap: 8px; justify-self: start; min-height: 32px; max-width: 100%; }
+.op-slot-disponivel strong { font-size: 12px; white-space: nowrap; }
+.op-slot-disponivel span { font-size: 11px; }
+.op-slot-disponivel:hover { background: #e3eff9; border-color: #8bb5d8; }
+.op-agenda .op-slot-closed { font-size: 12px; padding: 8px 6px; min-width: 0; line-height: 1.5; }
+.op-slot-almoco { background: #eef1f4; border-radius: 7px; }
+.op-day-special { padding: 12px 18px; color: #806028; background: #f8f0e1; font-size: 12px; }
+.op-agenda .op-day-closed { padding: 20px; min-height: 60px; }
+.op-week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0 5px; align-items: stretch; }
+.op-week-grid > .op-agenda-day { display: grid; grid-template-rows: subgrid; grid-row: span 13; }
+.op-week-grid .op-agenda-fechada { background: #e9eef2; }
+.op-week-grid .op-agenda-fechada > .op-slot-closed { grid-row: 2 / -1; align-self: start; }
+.op-week-grid .op-day-heading { display: block; padding: 8px 6px; min-width: 0; }
+.op-week-grid .op-day-heading h3 { font-size: 12px; line-height: 1.5; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.op-week-grid .op-day-heading span { display: block; margin-top: 3px; font-size: 11px; }
+.op-week-grid .op-agenda-slot { grid-template-columns: 1fr; align-content: start; }
+.op-week-grid .op-agenda-slot > time { justify-content: start; padding: 3px 6px; border: 0; font-size: 11px; }
+.op-week-grid .op-slot-conteudo { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 4px; min-height: 36px; }
+.op-week-grid .op-slot-disponivel { width: auto; align-self: start; padding: 3px 5px; min-height: 28px; gap: 4px; flex-wrap: wrap; }
+.op-week-grid .op-slot-disponivel strong { font-size: 11px; }
+.op-week-grid .op-slot-disponivel span { font-size: 10px; }
+.op-week-grid .op-slot-closed { font-size: 11px; padding: 4px 2px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.op-aula-evento.op-aula-compact { position: relative; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nome nome" "horario categoria"; padding: 5px 6px; gap: 2px 4px; margin: 0; }
+.op-aula-compact .op-evento-nome { padding-right: 10px; }
+.op-aula-compact .op-evento-horario { font-size: 10px; }
+.op-aula-compact .op-badge { position: absolute; top: 8px; right: 6px; width: 7px; height: 7px; padding: 0; overflow: hidden; font-size: 0; border: 0; border-radius: 50%; background: #7a91a7; }
+.op-aula-compact .op-aula-status-1 { background: #1769aa; }
+.op-aula-compact .op-aula-status-3 { background: #b6975c; }
+.op-month-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: #c8d9e8; border: 1px solid #c8d9e8; border-radius: 12px; overflow: hidden; }
+.op-month-weekday { font-size: 11px; text-align: center; background: #e6f0fa; color: var(--sipa-texto-neutro); padding: 12px 5px; }
+.op-month-day { display: flex; flex-direction: column; align-items: start; gap: 7px; text-align: left; min-height: 130px; min-width: 0; padding: 12px; background: #f7fafd; color: var(--sipa-texto-neutro); }
+.op-month-day > strong { display: grid; place-items: center; min-width: 26px; min-height: 26px; font-size: 13px; border-radius: 8px; }
+.op-month-day.op-selected > strong { background: #1769aa; color: #fff; }
+.op-month-day[aria-current=date] > strong { outline: 1px solid #2388d9; }
+.op-month-day.op-outside { background: #eaf0f5; color: var(--sipa-texto-neutro); }
+.op-month-day.op-closed { background: #e9eef2; }
+.op-month-day.op-holiday { border-top: 3px solid #b39a6c; }
+.op-month-day.op-facultativo { border-top: 3px dotted #b7cfe4; }
+.op-month-day.op-facultativo .op-month-special { color: var(--sipa-texto-neutro); }
+.op-month-day:hover { background: #e2eef9; }
+.op-month-special { color: #806028; font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.op-month-count { font-size: 11px; color: var(--sipa-texto-neutro); }
+.op-month-event { display: block; padding: 5px; border-radius: 5px; width: 100%; background: #e0edf8; color: #12578f; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1250px) { .op-agenda-nav { flex-basis: 100%; } .op-aula-lista { grid-template-columns: minmax(100px, 1fr) 110px 150px; grid-template-areas: "nome horario data" "recursos recursos acoes"; } }
+@media (max-width: 1100px) { .op-week-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+    .op-mode-demo .op-dashboard .op-dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .op-dashboard .op-metric-button { padding: 10px; }
+    .op-metric-heading { font-size: 12px; align-items: start; }
+    .op-metric-heading svg { width: 15px; height: 15px; padding: 5px; }
+    .op-metric-footer { font-size: 11px; grid-column: 1 / -1; }
+    .op-proximas-lista, .op-indicador-lista { grid-template-columns: 1fr; }
+    .op-aula-lista { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nome horario" "data data" "recursos recursos" "acoes acoes"; gap: 5px 8px; }
+    .op-aula-lista .op-aula-recursos { flex-wrap: wrap; gap: 3px 10px; }
+    .op-aula-lista .op-aula-footer { flex-wrap: wrap; }
+    .op-indicador-filtros { grid-template-columns: 1fr; }
+    .op-agenda-toolbar { gap: 12px; }
+    .op-agenda-nav { min-width: 0; }
+    .op-agenda-nav h2 { flex-basis: 100%; margin-left: 0; }
+    .op-agenda .op-agenda-filter-panel .op-agenda-filters { grid-template-columns: 1fr 1fr; }
+    .op-week-grid { grid-template-columns: 1fr; }
+    .op-week-grid > .op-agenda-day { display: block; grid-row: auto; margin-bottom: 14px; }
+    .op-week-grid .op-agenda-slot { grid-template-columns: 50px 1fr; min-height: 0; }
+    .op-week-grid .op-slot-conteudo { display: grid; grid-template-columns: 1fr; }
+    .op-month-weekday { font-size: 0; }
+    .op-month-weekday::first-letter { font-size: 11px; }
+    .op-month-day { padding: 5px 3px; min-height: 85px; gap: 5px; }
+    .op-month-event, .op-month-special { display: none; }
+    .op-month-day.op-holiday::after { content: "•"; color: #806028; }
+    .op-month-count { font-size: 9px; }
+    .op-aula-destaque h3 { font-size: 20px; }
+    .op-slot-conteudo { grid-template-columns: minmax(0, 1fr); padding: 6px; }
+    .op-agenda .op-agenda-slot { grid-template-columns: 50px 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .op-dashboard .op-metric-button { transition: none; } }
+.op-medical-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
+.op-medical-metrics .op-card { padding:12px 16px; margin:0; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; }
+.op-medical-metrics strong { font-size:24px; }
+.op-medical-filters { display:grid; grid-template-columns:minmax(170px,1.4fr) repeat(4,minmax(120px,1fr)); gap:10px; align-items:end; margin:14px 0; }
+.op-medical-filters label { min-width:0; font-size:12px; }
+.op-medical-filters button { justify-self:start; }
+.op-medical-dialog { max-height:88dvh; overflow:auto; width:min(850px,calc(100vw - 28px)); }
+.op-medical-dialog::backdrop { background:#0b183a8f; backdrop-filter:blur(5px); }
+.op-medical-document { padding:12px 0; border-top:1px solid #b8cada; border-bottom:1px solid #b8cada; margin:12px 0; }
+.op-medical-document img { display:block; max-width:100%; max-height:360px; object-fit:contain; margin:10px auto; }
+.op-medical-document a { color:inherit; text-decoration:underline; }
+.op-medical-dialog textarea { width:100%; min-height:90px; resize:vertical; font:inherit; }
+@media(max-width:1000px){.op-medical-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }}
+@media(max-width:550px){.op-medical-metrics,.op-medical-filters { grid-template-columns:minmax(0,1fr); }.op-medical-metrics .op-card { padding:10px 12px; }}
+
+.op-agenda > [hidden] { display:none !important; }
+.op-agenda-escolha { padding:0; margin-bottom:12px; }
+.op-agenda-veiculo-heading { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin-bottom:18px; }
+.op-agenda-veiculo-heading h2 { margin:0; font-size:1.15rem; }
+.op-agenda-veiculo-heading p { margin:0; flex:1; }
+@media(max-width:650px){.op-agenda-veiculo-heading p{flex-basis:100%;}}
+.op-mode-demo .op-agenda .op-agenda-seletor { display:grid; gap:8px; margin:12px 0 18px; font-size:17px; font-weight:600; }
+.op-mode-demo .op-agenda .op-agenda-seletor select { width:100%; min-width:0; min-height:48px; font:inherit; font-size:15px; color:inherit; background:var(--card-bg,#f7fafd); border:1px solid #8ca9c1; border-radius:8px; padding:11px 14px; }
+[data-theme=dark] .op-mode-demo .op-agenda .op-agenda-seletor select { background:#152b40; border-color:#3c536a; }
+.op-agenda .op-slot-conteudo { grid-template-columns:minmax(0,1fr); padding:4px 8px; gap:4px; }
+.op-agenda .op-agenda-slot { min-height:42px; }
+.op-agenda .op-aula-evento { grid-template-columns:minmax(0,1fr) auto auto auto; grid-template-areas:"nome horario categoria status"; padding:5px 8px; }
+.op-agenda .op-slot-closed { margin:0; padding:5px 6px; font-size:11px; }
+.op-agenda .op-week-grid { grid-template-columns:repeat(7,minmax(155px,1fr)); min-width:1100px; }
+.op-agenda-content:has(.op-week-grid) { overflow-x:auto; }
+.op-agenda .op-week-grid .op-agenda-day { display:grid; grid-template-rows:subgrid; grid-row:span 13; margin:0; }
+.op-agenda .op-week-grid .op-agenda-slot { grid-template-columns:42px minmax(0,1fr); }
+.op-agenda .op-week-grid .op-aula-evento { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"nome nome" "horario categoria" "status status"; }
+.op-agenda .op-week-grid .op-slot-conteudo { padding:3px; }
+@media(max-width:650px){.op-agenda .op-aula-evento{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nome nome" "horario categoria" "status status";}}
+
+.op-mode-demo .op-agenda .op-agenda-seletor select:focus-visible { outline:3px solid #479cee; outline-offset:2px; border-color:#1769aa; }
+.op-mode-demo .op-agenda .op-agenda-seletor select:has(option:checked:not([value=""])) { border-color:#2388d9; }
+.op-agenda .op-agenda-toolbar { display:flex; flex-wrap:wrap; align-items:end; gap:8px 12px; margin:0 0 10px; }
+.op-agenda .op-agenda-toolbar > [hidden] { display:none !important; }
+.op-mode-demo .op-agenda .op-agenda-seletor { flex:1 1 300px; margin:0; gap:6px; font-size:13px; }
+.op-mode-demo .op-agenda .op-agenda-seletor select { height:40px; min-height:40px; font-size:14px; padding:8px 10px; }
+.op-agenda .op-agenda-nav { display:flex; align-items:center; flex-wrap:nowrap; gap:5px; flex:0 0 auto; min-width:0; max-width:100%; }
+.op-agenda .op-agenda-nav .op-button { min-height:38px; padding:7px 10px; }
+.op-agenda .op-agenda-nav h2 { font-size:13px; margin:0 8px; white-space:nowrap; }
+.op-agenda .op-agenda-toolbar > label:not(.op-agenda-seletor) { font-size:11px; }
+.op-agenda .op-agenda-modos { display:flex; gap:0; padding:3px; border:1px solid #c8d9e8; border-radius:8px; }
+.op-agenda .op-agenda-modos button { min-height:32px; padding:6px 10px; }
+.op-agenda .op-agenda-veiculo-heading { margin:4px 0 10px; gap:6px 12px; }
+.op-agenda .op-agenda-veiculo-heading h2 { font-size:13px; }
+.op-agenda .op-agenda-veiculo-heading p { font-size:11px; }
+.op-agenda .op-agenda-filter-panel { margin:0 0 8px; }
+.op-agenda .op-agenda-legenda { margin:6px 0 10px; gap:6px 12px; font-size:10px; }
+.op-agenda .op-week-grid { grid-template-columns:56px repeat(7,minmax(125px,1fr)); min-width:950px; gap:0; border:1px solid #c8d9e8; border-radius:8px; }
+.op-agenda .op-week-grid .op-agenda-day { border:0; border-radius:0; border-left:1px solid #dce6ef; }
+.op-agenda .op-week-grid .op-day-heading { text-align:center; padding:7px 4px; }
+.op-agenda .op-week-grid .op-day-heading h3 { font-size:11px; }
+.op-agenda .op-week-grid .op-day-heading span { font-size:11px; margin-top:2px; }
+.op-agenda .op-week-grid .op-day-heading[aria-current=date] { background:#d9eafa; color:#12578f; }
+.op-agenda .op-week-grid .op-agenda-slot { grid-template-columns:minmax(0,1fr); min-height:44px; }
+.op-agenda .op-week-grid .op-agenda-slot > time { display:none; }
+.op-agenda .op-week-hours { display:grid; grid-template-rows:subgrid; grid-row:span 13; position:sticky; left:0; z-index:2; background:#edf3f9; }
+.op-week-hours > * { display:flex; align-items:center; justify-content:center; padding:5px; border-bottom:1px solid #dce6ef; font-size:11px; color:var(--sipa-texto-neutro); }
+.op-agenda .op-week-grid .op-slot-disponivel { align-self:stretch; width:100%; min-height:36px; border:0; background:transparent; border-radius:3px; padding:5px; }
+.op-agenda .op-week-grid .op-slot-disponivel span { display:none; }
+.op-agenda .op-week-grid .op-slot-disponivel:hover { background:#e4f0fb; }
+.op-agenda .op-week-grid .op-aula-evento { grid-template-areas:"nome nome" "horario status"; gap:2px 4px; padding:5px; box-shadow:none; }
+.op-agenda .op-week-grid .op-evento-categoria { display:none; }
+.op-agenda .op-week-grid .op-aula-evento .op-badge { font-size:9px; padding:1px 3px; }
+.op-agenda .op-slot-conteudo:has(.op-slot-closed) { background:#f0f2f5; }
+.op-agenda .op-aula-evento:has(.op-aula-status-3) { background:#fff6de; }
+.op-agenda .op-aula-evento:has(.op-aula-status-2) { background:#eef0f3; }
+[data-theme=dark] .op-agenda .op-week-hours { background:#152b40; }
+[data-theme=dark] .op-week-hours > * { color:var(--sipa-texto-claro); border-color:#30465b; }
+[data-theme=dark] .op-agenda .op-slot-conteudo:has(.op-slot-closed) { background:#1b2c3c; }
+[data-theme=dark] .op-agenda .op-week-grid .op-day-heading[aria-current=date] { background:#214767; color:var(--sipa-texto-claro); }
+[data-theme=dark] .op-agenda .op-aula-evento:has(.op-aula-status-3) { background:#423b29; }
+[data-theme=dark] .op-agenda .op-aula-evento:has(.op-aula-status-2) { background:#263341; }
+@media(max-width:700px){.op-agenda .op-agenda-seletor{flex-basis:100%;}.op-agenda .op-agenda-nav{flex-wrap:wrap;}.op-agenda .op-agenda-nav h2{white-space:normal;}}
+.op-mode-demo .op-dialog.op-instrutor-form-dialog { width:min(720px,calc(100vw - 28px)); }
+.op-instrutor-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 16px; margin:16px 0; }
+.op-instrutor-fields > label { display:grid; gap:6px; min-width:0; font-size:12px; font-weight:600; }
+.op-unidade .op-dialog .op-instrutor-fields > label { margin:0; }
+.op-instrutor-fields input,.op-instrutor-fields select,.op-instrutor-fields textarea { width:100%; min-width:0; min-height:40px; box-sizing:border-box; border:1px solid #bacddd; border-radius:7px; padding:8px 10px; font:inherit; }
+.op-instrutor-fields input[type=time] { height:40px; }
+.op-instrutor-fields textarea { min-height:64px; resize:vertical; }
+.op-instrutor-observacoes,.op-instrutor-fields > p { grid-column:1/-1; }
+.op-instrutor-form .op-dialog-actions { display:flex; justify-content:flex-end; gap:10px; padding-top:12px; border-top:1px solid #d2deea; }
+.op-instrutor-form .op-dialog-actions .op-button { width:auto; flex:0 0 auto; }
+@media(max-width:550px){.op-instrutor-fields { grid-template-columns:minmax(0,1fr); }.op-instrutor-form .op-dialog-actions { flex-wrap:wrap; }}
+.op-instrutor-filtros { display:flex; align-items:end; flex-wrap:wrap; gap:10px; margin:14px 0; }
+.op-instrutor-filtros > label { display:grid; gap:5px; font-size:12px; flex:1 1 180px; }
+.op-instrutor-filtros input,.op-instrutor-filtros select { min-height:40px; width:100%; border:1px solid #a8bfd2; border-radius:7px; padding:8px 10px; }
+.op-instrutor-fields > [hidden],.op-instrutor-filtros[hidden] { display:none !important; }
+.op-unidade .op-dialog.op-aula-dialog { width:min(760px,calc(100vw - 28px)); background:#f7fafd; }
+.op-aula-resumo { margin:12px 0; }
+.op-aula-resumo h3 { margin:0 0 6px; font-size:20px; }
+.op-aula-resumo p { font-size:13px; margin:0 0 8px; }
+.op-aula-dados { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
+.op-aula-dados > div { min-width:0; padding:10px; background:#eef3f8; border:1px solid #d4e0eb; border-radius:7px; }
+.op-aula-dados dt { font-size:11px; color:var(--sipa-texto-neutro); margin-bottom:5px; }
+.op-aula-dados dd { margin:0; font-size:13px; font-weight:600; overflow-wrap:anywhere; }
+.op-aula-dialog textarea,.op-aula-dialog select { width:100%; max-width:100%; box-sizing:border-box; padding:10px; border-radius:7px; }
+.op-aula-dialog .op-dialog-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; padding-top:12px; border-top:1px solid #ccd9e6; }
+.op-aula-dialog .unit-map-link { margin-right:auto; }
+[data-theme=dark] .op-unidade .op-dialog.op-aula-dialog { background:#172b3e; }
+[data-theme=dark] .op-aula-dados > div { background:#1d344a; border-color:#365069; }
+[data-theme=dark] .op-aula-dados dt { color:var(--sipa-texto-claro); }
+@media(max-width:650px){.op-aula-dados{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:420px){.op-aula-dados{grid-template-columns:minmax(0,1fr);}}
+.op-agenda-local { font-size:11px; color:var(--sipa-texto-neutro); line-height:1.4; margin:4px 0; }
+.op-agenda-veiculo-heading > .op-agenda-local { flex-basis:100%; }
+[data-theme=dark] .op-agenda-local { color:var(--sipa-texto-claro); }
+.operador-page .medical-request-dialog { width:min(660px,calc(100vw - 28px)); max-height:88vh; overflow:auto; border:1px solid #c6d6e5; border-radius:12px; padding:22px; color:var(--sipa-texto-neutro); background:#f7fafd; }
+.operador-page .medical-request-dialog::backdrop { background:#12263b99; backdrop-filter:blur(4px); }
+.operador-page .medical-request-dialog form { display:grid; gap:12px; }
+.operador-page .medical-request-dialog form > label { display:grid; gap:6px; font-size:13px; }
+.operador-page .medical-request-dialog textarea { width:100%; box-sizing:border-box; }
+.operador-page .medical-request-dialog footer { display:flex; justify-content:flex-end; gap:10px; }
+.operador-page .medical-request-dialog button { padding:10px 14px; border:1px solid #98b5cc; border-radius:7px; }
+.op-aula-dialog input[type=checkbox] { width:auto; min-height:0; }
+[data-theme=dark] .operador-page .medical-request-dialog { background:#172b3e; color:var(--sipa-texto-claro); border-color:#365069; }
+
+/* Recuperacao de acesso: mesma escala dos formularios administrativos. */
+.op-reset-access{margin-top:20px;padding-top:16px;border-top:1px solid var(--op-border,#c9d9e9)}
+.op-reset-access h4{margin-bottom:10px}
+.op-reset-dialog{width:660px}
+html body.operador-page .op-reset-dialog .op-fields{grid-template-columns:repeat(2,minmax(0,1fr));margin:16px 0}
+html body.operador-page .op-unidade .op-reset-dialog .op-fields{padding:8px 0;margin:8px 0 16px;gap:12px}
+html body.operador-page .op-unidade .op-reset-dialog .op-dialog-heading{margin-bottom:12px}
+html body.operador-page .op-unidade .op-reset-dialog .op-form-fields{gap:12px;margin-bottom:0}
+html body.operador-page .op-unidade .op-reset-dialog .op-form-fields :is(label,p){margin:0}
+.op-reset-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:8px}
+@media(max-width:600px){html body.operador-page .op-reset-dialog .op-fields{grid-template-columns:1fr}.op-reset-actions button{flex:1}}

@@ -24,7 +24,7 @@
 
     <link
         rel="stylesheet"
-        href="css/pacotes.css"
+        href="aluno/css/pacotes.css"
     >
 
 
@@ -58,10 +58,11 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
 
+<link rel="stylesheet" href="shared/css/escala.css">
 </head>
 
 
-<body class="login-page">
+<body data-sipa-escala="login" class="login-page">
 
 
 <div class="login-container">
@@ -267,57 +268,7 @@
                  SELETOR LOGIN / CADASTRO
                  ===================================== -->
 
-            <div class="access-switch">
 
-
-                <button
-                    type="button"
-                    id="login-mode-button"
-                    class="access-switch-button active"
-                >
-
-                    <i class="fa-solid fa-right-to-bracket"></i>
-
-                    <span>
-
-                        <strong>
-                            Já sou aluno
-                        </strong>
-
-                        <small>
-                            Fazer login
-                        </small>
-
-                    </span>
-
-                </button>
-
-
-
-                <button
-                    type="button"
-                    id="register-mode-button"
-                    class="access-switch-button"
-                >
-
-                    <i class="fa-solid fa-user-plus"></i>
-
-                    <span>
-
-                        <strong>
-                            Quero me cadastrar
-                        </strong>
-
-                        <small>
-                            Criar minha conta
-                        </small>
-
-                    </span>
-
-                </button>
-
-
-            </div>
 
 
 
@@ -344,7 +295,7 @@
 
 
                     <p>
-                        Informe seus dados para continuar.
+                        Informe seu CPF e sua senha para continuar.
                     </p>
 
                 </div>
@@ -355,6 +306,8 @@
 
                 <div
                     id="login-message"
+                    role="alert"
+                    aria-live="polite"
                     class="form-message"
                 ></div>
 
@@ -364,6 +317,7 @@
 
                 <form
                     id="login-form"
+                    novalidate
                     class="login-form"
                 >
 
@@ -373,7 +327,7 @@
                     <div class="form-field">
 
                         <label for="login-cpf">
-                            CPF ou CNPJ
+                            CPF
                         </label>
 
 
@@ -384,8 +338,12 @@
                             <input
                                 type="text"
                                 id="login-cpf"
-                                placeholder="Digite seu CPF ou CNPJ"
-                                maxlength="18"
+                                placeholder="000.000.000-00"
+                                maxlength="14"
+                                inputmode="numeric"
+                                spellcheck="false"
+                                required
+                                aria-describedby="login-message"
                                 autocomplete="username"
                             >
 
@@ -411,6 +369,8 @@
                             <input
                                 type="password"
                                 id="login-password"
+                                required
+                                aria-describedby="login-message"
                                 placeholder="Digite sua senha"
                                 autocomplete="current-password"
                             >
@@ -421,6 +381,7 @@
                                 id="password-toggle"
                                 class="password-toggle"
                                 aria-label="Mostrar senha"
+                                aria-pressed="false"
                             >
 
                                 <i class="fa-regular fa-eye"></i>
@@ -471,20 +432,12 @@
 
 
 
-                <!-- RODAPÉ -->
-
-                <div class="form-bottom-text">
-
-                    Ainda não possui uma conta?
-
-                    <button
-                        type="button"
-                        id="bottom-register-button"
-                    >
-                        Quero me cadastrar
-                    </button>
-
-                </div>
+                <section class="login-support" aria-label="Suporte de acesso">
+                    <strong>Precisa de ajuda para acessar?</strong>
+                    <p>Entre em contato com nossa recepção.</p>
+                    <a id="contato-recepcao" class="login-support-link" href="https://wa.me/55227998713181" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Falar com a recepção</a>
+                </section>
+                <noscript><p class="login-help">Ative o JavaScript para entrar. Para orientações, utilize o contato da recepção.</p></noscript>
 
 
             </div>
@@ -495,7 +448,9 @@
                  ÁREA DE CADASTRO
                  ===================================== -->
 
-            <div
+            <template id="cadastro-interno-template">
+<!-- Cadastro preservado para integração administrativa futura. Não é um fluxo público. -->
+<div
                 id="register-panel"
                 class="access-panel"
             >
@@ -940,6 +895,7 @@
 
 
             </div>
+</template>
 
 
         </div>
@@ -956,6 +912,27 @@
      JAVASCRIPT
      ========================================= -->
 
+<dialog id="recuperar-acesso" class="login-dialog" aria-labelledby="recuperar-titulo" aria-describedby="recuperar-descricao">
+    <header class="login-dialog-heading"><div><h2 id="recuperar-titulo">Recuperar acesso</h2><p id="recuperar-descricao">Escolha como deseja recuperar sua senha.</p></div><button type="button" class="dialog-close" data-fechar-recuperacao aria-label="Fechar recuperação">×</button></header>
+    <div class="recovery-options" aria-label="Alternativas de recuperação">
+        <button type="button" class="recovery-option" data-recuperacao="email" aria-pressed="false"><i class="fa-regular fa-envelope" aria-hidden="true"></i><span><strong>Receber recuperação por e-mail</strong><small>Receba instruções para redefinir sua senha no e-mail cadastrado.</small></span></button>
+        <button type="button" class="recovery-option" data-recuperacao="celular" aria-pressed="false"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i><span><strong>Recuperar pelo celular</strong><small>Receba instruções de recuperação no número de celular cadastrado.</small></span></button>
+        <button type="button" class="recovery-option" data-recuperacao="presencial" aria-pressed="false"><i class="fa-solid fa-building" aria-hidden="true"></i><span><strong>Solicitar na autoescola</strong><small>Compareça à recepção de uma de nossas unidades para solicitar a redefinição da senha.</small></span></button>
+    </div>
+    <section id="recuperacao-digital" class="recovery-panel" aria-labelledby="recuperacao-metodo" hidden>
+        <h3 id="recuperacao-metodo"></h3>
+        <label for="recuperacao-cpf">CPF</label><input id="recuperacao-cpf" type="text" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00">
+        <p id="recuperacao-pendente" class="login-help" role="status"></p>
+        <button type="button" class="primary-button" disabled aria-describedby="recuperacao-pendente">Envio indisponível</button>
+    </section>
+    <section id="recuperacao-presencial" class="recovery-panel" aria-labelledby="presencial-titulo" hidden>
+        <h3 id="presencial-titulo">Atendimento na recepção</h3>
+        <p>A recepção deverá verificar a identidade do solicitante antes de realizar a redefinição da senha.</p>
+        <ul class="recovery-units"><li>Unidade Cobilândia</li><li>Unidade Santa Rita</li><li>Unidade Vila Velha</li><li>Unidade Itaparica</li><li>Unidade Terra Vermelha</li><li>Unidade Novo Milênio</li></ul>
+        <a class="login-support-link" data-contato-copia target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Falar com a recepção pelo WhatsApp</a>
+        <p class="login-help">O contato serve para orientação. A redefinição não é automática pelo WhatsApp.</p>
+    </section>
+</dialog>
 <script type="module" src="js/login.js"></script>
 
 

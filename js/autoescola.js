@@ -3,22 +3,22 @@
    Pedidos dos alunos (aprovar e recusar) e pacotes à venda.
    ========================================= */
 
-import { exigirLogin } from "./modules/essencial/utils/sessao.js";
-import { sair } from "./modules/essencial/service/authService.js";
+import { exigirLogin } from "../shared/js/sessao.js";
+import { sair } from "../shared/js/services/authService.js";
 import { obterAutoescolaLogada }
-    from "./modules/autoescolas/services/autoescolas.service.js";
+    from "../shared/js/services/autoescolas.service.js";
 import {
     listarPacotes,
     cadastrarPacote,
     excluirPacote
-} from "./modules/pacotes/services/pacotes.service.js";
+} from "../shared/js/services/pacotes.service.js";
 import {
     listarContratacoes,
     aprovarContratacao,
     recusarContratacao
-} from "./modules/contratacoes/services/contratacoes.service.js";
+} from "../shared/js/services/contratacoes.service.js";
 import { avisoDeErro, mensagemDoErro }
-    from "./modules/pacotes/components/escolhaDePacotes.js";
+    from "../shared/js/services/escolhaDePacotes.js";
 
 
 /* =========================================

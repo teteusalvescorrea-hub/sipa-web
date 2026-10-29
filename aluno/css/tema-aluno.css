@@ -1,0 +1,150 @@
+@import url('../../shared/css/legibilidade.css');
+/* Tokens e compatibilidade com as folhas existentes, somente nas seis telas do aluno. */
+html[data-sipa-theme=aluno] { color-scheme:light; }
+.sipa-theme-header { position:relative; padding-right:60px; min-height:44px; }
+.sipa-theme-toggle { position:absolute; right:0; top:0; display:grid; place-items:center; width:44px; height:44px; border:1px solid #b8cfe3; border-radius:12px; background:#f7fafd; color:#12578f; font-size:18px; cursor:pointer; }
+.sipa-theme-toggle:hover { background:#dceefb; }
+.sipa-theme-toggle:focus-visible { outline:3px solid #2388d9; outline-offset:3px; }
+html[data-sipa-theme=aluno][data-theme=dark] {
+ color-scheme:dark; --sipa-bg:#101b2b; --sipa-card:#1b2b40; --sipa-secondary:#22364d; --sipa-text:#f1f6fc; --sipa-muted:#afc3d8; --sipa-border:#516c86; --sipa-accent:#82c4fa;
+ --bg:var(--sipa-bg); --card:var(--sipa-card); --white:var(--sipa-card); --text:var(--sipa-text); --text-secondary:var(--sipa-muted); --text-muted:var(--sipa-muted); --border:var(--sipa-border); --border-light:var(--sipa-border); --blue-light:var(--sipa-secondary); --green-bg:#183e35; --red-bg:#482b34;
+}
+html[data-sipa-theme=aluno][data-theme=dark] { --dashboard-bg:var(--sipa-bg); --dashboard-bg-secondary:var(--sipa-bg); --dashboard-card:var(--sipa-card); --dashboard-card-hover:var(--sipa-secondary); --dashboard-text:var(--sipa-text); --dashboard-text-secondary:var(--sipa-muted); --dashboard-text-muted:var(--sipa-muted); --dashboard-border:var(--sipa-border); --dashboard-border-light:var(--sipa-border); }
+html[data-sipa-theme=aluno][data-theme=dark] { --booking-bg:var(--sipa-bg); --booking-bg-secondary:var(--sipa-bg); --booking-card:var(--sipa-card); --booking-card-hover:var(--sipa-secondary); --booking-text:var(--sipa-text); --booking-text-secondary:var(--sipa-muted); --booking-text-muted:var(--sipa-muted); --booking-border:var(--sipa-border); --booking-border-light:var(--sipa-border); }
+html[data-sipa-theme=aluno][data-theme=dark] { --progress-bg:var(--sipa-bg); --progress-bg-secondary:var(--sipa-bg); --progress-card:var(--sipa-card); --progress-card-hover:var(--sipa-secondary); --progress-text:var(--sipa-text); --progress-text-secondary:var(--sipa-muted); --progress-text-muted:var(--sipa-muted); --progress-border:var(--sipa-border); --progress-border-light:var(--sipa-border); }
+html[data-sipa-theme=aluno][data-theme=dark] { --profile-bg:var(--sipa-bg); --profile-bg-secondary:var(--sipa-bg); --profile-card:var(--sipa-card); --profile-card-hover:var(--sipa-secondary); --profile-text:var(--sipa-text); --profile-text-secondary:var(--sipa-muted); --profile-text-muted:var(--sipa-muted); --profile-border:var(--sipa-border); --profile-border-light:var(--sipa-border); }
+
+html[data-sipa-theme=aluno][data-theme=dark] body { background:var(--sipa-bg)!important; color:var(--sipa-texto-neutro); }
+html[data-sipa-theme=aluno][data-theme=dark] :is(main,main section,main article,dialog) { color:var(--sipa-texto-neutro); border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.summary-card,.credit-card,.progress-card,.next-class-card,.quick-action-card,.lessons-card,.student-local-lesson,.booking-card,.category-evolution,.progress-details,.progress-detail-card,.profile-card,.profile-info-card,.profile-section,.profile-summary-card,.package-card,.pacote-card,.booking-unit-local,.summary-item,.booking-pending-row,.booking-success-list li,.lesson-cancel-summary,.booking-batch-dates) { background:var(--sipa-card)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(h1,h2,h3,h4,dd,strong,.progress-number,.credit-value,.summary-card strong,.profile-value) { color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(main p,main small,main dt,.card-eyebrow,.progress-eyebrow,.progress-card-description,.category-option-info span,.local-lesson-fields dt,.local-lesson-fields dd,.profile-info-card span,.profile-info-card small,.progress-link-unit,.category-evolution p,.booking-pending-row span,.time-header,.calendar-weekdays,.progress-footer,.dashboard-footer,.lessons-footer) { color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(dialog,.booking-local-dialog,.lesson-cancel-dialog,.modal-content,.modal-card,.local-form) { background:var(--sipa-card)!important; color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(dialog p,dialog dt,dialog small,.resource-options span) { color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { background:#142337!important; color:var(--sipa-texto-neutro)!important; border:1px solid #6c8299!important; }
+html[data-sipa-theme=aluno][data-theme=dark] ::placeholder { color:var(--sipa-texto-neutro); opacity:1; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(input,select,textarea,button,a):focus-visible { outline:3px solid #82c4fa!important; outline-offset:2px; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(button:disabled,select:disabled,input:disabled) { opacity:.65; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.sipa-theme-toggle,.booking-pending-row button,.booking-batch-action,.local-lesson-tabs button,.local-lesson-cancel,.resource-options button,.booking-local-dialog button,.booking-local-dialog a,.lesson-cancel-dialog button,.local-cancel-cleanup button) { background:var(--sipa-secondary)!important; color:var(--sipa-accent)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.sipa-theme-toggle:hover,.resource-options button:hover) { background:#304b69!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.category-option,.time-slot,.calendar-day,.calendar-header,.calendar-container,.calendar-grid,.instructor-preview,.confirmation-summary,.summary-item,.booking-package-info,.local-login-banner,.sipa-local-banner) { background:var(--sipa-secondary)!important; color:var(--sipa-texto-neutro)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.category-option.selected,.time-slot.selected,.calendar-day.selected,.resource-options button[aria-pressed=true],.local-lesson-tabs button[aria-pressed=true],.booking-dialog-actions>:first-child,[data-cancel-confirm],.confirm-booking-button) { background:#1769aa!important; color:#fff!important; border-color:#82c4fa!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.category-option.selected,.resource-options button[aria-pressed=true]) :is(strong,span) { color:#fff!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.calendar-day:disabled,.calendar-day.sem-disponibilidade,.time-slot:disabled):not(.selected) { background:#172638!important; color:#9aafc4!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.calendar-day.today,[aria-current=date]) { border:1px solid #82c4fa!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.booking-step,.booking-step span,.booking-step strong) { color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .booking-step .step-number { background:var(--sipa-secondary)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .booking-step[aria-current=step] .step-number { background:#1769aa!important; color:#fff!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .booking-steps { background:var(--sipa-card)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .booking-steps::before { background:var(--sipa-border); }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.category-progress-track,.progress-bar-container,.progress-track) { background:#344b65!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.category-progress-track>span,.progress-bar,.progress-fill) { background:#3997e5!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.local-lesson-status,.availability-status) { background:#223f59!important; color:#a8d9ff!important; }
+html[data-sipa-theme=aluno][data-theme=dark] [data-status='2'] .local-lesson-status { background:#34404e!important; color:#d8e3ef!important; }
+html[data-sipa-theme=aluno][data-theme=dark] [data-status='5'] .local-lesson-status { background:#204b3d!important; color:#a5e2bd!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.lesson-cancel-policy,.booking-warning,.package-alert) { background:#3a3323!important; color:#f1d79a!important; border-color:#b99445!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.lesson-cancel-policy,.booking-warning) :is(p,small,strong) { color:#f1d79a!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is([role=alert],#booking-message,.local-feedback) { color:#ffd1ce!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .sipa-sidebar { background:#102b47; }
+html[data-sipa-theme=aluno][data-theme=dark] .sipa-sidebar strong { color:#fff!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(a,summary) { color:var(--sipa-accent); }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.sipa-sidebar-link,.progress-action-button,.dashboard-action-button,.lessons-action-button) { color:#fff!important; }
+@media(prefers-reduced-motion:no-preference) { html[data-sipa-theme=aluno] :is(body,article,section,button,input,select,textarea,dialog) { transition:background-color .15s ease,color .15s ease,border-color .15s ease; } }
+@media(max-width:500px) { .sipa-theme-header { padding-right:54px; } }
+
+.sipa-theme-toggle svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+html[data-sipa-theme=aluno][data-theme=dark] body { color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] main { background:var(--sipa-bg)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.sipa-local-navigation,.dashboard-test-setup,.summary-lessons,.booking-student-info,.booking-resources-local,.profile-overview,.summary-item-icon,.category-option-icon) { background:var(--sipa-secondary)!important; color:var(--sipa-text)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.sipa-local-navigation a,.sipa-local-navigation button,.credit-heading span,.credit-value span,.dashboard-icon,.profile-eyebrow,.profile-label,.booking-success-icon,.lesson-cancel-dialog header svg,.progress-eyebrow,.booking-eyebrow) { color:var(--sipa-accent)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.booking-success-icon,.lesson-cancel-dialog header svg) { stroke:var(--sipa-accent)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.sipa-local-navigation button,.student-menu-toggle,#mobile-menu-button,[id$='-mobile-menu']) { background:var(--sipa-secondary)!important; color:var(--sipa-accent)!important; border-color:var(--sipa-border)!important; }
+
+html[data-sipa-theme=aluno][data-theme=dark] :is(main label,.calendar-weekdays span,.calendar-month span) { color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.calendar-area,.calendar-weekdays,.calendar-days) { background:var(--sipa-card)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.calendar-navigation,.back-dashboard) { background:var(--sipa-secondary)!important; color:var(--sipa-accent)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .calendar-day:disabled { opacity:1!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(main>header,.booking-steps) { border-color:var(--sipa-border)!important; }
+@media(prefers-reduced-motion:reduce) { html[data-sipa-theme=aluno] :is(body,main,article,section,button,input,select,textarea,dialog) { transition:none!important; animation:none!important; } }
+
+html[data-sipa-theme=aluno][data-theme=dark] :is(.dashboard-eyebrow,.lessons-eyebrow,.booking-eyebrow,.profile-identity span) { color:var(--sipa-accent)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] :is(.booking-footer,.profile-footer) { color:var(--sipa-texto-neutro)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .category-option-check { background:#344b65!important; border-color:var(--sipa-border)!important; }
+
+/* Endereços institucionais compartilham os tokens dos temas existentes. */
+.unit-location { display:flex; align-items:flex-start; gap:9px; margin-top:10px; padding:10px 0; min-width:0; font-size:13px; line-height:1.5; }
+.unit-location>div { min-width:0; }
+.unit-location>svg { flex:0 0 18px; width:18px; height:20px; fill:none; stroke:var(--sipa-accent,#1769aa); stroke-width:1.7; margin-top:2px; }
+.unit-location strong { display:block; font-size:13px; }
+.unit-location p { font-size:13px!important; line-height:1.5; margin:4px 0; overflow-wrap:anywhere; color:var(--sipa-texto-neutro); }
+.unit-map-link { display:inline-block; font-size:13px; line-height:1.5; color:var(--sipa-accent,#12578f); text-decoration:underline; text-underline-offset:3px; }
+.unit-map-link:focus-visible { outline:3px solid var(--sipa-accent,#2388d9); outline-offset:3px; border-radius:3px; }
+#summary-unit-address { width:100%; }
+.summary-item:has(#summary-unit-address) { flex-wrap:wrap; }
+.local-lesson-history .unit-location { margin:4px 0; padding:4px 0; }
+
+[data-sipa-local=aluno] .booking-summary { align-items:start; }
+.booking-success-list .booking-success-address { grid-column:1/-1; }
+
+/* Preferências do Aluno: extensões dos mesmos tokens e componentes. */
+[data-sipa-local=aluno] :is(.booking-content,.booking-steps,#automatic-booking,[data-health-guidance],.cancel-consent)[hidden] { display:none!important; }
+.booking-mode-choice { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 22px; }
+.booking-mode-choice button,.student-preferences button { border:1px solid var(--sipa-border,#b8cfe3); border-radius:8px; background:var(--sipa-secondary,#edf5fc); color:var(--sipa-texto-neutro); padding:11px 15px; font:600 13px/1.4 Inter,Arial,sans-serif; cursor:pointer; }
+.booking-mode-choice button[aria-pressed=true] { background:#1769aa; color:#fff; border-color:#1769aa; }
+.student-preferences { margin:20px 0; padding:22px; border:1px solid var(--sipa-border,#c7dcee); border-radius:14px; background:var(--sipa-card,#f7fafd); color:var(--sipa-texto-neutro); min-width:0; }
+.student-preferences h2 { font-size:20px; margin:0 0 10px; }
+.student-preferences h3 { margin:12px 0; font-size:16px; }
+.student-preferences p { font-size:13px; line-height:1.7; margin:10px 0; overflow-wrap:anywhere; }
+.student-preferences form { display:grid; gap:16px; min-width:0; }
+.student-preferences fieldset { min-width:0; border:1px solid var(--sipa-border,#c7dcee); border-radius:8px; padding:12px; margin:0; }
+.student-preferences .preference-fields { display:grid; gap:16px; border:0; padding:0; }
+.student-preferences legend { font-size:13px; font-weight:700; padding:0 5px; }
+.preference-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr)); gap:10px; max-height:240px; overflow-y:auto; }
+.student-preferences label,.cancel-consent { display:flex; align-items:flex-start; gap:8px; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.student-preferences input[type=checkbox],.cancel-consent input { flex:none; width:18px; height:18px; margin-top:2px; accent-color:#1769aa; }
+.student-preferences label:has(select),.student-preferences label:has(textarea),.student-preferences label:has(input[type=number]) { display:grid; gap:6px; }
+.student-preferences :is(select,textarea,input[type=number]) { width:100%; max-width:100%; min-width:0; padding:10px; border:1px solid var(--sipa-border,#a8bfd5); border-radius:7px; background:var(--sipa-card,#fff); color:var(--sipa-texto-neutro); font:inherit; }
+.student-preferences textarea { resize:vertical; min-height:80px; }
+.preference-actions,.preference-periods { display:flex; flex-wrap:wrap; gap:10px; }
+.preference-periods { margin:6px 0 12px; }
+.student-preferences button:disabled { opacity:.6; cursor:default; }
+.student-preferences :is(button,input,select,textarea,summary):focus-visible { outline:3px solid var(--sipa-accent,#2388d9); outline-offset:3px; }
+.student-preferences ol { list-style:none; padding:0; display:grid; gap:12px; }
+.student-preferences ol li { border:1px solid var(--sipa-border,#c7dcee); border-radius:9px; padding:12px; overflow-wrap:anywhere; }
+.student-preferences summary { cursor:pointer; font-weight:600; font-size:13px; padding:8px 0; }
+.student-preferences details[open] { display:grid; gap:12px; }
+.student-preferences details fieldset { margin-top:12px; }
+.cancel-consent { margin:14px 0; padding:12px; border:1px solid var(--sipa-border,#a8bfd5); border-radius:8px; }
+@media(max-width:500px) { .student-preferences { padding:16px; } .booking-mode-choice button { flex:1; } .preference-actions button { width:100%; } }
+
+[data-sipa-local=aluno] .student-preferences p { color:var(--sipa-texto-neutro); }
+
+[data-sipa-local=aluno] #lesson-cancel-hint { color:var(--sipa-texto-neutro); }
+
+/* Cancelamento: mensagem de devolução neutra, penalidade somente quando aplicável. */
+[data-sipa-local=aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] { background:var(--sipa-secondary,#edf5fc)!important; border-color:var(--sipa-border,#b8cfe3)!important; }
+[data-sipa-local=aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] :is(p,strong) { color:var(--sipa-texto-neutro)!important; }
+#student-anticipation p[hidden] { display:none; }
+
+/* Localização e comparecimento: informações da reserva, sem duplicação. */
+.lesson-attendance { margin:12px 0; padding:10px 12px; border:1px solid var(--sipa-border,#cbddec); border-radius:10px; background:var(--sipa-secondary,#f4f8fc); font-size:13px; line-height:1.5; }
+.lesson-attendance>strong { font-size:13px; color:var(--sipa-texto-neutro); }
+.lesson-attendance p { margin:4px 0 0; font-size:13px; line-height:1.5; }
+.lesson-attendance p strong { font-weight:600; }
+#proxima-aula-conteudo .unit-location { margin:8px 0; padding:0; }
+[data-sipa-local=aluno] .student-local-lesson[data-status='1'] .confirmed-lesson-location { grid-column:1/-1; grid-row:3; margin:0; padding:4px 0; }
+[data-sipa-local=aluno] .student-local-lesson[data-status='1'] .local-lesson-history { grid-row:4; }
+[data-sipa-local=aluno] .student-local-lesson[data-status='1'] .local-lesson-cancel { grid-row:4; }
+
+#anticipation-availability { margin:14px 0; padding:12px; min-width:0; border:1px solid var(--sipa-border,#cbddec); border-radius:10px; animation:anticipation-reveal .16s ease-out; }
+#anticipation-availability[hidden] { display:none; }
+#anticipation-availability legend { font-size:14px; font-weight:600; padding:0 4px; }
+#anticipation-availability p,#anticipation-summary { font-size:13px; line-height:1.5; }
+#anticipation-availability h3 { font-size:13px; margin:14px 0 8px; }
+.anticipation-days,.anticipation-hours { display:flex; flex-wrap:wrap; gap:7px; }
+#student-anticipation :is(.anticipation-days,.anticipation-hours) button { margin:0; padding:8px 11px; min-height:40px; border:1px solid var(--sipa-border,#b8cfe3); border-radius:8px; background:var(--sipa-card,#fff); color:var(--sipa-texto-neutro); font:inherit; font-size:13px; cursor:pointer; }
+#student-anticipation :is(.anticipation-days,.anticipation-hours) button[aria-pressed=true] { background:#1769aa; color:#fff; border-color:#1769aa; }
+#student-anticipation .anticipation-days button[data-open=true] { outline:2px solid var(--sipa-accent,#1769aa); outline-offset:2px; }
+#student-anticipation button:focus-visible { outline:3px solid var(--sipa-accent,#1769aa); outline-offset:3px; }
+@keyframes anticipation-reveal { from { opacity:0;transform:translateY(-3px); } to { opacity:1;transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce){#anticipation-availability { animation:none; }}

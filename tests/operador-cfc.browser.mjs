@@ -11,11 +11,11 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const artifacts = await fs.mkdtemp(path.join(os.tmpdir(), "sipa-operador-ui-"));
-const source = await fs.readFile(path.join(root, "operador-cfc.html"), "utf8");
-const layout = source.replace("<head>", '<head><base href="/">').replace(
-    '<script type="module" src="js/operador-cfc.js"></script>',
+const source = await fs.readFile(path.join(root, "nivel-1-operador/html/operador-cfc.html"), "utf8");
+const layout = source.replace("<head>", '<head><base href="/nivel-1-operador/html/">').replace(
+    /<script type="module"[^>]*>[\s\S]*?<\/script>/,
     `<script type="module">
-        import { montarEstruturaOperador } from '/js/modules/operador/components/painelOperador.js';
+        import { montarEstruturaOperador } from '/nivel-1-operador/js/components/painelOperador.js';
         document.getElementById('operador-acesso').hidden = true;
         const root = document.getElementById('operador-conteudo');
         montarEstruturaOperador(root, document.getElementById('operador-template'));
@@ -76,7 +76,7 @@ function send(method, params = {}) {
 }
 async function evaluate(expression) {
     const result = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
-    if (result.exceptionDetails) throw new Error(result.exceptionDetails.text);
+    if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text);
     return result.result.value;
 }
 async function navigate(route, ready) {
@@ -119,240 +119,251 @@ try {
     await send("Page.addScriptToEvaluateOnNewDocument", { source: "window.testCalls = []; window.testStorageReads = []; const originalGetItem = Storage.prototype.getItem; Storage.prototype.getItem = function(key) { window.testStorageReads.push(key); return originalGetItem.call(this, key); }; window.fetch = (...args) => { window.testCalls.push(String(args[0])); return Promise.reject(new Error('Nenhuma API deve ser chamada neste teste')); };" });
     await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1080, deviceScaleFactor: 1, mobile: false });
 
-    // Payloads artificiais existem somente neste navegador de teste; não há login,
-    // assinatura JWT ou sessão de usuário real sendo criada ou alterada.
-    const cases = [null, "Aluno", "Autoescola", "Motorista", "PerfilInexistente", "__proto__"];
-    for (const role of cases) {
-        await navigate("/__tests__/blank", "true");
-        const payload = Buffer.from(JSON.stringify({ role, exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url");
-        await evaluate(`sessionStorage.clear(); ${role === null ? "" : `sessionStorage.setItem('sipa.token', 'teste.${payload}.sem-assinatura');`}`);
-        await navigate("/operador-cfc.html", "document.getElementById('operador-voltar')");
-        await check("!document.getElementById('operador-acesso').hidden && document.getElementById('operador-conteudo').hidden && document.getElementById('operador-conteudo').children.length === 0 && window.testCalls.length === 0", `Área fechada para ${role ?? "visitante"}`);
-        if (role === "Autoescola") await check("document.getElementById('operador-voltar').getAttribute('href') === 'autoescola.html'", "Autoescola mantém sua área existente");
-        if (role === "Aluno") await check("document.getElementById('operador-voltar').getAttribute('href') === 'dashboard.html'", "Aluno mantém sua área existente");
-        if (role) await check("sessionStorage.getItem('sipa.token') !== null", "Sessão existente preservada");
-    }
-    await screenshot("acesso-bloqueado.png");
 
-    // A rota abaixo só existe no servidor efêmero deste teste. Não é incluída no app.
-    await navigate("/__tests__/layout", "window.layoutReady === true");
-    await check("document.querySelectorAll('[data-op-panel]').length === 6 && document.querySelectorAll('[data-op-panel]:not([hidden])').length === 1", "Seis áreas, apenas uma visível");
-    await screenshot("visao-geral-desktop.png");
-    for (const section of ["alunos", "agenda", "verificacoes", "acessos", "recursos", "visao-geral"]) {
-        await evaluate(`document.querySelector('[data-op-nav="${section}"]').click()`);
-        await check(`document.querySelector('[data-op-panel="${section}"]').hidden === false && document.querySelectorAll('[data-op-panel]:not([hidden])').length === 1 && document.activeElement.matches('[data-op-heading]')`, `Navegação e foco: ${section}`);
+    // Navegacao real, sem alterar as contas ou o navegador do usuario.
+    await send('Page.addScriptToEvaluateOnNewDocument',{source:"const Original=Date;window.Date=class extends Original{constructor(...a){super(...(a.length?a:['2026-10-19T08:00:00-03:00']));}static now(){return Original.parse('2026-10-19T08:00:00-03:00');}};"});
+    const route='/nivel-1-operador/html/operador-cfc.html';
+    await navigate('/__tests__/blank','true');
+    await evaluate("localStorage.setItem('sipa.aluno.preservar','original');sessionStorage.setItem('sipa.token','sessao-preservada-no-teste')");
+    for(const query of ['', '?demo=0', '?demo=1&demo=1', '?demo=1&ambiente=integrado']) {
+        await navigate(route+query,"!document.getElementById('operador-acesso').hidden");
+        await check("document.getElementById('operador-conteudo').hidden&&testCalls.length===0",'Acesso fechado '+query);
     }
-    await evaluate("document.querySelector('[data-op-nav=alunos]').click()");
-    await screenshot("alunos-desktop.png");
-    await evaluate("document.querySelector('[data-op-cadastro]').click()");
-    await check("document.querySelector('[data-op-dialog]').open && document.querySelector('[data-op-dialog] input').matches(':disabled') && document.querySelector('[data-op-dialog] button[type=submit]').disabled", "Cadastro pendente abre, sem aceitar ou enviar dados");
-    await screenshot("cadastro-desktop.png");
-    await evaluate("document.querySelector('[data-op-dialog] [data-op-fechar]').click()");
-    await check("!document.querySelector('[data-op-dialog]').open", "Diálogo fecha corretamente");
-    await evaluate("document.querySelector('[data-op-nav=recursos]').click(); document.querySelector('#recurso-todos').focus()");
-    await send("Input.dispatchKeyEvent", { type: "keyDown", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
-    await send("Input.dispatchKeyEvent", { type: "keyUp", key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 });
-    await check("document.querySelector('#recurso-veiculos').getAttribute('aria-selected') === 'true' && document.querySelector('#op-resource-panel').getAttribute('aria-labelledby') === 'recurso-veiculos'", "Abas de recursos respondem ao teclado");
-    await evaluate("document.querySelector('[data-op-nav=verificacoes]').click()");
-    await check("[...document.querySelectorAll('[data-op-panel=verificacoes] button:not([data-op-go])')].every(button => button.disabled) && document.querySelector('[data-op-panel=verificacoes]').textContent.includes('Nenhuma verificação financeira foi realizada')", "ICFC e exames não simulam verificações");
-    await evaluate("document.querySelector('[data-op-nav=acessos]').click()");
-    await check("document.querySelector('[data-op-panel=acessos] .op-button-primary').disabled && [...document.querySelectorAll('[data-op-panel=acessos] input, [data-op-panel=acessos] select')].every(input => input.matches(':disabled'))", "Nenhuma emissão de acesso ou senha habilitada");
-    await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-    await check("Math.abs(document.querySelector('.op-sidebar').getBoundingClientRect().width - innerWidth) < 1", "Menu ocupa a largura do celular, sem herdar largura fixa do desktop");
-    for (const section of ["visao-geral", "alunos", "verificacoes", "acessos", "recursos"]) {
-        await evaluate(`document.querySelector('[data-op-nav="${section}"]').click()`);
-        await check("document.documentElement.scrollWidth <= innerWidth", `Sem transbordamento horizontal no celular: ${section}`);
+    for(const role of ['Aluno','Autoescola','Motorista','PerfilInexistente']){
+        const payload=Buffer.from(JSON.stringify({role,exp:2000000000})).toString('base64url');
+        await evaluate("sessionStorage.setItem('sipa.token','teste."+payload+".sem-assinatura')");
+        await navigate(route,"!document.getElementById('operador-acesso').hidden");
+        await check("document.getElementById('operador-conteudo').hidden",'Perfil existente nao vira Operador '+role);
     }
-    await evaluate("document.querySelector('[data-op-nav=visao-geral]').click(); document.activeElement.blur(); window.scrollTo(0,0)");
-    await screenshot("visao-geral-mobile.png");
-    await check("getComputedStyle(document.querySelector('[data-op-sair]')).display !== 'none' && getComputedStyle(document.querySelector('.sipa-sidebar-bottom')).display !== 'none'", "Saída da conta disponível no celular");
-    await check("window.testCalls.length === 0", "Nenhuma requisição administrativa, ICFC ou criação de acesso");
-
-    // Demonstração no endereço real do aplicativo, sem a rota de montagem do teste.
-    await navigate("/__tests__/blank", "true");
-    await evaluate("sessionStorage.setItem('sipa.token', 'sessao-preservada-no-teste'); localStorage.setItem('sipa.API_URL', 'http://exemplo.invalid/api'); localStorage.setItem('demo', '1')");
-    await navigate("/operador-cfc.html", "document.getElementById('operador-voltar')");
-    await check("document.getElementById('operador-conteudo').hidden", "Flags no armazenamento não ativam demonstração");
-    await navigate("/operador-cfc.html?demo=1", "document.querySelector('.op-demo-banner')");
-    await check("document.getElementById('operador-acesso').hidden && !document.getElementById('operador-conteudo').hidden && document.querySelector('.op-demo-banner').textContent.includes('DADOS FICTÍCIOS')", "Ativação explícita monta painel completo e identificado");
-    await check("window.testStorageReads.every(k => k === 'sipa.operador.demo.v2') && sessionStorage['sipa.token'] === 'sessao-preservada-no-teste' && localStorage['sipa.API_URL'] === 'http://exemplo.invalid/api'", "Demonstração lê somente sua chave e preserva sessão e configuração reais");
-    await check("document.querySelector('.op-operator-label').textContent.includes('Operador fictício') && document.querySelector('.op-unit-chip').textContent.includes('Centro')", "Operador fictício nível 1 vinculado à unidade Centro");
-    await check("!document.querySelector('[data-op-panel=visao-geral]').textContent.includes('Atenção da recepção') && !document.querySelector('[data-op-panel=visao-geral]').textContent.includes('Fluxo do atendimento') && !document.querySelector('.op-metric-index')", "Visão geral sem blocos redundantes ou números decorativos");
-    for (const id of ["alunos", "financeiro", "exames", "aptos", "hoje", "semana", "veiculos", "instrutores", "livres"]) {
-        await evaluate(`window.totalIndicador = Number(document.querySelector('[data-indicador=${id}] > strong').textContent); document.querySelector('[data-indicador=${id}]').click()`);
-        await check("document.querySelector('[data-op-indicador]').open && Number(document.querySelector('[data-indicador-total]').dataset.indicadorTotal) === window.totalIndicador && document.querySelectorAll('[data-indicador-registro]').length === window.totalIndicador", `Card ${id}: total igual aos registros exibidos`);
-        if (id === "financeiro") await check("[...document.querySelectorAll('[data-indicador-registro]')].every(r => !r.textContent.includes('Financeiro: Regular'))", "Detalhamento financeiro contém somente pendências");
-        if (id === "alunos") await check("document.querySelector('[data-op-indicador]').textContent.includes('000.***.***-01') && !document.querySelector('[data-op-indicador]').textContent.includes('00000000001')", "CPF mascarado na listagem do indicador");
-        await evaluate("document.querySelector('[data-op-indicador] .op-close').click()");
+    await evaluate("sessionStorage.setItem('sipa.token','sessao-preservada-no-teste')");
+    await navigate(route+'?demo=1&ambiente=local',"!!document.querySelector('.op-unidade')&&!document.getElementById('operador-acesso').hidden===false");
+    await check("document.querySelectorAll('[data-op-panel]').length===9&&document.querySelectorAll('[data-op-panel]:not([hidden])').length===1",'Nove secoes, uma visivel');
+    await check("document.querySelector('.op-main').textContent.includes('DADOS FICT')&&!document.querySelector('[data-op-nav=acessos]')&&!document.querySelector('[data-op-panel=acessos]')",'Laboratorio identificado e credenciais indisponiveis');
+    await check("localStorage.getItem('sipa.operador.demo.v2')===null",'Abrir painel novo nao persiste fixtures ou saldos');
+    for(const section of ['alunos','cadastro','agenda','instrutores','recursos','verificacoes','perfil','visao-geral']){
+        await evaluate("document.querySelector('[data-op-nav="+section+"]').click()");
+        await check("!document.querySelector('[data-op-panel="+section+"]').hidden&&document.activeElement.matches('[data-op-heading]')",'Navegacao e foco '+section);
     }
-    await evaluate("document.querySelector('[data-indicador=alunos]').focus()");
-    await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r", unmodifiedText: "\r" });
-    await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-    await check("document.querySelector('[data-op-indicador]').open", "Indicador abre por teclado com Enter");
-    await evaluate("document.querySelector('[data-indicador-registro] button').click()");
-    await check("document.querySelector('[data-op-ficha]').open && document.querySelector('[data-op-ficha]').textContent.includes('Aluno Exemplo Um')", "Card reutiliza ficha existente do aluno");
-    await evaluate("document.querySelector('[data-op-ficha] .op-close').click()");
+    await check("document.querySelectorAll('[data-op-metrica]').length===1&&document.querySelector('[data-op-metrica=alunos] strong').textContent==='0'",'Somente indicador autorizado de alunos, sem gerar registros ou creditos');
+    await check("!document.querySelector('[data-op-panel=visao-geral] table')&&document.querySelectorAll('[data-op-atalho]').length===6&&!document.querySelector('[data-op-panel=visao-geral]').textContent.match(/Aten\u00e7\u00e3o no atendimento|Acompanhamento de hoje|Agendadas hoje|Realizadas hoje|Ativa\u00e7\u00e3o pendente|Cadastros em verifica\u00e7\u00e3o|Faltas hoje/)",'Inicio sem indicadores e secoes removidos');
+    for(const section of ['cadastro','alunos','agenda','instrutores','recursos']){
+        await evaluate("document.querySelector('[data-op-atalho="+section+"]').click()");
+        await check("!document.querySelector('[data-op-panel="+section+"]').hidden&&document.querySelector('[data-op-nav="+section+"]').getAttribute('aria-current')==='page'",'Atalho funcional '+section);
+        await evaluate("document.querySelector('[data-op-nav=visao-geral]').click()");
+    }
+    await screenshot('inicio-centro-light.png');
+    // Somente o perfil descartavel recebe fixtures para o cenario multiunidade.
+    await evaluate("(async()=>{const {criarDadosDemo}=await import('/dev/operador/dadosDemo.js');const e=criarDadosDemo();const a={...e.alunos[0],id:'s1',nome:'Aluno Teste Vinculado',cpf:'52998224725',tipoCambio:'manual',categoria:'AB',unidade:'Itaparica',unidadePrincipal:'Itaparica',unidadeCarro:'Itaparica',nascimento:'2000-01-01',financeiro:'Regular',creditos:{A:{contratadas:7,disponiveis:7},B:{contratadas:10,disponiveis:6}},etapas:Object.fromEntries(['medico','psicologico','teorica','ladv','pratica'].map(t=>[t,{status:'Aprovado'}]))};e.alunos=[a,...Array.from({length:11},(_,i)=>({...structuredClone(a),id:'list-'+i,nome:'Cadastro Teste '+String(i).padStart(2,'0'),cpf:'00000000'+String(i+1).padStart(3,'0')})),{...structuredClone(a),id:'externo',nome:'Cadastro Sem Vinculo',unidade:'Santa Rita',unidadePrincipal:'Santa Rita',unidadeCarro:'Santa Rita',tipoCambio:'manual',categoria:'B',cpf:'11144477735'}];e.recursos=['Itaparica','Santa Rita','Centro'].flatMap(u=>[{id:'i-'+u,tipo:'Instrutores',nome:'Instrutor Teste '+u,unidade:u,categorias:['A','B'],ativo:true},{id:'v-'+u,tipo:'Ve\u00edculos',nome:'Carro Teste '+u,unidade:u,tipoCambio:'manual',categoria:'B',ativo:true},{id:'m-'+u,tipo:'Ve\u00edculos',nome:'Moto Teste '+u,unidade:u,categoria:'A',ativo:true}]);e.aulas=['09:00','10:00','13:00'].map((h,i)=>({id:'amanha-'+i,alunoId:'s1',unidade:'Itaparica',tipoCambio:'manual',categoria:'B',data:'2026-10-20',inicio:h,fim:h.slice(0,2)+':50',instrutorId:'i-Itaparica',veiculoId:'v-Itaparica',status:1}));e.aulas.push({id:'elegivel',alunoId:'s1',unidade:'Itaparica',tipoCambio:'manual',categoria:'B',data:'2026-10-23',inicio:'09:00',fim:'09:50',instrutorId:'i-Itaparica',veiculoId:'v-Itaparica',status:1});localStorage.setItem('sipa.operador.demo.v2',JSON.stringify(e));window.fixtureSalva=JSON.stringify(e);})()");
+    await navigate(route+'?demo=1&unidade=Itaparica',"document.querySelector('[data-op-metrica=alunos] strong')?.textContent==='12'");
     await evaluate("document.querySelector('[data-op-nav=alunos]').click()");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 3", "Lista inicial contém somente três alunos fictícios");
-    await evaluate("var filtroAluno = document.querySelector('[data-aluno-filtro=financeiro]'); filtroAluno.value = 'Regular'; filtroAluno.dispatchEvent(new Event('change'))");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 1 && document.querySelector('[data-demo-aluno]').dataset.demoAluno === 'demo-2'", "Filtro financeiro seleciona os alunos correspondentes");
-    await evaluate("filtroAluno.value = ''; filtroAluno.dispatchEvent(new Event('change')); var categoriaAluno = document.querySelector('[data-aluno-filtro=categoria]'); categoriaAluno.value = 'AB'; categoriaAluno.dispatchEvent(new Event('change'))");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 1 && document.querySelector('[data-demo-aluno]').dataset.demoAluno === 'demo-3'", "Filtro de categoria restringe a lista");
-    await evaluate("categoriaAluno.value = ''; categoriaAluno.dispatchEvent(new Event('change')); var examesAluno = document.querySelector('[data-aluno-filtro=exames]'); examesAluno.value = 'Concluídos'; examesAluno.dispatchEvent(new Event('change'))");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 1", "Filtro de exames considera as quatro avaliações");
-    await evaluate("examesAluno.value = ''; examesAluno.dispatchEvent(new Event('change'))");
-    await evaluate("const busca = document.querySelector('.op-search input'); busca.value = 'Exemplo Dois'; busca.dispatchEvent(new Event('input'))");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 1", "Busca filtra somente os dados fictícios locais");
-    await evaluate("document.querySelector('[data-demo-aluno] button').click()");
-    await check("document.querySelector('[data-op-panel=alunos] .op-detail').textContent.includes('Aluno Exemplo Dois')", "Detalhes mostram o aluno fictício selecionado");
-    await check("document.querySelector('[data-op-ficha]').open && document.querySelectorAll('[data-exame]').length === 4", "Ficha abre quatro avaliações independentes");
-    await evaluate("const exame = document.querySelector('[data-exame=psicotecnico]'); exame.elements.status.value = 'Reprovado'; exame.elements.data.value = '2026-10-15'; exame.elements.observacoes.value = 'Anotação fictícia de teste'; exame.requestSubmit()");
-    await check("document.querySelector('[data-exame=psicotecnico] select').value === 'Reprovado' && document.querySelector('[data-exame=vista] select').value === 'Aprovado' && document.querySelector('[data-exame=teorica] select').value === 'Aprovado' && document.querySelector('[data-op-ficha]').textContent.includes('Aprovado → Reprovado')", "Salvar psicotécnico preserva vista e teórica, com histórico");
-    await screenshot("ficha-exames.png");
-    await evaluate("document.querySelector('[data-op-ficha] .op-close').click(); document.querySelector('[data-op-nav=verificacoes]').click(); document.querySelector('.op-verifications button').click()");
-    await check("document.querySelector('.op-verifications dd').textContent.includes('simulado') && document.querySelector('.op-demo-feedback').textContent.includes('Nenhuma verificação')", "Cenário financeiro não é consulta oficial ao ICFC");
-    await evaluate("document.querySelector('[data-op-nav=acessos]').click(); document.querySelector('[data-op-panel=acessos] .op-button-primary').click()");
-    await check("document.querySelector('#acesso-pendente').textContent.includes('Nenhum link, senha provisória ou acesso real')", "Acesso simulado não gera link ou senha");
-    await evaluate("const tipos = document.querySelector('[data-op-panel=acessos] select'); tipos.selectedIndex = 1; tipos.dispatchEvent(new Event('change')); document.querySelector('[data-demo-aluno] button').click(); document.querySelector('[data-op-ficha] .op-close').click()");
-    await check("document.querySelector('[data-demo-cpf]').value === '00000000010' && document.querySelector('[data-demo-cpf]').readOnly", "Simulação do instrutor mantém identificação fictícia separada do aluno");
-    await evaluate("document.querySelector('[data-op-cadastro]').click(); const form = document.querySelector('[data-op-dialog] form'); form.elements.nome.value = '<img src=x onerror=alert(1)>'; form.elements.cpf.value = '00000000004'; form.elements.email.value = 'novo@example.invalid'; form.elements.telefone.value = '(00) 00000-0004'; form.elements.categoria.selectedIndex = 1; form.requestSubmit()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===10&&document.querySelector('.op-local-pagination').children.length>0&&!document.querySelector('[data-op-panel=alunos]').textContent.includes('Cadastro Sem Vinculo')",'Escopo e paginacao de 10 alunos');
+    await evaluate("document.querySelector('.op-local-pagination button:last-child').click()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===2",'Segunda pagina');
+    await evaluate("document.querySelector('[data-op-busca]').focus()");
+    for(const [digito,esperado] of [['5','5'],['2','52'],['9','529'],['9','529.9'],['8','529.98'],['2','529.982']]){
+        await send('Input.insertText',{text:digito});await check("document.querySelector('[data-op-busca]').value==="+JSON.stringify(esperado),'Digitacao progressiva real '+esperado);
+    }
+    await evaluate("var b=document.querySelector('[data-op-busca]');b.value='529982';b.dispatchEvent(new Event('input'))");
+    await check("document.querySelector('[data-op-busca]').value==='529.982'&&document.querySelectorAll('[data-op-aluno]').length===2",'Mascara progressiva sem executar pesquisa durante digitacao');
+    await evaluate("document.querySelector('[data-op-pesquisar=busca]').click()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===1&&document.querySelector('.op-local-pagination').children.length===0&&document.querySelector('[data-op-panel=alunos]').textContent.includes('529.982.247-25')",'Busca CPF completo formatado e retorno a pagina 1');
+    await evaluate("window.linhaPesquisa=document.querySelector('[data-op-panel=alunos] tbody');document.querySelector('[data-op-pesquisar=busca]').click();document.querySelector('[data-op-pesquisar=busca]').click()");
+    await check("window.linhaPesquisa===document.querySelector('[data-op-panel=alunos] tbody')",'Cliques repetidos sem mudanca nao refazem a consulta local');
+    await evaluate("var b=document.querySelector('[data-op-busca]');b.value='inexistente';b.dispatchEvent(new Event('input'))");
+    await evaluate("document.querySelector('[data-op-pesquisar=categoria]').click()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===0",'Busca sem resultados');
+    for(const cpf of ['52998224725','529.982.247-25','52998224725999']){
+        await evaluate("var b=document.querySelector('[data-op-busca]');b.value="+JSON.stringify(cpf)+";b.dispatchEvent(new Event('input'));document.querySelector('[data-op-pesquisar=busca]').click()");
+        await check("document.querySelector('[data-op-busca]').value==='529.982.247-25'&&document.querySelectorAll('[data-op-aluno]').length===1&&document.querySelector('[data-op-aluno]').dataset.opAluno==='s1'",'CPF pontuado ou sem pontos, limite e comparacao exata '+cpf);
+    }
+    await evaluate("var b=document.querySelector('[data-op-busca]');b.value='529.982.247-25';b.setSelectionRange(4,4);b.dispatchEvent(new InputEvent('beforeinput',{inputType:'deleteContentBackward',bubbles:true,cancelable:true}))");
+    await check("document.querySelector('[data-op-busca]').value.replace(/\\D/g,'')==='5298224725'",'Backspace sobre pontuacao remove digito sem prender cursor');
+    await evaluate("document.querySelector('[data-op-limpar-busca]').click();var b=document.querySelector('[data-op-busca]');b.value='Aluno Teste';b.dispatchEvent(new Event('input'));b.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}))");
+    await check("document.querySelector('[data-op-busca]').value==='Aluno Teste'&&document.querySelectorAll('[data-op-aluno]').length===1",'Nome parcial preservado e pesquisa por Enter');
+    await evaluate("var b=document.querySelector('[data-op-busca]');b.value='Aluno 529982';b.dispatchEvent(new Event('input'));document.querySelector('[data-op-pesquisar=busca]').click()");
+    await check("document.querySelector('[data-op-busca]').value==='Aluno 529982'&&document.querySelectorAll('[data-op-aluno]').length===0",'Nome com numeros nao vira pesquisa por CPF');
+    for(const [key,value,total] of [['situacao','Pendente',12],['categoria','AB',12],['categoria','B',0],['principal','Itaparica',12],['carro','Itaparica',12],['principal','Santa Rita',0]]){
+        await evaluate("document.querySelector('[data-op-limpar-busca]').click();document.querySelector('[data-op-filtro="+key+"]').value="+JSON.stringify(value)+";document.querySelector('[data-op-pesquisar="+key+"]').click()");
+        await check("document.querySelector('[data-op-contagem]').textContent.startsWith('"+total+" aluno')&&document.querySelector('[data-op-filtro="+key+"]').value==="+JSON.stringify(value), 'Filtro individual '+key+' '+value);
+    }
+    await evaluate("document.querySelector('[data-op-limpar-busca]').click();document.querySelector('[data-op-busca]').value='52998224725';document.querySelector('[data-op-busca]').dispatchEvent(new Event('input'));document.querySelector('[data-op-filtro=categoria]').value='B';document.querySelector('[data-op-filtro=principal]').value='Itaparica';document.querySelector('[data-op-pesquisar=principal]').click()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===0&&document.querySelector('[data-op-panel=alunos]').textContent.includes('Nenhum aluno encontrado para os filtros informados.')",'Filtros combinados nao ignoram categoria ao pesquisar CPF');
+    await evaluate("document.querySelector('[data-op-filtro=categoria]').value='AB';document.querySelector('[data-op-pesquisar=carro]').click()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===1",'Todos os filtros sao aplicados por qualquer lupa');
+    await evaluate("document.querySelector('[data-op-limpar-busca]').click();document.querySelector('[data-op-busca]').value='11144477735';document.querySelector('[data-op-busca]').dispatchEvent(new Event('input'));document.querySelector('[data-op-pesquisar=busca]').click()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===0",'CPF completo externo nao revela aluno de outra unidade');
+    await evaluate("document.querySelector('[data-op-limpar-busca]').click()");
+    await check("document.querySelectorAll('[data-op-aluno]').length===10&&[...document.querySelectorAll('[data-op-filtro]')].every(n=>n.value==='')&&document.querySelector('[data-op-contagem]').textContent.startsWith('12 aluno')",'Limpeza restaura todos os autorizados na primeira pagina');
+    await evaluate("document.querySelector('[data-op-nav=cadastro]').click()");
+    await evaluate("document.querySelector('[data-op-panel=cadastro] form').requestSubmit()");
+    await check("document.querySelectorAll('[data-op-panel=cadastro] [aria-invalid=true]').length>=7&&document.activeElement.name==='nome'&&!document.querySelector('[data-op-confirmar-cadastro]').open",'Cadastro vazio bloqueado com erros por campo e foco no primeiro');
+    for(const [categoria,carro,moto] of [['A',false,true],['B',true,false],['AB',true,true]]){
+        await evaluate("var f=document.querySelector('[data-op-panel=cadastro] form');f.elements.categoria.value='"+categoria+"';f.elements.categoria.dispatchEvent(new Event('change'))");
+        await check("(()=>{const f=document.querySelector('[data-op-panel=cadastro] form'),d=new FormData(f);return !f.elements.quantidadeCarro.disabled==="+carro+"&&!f.elements.quantidadeMoto.disabled==="+moto+"&&d.has('quantidadeCarro')==="+carro+"&&d.has('quantidadeMoto')==="+moto+"&&f.elements.unidadeCarro.required==="+carro+";})()",'Quantidades e unidade condicionais '+categoria);
+    }
+    await evaluate("var f=document.querySelector('[data-op-panel=cadastro] form');f.elements.quantidadeCarro.value='20';f.elements.quantidadeMoto.value='15';f.elements.categoria.value='A';f.elements.categoria.dispatchEvent(new Event('change'));f.elements.categoria.value='AB';f.elements.categoria.dispatchEvent(new Event('change'))");
+    await check("(()=>{const f=document.querySelector('[data-op-panel=cadastro] form');return f.elements.quantidadeCarro.value===''&&f.elements.quantidadeMoto.value==='15';})()",'Troca de categoria descarta somente quantidade nao aplicavel');
+    await evaluate("var f=document.querySelector('[data-op-panel=cadastro] form');Object.entries({nome:'Cadastro Teste Novo',cpf:'12345678901',nascimento:'2000-01-01',telefone:'27999998888',email:'novo@example.invalid',tipoCambio:'manual',categoria:'AB',unidadeCarro:'Santa Rita',quantidadeCarro:'20',quantidadeMoto:'15',observacoes:'Cadastro de teste solicitado no atendimento.'}).forEach(([k,v])=>f.elements[k].value=v);f.elements.categoria.dispatchEvent(new Event('change'));f.elements.tipoCambio.value='manual';f.elements.tipoCambio.dispatchEvent(new Event('change'));f.elements.unidadeCarro.value='Santa Rita';f.requestSubmit()");
+    await waitFor(()=>evaluate("document.querySelector('[name=cpf]').getAttribute('aria-invalid')==='true'&&document.querySelector('#cadastro-erro-cpf').textContent.includes('CPF')"),'CPF invalido');
+    await evaluate("var f=document.querySelector('[data-op-panel=cadastro] form');f.elements.cpf.value='93541134780';f.elements.cpf.dispatchEvent(new Event('input'))");
+    await check("!document.querySelector('[name=cpf]').hasAttribute('aria-invalid')&&document.querySelector('[name=nome]').value==='Cadastro Teste Novo'",'Correcao remove erro e preserva dados');
+    for(const [key,value] of [['email','invalido'],['quantidadeCarro','0'],['quantidadeCarro','-1'],['quantidadeMoto','1.5'],['unidadeCarro',''],['observacoes','   ']]){
+        await evaluate("var f=document.querySelector('[data-op-panel=cadastro] form');window.valorAnterior=f.elements['"+key+"'].value;f.elements['"+key+"'].value="+JSON.stringify(value)+";f.requestSubmit()");
+        await check("document.querySelector('[name="+key+"]').getAttribute('aria-invalid')==='true'&&!document.querySelector('[data-op-confirmar-cadastro]').open",'Validacao visual bloqueia '+key+' '+value);
+        await evaluate("var f=document.querySelector('[data-op-panel=cadastro] form');f.elements['"+key+"'].value=window.valorAnterior;f.elements['"+key+"'].dispatchEvent(new Event('"+(key==='unidadeCarro'?'change':'input')+"'))");
+    }
+    await evaluate("document.querySelector('[data-op-panel=cadastro] [name=cpf]').value='93541134780';document.querySelector('[data-op-panel=cadastro] form').requestSubmit()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-confirmar-cadastro]').open"),'Revisar cadastro');
+    await check("JSON.parse(localStorage.getItem('sipa.operador.demo.v2')).alunos.length===13",'Nenhum cadastro salvo antes de confirmar');
+    for(const width of [1440,390])for(const theme of ['light','dark']){
+        await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate("SipaTema.salvar('"+theme+"')");
+        await check("(()=>{const d=document.querySelector('[data-op-confirmar-cadastro]');return d.querySelectorAll('.op-confirm-item').length===8&&[...d.querySelectorAll('.op-confirm-item')].every(n=>!n.querySelector('svg')&&n.querySelector('strong').textContent.endsWith(':')&&n.querySelector('.op-confirm-value'))&&d.scrollWidth<=d.clientWidth;})()",'Confirmacao com oito campos legiveis '+width+' '+theme);
+        await check("(()=>{const d=document.querySelector('[data-op-confirmar-cadastro]'),itens=[...d.querySelectorAll('.op-confirm-item')],r=d.getBoundingClientRect(),footer=d.querySelector('footer').getBoundingClientRect(),g=d.querySelector('.op-confirm-grid');return itens[1].querySelector('.op-confirm-value').textContent==='935.411.347-80'&&itens[2].querySelector('.op-confirm-value').textContent==='A+B'&&itens.every((n,i)=>!i||n.getBoundingClientRect().top>=itens[i-1].getBoundingClientRect().bottom)&&getComputedStyle(g).gridTemplateColumns.split(' ').length===1&&footer.bottom<=r.bottom&&getComputedStyle(d,'::backdrop').backdropFilter==='none'&&getComputedStyle(itens[0]).backgroundColor==="+(theme==='dark'?"'rgb(32, 50, 71)'":"'rgb(255, 255, 255)'")+";})()",'Lista vertical solida, CPF completo e rodape visivel '+width+' '+theme);
+        await evaluate("document.querySelector('.op-confirm-grid').scrollTop=9999");
+        await check("(()=>{const d=document.querySelector('[data-op-confirmar-cadastro]'),h=d.querySelector('.op-dialog-heading').getBoundingClientRect(),f=d.querySelector('footer').getBoundingClientRect(),r=d.getBoundingClientRect();return h.top>=r.top&&f.bottom<=r.bottom&&d.scrollTop===0;})()",'Rolagem restrita aos dados '+width+' '+theme);
+        await screenshot('confirmar-cadastro-'+width+'-'+theme+'.png');
+    }
+    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1080,deviceScaleFactor:1,mobile:false});
+    await evaluate("sessionStorage.setItem('alunos-antes-cadastro',JSON.stringify(JSON.parse(localStorage.getItem('sipa.operador.demo.v2')).alunos));var b=document.querySelector('[data-op-confirmar-cadastro] .op-button-primary');b.click();b.click()");
+    await waitFor(()=>evaluate("JSON.parse(localStorage.getItem('sipa.operador.demo.v2')).alunos.length===14"),'Cadastro persistido');
+    await check("(()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2')),a=e.alunos.at(-1);return a.unidadePrincipal==='Itaparica'&&a.unidadeCarro==='Santa Rita'&&a.aulas===0&&a.creditos.B.disponiveis===20&&a.creditos.A.disponiveis===15&&a.id!==a.cpf&&a.aulasAdquiridas.B===20&&a.aulasAdquiridas.A===15&&JSON.stringify(e.alunos.slice(0,-1))===sessionStorage.getItem('alunos-antes-cadastro');})()",'Cadastro unico com quantidades separadas, com creditos imediatos sem alterar alunos existentes');
+    await evaluate("document.querySelector('[data-op-nav=alunos]').click();document.querySelector('[data-op-aluno=s1]').click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-ficha]').open"),'Ficha abre');
+    await check("document.querySelector('[data-op-ficha]').textContent.includes('529.982.247-25')&&document.querySelector('[data-op-ficha]').textContent.includes('Unidade Itaparica')",'Ficha autorizada completa');
+    await (await import('./operador-ficha.browser.steps.mjs')).validarFicha({evaluate,waitFor,check,send,screenshot});
+    for(const categoria of ['A','B']){
+        await evaluate("document.querySelector('[data-op-ficha]').close();var e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2'));e.alunos.find(a=>a.id==='list-0').categoria='"+categoria+"';localStorage.setItem('sipa.operador.demo.v2',JSON.stringify(e));document.querySelector('[data-op-aluno=list-0]').click()");
+        await waitFor(()=>evaluate("document.querySelector('[data-op-ficha]').open&&document.querySelectorAll('[data-op-ficha] .op-local-tabs button').length===6"),'Ficha categoria '+categoria);
+        await evaluate("document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[1].click()");
+        await waitFor(()=>evaluate("!!document.querySelector('[data-op-exames-ficha]')"),'Acompanhamento categoria '+categoria);
+        await check("document.querySelectorAll('[data-op-prova]').length===2&&!!document.querySelector('[data-op-prova="+(categoria==='A'?'praticaMoto':'praticaCarro')+"]')&&!document.querySelector('[data-op-prova="+(categoria==='A'?'praticaCarro':'praticaMoto')+"]')",'Somente prova aplicavel categoria '+categoria);
+        await evaluate("document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[2].click()");
+        await waitFor(()=>evaluate("!!document.querySelector('[data-op-resumo-categoria]')"),'Resumo da categoria '+categoria);
+        await check("document.querySelectorAll('[data-op-resumo-categoria]').length===1&&document.querySelector('[data-op-resumo-categoria]').dataset.opResumoCategoria==='"+categoria+"'",'Somente card da categoria '+categoria);
+    }
+    await evaluate("document.querySelector('[data-op-ficha]').close();var e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2'));e.alunos.find(a=>a.id==='list-0').categoria='AB';localStorage.setItem('sipa.operador.demo.v2',JSON.stringify(e));document.querySelector('[data-op-aluno=s1]').click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-ficha]').open&&!!document.querySelector('[data-op-transferir]')"),'Retorno ficha original');
+    await evaluate("document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[2].click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-ficha]').textContent.includes('Categoria B')"),'Creditos por categoria');
+    await check("document.querySelectorAll('[data-op-resumo-categoria]').length===2&&!document.querySelector('[data-op-ficha] table')&&[...document.querySelectorAll('[data-op-total=adquiridas]')].every(x=>x.textContent==='Não informado')",'Dois cards compactos sem saldo inventado ou tabela');
+    await evaluate("(async()=>{sessionStorage.setItem('antes-resumo',localStorage.getItem('sipa.operador.demo.v2'));const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2'));e.alunos[0].aulasAdquiridas={A:5,B:10};e.aulas.push(...['A','B'].flatMap(c=>[5,6].map(status=>({id:'resultado-'+c+'-'+status,alunoId:'s1',categoria:c,unidade:c==='A'?'Centro':'Santa Rita',data:'2026-10-16',inicio:'07:00',fim:'07:50',instrutorId:'i-'+(c==='A'?'Centro':'Santa Rita'),veiculoId:(c==='A'?'m-Centro':'v-Santa Rita'),status:1}))));localStorage.setItem('sipa.operador.demo.v2',JSON.stringify(e));sessionStorage.setItem('resumo-antes-presenca',JSON.stringify(e));const sessao=await import('/dev/sessao.js'),r=await import('/dev/instrutor/agendamentosLocais.js');sessao.entrarDemo('teste','teste','instrutor');for(const c of ['A','B']){await r.vincularCadastro(JSON.stringify(['operador','i-'+(c==='A'?'Centro':'Santa Rita')]));for(const status of [5,6])await r.registrarAgendamentoVinculado('resultado-'+c+'-'+status,status);}let recusado=false;try{await r.registrarAgendamentoVinculado('resultado-B-5',5);}catch{recusado=true;}window.__duplicadoRecusado=recusado;sessao.entrarDemo('teste','teste','operador','Itaparica');document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[2].click();})()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-resumo-categoria=A] [data-op-total=realizadas]')?.textContent==='1'"),'Presenca do instrutor refletida na ficha');
+    await check("window.__duplicadoRecusado&&[...document.querySelectorAll('[data-op-total=realizadas],[data-op-total=faltas]')].every(x=>x.textContent==='1')&&document.querySelector('[data-op-resumo-categoria=A] [data-op-total=adquiridas]').textContent==='5'&&document.querySelector('[data-op-resumo-categoria=B] [data-op-total=adquiridas]').textContent==='10'",'Presenca e falta A/B entre unidades sem contagem duplicada');
+    await check("(()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2')),antes=JSON.parse(sessionStorage.getItem('resumo-antes-presenca'));return JSON.stringify(e.alunos)===JSON.stringify(antes.alunos)&&e.aulas.slice(-4).every(a=>a.historico.length===1&&a.historico[0].autor===a.instrutorId)&&e.aulas.slice(-4).every((a,i)=>a.unidade===antes.aulas.at(-4+i).unidade);})()",'Presencas preservam creditos, cadastros, unidades e auditam o registro original');
+    for(const width of [1440,390])for(const theme of ['light','dark']){
+        await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});await evaluate("SipaTema.salvar('"+theme+"')");
+        await check("(()=>{const d=document.querySelector('[data-op-ficha]'),g=d.querySelector('.op-resumo-aulas');return d.scrollWidth<=d.clientWidth+1&&getComputedStyle(g).gridTemplateColumns.split(' ').length==="+(width===1440?2:1)+";})()",'Resumo responsivo '+width+' '+theme);await screenshot('aulas-creditos-'+width+'-'+theme+'.png');
+    }
+    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1080,deviceScaleFactor:1,mobile:false});
+    await evaluate("document.querySelector('[data-op-ficha]').close();document.querySelector('[data-op-aluno=s1]').click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-ficha]').open"),'Reabrir ficha de resultados');
+    await evaluate("document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[2].click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-resumo-categoria=B] [data-op-total=faltas]')?.textContent==='1'"),'Resultados persistem ao reabrir');
+    await evaluate("document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[4].click()");
+    await waitFor(()=>evaluate("!!document.querySelector('[data-op-linha-tempo]')"),'Historico detalhado preservado');
+    await evaluate("var f=document.querySelector('.op-timeline-filtros');f.elements.tipo.value='aulas';f.requestSubmit()");
+    await check("document.querySelector('[data-op-ficha]').textContent.includes('Aula realizada')&&document.querySelector('[data-op-ficha]').textContent.includes('Cobil')===false&&document.querySelector('[data-op-ficha]').textContent.includes('Santa Rita')",'Historico mostra aulas e unidades originais');
+    await evaluate("localStorage.setItem('sipa.operador.demo.v2',sessionStorage.getItem('antes-resumo'))");
+    await evaluate("document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[5].click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-ficha]').textContent.includes('Nenhuma credencial')"),'Acesso da ficha');
+    await check("!document.querySelector('[data-op-ficha] input[type=password]')",'Ficha de acesso nao expoe senha');
+    // Resultado administrativo permanece registrado, mas nao condiciona reserva.
+    await check("(async()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2')),a=e.alunos[0],m=await import('/shared/js/elegibilidadeAluno.js'),r=await import('/nivel-1-operador/js/dominioOperador.js');const n=r.agendarAula(e,{id:'operador-teste',unidade:'Itaparica',permissoes:['consultar','agendar']},{alunoId:a.id,tipoCambio:'manual',categoria:'B',data:'2026-10-23',inicio:'14:00',instrutorId:'i-Itaparica',veiculoId:'v-Itaparica'},'consulta-sem-gravacao',new Date('2026-10-19T08:00:00-03:00'));return m.pendenciasAgendamento(a,'2026-10-23').some(p=>p.tipo==='medico'&&p.situacao==='Reprovado')&&n.aulas.at(-1).id==='consulta-sem-gravacao'&&a.examesAdministrativos.medico.status==='Reprovado';})()",'Reprovacao medica permanece no acompanhamento sem bloquear a reserva');
+    await evaluate("document.querySelectorAll('[data-op-ficha] .op-local-tabs button')[0].click()");
+    await waitFor(()=>evaluate("!!document.querySelector('[data-op-transferir]')"),'Retorno ao cadastro');
+    await evaluate("document.querySelector('[data-op-transferir]').click();const s=document.querySelector('[data-op-nova-unidade]');s.value='Santa Rita';s.dispatchEvent(new Event('change'))");
+    await waitFor(()=>evaluate("!document.querySelector('[data-op-confirmar-transferencia]').disabled"),'Previa transferencia');
+    await check("document.querySelectorAll('[data-op-transferencia] input[type=checkbox]:disabled').length===3&&document.querySelectorAll('[data-op-transferencia] input[type=checkbox]:not(:disabled)').length===1",'Tres aulas amanha bloqueadas e uma elegivel');
+    await screenshot('transferencia-light.png');
+    await evaluate("document.querySelector('[data-op-motivo-transferencia]').value='Solicitado pelo aluno no atendimento';document.querySelector('[data-op-confirmar-transferencia]').click()");
+    await waitFor(()=>evaluate("!document.querySelector('[data-op-transferencia]').open"),'Transferencia salva');
+    await check("(()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2'));return e.alunos[0].unidadeCarro==='Santa Rita'&&e.alunos[0].unidadePrincipal==='Itaparica'&&e.alunos[0].creditos.B.disponiveis===6&&e.aulas.every(a=>a.unidade==='Itaparica'&&a.status===1)&&e.alunos[0].historico.at(-1).mantidas.length===4;})()",'Transferencia imediata sem migrar, cancelar ou restituir automaticamente');
+    await evaluate("document.querySelector('[data-op-ficha]').close()");
+    await navigate(route+'?demo=1&unidade=Santa%20Rita',"document.querySelector('.op-unidade')&&!document.getElementById('operador-acesso').hidden===false");
+    await evaluate("document.querySelector('[data-op-nav=agenda]').click();const d=document.querySelector('[data-agenda-data]');d.value='2026-10-23';d.dispatchEvent(new Event('change'))");
+    await check("document.querySelectorAll('[data-agenda-coluna] [data-agenda-horario]').length===12&&!document.querySelector('[data-agendar-horario=\"11:00\"]')&&!document.querySelector('[data-agendar-horario=\"12:00\"]')",'Grade com 12 linhas e almoco bloqueado');
+    await evaluate("document.querySelector('[data-agendar-horario=\"14:00\"]').click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-agendar]').open"),'Modal de agendamento');
+    await evaluate("document.querySelector('[data-op-reserva-aluno=s1]').click();document.querySelector('[data-op-reserva-confirmar]').click()");
+    await waitFor(()=>evaluate("!document.querySelector('[data-op-agendar]').open"),'Reserva salva');
+    await check("(()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2')),a=e.aulas.at(-1);return a.unidade==='Santa Rita'&&a.instrutorId==='i-Santa Rita'&&a.veiculoId==='v-Santa Rita'&&a.inicio==='14:00'&&a.fim==='14:50'&&e.alunos[0].creditos.B.disponiveis===5&&e.aulas.slice(0,4).every(x=>x.unidade==='Itaparica');})()",'Nova reserva utiliza recursos atuais, 50 min, saldo existente e preserva anteriores');
+    await evaluate("document.querySelector('[data-agenda-modo=semana]').click()");await check("document.querySelectorAll('[data-agenda-coluna]').length===7",'Agenda semanal preservada');
+    await evaluate("document.querySelector('[data-agenda-modo=mes]').click()");await check("document.querySelectorAll('[data-agenda-dia]').length>=28",'Agenda mensal preservada');
+    await navigate(route+'?demo=1&unidade=Centro',"!!document.querySelector('.op-unidade')");
     await evaluate("document.querySelector('[data-op-nav=alunos]').click()");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 4 && !document.querySelector('[data-op-dialog]').open && !document.querySelector('.op-table tbody img')", "Cadastro fictício é local e conteúdo é tratado como texto");
-    await evaluate("document.querySelector('[data-op-nav=recursos]').click(); document.querySelector('#recurso-instrutores').click()");
-    await check("document.querySelectorAll('.op-demo-resource').length === 2 && document.querySelector('.op-demo-resource').textContent.includes('Instrutor Exemplo')", "Recursos fictícios podem ser filtrados");
+    await check("document.querySelectorAll('[data-op-aluno]').length===0&&!document.querySelector('[data-op-panel=alunos]').textContent.includes('Aluno Teste Vinculado')",'Pista Centro nao libera ficha administrativa externa');
+    await evaluate("document.querySelector('[data-op-nav=agenda]').click();const d=document.querySelector('[data-agenda-data]');d.value='2026-10-23';d.dispatchEvent(new Event('change'));document.querySelector('[data-agendar-horario=\"15:00\"]').click()");
+    await waitFor(()=>evaluate("document.querySelector('[data-op-agendar]').open"),'Agendamento moto na pista');
+    await evaluate("var s=document.querySelector('[data-op-reserva-par]');s.value='1';s.dispatchEvent(new Event('change'))");
+    await waitFor(()=>evaluate("!!document.querySelector('[data-op-reserva-aluno=s1]')"),'Aluno autorizado na pista');
+    await evaluate("document.querySelector('[data-op-reserva-aluno=s1]').click();document.querySelector('[data-op-reserva-confirmar]').click()");
+    await waitFor(()=>evaluate("!document.querySelector('[data-op-agendar]').open"),'Reserva moto salva');
+    await check("(()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2'));return e.aulas.at(-1).categoria==='A'&&e.aulas.at(-1).unidade==='Vila Velha'&&e.alunos[0].creditos.A.disponiveis===6;})()",'Moto exclusivamente Centro com dados minimos para operacao');
     await evaluate("document.querySelector('[data-op-nav=visao-geral]').click()");
-    await check("document.querySelectorAll('.op-metric').length === 9 && document.querySelector('.op-demo-agenda').textContent.includes('DEMO-02')", "Indicadores e próximas aulas derivados dos dados fictícios");
-    await evaluate("document.querySelector('[data-op-nav=agenda]').click(); var d = document.querySelector('[data-agenda-data]'); d.value = '2026-10-19'; d.dispatchEvent(new Event('change'))");
-    await check("document.querySelectorAll('.op-agenda-slot').length === 12 && [...document.querySelectorAll('.op-agenda-slot')].filter(s => s.textContent.includes('Intervalo de almoço')).length === 2", "Grade semanal exibe almoço às 12h e 13h");
-    await evaluate("var filtroAgenda = document.querySelector('[data-agenda-filtro=categoria]'); filtroAgenda.value = 'B'; filtroAgenda.dispatchEvent(new Event('change'))");
-    await check("document.querySelectorAll('.op-agenda .op-aula-card').length === 0", "Filtro da agenda exclui aulas de outra categoria");
-    await evaluate("filtroAgenda.value = ''; filtroAgenda.dispatchEvent(new Event('change')); var aulaFicticia = JSON.parse(localStorage['sipa.operador.demo.v2']).aulas[0]; d.value = aulaFicticia.data; d.dispatchEvent(new Event('change')); document.querySelector('.op-agenda .op-aula-evento').click()");
-    await check("document.querySelector('[data-op-aula]').open && document.querySelector('[data-op-aula]').textContent.includes('Centro') && document.querySelector('[data-op-aula]').textContent.includes('Instrutor Exemplo') && document.querySelector('[data-op-aula] button:disabled') !== null", "Aula ocupada abre detalhes sem cancelamento administrativo");
-    await screenshot("agenda-detalhes.png");
-    await evaluate("document.querySelector('[data-op-aula] .op-close').click(); d.value = '2026-10-19'; d.dispatchEvent(new Event('change'))");
-    await screenshot("agenda-mobile.png");
-    await evaluate("document.querySelector('[data-agenda-modo=semana]').click()");
-    await check("document.querySelectorAll('.op-agenda-day').length === 7", "Visualização semanal contém sete dias");
-    await evaluate("document.querySelector('[data-agenda-modo=mes]').click()");
-    await check("document.querySelectorAll('.op-month-day').length === 42", "Visualização mensal mostra calendário com dias adjacentes");
-    await evaluate("document.querySelector('[data-agenda-modo=dia]').click(); var d = document.querySelector('[data-agenda-data]'); d.value = '2026-10-18'; d.dispatchEvent(new Event('change'))");
-    await check("document.querySelector('.op-agenda-content').textContent.includes('Domingo') && document.querySelectorAll('.op-agenda-slot').length === 0 && !document.querySelector('[data-agendar-horario]')", "Domingo apresenta fechamento");
-    await evaluate("var d = document.querySelector('[data-agenda-data]'); d.value = '2027-11-20'; d.dispatchEvent(new Event('change'))");
-    await check("document.querySelector('.op-agenda-content').textContent.includes('Consciência Negra') && !document.querySelector('[data-agendar-horario]')", "Feriado nacional fechado sem oferecer agendamento");
-    await evaluate("document.querySelector('[data-agenda-modo=mes]').click()");
-    await check("document.querySelector('[data-agenda-dia=\"2027-11-20\"]').classList.contains('op-closed')", "Calendário mensal identifica feriado");
-    await evaluate("var d = document.querySelector('[data-agenda-data]'); d.value = '2028-02-29'; d.dispatchEvent(new Event('change')); document.querySelector('[aria-label=\"Próximo período\"]').click()");
-    await check("document.querySelector('[data-agenda-data]').value === '2028-03-01'", "Navegação de mês em ano bissexto");
-    for (const section of ["visao-geral", "alunos", "agenda", "verificacoes", "acessos", "recursos"]) {
-        await evaluate(`document.querySelector('[data-op-nav="${section}"]').click()`);
-        await check("document.documentElement.scrollWidth <= innerWidth", `Demonstração sem transbordamento móvel: ${section}`);
-    }
-    await evaluate("document.querySelector('[data-op-nav=visao-geral]').click(); document.activeElement.blur(); scrollTo(0,0)");
-    await screenshot("demonstracao-mobile.png");
-    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1080, deviceScaleFactor: 1, mobile: false });
-    await screenshot("demonstracao-desktop.png");
-    await evaluate("document.querySelector('[data-op-nav=agenda]').click()");
-    await screenshot("agenda-desktop.png");
-    await evaluate("d.value = aulaFicticia.data; d.dispatchEvent(new Event('change')); document.querySelector('[data-agenda-modo=semana]').click()");
-    await screenshot("agenda-semana-desktop.png");
-    await check("document.documentElement.scrollWidth <= innerWidth", "Agenda semanal sem transbordamento no desktop");
-    await check("[...document.querySelectorAll('.op-week-grid [data-agenda-horario=\"10:00\"]')].every(s => Math.abs(s.getBoundingClientRect().top - document.querySelector('.op-week-grid [data-agenda-horario=\"10:00\"]').getBoundingClientRect().top) < 1)", "Horários semanais alinhados entre colunas com e sem aulas");
-    await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
-    await check("document.documentElement.scrollWidth <= innerWidth", "Agenda semanal responsiva sem transbordamento no celular");
-    await screenshot("agenda-semana-mobile.png");
-    await send("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1080, deviceScaleFactor: 1, mobile: false });
-    await check("window.testCalls.length === 0 && sessionStorage['sipa.token'] === 'sessao-preservada-no-teste' && localStorage['sipa.API_URL'] === 'http://exemplo.invalid/api'", "Nenhuma API ou alteração de credenciais após todas as simulações");
-    await navigate("/operador-cfc.html?demo=1", "document.querySelector('.op-demo-banner')");
-    await evaluate("document.querySelector('[data-op-nav=alunos]').click()");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 4", "Recarregar preserva os cadastros fictícios");
-    await evaluate("document.querySelector('[data-demo-aluno=demo-2] button').click()");
-    await check("document.querySelector('[data-exame=psicotecnico] select').value === 'Reprovado' && document.querySelector('[data-exame=psicotecnico] textarea').value === 'Anotação fictícia de teste'", "Recarregar preserva exame, data e observações");
-    await evaluate("var exameApto = document.querySelector('[data-exame=psicotecnico]'); exameApto.elements.status.value = 'Aprovado'; exameApto.requestSubmit(); document.querySelector('[data-op-ficha] .op-close').click()");
-    await evaluate("(async () => { var datas = await import('/js/modules/operador/calendario.js'); var regras = await import('/js/modules/operador/disponibilidade.js'); window.dataAulaTeste = datas.somarDias(datas.hojeBrasil(), 1); while (regras.motivoFechamento(window.dataAulaTeste)) window.dataAulaTeste = datas.somarDias(window.dataAulaTeste, 1); })()");
-    await evaluate("document.querySelector('[data-op-nav=agenda]').click(); document.querySelector('[data-agenda-modo=dia]').click(); var d = document.querySelector('[data-agenda-data]'); d.value = window.dataAulaTeste; d.dispatchEvent(new Event('change')); document.querySelector('[data-agendar-horario=\"07:00\"]').click()");
-    await check("document.querySelector('[data-op-agendar]').open && document.querySelector('.op-booking-resumo').textContent.includes('07:00 às 08:00')", "Horário livre abre formulário com data e duração preenchidas");
-    await evaluate("var agForm = document.querySelector('[data-op-agendar] form'); agForm.elements.alunoId.value = 'demo-2'; agForm.elements.alunoId.dispatchEvent(new Event('change')); agForm.elements.instrutorId.value = 'i1'; agForm.elements.instrutorId.dispatchEvent(new Event('change')); agForm.elements.veiculoId.value = 'v2'");
-    await check("agForm.elements.categoria.value === 'A' && [...agForm.elements.veiculoId.options].every(o => !o.value || o.value === 'v2')", "Categoria inferida e veículos filtrados por compatibilidade");
-    await screenshot("novo-agendamento.png");
-    await evaluate("window.aulasAntes = JSON.parse(localStorage['sipa.operador.demo.v2']).aulas.length; agForm.requestSubmit()");
-    await check("!document.querySelector('[data-op-agendar]').open && JSON.parse(localStorage['sipa.operador.demo.v2']).aulas.length === window.aulasAntes + 1 && document.querySelector('[data-agenda-horario=\"07:00\"] .op-aula-card').textContent.includes('Aluno Exemplo Dois') && document.querySelector('.op-agenda-success').textContent.includes('confirmado')", "Confirmar cria e persiste aula fictícia, ocupa a grade e mostra sucesso");
-    await check("JSON.parse(localStorage['sipa.operador.demo.v2']).alunos.find(a => a.id === 'demo-2').aulas === 9", "Agendamento consome somente uma aula do saldo fictício");
-    await evaluate("document.querySelector('[data-agendar-horario=\"07:00\"]').click(); agForm.elements.alunoId.value = 'demo-2'; agForm.elements.alunoId.dispatchEvent(new Event('change'))");
-    await check("[...agForm.elements.instrutorId.options].every(o => o.value !== 'i1')", "Instrutor ocupado não é oferecido para novo agendamento");
-    // Simula uma seleção antiga que ficou indisponível após abrir o formulário.
-    await evaluate("agForm.elements.categoria.append(new Option('A', 'A')); agForm.elements.categoria.disabled = false; agForm.elements.categoria.value = 'A'; agForm.elements.instrutorId.append(new Option('Seleção antiga', 'i1')); agForm.elements.instrutorId.disabled = false; agForm.elements.instrutorId.value = 'i1'; agForm.elements.veiculoId.append(new Option('Seleção antiga', 'v2')); agForm.elements.veiculoId.disabled = false; agForm.elements.veiculoId.value = 'v2'; agForm.requestSubmit()");
-    await check("document.querySelector('[data-op-agendar]').open && document.querySelector('.op-booking-feedback').textContent.includes('Conflito') && JSON.parse(localStorage['sipa.operador.demo.v2']).aulas.length === window.aulasAntes + 1 && JSON.parse(localStorage['sipa.operador.demo.v2']).alunos.find(a => a.id === 'demo-2').aulas === 9", "Seleção antiga conflitante é bloqueada na confirmação sem alterar aulas ou saldo");
-    await evaluate("document.querySelector('[data-op-agendar] .op-close').click(); document.querySelector('[data-op-nav=visao-geral]').click(); document.querySelector('[data-indicador=semana]').click()");
-    await check("[...document.querySelectorAll('[data-indicador-registro]')].some(r => r.textContent.includes('07:00 às 08:00')) && Number(document.querySelector('[data-indicador-total]').dataset.indicadorTotal) === document.querySelectorAll('[data-indicador-registro]').length", "Nova aula sincronizada com indicador e detalhamento dos sete dias");
-    await evaluate("document.querySelector('[data-op-indicador] .op-close').click()");
-    await navigate("/operador-cfc.html?demo=1", "document.querySelector('.op-demo-banner')");
-    await check("JSON.parse(localStorage['sipa.operador.demo.v2']).aulas.length === 5 && JSON.parse(localStorage['sipa.operador.demo.v2']).aulas.some(a => a.inicio === '07:00')", "Agendamento fictício preservado após recarga");
-    await evaluate("[...document.querySelectorAll('.op-demo-banner button')].find(b => b.textContent === 'Restaurar dados').click()");
-    await check("document.querySelector('[data-op-reset]').open", "Restauração pede confirmação no diálogo");
-    await evaluate("[...document.querySelectorAll('[data-op-reset] button')].find(b => b.textContent === 'Restaurar dados iniciais').click()");
-    await check("document.querySelectorAll('[data-demo-aluno]').length === 3 && JSON.parse(localStorage['sipa.operador.demo.v2']).aulas.length === 4 && sessionStorage['sipa.token'] === 'sessao-preservada-no-teste' && localStorage['sipa.API_URL'] === 'http://exemplo.invalid/api'", "Restaurar remove apenas dados fictícios e preserva credenciais/configuração");
-
-    // Cenário exclusivamente neste perfil temporário: duas aulas no mesmo início,
-    // com recursos distintos, mais uma aguardando aceite. Nunca altera o navegador do usuário.
-    async function cenarioCompacto(longo) {
-        await evaluate(`(async () => {
-            const { criarDadosDemo } = await import('/js/modules/operador/demo/dadosDemo.js');
-            const { hojeBrasil, somarDias, diaSemana } = await import('/js/modules/operador/calendario.js');
-            const { motivoFechamento } = await import('/js/modules/operador/disponibilidade.js');
-            const estado = criarDadosDemo(); let data = somarDias(hojeBrasil(), 1);
-            while (motivoFechamento(data) || diaSemana(data) === 6) data = somarDias(data, 1);
-            if (${longo}) {
-                estado.alunos.forEach(a => { a.nome = a.nome + ' SobrenomeMuitoLongo'.repeat(12); });
-                estado.recursos.forEach(r => { r.nome += ' IdentificaçãoLonga'.repeat(12); r.descricao += ' DescriçãoLonga'.repeat(12); });
+    for(const width of [1440,900,390]){
+        await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});
+        for(const theme of ['light','dark']){
+            await evaluate("SipaTema.salvar('"+theme+"')");
+            for(const section of ['visao-geral','alunos','cadastro','agenda','instrutores','recursos','perfil']){
+                await evaluate("document.querySelector('[data-op-nav="+section+"]').click()");
+                if(section==='alunos'){
+                    await check("(()=>{const f=document.querySelector('.op-local-filters'),r=f.getBoundingClientRect();return document.querySelectorAll('[data-op-pesquisar]').length===5&&[...document.querySelectorAll('[data-op-pesquisar]')].every(b=>{const x=b.getBoundingClientRect();return x.width>=38&&x.height>=40&&x.right<=r.right+1&&b.querySelector('svg');});})()",'Lupas alinhadas e clicaveis '+width+' '+theme);
+                    await screenshot('pesquisa-alunos-'+width+'-'+theme+'.png');
+                }
+                if(section==='cadastro'){
+                    await evaluate("var f=document.querySelector('[data-op-panel=cadastro] form');f.elements.categoria.value='AB';f.elements.categoria.dispatchEvent(new Event('change'));f.elements.quantidadeCarro.value='20';f.elements.quantidadeMoto.value='15'");
+                    await check("getComputedStyle(document.querySelector('.op-cadastro-quantidades')).gridTemplateColumns.split(' ').length==="+(width>760?2:1)+"&&document.querySelector('[data-op-panel=cadastro] button[type=submit]').textContent==='Confirmar cadastro'",'Quantidades AB alinhadas '+width+' '+theme);
+                    await check("(()=>{const n=document.querySelector('.op-pista-aviso'),s=document.querySelector('[name=unidadeCarro]'),r=n.getBoundingClientRect(),b=s.getBoundingClientRect();return n.textContent.includes('1335')&&!n.querySelector('svg')&&getComputedStyle(n).fontSize==='12px'&&("+(width>760?"r.left>=b.right&&Math.abs(r.top-b.top)<3&&Math.abs(r.width-b.width)<2":"r.top>=b.bottom&&Math.abs(r.left-b.left)<2")+")&&!document.querySelector('[data-op-panel=cadastro] .op-inline-note');})()",'Pista em coluna direita ou empilhada sem sobreposicao '+width+' '+theme);
+                    await screenshot('cadastro-'+width+'-'+theme+'.png');
+                }
+                await check("document.documentElement.scrollWidth<=innerWidth+1",'Sem overflow '+section+' '+width+' '+theme);
             }
-            estado.aulas = [
-                { id: 'compacta-1', alunoId: 'demo-1', instrutorId: 'i1', veiculoId: 'v1', categoria: 'B', inicio: '07:00', fim: '08:00', status: 1 },
-                { id: 'compacta-2', alunoId: 'demo-2', instrutorId: 'i2', veiculoId: 'v2', categoria: 'A', inicio: '07:00', fim: '08:00', status: 1 },
-                { id: 'compacta-3', alunoId: 'demo-3', instrutorId: 'i1', veiculoId: 'v1', categoria: 'B', inicio: '09:00', fim: '10:00', status: 3 }
-            ].map(a => ({ ...a, unidade: 'Centro', data }));
-            localStorage.setItem('sipa.operador.demo.v2', JSON.stringify(estado));
-        })()`);
-        await navigate('/operador-cfc.html?demo=1', "document.querySelector('[data-indicador]')");
-    }
-    for (const longo of [false, true]) {
-        await cenarioCompacto(longo);
-        for (const [width, height] of [[1366, 768], [1920, 1080]]) {
-            await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
-            await evaluate("document.querySelector('[data-op-nav=visao-geral]').click(); scrollTo(0, 0)");
-            await check("document.querySelectorAll('[data-indicador]').length === 9 && document.querySelector('.op-dashboard-metrics').getBoundingClientRect().height < 310 && [...document.querySelectorAll('[data-indicador]')].every(c => c.getBoundingClientRect().height < 110)", `Indicadores compactos em ${width}, textos ${longo ? 'longos' : 'normais'}`);
-            await check("getComputedStyle(document.querySelector('.op-proximas-lista')).gridTemplateColumns.split(' ').length === 1 && [...document.querySelectorAll('.op-aula-lista')].every(c => c.getBoundingClientRect().height < 100)", `Próximas aulas em lista compacta em ${width}, textos ${longo ? 'longos' : 'normais'}`);
-            await check("document.documentElement.scrollWidth <= innerWidth", `Visão geral sem transbordamento em ${width}, textos ${longo ? 'longos' : 'normais'}`);
-            if (!longo) await screenshot(`compacto-dashboard-${width}.png`);
-            const medidas = await evaluate("({ indicadores: Math.round(document.querySelector('.op-dashboard-metrics').getBoundingClientRect().height), aulaLista: Math.round(document.querySelector('.op-aula-lista').getBoundingClientRect().height) })");
-            await evaluate("document.querySelector('[data-op-nav=agenda]').click(); document.querySelector('[data-agenda-modo=dia]').click(); var dataCompacta = JSON.parse(localStorage['sipa.operador.demo.v2']).aulas[0].data; var inputCompacto = document.querySelector('[data-agenda-data]'); inputCompacto.value = dataCompacta; inputCompacto.dispatchEvent(new Event('change')); scrollTo(0,0)");
-            await check("document.querySelectorAll('.op-aula-evento').length === 3 && document.querySelectorAll('[data-agenda-horario=\"07:00\"] .op-aula-evento').length === 2 && [...document.querySelectorAll('.op-agenda-slot')].every(s => s.getBoundingClientRect().height < 90)", `Dia compacto preserva aulas simultâneas em ${width}, textos ${longo ? 'longos' : 'normais'}`);
-            await check("[...document.querySelectorAll('.op-aula-evento')].every(e => e.matches('button') && !e.querySelector('.op-aula-recursos') && e.getAttribute('aria-label').includes('Ver detalhes'))", 'Eventos preservam ação acessível e resumo sem dados repetidos');
-            medidas.faixaDiaria = await evaluate("Math.round(document.querySelector('[data-agenda-horario=\"07:00\"]').getBoundingClientRect().height)");
-            if (!longo) await screenshot(`compacto-dia-${width}.png`);
-            await evaluate("document.querySelector('.op-aula-evento').click()");
-            await check("document.querySelector('[data-op-aula]').open && document.querySelector('[data-op-aula]').textContent.includes('Instrutor') && document.querySelector('[data-op-aula]').textContent.includes('Identificação')", 'Resumo compacto continua abrindo todos os detalhes');
-            await evaluate("document.querySelector('[data-op-aula] .op-close').click(); document.querySelector('[data-agenda-modo=semana]').click(); scrollTo(0,0)");
-            await check("getComputedStyle(document.querySelector('.op-week-grid')).gridTemplateColumns.split(' ').length === 7 && document.documentElement.scrollWidth <= innerWidth", `Sete dias em colunas sem rolagem horizontal em ${width}`);
-            if (!longo) await screenshot(`compacto-semana-${width}.png`);
-            await check("[...document.querySelectorAll('.op-week-grid [data-agenda-horario=\"09:00\"]')].every(s => Math.abs(s.getBoundingClientRect().top - document.querySelector('.op-week-grid [data-agenda-horario=\"09:00\"]').getBoundingClientRect().top) < 1) && [...document.querySelectorAll('.op-week-grid .op-agenda-slot')].every(s => s.getBoundingClientRect().height < 135)", `Semana compacta e alinhada em ${width}, textos ${longo ? 'longos' : 'normais'}`);
-            medidas.faixaSemanal = await evaluate("Math.round([...document.querySelectorAll('.op-week-grid .op-agenda-slot')].reduce((max, s) => Math.max(max, s.getBoundingClientRect().height), 0))");
-            medidasLayout.push({ width, longo, ...medidas });
-            if (!longo) await screenshot(`compacto-semana-${width}.png`);
+            await evaluate("document.querySelector('[data-op-nav=visao-geral]').click()");
+            const colunas=width>1100?3:width>600?2:1;
+            await check("getComputedStyle(document.querySelector('.op-quick-grid')).gridTemplateColumns.split(' ').length==="+colunas+"&&[...document.querySelectorAll('.op-quick-action')].every(n=>n.scrollHeight<=n.clientHeight&&n.querySelectorAll('svg').length===2)&&document.documentElement.dataset.theme==='"+theme+"'",'Grade de atalhos legivel '+colunas+' colunas '+theme);
+            await screenshot('inicio-'+width+'-'+theme+'.png');
         }
     }
-    for (const width of [768, 390]) {
-        await send('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: width < 500 });
-        for (const secao of ['visao-geral', 'agenda']) {
-            await evaluate(`document.querySelector('[data-op-nav=${secao}]').click(); scrollTo(0,0)`);
-            await check('document.documentElement.scrollWidth <= innerWidth', `Textos longos sem transbordamento em ${secao}, largura ${width}`);
-            await screenshot(`compacto-${secao}-${width}.png`);
-        }
+    await evaluate("document.querySelector('.op-menu-mobile').click()");await check("document.querySelector('.op-sidebar').classList.contains('op-open')",'Menu mobile acessivel');
+    await evaluate("document.querySelector('[data-op-nav=alunos]').click()");await check("!document.querySelector('.op-sidebar').classList.contains('op-open')",'Menu mobile fecha na navegacao');
+    await check("localStorage.getItem('sipa.aluno.preservar')==='original'&&sessionStorage.getItem('sipa.token')==='sessao-preservada-no-teste'&&testCalls.length===0",'Dados dos outros perfis e sessao preservados, nenhuma API');
+    await navigate(route+'?demo=1&unidade=Itaparica',"!!document.querySelector('.op-unidade')");
+    await evaluate("document.querySelector('[data-op-nav=alunos]').click();document.querySelector('[data-op-aluno=s1]').click()");
+    await waitFor(()=>evaluate("!!document.querySelector('[data-op-transferir]')&&document.querySelector('[data-op-ficha]').open"),'Ficha depois de recarregar');
+    await check("document.querySelector('[data-op-ficha]').textContent.includes('Unidade Santa Rita')",'Unidade transferida persiste na recarga');
+    await evaluate("document.querySelector('[data-op-transferir]').click();var s=document.querySelector('[data-op-nova-unidade]');s.value='Cobil\u00e2ndia';s.dispatchEvent(new Event('change'))");
+    await waitFor(()=>evaluate("!document.querySelector('[data-op-confirmar-transferencia]').disabled"),'Segunda previa');
+    await evaluate("document.querySelector('[data-op-transferencia] input[type=checkbox]').checked=true;document.querySelector('[data-op-motivo-transferencia]').value='Nova solicitacao com cancelamento expresso';document.querySelector('[data-op-confirmar-transferencia]').click()");
+    await waitFor(()=>evaluate("!document.querySelector('[data-op-transferencia]').open"),'Cancelamento elegivel confirmado');
+    await check("(()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2'));return e.aulas[4].status===2&&e.aulas[4].unidade==='Santa Rita'&&e.aulas.slice(0,4).every(a=>a.status===1&&a.unidade==='Itaparica')&&e.alunos[0].creditos.B.disponiveis===6&&e.alunos[0].historico.at(-1).canceladas.length===1;})()",'Somente cancelamento selecionado altera reserva e devolve credito existente');
+    await check("(()=>{const e=JSON.parse(localStorage.getItem('sipa.operador.demo.v2'));return e.contasAlunos.length===1&&e.contasAlunos[0].hash.length===64&&e.contasAlunos[0].alunoId===e.alunos.at(-1).id&&!localStorage.getItem('sipa.operador.demo.v2').includes('senha-segura-local-123');})()",'Conta ficticia vinculada com hash e sem senha em texto puro');
+    await navigate('/login.html?ambiente=local',"!!document.querySelector('#conta-aluno-cadastrada')");
+    await evaluate("document.querySelector('#conta-aluno-cadastrada').checked=true;document.querySelector('#login-cpf').value='935.411.347-80';document.querySelector('#login-password').value='935411';document.querySelector('#login-form').requestSubmit()");
+    await waitFor(()=>evaluate("document.querySelector('[data-definir-senha-recepcao]')?.open"),'Primeiro login exige nova senha');
+    await check("(()=>{const f=document.querySelector('[data-definir-senha-recepcao] form');return f.elements.nova.minLength===4&&f.elements.confirmacao.minLength===4&&f.elements.nova.maxLength===128&&f.textContent.includes('m\u00ednimo de 4 caracteres');})()",'Primeiro acesso permite quatro caracteres e preserva limite de 128');
+    await send('Page.navigate',{url:origin+'/aluno/html/dashboard.html?alunoId=s1'});
+    await waitFor(()=>evaluate("location.pathname==='/login.html'&&document.querySelector('[data-definir-senha-recepcao]')?.open"),'Pagina protegida bloqueada antes da troca');
+    await check("!document.querySelector('.conta-recepcao')",'Nenhum dado protegido exposto durante ativacao pendente');
+    await evaluate("var f=document.querySelector('[data-definir-senha-recepcao] form');f.elements.nova.value='1234';f.elements.confirmacao.value='1234';f.requestSubmit()");
+    await waitFor(()=>evaluate("document.body.dataset.sipaOrigem==='recepcao'"),'Aluno ativado acessa seu painel');
+    await navigate('/aluno/html/meu-perfil.html',"document.querySelector('#profile-cpf')?.textContent==='935.411.347-80'");
+    await check("document.querySelector('main').textContent.includes('Cadastro Teste Novo')&&document.querySelector('main').textContent.includes('935.411.347-80')&&!document.querySelector('main').textContent.includes('Aluno Teste Vinculado')",'Painel le cadastro central do aluno autenticado, sem outros alunos');
+    await check("(async()=>{const m=await import('/dev/aluno/contaRecepcao.js');return (await m.consultarMinhaContaRecepcao('s1')).aluno.cpf==='93541134780';})()",'Parametro de terceiro nao altera identidade da consulta');
+    await evaluate("(async()=>{const m=await import('/dev/aluno/contaRecepcao.js');await m.sairContaRecepcao();location.assign('/login.html?ambiente=local');})()");
+    await waitFor(()=>evaluate("location.pathname==='/login.html'&&!!document.querySelector('#conta-aluno-cadastrada')"),'Sair da conta vinculada');
+    await evaluate("document.querySelector('#conta-aluno-cadastrada').checked=true;document.querySelector('#login-cpf').value='93541134780';document.querySelector('#login-password').value='935411';document.querySelector('#login-form').requestSubmit()");
+    await waitFor(()=>evaluate("!document.querySelector('#login-submit').disabled&&document.querySelector('#login-message').textContent.includes('inv')"),'Senha provisoria deixa de autenticar');
+    await evaluate("document.querySelector('#login-password').value='1234';document.querySelector('#login-form').requestSubmit()");
+    await waitFor(()=>evaluate("document.body.dataset.sipaOrigem==='recepcao'"),'Novo login com senha definida');
+    await navigate('/aluno/html/meu-perfil.html',"document.querySelector('#profile-cpf')?.textContent==='935.411.347-80'");
+    await check("!document.querySelector('[data-definir-senha-recepcao]')&&sessionStorage.getItem('sipa.token')==='sessao-preservada-no-teste'",'Login posterior sem nova ativacao e token real preservado');
+    for(const width of [1440,390])for(const theme of ['light','dark']){
+        await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await evaluate("SipaTema.salvar('"+theme+"')");
+        await check("document.documentElement.scrollWidth<=innerWidth&&document.querySelector('main').textContent.includes('Cadastro Teste Novo')",'Conta propria responsiva '+width+' '+theme);await screenshot('conta-aluno-'+width+'-'+theme+'.png');
     }
-    assert.deepEqual(consoleErrors, [], "Sem exceções ou console.error no navegador"); checks.push("Sem erros de JavaScript no console");
-    await evaluate("document.querySelector('[data-op-sair]').click()");
-    await waitFor(async () => await evaluate("location.search === '' && document.readyState === 'complete' && !document.getElementById('operador-acesso').hidden"), "saída da demonstração");
-    await check("sessionStorage['sipa.token'] === 'sessao-preservada-no-teste' && document.getElementById('operador-conteudo').hidden", "Sair da demonstração restaura bloqueio sem fazer logout real");
-    console.log(JSON.stringify({ passed: checks.length, checks, medidasLayout, artifacts }, null, 2));
+    await evaluate("document.querySelector('#mobile-menu-button,[id$=\"-mobile-menu\"],.student-menu-toggle').click()");await check("document.querySelector('.sipa-sidebar').classList.contains('mobile-open')",'Conta vinculada preserva acesso ao menu no celular');
+    assert.deepEqual(consoleErrors,[]);checks.push('Nenhum erro novo no console');
+    console.log(JSON.stringify({passed:checks.length,checks,artifacts},null,2));
 } finally {
     if (ws?.readyState === WebSocket.OPEN) {
         try { await send("Browser.close"); } catch { /* processo pode já ter encerrado */ }
