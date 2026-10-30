@@ -312,7 +312,21 @@ html body.operador-page .op-unidade .op-reset-dialog .op-form-fields :is(label,p
 
 /* Busca com sugestões (instrutor responsável): campo único com a lista logo abaixo, como o autocomplete do Simplea. */
 .sipa-busca-sugestoes { position:relative; min-width:0; }
-.sipa-busca-sugestoes > ul { position:absolute; z-index:20; left:0; right:0; top:calc(100% + 4px); max-height:220px; overflow:auto; margin:0; padding:4px; list-style:none; background:var(--progress-card,#fff); color:var(--sipa-texto-neutro,#14263a); border:1px solid #bacddd; border-radius:7px; box-shadow:0 8px 24px rgba(15,40,70,.16); }
-.sipa-busca-sugestoes > ul > li { padding:8px 10px; border-radius:5px; cursor:pointer; font-weight:500; overflow-wrap:anywhere; }
-.sipa-busca-sugestoes > ul > li[aria-selected=true], .sipa-busca-sugestoes > ul > li:hover { background:#1769aa; color:#fff; }
+.sipa-busca-sugestoes > input { width:100%; padding-right:38px; }
+.sipa-busca-sugestoes-seta { position:absolute; top:0; right:0; bottom:0; width:36px; border:0; background:none; cursor:pointer; color:inherit; padding:0; }
+.sipa-busca-sugestoes-seta::before { content:''; position:absolute; left:50%; top:50%; margin:-3px 0 0 -6px; border-left:6px solid transparent; border-right:6px solid transparent; border-top:7px solid currentColor; }
+.sipa-busca-sugestoes-seta:disabled { cursor:default; opacity:.4; }
+.sipa-busca-sugestoes > ul { position:absolute; z-index:20; left:0; right:0; top:calc(100% + 4px); max-height:300px; overflow:auto; margin:0; padding:6px 0; list-style:none; background:var(--progress-card,#fff); color:var(--sipa-texto-neutro,#14263a); border:1px solid #d3dde6; border-radius:8px; box-shadow:0 8px 24px rgba(15,40,70,.18); }
+.sipa-busca-sugestoes > ul > li { padding:12px 16px; cursor:pointer; overflow-wrap:anywhere; }
+.sipa-busca-sugestoes > ul > li[aria-selected=true], .sipa-busca-sugestoes > ul > li:hover { background:#d8e6ea; }
 .sipa-busca-sugestoes > ul > li.sipa-busca-sugestoes-vazio { cursor:default; color:inherit; background:none; opacity:.75; }
+.sipa-multi-selecao { position:relative; min-width:0; font-weight:400; }
+.sipa-multi-selecao-botao { position:relative; width:100%; min-height:40px; box-sizing:border-box; border:1px solid #bacddd; border-radius:7px; padding:8px 38px 8px 10px; font:inherit; text-align:left; background:var(--progress-card,#fff); color:inherit; cursor:pointer; }
+.sipa-multi-selecao-botao::after { content:''; position:absolute; right:13px; top:50%; margin-top:-3px; border-left:6px solid transparent; border-right:6px solid transparent; border-top:7px solid currentColor; }
+.sipa-multi-selecao-botao > span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sipa-multi-selecao-vazio { opacity:.7; }
+.sipa-multi-selecao-lista { position:absolute; z-index:20; left:0; right:0; top:calc(100% + 4px); margin:0; padding:6px 0; background:var(--progress-card,#fff); color:var(--sipa-texto-neutro,#14263a); border:1px solid #d3dde6; border-radius:8px; box-shadow:0 8px 24px rgba(15,40,70,.18); }
+.sipa-multi-selecao .sipa-multi-selecao-lista > label { display:flex !important; margin:0; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; font-weight:400; }
+.sipa-multi-selecao-lista > label:hover { background:#d8e6ea; }
+.op-instrutor-fields .sipa-multi-selecao-lista input[type=checkbox] { width:18px; min-height:0; height:18px; margin:0; }
+.op-linha-acoes { display:flex; gap:8px; justify-content:flex-end; white-space:nowrap; }

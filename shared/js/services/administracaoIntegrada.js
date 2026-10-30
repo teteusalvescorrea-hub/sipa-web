@@ -308,7 +308,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    const local=await base.detalhesInstrutor(id,consulta),vinculoId=local.instrutor.vinculoId;
    const r=vinculoId&&await opcional(Get(ComParams(`vinculos/${vinculoId}/desempenho`,{de:local.periodo.inicio,ate:local.periodo.fim})));
    if(!r)return local;
-   return {...local,concluidas:r.concluidas,presencas:r.presencas,faltas:r.faltas,total:r.total??local.total,totais:r.totais??local.totais,veiculos:r.veiculos?r.veiculos.map(v=>({id:v.id,nome:v.modelo??v.nome,placa:v.placa,categoria:categoria(v.categoria)})):local.veiculos,
+   return {...local,concluidas:r.concluidas,presencas:r.presencas,faltas:r.faltas,total:local.total,totais:local.totais,veiculos:r.veiculos?r.veiculos.map(v=>({id:v.id,nome:v.modelo??v.nome,placa:v.placa,categoria:categoria(v.categoria)})):local.veiculos,
     historico:(r.historico||[]).map(h=>{const a=h.aula?adaptarAulaEquipe(h.aula,u):{};return {id:a.id,instrutorId:id,veiculoId:a.veiculoId,data:a.data,inicio:a.inicio,fim:a.fim,categoria:a.categoria,unidade:a.unidade,status:a.status,registradoPor:h.registradoPor?.nome??h.registradoPor,alunoNome:h.aluno?.nome??h.aluno??a.alunoNome??'Aluno não informado',veiculoNome:h.veiculo?.modelo??h.veiculo??a.veiculoNome??'Não informado',em:h.em};})};
   },
   async relatorio(f){

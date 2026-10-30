@@ -8,7 +8,7 @@ import { GRADE_CENTRO,motivoNovoAgendamento, validarHorario, fimDaAula, conflito
 import { calcularPrazoCancelamento, criarCancelamento,identificarMotivo,POLITICA_CANCELAMENTO } from '../../aluno/js/domain/agendamentoAluno.js';
 import { TIPOS_EXAME } from './exames.js';
 import {resumirCreditosRecepcao,motivoBloqueioCreditos} from '../../aluno/js/domain/creditosRecepcao.js';
-import {motivoAlmoco,localCategoriaD,motivoCatalogoOnibus,recursoCategoriaD,recursosOperacionaisD,onibusTemporario,ALMOCOS,INTERVALOS_ALMOCO,MATRICULAS} from '../../shared/js/categorias.js';
+import {motivoAlmoco,localCategoriaD,motivoCatalogoOnibus,recursoCategoriaD,recursosOperacionaisD,onibusTemporario,ALMOCOS,INTERVALOS_ALMOCO} from '../../shared/js/categorias.js';
 
 export const unidade = valor => valor === 'Centro' ? 'Vila Velha' : normalizarChaveUnidade(valor);
 export const UNIDADES = UNIDADES_INSTITUCIONAIS.map(u => [u.id, u.nome]);
@@ -145,7 +145,7 @@ export function cadastrarRecurso(estado,identidade,dados,id){
  if(referencia!==unidade(identidade.unidade)||dados.unidade&&unidade(dados.unidade)!==referencia)throw new Error('Cadastro fora do escopo administrativo da unidade de referência da categoria.');
  if(dados.inicio==null&&dados.fim==null)dados={...dados,inicio:String(Math.min(...GRADE_CENTRO.semana)).padStart(2,'0')+':00',fim:String(GRADE_CENTRO.fechaTarde).padStart(2,'0')+':00'};
  if(!['Instrutores','Veículos'].includes(dados.tipo)||String(dados.nome||'').trim().length<3||!String(dados.identificacao||'').trim())throw new Error('Informe nome, identificação e tipo do recurso.');
- if(!MATRICULAS.includes(dados.categoria)||(dados.tipo==='Veículos'&&dados.categoria==='AB'))throw new Error('Categoria de recurso inválida.');
+ if(dados.tipo==='Instrutores'?!/^(?=.)A?B?D?$/.test(dados.categoria||''):!['A','B','D'].includes(dados.categoria))throw new Error('Categoria de recurso inválida.');
  if(dados.categoria==='D'&&estado.recursos.some(r=>recursoCategoriaD(r)&&!onibusTemporario(r)&&r.tipo===dados.tipo&&r.ativo===true&&r.disponivel!==false))throw new Error('Já existe um recurso ativo desse tipo na agenda única da Categoria D. Consulte o cadastro existente; não será criada outra agenda.');
  if(dados.tipo==='Instrutores'&&![...ALMOCOS,...INTERVALOS_ALMOCO].some(([id])=>id===dados.horarioAlmoco))throw new Error('Escolha obrigatoriamente o horário de almoço do instrutor.');
  if(!/^\d{2}:00$/.test(dados.inicio)||!/^\d{2}:00$/.test(dados.fim)||dados.inicio>='19:00'||dados.fim>'19:00'||dados.inicio<'07:00'||dados.fim<=dados.inicio)throw new Error('Informe disponibilidade válida, em horas inteiras, entre 07:00 e 19:00.');
@@ -153,7 +153,7 @@ export function cadastrarRecurso(estado,identidade,dados,id){
  if(dados.tipo==='Veículos'&&dados.categoria==='B'&&(!cambioValido(dados.tipoCambio)||!unidadeCarroPermitida(dados.tipoCambio,identidade.unidade)))throw new Error('Informe o tipo de câmbio e uma unidade compatível.');
  const operacoesCarro=dados.operacoesCarro||[];
  if(!Array.isArray(operacoesCarro)||operacoesCarro.some(x=>!DESLOCAMENTOS_CARRO.some(op=>op.origem===x.origem&&op.destino===x.destino&&op.dia===x.dia&&[op.origem,op.destino].includes(unidade(identidade.unidade))))||operacoesCarro.length&&!dados.categoria.includes('B'))throw new Error('Operação de deslocamento não autorizada para este recurso.');
- const r={operacoesCarro,...(dados.tipo==='Veículos'&&dados.categoria==='B'?{tipoCambio:dados.tipoCambio}:{}),...(dados.tipo==='Instrutores'&&dados.cpf?{cpf:String(dados.cpf).replace(/\D/g,'')}:{}),id,tipo:dados.tipo,nome:String(dados.nome).trim(),identificacao:String(dados.identificacao).trim(),unidade:unidade(identidade.unidade),ativo:dados.ativo??true,disponivel:dados.disponivel??true,observacoes:String(dados.observacoes||'').trim(),origem:'manual-local',...(dados.tipo==='Instrutores'?{categorias:dados.categoria==='AB'?['A','B']:[dados.categoria],horarioAlmoco:dados.horarioAlmoco}:{categoria:dados.categoria,placa:dados.identificacao}),disponibilidade:Object.fromEntries([1,2,3,4,5].map(d=>[d,[{inicio:dados.inicio,fim:dados.fim}]]))};
+ const r={operacoesCarro,...(dados.tipo==='Veículos'&&dados.categoria==='B'?{tipoCambio:dados.tipoCambio}:{}),...(dados.tipo==='Instrutores'&&dados.cpf?{cpf:String(dados.cpf).replace(/\D/g,'')}:{}),id,tipo:dados.tipo,nome:String(dados.nome).trim(),identificacao:String(dados.identificacao).trim(),unidade:unidade(identidade.unidade),ativo:dados.ativo??true,disponivel:dados.disponivel??true,observacoes:String(dados.observacoes||'').trim(),origem:'manual-local',...(dados.tipo==='Instrutores'?{categorias:[...dados.categoria],horarioAlmoco:dados.horarioAlmoco}:{categoria:dados.categoria,placa:dados.identificacao}),disponibilidade:Object.fromEntries([1,2,3,4,5].map(d=>[d,[{inicio:dados.inicio,fim:dados.fim}]]))};
  r.disponibilidade[6]=dados.categoria==='D'?[{inicio:dados.inicio,fim:dados.fim}]:dados.inicio<'12:00'?[{inicio:dados.inicio,fim:dados.fim<'12:00'?dados.fim:'12:00'}]:[];
  if(r.tipo==='Veículos'&&['A','B','D'].includes(r.categoria)){
   const legados=estado.recursos.filter(i=>i.tipo==='Instrutores'&&i.veiculoIds?.includes(id));
