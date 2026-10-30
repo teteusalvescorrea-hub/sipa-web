@@ -184,7 +184,7 @@ function adaptarProvas(itens,a){
 const adaptarHistoricoAluno=itens=>lista(itens).map(h=>({id:h.id,tipo:h.grupo,titulo:h.titulo,em:h.em,responsavel:h.responsavel?.nome??h.responsavel,depois:h.descricao||'',dados:h.dados||[],referencia:h.referencia}));
 const quando=v=>v&&!/(Z|[+-]\d\d:\d\d)$/.test(v)?v+'-03:00':v;
 function adaptarAuditoria(itens){
- return lista(itens).map(x=>({id:x.id,em:quando(x.quando??x.em),usuario:x.usuario?.id??x.usuario,responsavel:x.usuario?.id,tipo:[descricao(x.acao),x.tabela].filter(Boolean).join(' · ').toLowerCase()||'registro',unidade:x.unidade||'',referencia:x.registroId,justificativa:x.justificativa||''}));
+ return lista(itens).map(x=>({id:x.id,em:quando(x.quando??x.em),usuario:x.usuario?.id??x.usuario,responsavel:x.usuario?.id,responsavelNome:x.usuario?.nome,...(x.usuario?.id&&x.usuario.id===x.registroId?{contaNome:x.usuario.nome}:{}),tipo:[descricao(x.acao),x.tabela].filter(Boolean).join(' · ').toLowerCase()||'registro',unidade:x.unidade||'',referencia:x.registroId,justificativa:x.justificativa||''}));
 }
 const janelas=(hoje=hojeBrasil())=>[{de:somarDias(hoje,-91),ate:hoje},{de:somarDias(hoje,1),ate:somarDias(hoje,92)}];
 const dataHora=(data,inicio)=>data+'T'+inicio+':00';
@@ -480,7 +480,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   },
   async historicoAcessos(){
    exigirCapacidade(op,'gestao-acessos',3);const hoje=hojeBrasil();
-   return adaptarAuditoria(await opcional(Get(ComParams('auditoria',{de:somarDias(hoje,-91),ate:hoje,tabela:'USUARIOS',pagina:1,tamanho:100})),[])).map(x=>({...x,acao:x.tipo.includes('cria')?'criar':'salvar',contaId:x.referencia}));
+   return adaptarAuditoria(lista(await opcional(Get(ComParams('auditoria',{de:somarDias(hoje,-91),ate:hoje,tabela:'USUARIOS',pagina:1,tamanho:100})),[])).filter(x=>descricao(x.acao)!=='Login')).map(x=>({...x,acao:x.tipo.includes('cria')?'criar':'salvar',contaId:x.referencia}));
   },
   async identidadesHistorico(){return (await consultarAcessos()).map(({id,nome,perfil,unidade})=>({id,nome,perfil,unidade}));},
   async consultarPendenciasAdministrativas(){return [];}
