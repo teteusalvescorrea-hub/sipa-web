@@ -2,12 +2,17 @@
 
 import { API_URL } from "./config-api.js";
 import { ApiErro } from "./apiErro.js";
-import { obterToken, limparSessao } from "./sessao.js";
+import { obterToken, limparSessao, urlLogin } from "./sessao.js";
 
 
-async function requisicao(metodo, rota, corpo) {
+// opcoes.cabecalhos: cabeçalhos extras (ex.: Idempotency-Key).
+// opcoes.binario: devolve o Blob da resposta (documento do atestado).
+// Corpo FormData vai como multipart, sem Content-Type (o navegador põe o boundary).
+async function requisicao(metodo, rota, corpo, opcoes = {}) {
 
-    const cabecalhos = { "Content-Type": "application/json" };
+    const multipart = typeof FormData !== "undefined" && corpo instanceof FormData;
+    const cabecalhos = multipart ? {} : { "Content-Type": "application/json" };
+    Object.assign(cabecalhos, opcoes.cabecalhos);
     const token = obterToken();
 
     if (token) {
@@ -20,7 +25,7 @@ async function requisicao(metodo, rota, corpo) {
         resposta = await fetch(`${API_URL}/${rota}`, {
             method: metodo,
             headers: cabecalhos,
-            body: corpo === undefined ? undefined : JSON.stringify(corpo)
+            body: corpo === undefined ? undefined : multipart ? corpo : JSON.stringify(corpo)
         });
     } catch {
         throw new ApiErro(0, null);
@@ -29,8 +34,12 @@ async function requisicao(metodo, rota, corpo) {
     // 401 numa tela logada: volta para o login e não resolve, para a tela não mostrar erro.
     if (resposta.status === 401 && token) {
         limparSessao();
-        window.location.href = "/login.html?sessao=expirada";
+        window.location.href = urlLogin("sessao=expirada");
         return new Promise(() => {});
+    }
+
+    if (opcoes.binario && resposta.ok) {
+        return resposta.blob();
     }
 
     const texto = await resposta.text();
@@ -52,11 +61,11 @@ async function requisicao(metodo, rota, corpo) {
 }
 
 
-export const Get = (rota) => requisicao("GET", rota);
+export const Get = (rota, opcoes) => requisicao("GET", rota, undefined, opcoes);
 
-export const Post = (rota, corpo) => requisicao("POST", rota, corpo ?? {});
+export const Post = (rota, corpo, opcoes) => requisicao("POST", rota, corpo ?? {}, opcoes);
 
-export const Put = (rota, corpo) => requisicao("PUT", rota, corpo ?? {});
+export const Put = (rota, corpo, opcoes) => requisicao("PUT", rota, corpo ?? {}, opcoes);
 
 export const Delete = (rota) => requisicao("DELETE", rota);
 

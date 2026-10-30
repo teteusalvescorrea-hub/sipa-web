@@ -4,6 +4,13 @@ const CHAVE_TOKEN = "sipa.token";
 const CLAIM_PERFIL = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
 
+// Login relativo a este arquivo (shared/js → raiz): funciona também num
+// subcaminho (GitHub Pages de projeto). Nada de "/login.html".
+export function urlLogin(query = "") {
+    return new URL("../../login.html" + (query ? "?" + query : ""), import.meta.url).href;
+}
+
+
 export function salvarToken(token) {
     sessionStorage.setItem(CHAVE_TOKEN, token);
 }
@@ -61,7 +68,7 @@ export function exigirLogin(perfisPermitidos = []) {
         (perfisPermitidos.length && !perfisPermitidos.includes(perfil))) {
 
         limparSessao();
-        window.location.href = "/login.html";
+        window.location.href = urlLogin();
         return false;
     }
 

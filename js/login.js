@@ -31,7 +31,18 @@ function informar(texto, tipo = "error", campo) {
     mensagem.textContent = texto; mensagem.className = `form-message ${texto ? `visible ${tipo}` : ""}`;
     if (campo) { campo.setAttribute("aria-invalid", "true"); campo.focus(); }
 }
-ativarMascaraCpf(cpf);
+// Equipe (ADM 1, 2 e 3) entra com CPF ou e-mail no mesmo campo; aluno e instrutor, só CPF.
+// A máscara só formata quando o texto é numérico, então o e-mail passa intacto.
+ativarMascaraCpf(cpf,{permitirNome:true});
+const tipoAcesso=document.getElementById('tipo-acesso'),rotuloLogin=document.querySelector('label[for="login-cpf"]');
+const equipeSelecionada=()=>['operador','gerencia','master'].includes(tipoAcesso?.value);
+function ajustarCampoLogin(){
+    const equipe=!servicoDemo&&equipeSelecionada();
+    if(rotuloLogin)rotuloLogin.textContent=equipe?'CPF ou e-mail':'CPF';
+    cpf.placeholder=equipe?'CPF ou e-mail':'000.000.000-00';cpf.maxLength=equipe?254:14;cpf.inputMode=equipe?'email':'numeric';
+    if(!equipe&&/[^\d.\-\s]/.test(cpf.value))cpf.value='';
+}
+tipoAcesso?.addEventListener('change',ajustarCampoLogin);ajustarCampoLogin();
 if(servicoDemo)senha.maxLength=128;
 ativarMascaraCpf(document.getElementById("recuperacao-cpf"));
 senha.addEventListener("input", () => senha.removeAttribute("aria-invalid"));
@@ -40,7 +51,35 @@ olho.addEventListener("click", () => {
     olho.setAttribute("aria-label", mostrar ? "Ocultar senha" : "Mostrar senha"); olho.setAttribute("aria-pressed", String(mostrar));
     olho.querySelector("i").className = mostrar ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
 });
-const destinos = Object.freeze({ Aluno: "/aluno/html/dashboard.html", Motorista: "/instrutor/html/instrutor.html", Autoescola: "/autoescola.html" });
+// Destinos relativos a este arquivo (js/ → raiz): funcionam no Pages de projeto (M1).
+const destino = caminho => new URL('../' + caminho, import.meta.url).href;
+const destinos = Object.freeze({ Aluno: destino("aluno/html/dashboard.html"), Motorista: destino("instrutor/html/instrutor.html") });
+const paineisEquipe = Object.freeze({ operador: [1, destino("nivel-1-operador/html/operador-cfc.html")], gerencia: [2, destino("nivel-2-gerencia/html/gerencia.html")], master: [3, destino("nivel-3-master/html/master.html")] });
+const emailValido = valor => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
+
+// Senha provisória (deveTrocarSenha): o login não devolve token. Pede a nova
+// senha aqui mesmo e troca por POST /api/usuarios/trocar-senha-provisoria (M3).
+function pedirNovaSenha(trocar) {
+    return new Promise(resolve => {
+        const d = document.createElement("dialog"); d.className = "login-provisoria"; d.setAttribute("aria-labelledby", "provisoria-titulo");
+        d.innerHTML = '<form method="dialog" novalidate><h2 id="provisoria-titulo">Crie sua senha</h2><p>Sua senha atual é provisória. Escolha uma nova senha com pelo menos 8 caracteres.</p><label for="provisoria-nova">Nova senha</label><input type="password" id="provisoria-nova" autocomplete="new-password" minlength="8" maxlength="128" required><label for="provisoria-confirmacao">Confirme a nova senha</label><input type="password" id="provisoria-confirmacao" autocomplete="new-password" minlength="8" maxlength="128" required><p data-provisoria-erro role="alert"></p><footer><button type="button" data-provisoria-cancelar>Cancelar</button><button type="submit" data-provisoria-salvar>Salvar e entrar</button></footer></form>';
+        const nova = d.querySelector("#provisoria-nova"), confirmacao = d.querySelector("#provisoria-confirmacao"), erro = d.querySelector("[data-provisoria-erro]"), salvar = d.querySelector("[data-provisoria-salvar]");
+        let resultado = null, ocupado = false;
+        d.querySelector("[data-provisoria-cancelar]").onclick = () => d.close();
+        d.addEventListener("cancel", e => { if (ocupado) e.preventDefault(); });
+        d.querySelector("form").onsubmit = async e => {
+            e.preventDefault(); if (ocupado) return;
+            if (nova.value.length < 8) { erro.textContent = "A nova senha precisa ter pelo menos 8 caracteres."; nova.focus(); return; }
+            if (nova.value !== confirmacao.value) { erro.textContent = "A confirmação não corresponde à nova senha."; confirmacao.focus(); return; }
+            ocupado = true; salvar.disabled = true; erro.textContent = "";
+            try { resultado = await trocar(nova.value); d.close(); }
+            catch (falha) { erro.textContent = falha?.erros?.map(x => x?.mensagem || x).join(" ") || falha?.message || "Não foi possível salvar a nova senha."; }
+            finally { ocupado = false; salvar.disabled = false; }
+        };
+        d.addEventListener("close", () => { nova.value = confirmacao.value = ""; d.remove(); resolve(resultado); }, { once: true });
+        document.body.append(d); d.showModal(); nova.focus();
+    });
+}
 form.addEventListener("submit", async event => {
     event.preventDefault(); if (enviando) return;
     enviando = true; entrar.disabled = true; form.setAttribute("aria-busy", "true");
@@ -49,27 +88,44 @@ form.addEventListener("submit", async event => {
     let redirecionando = false;
     try {
         informar('');
-        if(cpf.value.replace(/\D/g,'').length!==11){informar('Informe os 11 dígitos do CPF.','error',cpf);return;}
+        const escolhido=document.getElementById('tipo-acesso').value,equipe=Object.hasOwn(paineisEquipe,escolhido);
+        const porEmail=!servicoDemo&&equipe&&cpf.value.includes('@');
+        if(porEmail){if(!emailValido(cpf.value.trim())){informar('Informe um e-mail válido.','error',cpf);return;}}
+        else if(cpf.value.replace(/\D/g,'').length!==11||/[^\d.\-\s]/.test(cpf.value)){informar(equipe&&!servicoDemo?'Informe o CPF (11 dígitos) ou o e-mail.':'Informe os 11 dígitos do CPF.','error',cpf);return;}
         if (servicoDemo) { await servicoDemo.entrar(normalizarCPF(cpf.value), senha.value); senha.value = ''; redirecionando = true; return; }
-        if (!validarCPF(cpf.value)) { informar('Informe um CPF válido.', 'error', cpf); return; }
+        if (!porEmail && !validarCPF(cpf.value)) { informar('Informe um CPF válido.', 'error', cpf); return; }
         if (!senha.value) { informar('Digite sua senha.', 'error', senha); return; }
-        const { login } = await import("../shared/js/services/authService.js");
-        const resposta = await login(normalizarCPF(cpf.value), senha.value);
-        const perfil = resposta?.perfil?.descricao;
-        const escolhido=document.getElementById('tipo-acesso').value;
-        const contrato={aluno:'Aluno',instrutor:'Motorista'};
-        if(!Object.hasOwn(contrato,escolhido)||contrato[escolhido]!==perfil){
-            const {limparSessao}=await import('../shared/js/sessao.js');limparSessao();
-            informar(Object.hasOwn(contrato,escolhido)?'A conta autenticada não possui o perfil selecionado.':'Este perfil administrativo aguarda o contrato de autenticação e autorização da API. Nenhum acesso foi concedido.','info');return;
+        const identificacao = porEmail ? cpf.value.trim() : normalizarCPF(cpf.value);
+        const { login, trocarSenhaProvisoria } = await import("../shared/js/services/authService.js");
+        const { limparSessao } = await import('../shared/js/sessao.js');
+        let resposta = await login(identificacao, senha.value);
+        if (resposta?.deveTrocarSenha && !resposta.token) {
+            informar('Sua senha é provisória. Crie uma nova senha para continuar.', 'info');
+            resposta = await pedirNovaSenha(nova => trocarSenhaProvisoria(identificacao, senha.value, nova));
+            if (!resposta?.token) { limparSessao(); informar('A nova senha não foi salva. Entre novamente para tentar de novo.', 'info'); return; }
         }
-        if (!Object.hasOwn(destinos, perfil)) {
-            const { limparSessao } = await import("../shared/js/sessao.js"); limparSessao();
-            informar(perfil === "Motorista" ? "A interface do instrutor ainda aguarda integração. Nenhuma permissão administrativa foi concedida." : "O perfil retornado ainda não possui um painel integrado.", "info"); return;
+        senha.value = '';
+        const perfil = resposta?.perfil?.descricao;
+        if (equipe) {
+            if (perfil !== 'Autoescola') { limparSessao(); informar('A conta autenticada não possui o perfil selecionado.', 'info'); return; }
+            // O painel vem do papel (equipe/me). A API autoriza cada rota; aqui só se escolhe a tela.
+            const { Get } = await import('../shared/js/api.js');
+            const membro = await Get('equipe/me'), painel = membro?.painel?.valor ?? membro?.painel ?? null;
+            const [nivel, url] = paineisEquipe[escolhido];
+            if (painel !== null && painel !== nivel) { limparSessao(); informar('Sua conta não possui acesso a este painel administrativo.', 'info'); return; }
+            redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");
+            window.location.assign(url); return;
+        }
+        const contrato={aluno:'Aluno',instrutor:'Motorista'};
+        if(contrato[escolhido]!==perfil||!Object.hasOwn(destinos, perfil)){
+            limparSessao();
+            informar('A conta autenticada não possui o perfil selecionado.','info');return;
         }
         redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");
         window.location.assign(destinos[perfil]);
     } catch (erro) {
-        informar(erro.status === 401 ? "CPF ou senha inválidos, ou conta indisponível." : erro.message || "Não foi possível concluir o acesso. Tente novamente.");
+        try { (await import('../shared/js/sessao.js')).limparSessao(); } catch {}
+        informar(erro.status === 401 ? (equipeSelecionada() ? "CPF, e-mail ou senha inválidos, ou conta indisponível." : "CPF ou senha inválidos, ou conta indisponível.") : erro.message || "Não foi possível concluir o acesso. Tente novamente.");
     } finally {
         if (!redirecionando) { enviando = false; entrar.disabled = false; form.removeAttribute("aria-busy"); entrar.querySelector("span").textContent = "Entrar"; entrar.querySelector("i").className = "fa-solid fa-arrow-right"; }
     }

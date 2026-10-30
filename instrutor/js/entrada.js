@@ -15,7 +15,12 @@ if (desenvolvimentoAtivo()) {
 } else {
     const {exigirLogin} = await import('../../shared/js/sessao.js');
     if (exigirLogin(['Motorista'])) {
-        root.className = 'in-login-wrap';
-        root.textContent = 'Painel do Instrutor: integração da agenda e do veículo com a API pendente. Nenhum dado de demonstração foi carregado.';
+        const [{criarServicoInstrutor},{montarPainel},{sair}] = await Promise.all([import('./services/instrutorIntegrado.js'),import('./painel.js'),import('../../shared/js/services/authService.js')]);
+        try {
+            await montarPainel(root, criarServicoInstrutor(), {aoSair() { sair(); }});
+        } catch (erro) {
+            root.className = 'in-login-wrap';
+            root.textContent = erro.status === 0 ? 'Não foi possível falar com o servidor. Tente novamente.' : erro.message || 'Não foi possível carregar o painel do instrutor.';
+        }
     }
 }

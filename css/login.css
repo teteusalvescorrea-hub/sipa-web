@@ -2050,3 +2050,17 @@ body.login-page {
 .local-login-tools #perfil-pendente { margin: 0; color: var(--sipa-texto-neutro); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
 .local-login-tools select:focus-visible { outline: 3px solid #2388d9; outline-offset: 3px; }
 @media (max-width: 650px) { .login-dialog { padding: 20px; } .recovery-units { grid-template-columns: 1fr; } }
+
+/* Senha provisória (deveTrocarSenha): nova senha pedida no próprio login. */
+.login-provisoria { width: min(420px, calc(100vw - 32px)); padding: 24px; border: 1px solid #cbddec; border-radius: 14px; color: var(--sipa-texto-neutro); }
+.login-provisoria::backdrop { background: rgba(15, 30, 50, .45); }
+.login-provisoria form { display: grid; gap: 10px; }
+.login-provisoria h2 { margin: 0; font-size: 18px; }
+.login-provisoria p { margin: 0; font-size: 13px; }
+.login-provisoria label { font-size: 12px; font-weight: 600; }
+.login-provisoria input { width: 100%; padding: 12px; border: 1px solid #cbddec; border-radius: 10px; font: inherit; }
+.login-provisoria [role="alert"]:empty { display: none; }
+.login-provisoria [role="alert"] { color: #b42318; }
+.login-provisoria footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.login-provisoria button { padding: 10px 14px; border-radius: 10px; border: 1px solid #cbddec; background: #edf5fc; font: inherit; cursor: pointer; }
+.login-provisoria button[type="submit"] { background: #1f6fb2; border-color: #1f6fb2; color: #fff; }

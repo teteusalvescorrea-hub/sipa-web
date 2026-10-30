@@ -21,12 +21,14 @@ async function iniciar(){
  preparar();if(pagina==='pacotes.html')return;
  aviso('Carregando seus dados…');const servico=criarServicoAluno();
  try{
- const dados=await servico.carregar();
+ const dados=await servico.carregar();aviso('');
  if(pagina==='dashboard.html')apresentarDashboard(dados);
- else if(pagina==='minhas-aulas.html'){await apresentarAulas(servico,dados);aviso('Cancelamento indisponível no momento. Para solicitar, entre em contato com a recepção.');}
- else if(pagina==='agendamento.html'){await apresentarAgendamento(servico,dados);aviso('Agendamento por unidade indisponível no momento. Consulte a recepção.');}
+ else if(pagina==='minhas-aulas.html')await apresentarAulas(servico,dados);
+ else if(pagina==='agendamento.html'){await apresentarAgendamento(servico,dados);
+  // Agendamento automático fica para a F13 (D19): só o manual está ligado.
+  const auto=document.getElementById('booking-mode-auto');if(auto&&!servico.capacidades.automatico){auto.disabled=true;auto.title='Agendamento automático ainda indisponível. Use o agendamento manual.';}}
  else if(pagina==='meu-progresso.html')apresentarProgresso(dados);
- else if(pagina==='meu-perfil.html'){apresentarPerfil(dados);montarAlteracaoSenha(servico);await montarAntecipacaoAluno(servico);const senha=document.getElementById('change-password-button');if(senha){senha.disabled=true;senha.title='Alteração de senha indisponível no momento.';}document.querySelectorAll('#student-anticipation input,#student-anticipation button').forEach(b=>b.disabled=true);aviso('Alteração de senha e preferências de antecipação indisponíveis no momento. Consulte a recepção.');}
+ else if(pagina==='meu-perfil.html'){apresentarPerfil(dados);montarAlteracaoSenha(servico);await montarAntecipacaoAluno(servico);}
  if(['dashboard.html','meu-progresso.html'].includes(pagina))aviso(Object.values(dados.resumo.categorias).some(c=>c.total===null)?'O saldo conjunto está disponível. A separação por categoria ainda não foi informada pelo serviço.':'');
  }catch(e){aviso(e.status===0?'Não foi possível falar com o servidor. Tente novamente ou contate a recepção.':e.message||'Não foi possível carregar seus dados. Tente novamente.');}
 }
