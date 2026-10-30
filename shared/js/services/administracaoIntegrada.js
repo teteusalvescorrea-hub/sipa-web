@@ -11,6 +11,7 @@ import {NIVEIS,permissoesDoPerfil,exigirCapacidade,escopoPermitido} from '../per
 import {obterUnidadeInstitucional} from '../catalogoUnidades.js';
 import {hojeBrasil,somarDias} from '../calendario.js';
 import {fimDaAula} from '../disponibilidade.js';
+import {localCarro} from '../operacaoCarro.js';
 import {aulaSemAdministracaoAlheia,vinculoAdministrativoAluno} from '../escopoAlunoAdministrativo.js';
 import {validarAtestado} from '../solicitacoesMedicas.js';
 import {gerarRelatorio} from '../relatoriosAdministrativos.js';
@@ -297,7 +298,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   async alunosAgendaveis(data,inicio,par){
    const r=await opcional(Get(ComParams('disponibilidade/alunos',{data,inicio,motoristaId:par.instrutorId,veiculoId:par.veiculoId,categoria:NUMERO[par.categoria]})));
    if(!r)return base.alunosAgendaveis(data,inicio,par);
-   return lista(r).map(a=>({id:a.id,nome:a.nome,...(a.cpf?{cpf:digitos(a.cpf)}:{}),categoria:typeof a.categoria==='string'?a.categoria:categoriaMatricula([a.categoria]),tipoCambio:CAMBIO[numero(a.tipoCambio)]??a.tipoCambio,unidadeCarro:u.chave(a.unidadeCarro),localAula:a.localAula?.nome??a.localAula??null,unidadeAulas:u.chave(a.unidadeAulas)||a.unidadeAulas,saldo:a.saldo,agendadas:a.agendadas}));
+   return lista(r).map(a=>({id:a.id,nome:a.nome,...(a.cpf?{cpf:digitos(a.cpf)}:{}),categoria:typeof a.categoria==='string'?a.categoria:categoriaMatricula([a.categoria]),tipoCambio:CAMBIO[numero(a.tipoCambio)]??a.tipoCambio,unidadeCarro:u.chave(a.unidadeCarro),localAula:a.localAula?.nome??a.localAula??(par.categoria==='B'?localCarro({unidadeCarro:u.chave(a.unidadeCarro)||u.chave(a.unidadeAulas),tipoCambio:CAMBIO[numero(a.tipoCambio)]},data)?.nome??null:null),unidadeAulas:u.chave(a.unidadeAulas)||a.unidadeAulas,saldo:a.saldo,agendadas:a.agendadas}));
   },
   async previa(id,para){
    const r=await chamar(Get(ComParams(`alunos/${id}/transferencia-carro`,{unidadeId:u.guid(para)})));
@@ -314,7 +315,10 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    exigirCapacidade(op,'relatorios');
    const r=await opcional(Get(ComParams('relatorios',{tipo:f.tipo,unidadeId:f.unidade?u.guid(f.unidade):undefined,categoria:NUMERO[f.categoria],alunoId:f.alunoId,motoristaId:f.instrutorId,veiculoId:f.veiculoId,de:f.inicio,ate:f.fim,horaInicial:f.horaInicio,horaFinal:f.horaFim,status:f.status})));
    if(!r)return gerarRelatorio(permitido(await ler()),op,f);
-   return {nomes:r.nomes||{},filtros:{...f},totais:r.totais||{},colunas:r.colunas||[],linhas:r.linhas||[],criterio:r.criterio||''};
+   // A API ainda não calcula a ocupação por par elegível: usa a regra do front sobre os dados lidos da API.
+   const totais={...(r.totais||{})};
+   if(!Object.hasOwn(totais,'ocupacao')){const local=(await gerarRelatorio(permitido(await ler()),op,f))?.totais||{};for(const k of ['elegiveis','ocupados','disponiveis','ocupacao'])if(Object.hasOwn(local,k))totais[k]=local[k];}
+   return {nomes:r.nomes||{},filtros:{...f},totais,colunas:r.colunas||[],linhas:r.linhas||[],criterio:r.criterio||''};
   },
   // ---- comandos da Recepção
   async cadastrar(dados,solicitacaoId=chaveOperacao()){
