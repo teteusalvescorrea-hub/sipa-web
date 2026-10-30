@@ -1,7 +1,8 @@
 import {desenvolvimentoAtivo} from './ambiente.js';
 const root=document.getElementById('administracao-root'),perfil=document.body.dataset.perfil;
 let sessaoValidada=false;
-if(!desenvolvimentoAtivo()){root.textContent='O acesso administrativo depende da integração autenticada com o servidor.';}
+// Integrado: sessão da API, equipe/me e serviço HTTP, sem dev/ (entradaAdministrativaIntegrada.js).
+if(!desenvolvimentoAtivo()){await import('./entradaAdministrativaIntegrada.js');}
 else{try{
  const {exigirPerfil,vigiarPerfil,sair,cadastrarInstrutor,transacaoAdministrativaEmCurso,exigirPersistenciaEstavel}=await import('../../dev/autenticacao.js'),conta=await exigirPerfil(perfil),{UNIDADES_INSTITUCIONAIS}=await import('./catalogoUnidades.js'),{montarUnidade}=await import('../../nivel-1-operador/js/components/unidadeOperador.js'),{repositorioDemo,CHAVE_DEMO}=await import('../../dev/operador/repositorioDemo.js'),{criarServicoAdministrativo}=await import('../../dev/servicoAdministrativo.js'),{prepararRedefinicaoAlunoLocal,prepararAcessoAluno,resumirSegredo}=await import('../../dev/aluno/contaRecepcao.js'),{auditarDiferencas}=await import('./auditoria.js');
  sessaoValidada=true;

@@ -24,12 +24,12 @@ export async function prepararIntegrado(destino) {
     await fs.writeFile(login,(await fs.readFile(login,'utf8')).replace("const servicoDemo = desenvolvimentoAtivo() ? (await import('../dev/login.js')).montarLoginDemo(form) : null;",'const servicoDemo = null;'));
     await fs.writeFile(path.join(saida,'aluno/js/entrada.js'),"await import('./integrado.js');\n");
     await fs.writeFile(path.join(saida,'instrutor/js/entrada.js'),"import {exigirLogin} from '../../shared/js/sessao.js';\nconst root=document.getElementById('instrutor-root');\nif(exigirLogin(['Motorista']))root.textContent='Painel do Instrutor: integração da agenda, veículo e registro de frequência com a API pendente.';\n");
-    await fs.writeFile(path.join(saida,'shared/js/entradaAdministrativa.js'),"document.getElementById('administracao-root').textContent='O acesso administrativo depende da integração autenticada com o servidor.';\n");
-    await fs.writeFile(path.join(saida,'nivel-1-operador/js/operador-cfc.js'),"document.getElementById('acesso-orientacao').textContent='O acesso administrativo aguarda a integração de perfil, unidade e permissões com o servidor.';\n");
+    await fs.writeFile(path.join(saida,'shared/js/entradaAdministrativa.js'),"await import('./entradaAdministrativaIntegrada.js');\n");
+    await fs.writeFile(path.join(saida,'nivel-1-operador/js/operador-cfc.js'),"await import('./operadorIntegrado.js');\n");
     const mensagens=path.join(saida,'aluno/js/mensagens.js'),fonte=await fs.readFile(mensagens,'utf8');
     await fs.writeFile(mensagens,fonte.slice(0,fonte.indexOf('if(desenvolvimentoAtivo())'))+'{'+fonte.slice(fonte.lastIndexOf('}else{')+6));
     // Componentes legados usados exclusivamente pelos adaptadores excluídos.
-    for(const nome of ['agendamentoOperador.js','fichaAluno.js','visaoGeralOperador.js'])await fs.unlink(path.join(saida,'nivel-1-operador/js/components',nome));
+    for(const nome of ['fichaAluno.js','visaoGeralOperador.js'])await fs.unlink(path.join(saida,'nivel-1-operador/js/components',nome));
     const servico=path.join(saida,'nivel-1-operador/js/servicoOperador.js');
     await fs.writeFile(servico,(await fs.readFile(servico,'utf8')).replaceAll("import('../../dev/aluno/documentosMedicos.js')","import('../../shared/js/armazenamentoMedicoPendente.js')"));
     await fs.writeFile(path.join(saida,'shared/js/armazenamentoMedicoPendente.js'),"// Sem fallback de armazenamento local na entrega.\nconst pendente=async()=>{throw new Error('Armazenamento de atestados depende da integração autenticada com a API.');};\nexport const guardarAtestado=pendente,lerAtestado=pendente,descartarUploadNaoSalvo=pendente;\n");

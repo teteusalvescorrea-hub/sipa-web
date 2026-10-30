@@ -9,7 +9,7 @@ import { criarFichaAluno } from "../../nivel-1-operador/js/components/fichaAluno
 import { montarAgenda } from "../../nivel-1-operador/js/components/agendaOperador.js";
 import { montarVisaoGeral } from "../../nivel-1-operador/js/components/visaoGeralOperador.js";
 import { criarDetalhesAula } from "../../nivel-1-operador/js/components/aulaOperador.js";
-import { criarFormularioAgendamento } from "../../nivel-1-operador/js/components/agendamentoOperador.js";
+import { criarFormularioAgendamento } from "./agendamentoOperador.js";
 import { el, botao, campo, select, modal } from "../../nivel-1-operador/js/components/uiOperador.js";
 
 export function iniciarDemonstracaoLegada(raiz, template, endereco) {

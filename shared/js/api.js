@@ -67,7 +67,10 @@ export const Post = (rota, corpo, opcoes) => requisicao("POST", rota, corpo ?? {
 
 export const Put = (rota, corpo, opcoes) => requisicao("PUT", rota, corpo ?? {}, opcoes);
 
-export const Delete = (rota) => requisicao("DELETE", rota);
+export const Patch = (rota, corpo, opcoes) => requisicao("PATCH", rota, corpo ?? {}, opcoes);
+
+// DELETE com corpo opcional (ex.: { justificativa }).
+export const Delete = (rota, corpo, opcoes) => requisicao("DELETE", rota, corpo, opcoes);
 
 
 // Query string. Lista vira chave repetida: { status: [3, 4] } → "status=3&status=4".

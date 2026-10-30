@@ -1,6 +1,7 @@
 import {el,botao,modal} from './uiOperador.js';
 import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {formatarCpf} from '../../../shared/js/formatacao.js';
+import {mostrarSenhaProvisoria} from '../../../shared/components/senhaProvisoria.js';
 
 export async function montarAcessoAluno(host,aluno,{raiz,servico,reabrir}){
  const secao=el('section',undefined,'op-reset-access');secao.append(el('h4','Redefinir senha'));host.append(secao);
@@ -27,7 +28,7 @@ function abrirRedefinicao(raiz,id,acesso,servico,reabrir,origem){
  for(const [label,valor]of [['Nome completo',acesso.nome],['CPF',formatarCpf(cpf)],['Unidade principal',nomeUnidadeInstitucional(acesso.unidadeBase)]]){const linha=el('div');linha.append(el('dt',label),el('dd',valor));resumo.append(linha);}
  const form=el('form',undefined,'op-form-fields'),erro=el('p','','op-help'),acoes=el('footer',undefined,'op-reset-actions');erro.setAttribute('role','alert');
  const cancelar=botao('Cancelar',()=>d.close()),enviar=el('button','Sim, redefinir senha','op-button op-button-primary');enviar.type='submit';
- acoes.append(cancelar,enviar);form.append(el('p','Ao confirmar, a senha atual ser\u00e1 substitu\u00edda pelos seis primeiros n\u00fameros do CPF cadastrado, sem pontos ou tra\u00e7os.','op-inline-note'),el('p','O aluno poder\u00e1 utilizar essa senha provis\u00f3ria para entrar novamente no SIPA e dever\u00e1 cadastrar uma senha pessoal de sua prefer\u00eancia no pr\u00f3ximo acesso.','op-help'),el('p','Esta opera\u00e7\u00e3o ficar\u00e1 registrada no hist\u00f3rico do sistema.','op-help'),erro,acoes);d.append(resumo,form);
+ acoes.append(cancelar,enviar);form.append(el('p',servico.senhaPeloServidor?'Ao confirmar, o servidor gera uma nova senha provis\u00f3ria, mostrada uma \u00fanica vez, e encerra as sess\u00f5es abertas do aluno.':'Ao confirmar, a senha atual ser\u00e1 substitu\u00edda pelos seis primeiros n\u00fameros do CPF cadastrado, sem pontos ou tra\u00e7os.','op-inline-note'),el('p','O aluno poder\u00e1 utilizar essa senha provis\u00f3ria para entrar novamente no SIPA e dever\u00e1 cadastrar uma senha pessoal de sua prefer\u00eancia no pr\u00f3ximo acesso.','op-help'),el('p','Esta opera\u00e7\u00e3o ficar\u00e1 registrada no hist\u00f3rico do sistema.','op-help'),erro,acoes);d.append(resumo,form);
  let salvando=false;
  d.addEventListener('cancel',e=>{if(salvando)e.preventDefault();});
  form.addEventListener('submit',async e=>{
@@ -40,7 +41,8 @@ function abrirRedefinicao(raiz,id,acesso,servico,reabrir,origem){
    const sucesso=modal(raiz,resultado.acessoCriado?'Acesso criado com sucesso!':'Senha redefinida com sucesso!','opSenhaRedefinida');sucesso.classList.add('op-reset-dialog');
    sucesso.append(el('p',resultado.acessoCriado?'O acesso do aluno '+acesso.nome+' foi criado com sucesso.':'A senha de acesso de '+acesso.nome+' foi redefinida com sucesso.','op-help'));
    if(resultado.acessoCriado)sucesso.append(el('p','O acesso do aluno foi criado e vinculado ao cadastro existente.','op-inline-note'));
-   sucesso.append(el('p','A nova senha provis\u00f3ria corresponde aos seis primeiros n\u00fameros do CPF cadastrado, sem pontos ou tra\u00e7os.','op-help'),el('p','O aluno j\u00e1 pode acessar o SIPA utilizando seu CPF e essa senha. No pr\u00f3ximo acesso, dever\u00e1 cadastrar uma nova senha pessoal de sua prefer\u00eancia, que substituir\u00e1 a senha provis\u00f3ria.','op-help'),el('p','A redefini\u00e7\u00e3o foi registrada no hist\u00f3rico do sistema.','op-help'));
+   if(resultado.senhaProvisoria)sucesso.addEventListener('close',()=>mostrarSenhaProvisoria(raiz,{titulo:'Nova senha provis\u00f3ria',nome:acesso.nome,senha:resultado.senhaProvisoria}),{once:true});
+   sucesso.append(el('p',resultado.senhaProvisoria?'A nova senha provis\u00f3ria ser\u00e1 mostrada uma \u00fanica vez ao fechar este aviso.':'A nova senha provis\u00f3ria corresponde aos seis primeiros n\u00fameros do CPF cadastrado, sem pontos ou tra\u00e7os.','op-help'),el('p','O aluno j\u00e1 pode acessar o SIPA utilizando seu CPF e essa senha. No pr\u00f3ximo acesso, dever\u00e1 cadastrar uma nova senha pessoal de sua prefer\u00eancia, que substituir\u00e1 a senha provis\u00f3ria.','op-help'),el('p','A redefini\u00e7\u00e3o foi registrada no hist\u00f3rico do sistema.','op-help'));
    if(!atualizada)sucesso.append(el('p','N\u00e3o foi poss\u00edvel atualizar a ficha. Feche e reabra para consultar a situa\u00e7\u00e3o atual.','op-help'));
    sucesso.append(botao('Entendi',()=>sucesso.close(),'op-button op-button-primary'));sucesso.addEventListener('close',()=>sucesso.remove(),{once:true});sucesso.showModal();
   }catch(e){erro.textContent=e.message;}

@@ -1,8 +1,10 @@
-import { el, botao, campo, select, modal } from "./uiOperador.js";
-import { apto } from "../exames.js";
-import { formatarData } from "../../../shared/js/calendario.js";
-import { fimDaAula, paresDisponiveis, motivoNovoAgendamento } from "../../../shared/js/disponibilidade.js";
-import { validarAgendamentoDemo } from "../../../dev/operador/agendamentosDemo.js";
+// Formulário da demonstração local (só o laboratório usa). Fica em dev/ para o
+// código entregue não importar dev/ (M4).
+import { el, botao, campo, select, modal } from "../../nivel-1-operador/js/components/uiOperador.js";
+import { apto } from "../../nivel-1-operador/js/exames.js";
+import { formatarData } from "../../shared/js/calendario.js";
+import { fimDaAula, paresDisponiveis, motivoNovoAgendamento } from "../../shared/js/disponibilidade.js";
+import { validarAgendamentoDemo } from "./agendamentosDemo.js";
 
 export function criarFormularioAgendamento(raiz, obterEstado, aoConfirmar) {
     const dialogo = modal(raiz, "Novo agendamento", "opAgendar");
