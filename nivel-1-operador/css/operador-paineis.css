@@ -309,3 +309,10 @@ html body.operador-page .op-unidade .op-reset-dialog .op-form-fields{gap:12px;ma
 html body.operador-page .op-unidade .op-reset-dialog .op-form-fields :is(label,p){margin:0}
 .op-reset-actions{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:8px}
 @media(max-width:600px){html body.operador-page .op-reset-dialog .op-fields{grid-template-columns:1fr}.op-reset-actions button{flex:1}}
+
+/* Busca com sugestões (instrutor responsável): campo único com a lista logo abaixo, como o autocomplete do Simplea. */
+.sipa-busca-sugestoes { position:relative; min-width:0; }
+.sipa-busca-sugestoes > ul { position:absolute; z-index:20; left:0; right:0; top:calc(100% + 4px); max-height:220px; overflow:auto; margin:0; padding:4px; list-style:none; background:var(--progress-card,#fff); color:var(--sipa-texto-neutro,#14263a); border:1px solid #bacddd; border-radius:7px; box-shadow:0 8px 24px rgba(15,40,70,.16); }
+.sipa-busca-sugestoes > ul > li { padding:8px 10px; border-radius:5px; cursor:pointer; font-weight:500; overflow-wrap:anywhere; }
+.sipa-busca-sugestoes > ul > li[aria-selected=true], .sipa-busca-sugestoes > ul > li:hover { background:#1769aa; color:#fff; }
+.sipa-busca-sugestoes > ul > li.sipa-busca-sugestoes-vazio { cursor:default; color:inherit; background:none; opacity:.75; }
