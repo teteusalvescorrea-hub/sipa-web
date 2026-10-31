@@ -7,8 +7,17 @@ export async function montarAcessoAluno(host,aluno,{raiz,servico,reabrir}){
  const secao=el('section',undefined,'op-reset-access');secao.append(el('h4','Redefinir senha'));host.append(secao);
  if(!servico.identidade.permissoes.includes('redefinir-senha-aluno')){secao.append(el('p','Sem permissão para redefinir a senha deste aluno.','op-help'));return;}
  let acesso;try{acesso=await servico.acessoAluno(aluno.id);}catch(e){secao.append(el('p','Redefinição indisponível: '+e.message,'op-help'));return;}
- const dados=el('dl',undefined,'op-fields'),situacao=!acesso.possuiConta?'Sem conta de acesso':!acesso.ativa?'Conta desativada':acesso.trocaObrigatoria?(acesso.ultimaRedefinicao?'Redefinição pendente':'Primeiro acesso pendente'):'Ativa';
- for(const [label,valor]of [['Nome completo',acesso.nome],['CPF cadastrado',formatarCpf(acesso.cpf)],['Situação do acesso',situacao],['Última redefinição',acesso.ultimaRedefinicao?new Date(acesso.ultimaRedefinicao).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'Não realizada']]){const linha=el('div');linha.append(el('dt',label),el('dd',valor));dados.append(linha);}secao.append(dados);
+ const situacao=!acesso.possuiConta?'Sem conta de acesso':!acesso.ativa?'Conta desativada':acesso.trocaObrigatoria?(acesso.ultimaRedefinicao?'Redefinição pendente':'Primeiro acesso pendente'):'Ativa';
+ secao.append(el('p',`Situação do acesso: ${situacao}${acesso.ultimaRedefinicao?' · última redefinição em '+new Date(acesso.ultimaRedefinicao).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):''}`,'op-help'));
+ if(servico.enviarRedefinicaoAluno&&!(acesso.possuiConta&&!acesso.ativa)){
+  // Com a API: o link de redefinição vai para o e-mail do cadastro (vale por tempo limitado, uso único).
+  const aviso=el('p','','op-help'),enviar=botao(aluno.email?'Enviar link de redefinição':'Cadastre um e-mail para redefinir',async()=>{
+   enviar.disabled=true;aviso.textContent='Enviando…';
+   try{const r=await servico.enviarRedefinicaoAluno(aluno.id);aviso.textContent=`Link enviado para ${r?.email||'o e-mail do aluno'}. O aluno cria a nova senha pelo link.`;}
+   catch(e){aviso.textContent=e.message;}finally{enviar.disabled=!aluno.email;}
+  },'op-button op-button-primary');enviar.dataset.opRedefinirAluno=aluno.id;enviar.disabled=!aluno.email;aviso.setAttribute('role','status');
+  secao.append(el('p',aluno.email?`O aluno recebe em ${aluno.email} um link para criar uma nova senha.`:'O aluno não tem e-mail cadastrado.','op-help'),enviar,aviso);return;
+ }
  if(acesso.possuiConta&&!acesso.ativa){
   secao.append(el('p','Conta desativada. Solicite a regulariza\u00e7\u00e3o ao Master.','op-help'));
  }else{

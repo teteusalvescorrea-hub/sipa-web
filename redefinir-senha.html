@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIPA | Nova senha</title>
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="shared/css/escala.css">
+</head>
+<!-- Página do link de redefinição (e-mail do esqueci-senha e do "Enviar link de redefinição" da recepção):
+     lê o token do #token=, pede a senha nova e chama POST usuarios/redefinir-senha. -->
+<body data-sipa-escala="login" class="login-page">
+<div class="login-container">
+    <section class="login-form-area">
+        <div class="login-card">
+            <div class="access-panel active">
+                <div class="login-header">
+                    <span class="form-eyebrow">REDEFINIR SENHA</span>
+                    <h2>Crie sua nova senha</h2>
+                    <p>A senha deve ter de 8 a 100 caracteres, com letras e números.</p>
+                </div>
+                <div id="redefinir-mensagem" role="alert" aria-live="polite" class="form-message"></div>
+                <form id="redefinir-form" novalidate class="login-form">
+                    <div class="form-field">
+                        <label for="nova-senha">Nova senha</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="nova-senha" name="novaSenha" required minlength="8" maxlength="100" autocomplete="new-password" placeholder="Digite a nova senha">
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label for="confirmar-senha">Confirmar nova senha</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="confirmar-senha" name="confirmarSenha" required maxlength="100" autocomplete="new-password" placeholder="Repita a nova senha">
+                        </div>
+                    </div>
+                    <button type="submit" id="redefinir-enviar" class="primary-button">
+                        <span>Salvar nova senha</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </form>
+                <p id="redefinir-login" hidden><a href="login.html" class="primary-button" style="text-decoration:none;justify-content:center">Ir para o login</a></p>
+            </div>
+        </div>
+    </section>
+</div>
+<script type="module" src="js/redefinirSenha.js"></script>
+</body>
+</html>

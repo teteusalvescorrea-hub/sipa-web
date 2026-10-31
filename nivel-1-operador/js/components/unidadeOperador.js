@@ -244,7 +244,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             fichaConteudo.append(grade);
         }
         if(abaFicha==='historico')montarLinhaTempo(fichaConteudo,linhaTempo,{abrirAula:id=>{const aula=aulas.find(a=>a.id===id);if(aula)detalhes.abrir(aula);}});
-        if(abaFicha==='acesso'){fichaConteudo.append(campos([['Login previsto (CPF)',formatarCpf(a.cpf)],['Ativação',a.acesso],['Convite',a.convite?.status||'Não emitido / integração pendente'],['Primeiro acesso',a.primeiroAcessoEm?dataHora(a.primeiroAcessoEm):'Não informado'],['Troca obrigatória de senha',a.contaId?'Obrigatória no primeiro acesso':'Validação pendente na API'],['Último acesso',dataHora(a.ultimoAcessoEm)]]),el('p',a.contaId?'Acesso vinculado ao cadastro do aluno.':'Nenhuma credencial foi emitida para este cadastro legado.','op-inline-note'));
+        if(abaFicha==='acesso'){fichaConteudo.append(campos([['Login (CPF)',formatarCpf(a.cpf)],['E-mail',a.email||'Não cadastrado'],['Último acesso',a.ultimoAcessoEm?dataHoraCurta(a.ultimoAcessoEm):'Ainda não entrou']]));
 
         }
         if(abaFicha==='acesso')await montarAcessoAluno(fichaConteudo,a,contextoFicha);

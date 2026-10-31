@@ -49,6 +49,9 @@ export function montarReservaRecepcao(raiz,servico,executar){
    par.addEventListener('change',atualizarLocal);atualizarLocal();
    corpo.replaceChildren(el('p',`${formatarData(data)} · ${hora}–${fimDaAula(hora)}`),campo('Instrutor responsável · veículo selecionado · categoria',par),local,campo('Selecionar aluno · nome ou CPF',busca),lista,saldo,erro,acoes);
    await pesquisar();if(!janela.open)janela.showModal();busca.focus();
-  }catch(e){await executar(()=>{throw e;},'');}
+  }catch(e){
+   const aviso=modal(raiz,'Não foi possível agendar','opReservaErro');aviso.append(el('p',e?.message||'Não foi possível concluir a operação.','op-help'),botao('Entendi',()=>aviso.close(),'op-button op-button-primary'));
+   aviso.addEventListener('close',()=>aviso.remove(),{once:true});aviso.showModal();
+  }
  };
 }

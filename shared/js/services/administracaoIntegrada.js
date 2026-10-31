@@ -187,7 +187,8 @@ const quando=v=>v&&!/(Z|[+-]\d\d:\d\d)$/.test(v)?v+'-03:00':v;
 function adaptarAuditoria(itens){
  return lista(itens).map(x=>({id:x.id,em:quando(x.quando??x.em),usuario:x.usuario?.id??x.usuario,responsavel:x.usuario?.id,responsavelNome:x.usuario?.nome,...(x.usuario?.id&&x.usuario.id===x.registroId?{contaNome:x.usuario.nome}:{}),tipo:[descricao(x.acao),x.tabela].filter(Boolean).join(' · ').toLowerCase()||'registro',unidade:x.unidade||'',referencia:x.registroId,justificativa:x.justificativa||''}));
 }
-const janelas=(hoje=hojeBrasil())=>[{de:somarDias(hoje,-91),ate:hoje},{de:somarDias(hoje,1),ate:somarDias(hoje,92)}];
+// O "ate" da API é exclusivo (início < ate): a primeira janela vai até amanhã para trazer as aulas de hoje.
+const janelas=(hoje=hojeBrasil())=>[{de:somarDias(hoje,-91),ate:somarDias(hoje,1)},{de:somarDias(hoje,1),ate:somarDias(hoje,92)}];
 const dataHora=(data,inicio)=>data+'T'+inicio+':00';
 
 // ---------------------------------------------------------------- serviço
@@ -390,6 +391,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    await chamar(Put(`veiculos/${id}/pela-autoescola`,{modelo:String(d.nome??v.nome).trim(),placa:String(d.identificacao??v.placa).trim(),tipoCambioId:Object.hasOwn(d,'tipoCambio')?CAMBIO_ID[d.tipoCambio]??null:undefined}));
    if(d.instrutorId&&d.instrutorId!==v.instrutorId)await chamar(Put(`veiculos/${id}/responsavel`,{motoristaId:d.instrutorId},comChave()));
   },
+  // Redefinir senha (decisão do João em 31/10): a API manda o link de redefinição ao e-mail do aluno.
+  async enviarRedefinicaoAluno(id){exigirCapacidade(op,'redefinir-senha-aluno');return chamar(Post(`alunos/${id}/enviar-redefinicao`,{}));},
   async redefinirSenhaAluno(id,dados){
    regras.autorizar(op,'redefinir-senha-aluno');const j=String(dados?.justificativa||'').trim();if(j.length<5||j.length>1000)throw new Error('Informe a justificativa da redefinição (5 a 1000 caracteres).');
    return {acessoCriado:false,...respostaSenha(await chamar(Post(`alunos/${id}/redefinir-acesso`,{justificativa:j})))};
