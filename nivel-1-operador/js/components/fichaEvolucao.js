@@ -10,13 +10,47 @@ const final=s=>['Aprovado','Reprovado','Cancelado'].includes(s);
 const primario='op-button op-button-primary';
 function erroFormulario(f){const p=el('p',undefined,'op-acompanhamento-erro');p.setAttribute('role','alert');f.append(p);return p;}
 function envio(f,fn){let ocupado=false;f.addEventListener('submit',async e=>{e.preventDefault();if(ocupado)return;ocupado=true;const botoes=[...f.querySelectorAll('button')];botoes.forEach(b=>b.disabled=true);try{await fn();}finally{ocupado=false;botoes.forEach(b=>b.disabled=false);}});}
+// Passos (stepper): cada item com título, detalhe e estado — feito, atual, falhou ou pendente.
+function passos(rotulo,itens){
+ const ol=el('ol',undefined,'op-passos');ol.setAttribute('aria-label',rotulo);
+ itens.forEach((p,i)=>{const li=el('li',undefined,'op-passo op-passo-'+p.estado),marca=el('span',p.estado==='feito'?'✓':p.estado==='falhou'?'✕':String(i+1),'op-passo-marca'),texto=el('div',undefined,'op-passo-texto');marca.setAttribute('aria-hidden','true');texto.append(el('strong',p.titulo),el('small',p.detalhe));li.append(marca,texto);if(p.estado==='atual')li.setAttribute('aria-current','step');ol.append(li);});
+ return ol;
+}
+const ultimaProva=(tentativas,tipo)=>tentativas.filter(p=>p.tipo===tipo&&!p.arquivada).at(-1);
+function passoProva(titulo,p){
+ const s=p?.status||'Não solicitado';
+ if(s==='Aprovado')return {titulo,estado:'feito',detalhe:'Aprovado'+(p.data?' em '+data(p.data):'')};
+ if(s==='Reprovado'||s==='Cancelado')return {titulo,estado:'falhou',detalhe:`${s} · tentativa ${p.ordem||1}`};
+ if(s==='Agendado')return {titulo,estado:'atual',detalhe:'Agendada'+(p.data?' para '+data(p.data):'')};
+ if(s==='Solicitado')return {titulo,estado:'atual',detalhe:'Solicitada, aguardando data'};
+ return {titulo,estado:'pendente',detalhe:'Não solicitada'};
+}
+function passoEtapa(titulo,item,feito){
+ const s=item?.status||'Não informado';
+ if(s==='Aprovado')return {titulo,estado:'feito',detalhe:feito};
+ if(s==='Reprovado'||s==='Vencido')return {titulo,estado:'falhou',detalhe:s};
+ return {titulo,estado:s==='Pendente'?'atual':'pendente',detalhe:s==='Não informado'?'Não informada':s};
+}
+// Jornada até a habilitação: exames, prova teórica, LADV, liberação das aulas práticas, provas práticas e habilitação.
+function jornada(a,tentativas){
+ const exames=Object.keys(EXAMES_FICHA).map(t=>lerExameFicha(a,t).status),ok=exames.filter(s=>s==='Aprovado'||s==='Não se aplica').length;
+ const itens=[exames.includes('Reprovado')?{titulo:'Exames',estado:'falhou',detalhe:'Há exame reprovado'}:ok===exames.length?{titulo:'Exames',estado:'feito',detalhe:'Todos aprovados'}:{titulo:'Exames',estado:ok||exames.includes('Pendente')?'atual':'pendente',detalhe:`${ok} de ${exames.length} aprovados`}];
+ itens.push(passoProva('Prova teórica',ultimaProva(tentativas,'teorica')),passoEtapa('LADV',etapaParaAgendamento(a,'ladv'),'Emitida'),passoEtapa('Aulas práticas',etapaParaAgendamento(a,'pratica'),'Liberadas'));
+ const praticas=Object.entries(PROVAS_FICHA).filter(([t,c])=>t!=='teorica'&&c.categoria&&a.categoria.includes(c.categoria));
+ for(const [t,c] of praticas)itens.push(passoProva('Prova prática '+c.categoria,ultimaProva(tentativas,t)));
+ const habilitado=praticas.length>0&&praticas.every(([t])=>ultimaProva(tentativas,t)?.status==='Aprovado');
+ itens.push({titulo:'Habilitação',estado:habilitado?'feito':'pendente',detalhe:habilitado?'Concluída':'Após as provas práticas'});
+ // A próxima etapa a cumprir aparece como a atual.
+ const proxima=itens.find(p=>p.estado!=='feito');if(proxima?.estado==='pendente')proxima.estado='atual';
+ return itens;
+}
 function confirmar(ctx,titulo,descricao,acao,conteudo){
  const d=modal(ctx.raiz,titulo,'opConfirmacaoFicha'),f=el('form');f.append(el('p',descricao,'op-help'));if(conteudo)f.append(conteudo);const rodape=el('footer',undefined,'op-ficha-acoes'),voltar=botao('Voltar',()=>d.close()),b=el('button','Confirmar',primario);b.type='submit';rodape.append(voltar,b);f.append(rodape);d.append(f);
  envio(f,async()=>{if(await acao())d.close();});d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();
 }
 export function montarEdicaoCadastro(destino,a,ctx){
- if(ctx.servico.identidade.nivel<2||!ctx.permissoes.includes('editar-cadastro'))return;
- if(ctx.servico.corrigirAluno)destino.append(botao('Vínculo e situação cadastral',()=>formularioAdministrativo(ctx.raiz,'Correção administrativa',[['unidadePrincipal','Unidade principal','select',a.unidadePrincipal||a.unidade,UNIDADES_INSTITUCIONAIS.filter(u=>ctx.servico.identidade.nivel===3||ctx.servico.identidade.unidades?.includes(u.id)).map(u=>[u.id,u.nome])],['situacao','Situação cadastral','select',a.situacao||'Pendente',['Pendente','Regular','Inativo']],['bloqueado','Bloquear novos agendamentos','checkbox',a.bloqueioAdministrativo?.ativo===true],['justificativa','Justificativa','textarea','']],d=>ctx.executar(()=>ctx.servico.corrigirAluno(a.id,{unidadePrincipal:d.unidadePrincipal,situacao:d.situacao,bloqueioAdministrativo:{ativo:d.bloqueado,motivo:d.justificativa}},d.justificativa),'Correção registrada.',ctx.reabrir))));
+ if(!ctx.permissoes.includes('editar-cadastro'))return;
+ if(ctx.servico.corrigirAluno&&ctx.permissoes.includes('corrigir-registro'))destino.append(botao('Vínculo e situação cadastral',()=>formularioAdministrativo(ctx.raiz,'Correção administrativa',[['unidadePrincipal','Unidade principal','select',a.unidadePrincipal||a.unidade,UNIDADES_INSTITUCIONAIS.filter(u=>ctx.servico.identidade.nivel===3||ctx.servico.identidade.unidades?.includes(u.id)).map(u=>[u.id,u.nome])],['situacao','Situação cadastral','select',a.situacao||'Pendente',['Pendente','Regular','Inativo']],['bloqueado','Bloquear novos agendamentos','checkbox',a.bloqueioAdministrativo?.ativo===true],['justificativa','Justificativa','textarea','']],d=>ctx.executar(()=>ctx.servico.corrigirAluno(a.id,{unidadePrincipal:d.unidadePrincipal,situacao:d.situacao,bloqueioAdministrativo:{ativo:d.bloqueado,motivo:d.justificativa}},d.justificativa),'Correção registrada.',ctx.reabrir))));
  const editar=botao('Editar cadastro',()=>{
   const f=el('form',undefined,'op-form-grid');f.dataset.opEditarCadastro='';f.noValidate=true;
   const controles={};for(const [k,titulo,tipo] of [['nome','Nome completo','text'],['cpf','CPF','text'],['nascimento','Data de nascimento','date'],['telefone','Telefone','tel'],['email','E-mail','email'],['categoria','Categoria','select'],['observacoes','Observações administrativas','textarea']]){
@@ -34,7 +68,7 @@ export function montarEdicaoCadastro(destino,a,ctx){
  });editar.dataset.opEditar='';editar.disabled=!ctx.permissoes.includes('editar-cadastro');destino.append(editar);
 }
 export function montarExamesProvas(destino,a,ctx){
- const permitido=ctx.permissoes.includes('verificar'),tentativas=provasDoAluno(a);
+ const permitido=ctx.permissoes.includes('verificar');
  destino.append(el('p','Acompanhamento administrativo local. Não realiza consulta, agendamento ou cancelamento oficial no DETRAN.','op-inline-note'));
  const exames=el('form',undefined,'op-acompanhamento');exames.dataset.opExamesFicha='';exames.append(el('h4','Exames'));const controles={};
  for(const [tipo,nome] of Object.entries(EXAMES_FICHA)){
@@ -53,6 +87,10 @@ export function montarExamesProvas(destino,a,ctx){
   const b=el('button','Salvar autorização',primario);b.type='submit';b.disabled=bloqueado;f.append(b);
   envio(f,()=>ctx.executar(()=>ctx.servico.verificar(a.id,tipo,{status:status.value,data:dia.value,validade:validade.value,fonte:fonte.value}),'Autorização registrada.',ctx.reabrir));destino.append(f);
  }
+}
+export function montarProvas(destino,a,ctx){
+ const permitido=ctx.permissoes.includes('verificar'),tentativas=provasDoAluno(a);
+ const resumo=el('section',undefined,'op-jornada');resumo.dataset.opJornada='';resumo.append(el('h4','Jornada até a habilitação'),passos('Jornada até a habilitação',jornada(a,tentativas)));destino.append(resumo);
  destino.append(el('h4','Provas e agendamentos'));
  function formularioProva(tipo,atual,host){
   const cfg=PROVAS_FICHA[tipo],f=el('form',undefined,'op-prova-form'),situacao=select(SITUACOES_PROVA,atual?.status||'Não solicitado'),dia=entrada('date',atual?.data||''),dataCampo=campo('Data da prova',dia),erro=erroFormulario(f),acoes=el('div',undefined,'op-ficha-acoes');
@@ -70,12 +108,19 @@ export function montarExamesProvas(destino,a,ctx){
   });host.replaceChildren(f);
  }
  for(const [tipo,cfg] of Object.entries(PROVAS_FICHA).filter(([,c])=>!c.categoria||a.categoria.includes(c.categoria))){
-  const lista=tentativas.filter(p=>p.tipo===tipo),atual=lista.find(p=>!p.arquivada&&['Solicitado','Agendado'].includes(p.status))||lista.at(-1),host=el('div');formularioProva(tipo,atual,host);destino.append(host);
+  const lista=tentativas.filter(p=>p.tipo===tipo),atual=lista.find(p=>!p.arquivada&&['Solicitado','Agendado'].includes(p.status))||lista.at(-1),host=el('div');formularioProva(tipo,atual,host);
+  const s=!atual||atual.arquivada?'Não solicitado':atual.status,fim=final(s),comData=!!atual?.data&&(s==='Agendado'||fim);
+  const etapas=[{titulo:'Solicitada',estado:s==='Não solicitado'?'atual':'feito',detalhe:s==='Não solicitado'?'Ainda não solicitada':'Pedido registrado'},
+   {titulo:'Agendada',estado:s==='Solicitado'?'atual':comData?'feito':'pendente',detalhe:comData?data(atual.data):'Sem data'},
+   {titulo:'Resultado',estado:s==='Aprovado'?'feito':s==='Reprovado'||s==='Cancelado'?'falhou':s==='Agendado'?'atual':'pendente',detalhe:fim?s:s==='Agendado'?'Aguardando a prova':'Sem resultado'}];
+  const card=el('article',undefined,'op-prova-card'),topo=el('header',undefined,'op-prova-card-topo'),titulo=el('div');titulo.append(el('h5',cfg.nome),el('small',s==='Não solicitado'?'Nenhuma tentativa em andamento':`Tentativa ${atual.ordem||1}`));
+  topo.append(titulo,el('span',s,'op-badge op-prova-situacao op-prova-situacao-'+(s==='Aprovado'?'ok':s==='Reprovado'||s==='Cancelado'?'erro':s==='Não solicitado'?'neutra':'andamento')));
+  card.dataset.opProvaCard=tipo;card.append(topo,passos(cfg.nome,etapas),host);destino.append(card);
  }
 }
 export function montarProvasAgendadas(destino,a,ctx){
  const permitido=ctx.permissoes.includes('verificar'),tentativas=provasDoAluno(a);
- if(ctx.servico.corrigirProva&&tentativas.length)destino.append(botao('Corrigir registro de prova',()=>formularioAdministrativo(ctx.raiz,'Correção de prova',[['tentativa','Tentativa','select',tentativas[0].id,tentativas.map(p=>[p.id,PROVAS_FICHA[p.tipo].nome+' · Tentativa '+p.ordem+' · '+p.status])],['data','Data da prova','date',tentativas[0].data||hojeBrasil()],['status','Situação corrigida','select',tentativas[0].status,SITUACOES_PROVA],['justificativa','Justificativa','textarea','']],d=>ctx.executar(()=>ctx.servico.corrigirProva(a.id,d.tentativa,d),'Correção preservada no histórico.',ctx.reabrir))));
+ const corrigir=ctx.servico.corrigirProva&&tentativas.length&&botao('Corrigir registro de prova',()=>formularioAdministrativo(ctx.raiz,'Correção de prova',[['tentativa','Tentativa','select',tentativas[0].id,tentativas.map(p=>[p.id,PROVAS_FICHA[p.tipo].nome+' · Tentativa '+p.ordem+' · '+p.status])],['data','Data da prova','date',tentativas[0].data||hojeBrasil()],['status','Situação corrigida','select',tentativas[0].status,SITUACOES_PROVA],['justificativa','Justificativa','textarea','']],d=>ctx.executar(()=>ctx.servico.corrigirProva(a.id,d.tentativa,d),'Correção preservada no histórico.',ctx.reabrir)));
  destino.append(el('h4','Provas agendadas'));const ativos=tentativas.filter(p=>p.status==='Agendado'&&!p.arquivada);
  if(!ativos.length)destino.append(el('p','Nenhuma prova agendada.','op-help'));
  for(const p of ativos){
@@ -94,7 +139,7 @@ export function montarProvasAgendadas(destino,a,ctx){
   const linha=el('article',undefined,'op-prova-resultado');linha.dataset.opResultadoProva=p.id;
   linha.append(el('strong',PROVAS_FICHA[p.tipo]?.nome||p.tipo),el('p',`Tentativa ${p.ordem} · Data da prova: ${data(p.data)} · ${p.arquivada?'Arquivada':p.status}${!SITUACOES_PROVA.includes(p.status)?' (registro anterior, somente consulta)':''}`));
   if(p.motivoExclusao)linha.append(el('p','Motivo: '+p.motivoExclusao));anteriores.append(linha);
- }if(anteriores.children.length===1)anteriores.append(el('p','Nenhum resultado anterior registrado.','op-help'));destino.append(anteriores);
+ }if(anteriores.children.length===1)anteriores.append(el('p','Nenhum resultado anterior registrado.','op-help'));destino.append(anteriores);if(corrigir){const rodape=el('div',undefined,'op-ficha-acoes op-provas-rodape');rodape.append(corrigir);destino.append(rodape);}
 }
 export function montarLinhaTempo(destino,eventos,{abrirAula}={}){
  const box=el('section',undefined,'op-linha-tempo');box.dataset.opLinhaTempo='';box.setAttribute('aria-label','Histórico do aluno');

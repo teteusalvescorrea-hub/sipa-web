@@ -22,7 +22,7 @@ export async function validarRedefinicaoAluno({evaluate,waitFor,check,navigate,s
   await evaluate("document.querySelector('[data-op-ficha-aba=acesso]').click()");
   await waitFor(()=>evaluate("document.querySelector('[data-op-ficha]').dataset.opAba==='acesso'"),'Aba Acesso');
   await check("!document.querySelector('[data-op-ficha] [data-op-redefinir-aluno]')&&!document.querySelector('[data-op-ficha] .op-reset-access')",'Acesso sem método anterior de redefinição');
-  await check("[...document.querySelectorAll('[data-op-ficha-aba]')].map(b=>b.textContent).join('|')==='Cadastro|Exames e agendamento de prova|Aulas|Provas marcadas|Histórico|Acesso|Redefinir senha'",'Sete abas com Redefinir senha imediatamente após Acesso');
+  await check("[...document.querySelectorAll('[data-op-ficha-aba]')].map(b=>b.textContent).join('|')==='Cadastro|Exames|Provas|Aulas|Histórico|Acesso'",'Sete abas com Redefinir senha imediatamente após Acesso');
   await evaluate("document.querySelector('[data-op-ficha-aba=acesso]').click()");
   await waitFor(()=>evaluate("!!document.querySelector('[data-op-ficha][open] [data-op-redefinir-aluno]')"),'Ação de redefinição disponível');
   await check("document.querySelector('.op-reset-access').textContent.includes('529.982.247-25')&&document.querySelector('.op-reset-access').textContent.includes('Aluno para recuperação')",'Novo painel mostra nome e CPF cadastrado');

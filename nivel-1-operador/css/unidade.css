@@ -276,3 +276,36 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-unidade [data-op-ficha] .op-ficha-bloco textarea{width:100%;box-sizing:border-box;min-height:70px}
 .op-unidade [data-op-ficha] .op-ficha-acoes-notas{display:flex;justify-content:flex-end;margin-top:8px}
 .op-unidade [data-op-ficha] .op-ficha-barra{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-bottom:12px}
+
+/* Aba Provas: jornada em passos e um card por prova. */
+.op-unidade [data-op-ficha] .op-jornada{margin:0 0 18px;padding:16px 18px;border:1px solid var(--op-line);border-radius:12px;background:var(--op-soft)}
+.op-unidade [data-op-ficha] .op-jornada>h4{margin:0 0 16px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--progress-text-secondary,#4c6278)}
+.op-passos{display:flex;margin:0;padding:0;list-style:none}
+.op-passo{position:relative;flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;padding:0 4px;text-align:center}
+.op-passo::before{content:'';position:absolute;top:15px;left:calc(-50% + 20px);right:calc(50% + 20px);height:2px;border-radius:1px;background:var(--op-line)}
+.op-passo:first-child::before{display:none}
+.op-passo:is(.op-passo-feito,.op-passo-atual,.op-passo-falhou)::before{background:var(--progress-blue,#1769aa)}
+.op-passo-marca{position:relative;z-index:1;display:grid;place-items:center;width:32px;height:32px;box-sizing:border-box;border:2px solid var(--op-line);border-radius:50%;background:var(--progress-card,#fff);color:var(--op-muted);font-size:14px;font-weight:700}
+.op-passo-feito .op-passo-marca{border-color:var(--progress-blue,#1769aa);background:var(--progress-blue,#1769aa);color:#fff}
+.op-passo-atual .op-passo-marca{border-color:var(--progress-blue,#1769aa);color:var(--progress-blue,#1769aa);box-shadow:0 0 0 4px rgba(23,105,170,.16)}
+.op-passo-falhou .op-passo-marca{border-color:#b42318;background:#b42318;color:#fff}
+.op-passo-texto{display:flex;flex-direction:column;gap:2px;min-width:0}
+.op-passo-texto strong{font-size:13px;line-height:1.25}
+.op-passo-texto small{font-size:12px;line-height:1.3;color:var(--op-muted)}
+.op-passo-atual .op-passo-texto strong{color:var(--progress-blue,#1769aa)}
+.op-passo-falhou .op-passo-texto small{color:#b42318}
+.op-unidade [data-op-ficha] .op-prova-card{margin:0 0 14px;padding:16px 18px;border:1px solid var(--op-line);border-radius:12px}
+.op-prova-card-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.op-prova-card-topo h5{margin:0 0 2px;font-size:15px}
+.op-prova-card-topo small{color:var(--op-muted);font-size:12px}
+.op-prova-card .op-passos{max-width:560px;margin:0 auto 14px}
+.op-unidade [data-op-ficha] .op-prova-card .op-prova-form{margin:0}
+.op-badge.op-prova-situacao{flex:none;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.op-prova-situacao-ok{background:#e3f4ea;border-color:#b5dfc4;color:#1d6b3a}
+.op-prova-situacao-erro{background:#fdecea;border-color:#f3c3bd;color:#b42318}
+.op-prova-situacao-andamento{background:var(--progress-card-hover,#e6f1fb);border-color:#b9d5ee;color:var(--progress-blue,#1769aa)}
+.op-provas-rodape{justify-content:flex-end;margin-top:8px}
+[data-theme=dark] .op-passo-texto small{color:#a9bccd}
+[data-theme=dark] .op-passo-falhou .op-passo-marca{border-color:#ffb4ab;background:#ffb4ab;color:#3b0a05}
+[data-theme=dark] .op-passo-falhou .op-passo-texto small,[data-theme=dark] .op-prova-situacao-erro{color:#ffb4ab}
+@media(max-width:700px){.op-passos{flex-direction:column;gap:12px}.op-passo{flex-direction:row;align-items:flex-start;text-align:left}.op-passo::before{display:none}}

@@ -2,7 +2,7 @@ export async function validarFicha({evaluate,waitFor,check,send,screenshot}){
  const aba=async n=>{const id=['cadastro','etapas','creditos','provas','historico','acesso'][n];await evaluate(`if(document.querySelector('[data-op-ficha]').dataset.opAba!=='${id}')document.querySelector('[data-op-ficha-aba=${id}]').click()`);await waitFor(()=>evaluate(`document.querySelector('[data-op-ficha]').dataset.opAba==='${id}'`),'Aba '+id);};
  const livre=()=>waitFor(()=>evaluate("!document.getElementById('operador-conteudo').hasAttribute('aria-busy')"),'Operacao concluida');
  await evaluate("sessionStorage.setItem('ficha-antes-edicao',localStorage.getItem('sipa.operador.demo.v2'))");
- await check("JSON.stringify([...document.querySelectorAll('[data-op-ficha-aba]')].map(b=>b.textContent))===JSON.stringify(['Cadastro','Exames e agendamento de prova','Aulas','Provas marcadas','Histórico','Acesso'])",'Seis abas superiores na ordem exata ao abrir ficha');
+ await check("JSON.stringify([...document.querySelectorAll('[data-op-ficha-aba]')].map(b=>b.textContent))===JSON.stringify(['Cadastro','Exames','Provas','Aulas','Histórico','Acesso'])",'Seis abas superiores na ordem exata ao abrir ficha');
  await (await import('./operador-ficha-scroll.browser.steps.mjs')).verificarBackdropUnico({evaluate,waitFor,check,send,screenshot});
  await check("!document.querySelector('[data-op-editar]')&&!document.querySelector('[data-op-editar-cadastro]')&&!!document.querySelector('[data-op-transferir]')",'N1 consulta cadastro sem edicao, preservando transferencia');
  await aba(1);await waitFor(()=>evaluate("!!document.querySelector('[data-op-exames-ficha]')"),'Exames e provas');

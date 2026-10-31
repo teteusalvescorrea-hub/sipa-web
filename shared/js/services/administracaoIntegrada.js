@@ -85,7 +85,7 @@ const TELAS_DA_CAPACIDADE=Object.freeze({
  'cadastrar-recurso':[['motoristas','cria']],'editar-instrutor':[['motoristas','atualiza']],'editar-veiculo':[['motoristas','atualiza']],
  agendar:[['agenda','cria']],'registrar-frequencia':[['agenda','atualiza']],'cancelar-aula':[['agenda','remove']],antecipar:[['antecipacoes','cria']],
  'decidir-atestado':[['decisao-atestados','atualiza']],'corrigir-decisao':[['decisao-atestados','remove']],relatorios:[['relatorios','le']],
- 'editar-cadastro':[['correcoes','atualiza']],'editar-categoria':[['correcoes','atualiza']],'gerenciar-situacao':[['correcoes','atualiza']],'corrigir-registro':[['correcoes','atualiza']],
+ 'editar-cadastro':[['alunos','atualiza']],'editar-categoria':[['correcoes','atualiza']],'gerenciar-situacao':[['correcoes','atualiza']],'corrigir-registro':[['correcoes','atualiza']],
  'excluir-cadastro':[['exclusoes','remove']],'gestao-acessos':[['equipe','cria']],'gerir-permissoes':[['papeis','cria']],auditoria:[['auditoria','le']],
  configurar:[['unidades','atualiza']],'gestao-global':[],'excecao-agenda':[['excecao-agenda','atualiza']]
 });
@@ -444,7 +444,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    await chamar(Patch(`alunos/${id}/matricula`,{...(dados.unidadePrincipal?{unidadeBaseId:u.guid(dados.unidadePrincipal)}:{}),...(dados.situacao?{situacaoAlunoId:SITUACAO_ALUNO_ID[dados.situacao]}:{}),...(dados.bloqueioAdministrativo?{bloqueioAdministrativo:dados.bloqueioAdministrativo.ativo===true}:{}),justificativa:j}));
   },
   async editarCadastro(id,d,justificativa){
-   exigirCapacidade(op,'editar-cadastro');const j=String(justificativa||'').trim();if(op.nivel>=2&&j.length<5)throw new Error('Justifique a correção cadastral.');
+   exigirCapacidade(op,'editar-cadastro');const j=String(justificativa||'').trim();if(j.length<5)throw new Error('Justifique a correção cadastral.');
    const e=await lerComAluno(id),a=regras.alunoAutorizado(e,op,id);
    await chamar(Put(`alunos/${id}/cadastro`,{nome:String(d.nome??a.nome).trim(),cpf:digitos(d.cpf??a.cpf),dataNascimento:d.nascimento??a.nascimento,telefone:digitos(d.telefone??a.telefone),email:String(d.email??a.email).trim(),justificativa:j||null}));
    if(d.categoria&&d.categoria!==a.categoria){exigirCapacidade(op,'editar-categoria');await chamar(Patch(`alunos/${id}/matricula`,{categorias:categoriasId(d.categoria),justificativa:j||null}));}
