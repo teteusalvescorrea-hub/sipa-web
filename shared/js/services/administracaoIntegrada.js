@@ -392,7 +392,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    if(d.instrutorId&&d.instrutorId!==v.instrutorId)await chamar(Put(`veiculos/${id}/responsavel`,{motoristaId:d.instrutorId},comChave()));
   },
   // Redefinir senha (decisão do João em 31/10): a API manda o link de redefinição ao e-mail do aluno.
-  async enviarRedefinicaoAluno(id){exigirCapacidade(op,'redefinir-senha-aluno');return chamar(Post(`alunos/${id}/enviar-redefinicao`,{}));},
+  async enviarRedefinicaoAluno(id){exigirCapacidade(op,'redefinir-senha-aluno',1);return chamar(Post(`alunos/${id}/enviar-redefinicao`,{}));},
   async redefinirSenhaAluno(id,dados){
    regras.autorizar(op,'redefinir-senha-aluno');const j=String(dados?.justificativa||'').trim();if(j.length<5||j.length>1000)throw new Error('Informe a justificativa da redefinição (5 a 1000 caracteres).');
    return {acessoCriado:false,...respostaSenha(await chamar(Post(`alunos/${id}/redefinir-acesso`,{justificativa:j})))};
@@ -447,7 +447,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    await chamar(Patch(`alunos/${id}/matricula`,{...(dados.unidadePrincipal?{unidadeBaseId:u.guid(dados.unidadePrincipal)}:{}),...(dados.situacao?{situacaoAlunoId:SITUACAO_ALUNO_ID[dados.situacao]}:{}),...(dados.bloqueioAdministrativo?{bloqueioAdministrativo:dados.bloqueioAdministrativo.ativo===true}:{}),justificativa:j}));
   },
   async editarCadastro(id,d,justificativa){
-   exigirCapacidade(op,'editar-cadastro');const j=String(justificativa||'').trim();if(j.length<5)throw new Error('Justifique a correção cadastral.');
+   exigirCapacidade(op,'editar-cadastro',1);const j=String(justificativa||'').trim();if(j.length<5)throw new Error('Justifique a correção cadastral.');
    const e=await lerComAluno(id),a=regras.alunoAutorizado(e,op,id);
    await chamar(Put(`alunos/${id}/cadastro`,{nome:String(d.nome??a.nome).trim(),cpf:digitos(d.cpf??a.cpf),dataNascimento:d.nascimento??a.nascimento,telefone:digitos(d.telefone??a.telefone),email:String(d.email??a.email).trim(),justificativa:j||null}));
    if(d.categoria&&d.categoria!==a.categoria){exigirCapacidade(op,'editar-categoria');await chamar(Patch(`alunos/${id}/matricula`,{categorias:categoriasId(d.categoria),justificativa:j||null}));}
