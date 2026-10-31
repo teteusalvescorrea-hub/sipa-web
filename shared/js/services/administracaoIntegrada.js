@@ -58,7 +58,8 @@ async function opcional(p,reserva=null){try{return await p;}catch(e){if(semRota(
 const lista=r=>Array.isArray(r)?r:Array.isArray(r?.itens)?r.itens:Array.isArray(r?.items)?r.items:[];
 
 // ---------------------------------------------------------------- unidades
-// GET /api/unidades → chave do catálogo do front (regras da tela) ↔ Guid (API).
+// GET /api/unidades?todas=true → chave do catálogo do front (regras da tela) ↔ Guid (API). Todas as unidades ativas,
+// porque a das aulas de carro pode ser de fora do escopo; o escopo da tela continua vindo do equipe/me.
 export function mapaUnidades(unidadesApi=[]){
  const porGuid=new Map(),porChave=new Map();
  const chaveDoNome=nome=>obterUnidadeInstitucional(regras.unidade(nome))?.id||regras.unidade(nome)||'';
@@ -98,7 +99,7 @@ export function capacidadesDoMembro(me,perfil){
 // (back antigo), vale o painel escolhido no login e o servidor barra o resto.
 export async function carregarIdentidadeEquipe(perfil,{unidadeEscolhida}={}){
  const nivel=NIVEIS[perfil];if(!nivel)throw new Error('Perfil administrativo inválido.');
- const [me,unidadesApi]=await Promise.all([chamar(Get('equipe/me')),chamar(Get('unidades'))]);
+ const [me,unidadesApi]=await Promise.all([chamar(Get('equipe/me')),chamar(Get(ComParams('unidades',{todas:true})))]);
  const painel=numero(me?.painel);if(painel!=null&&painel!==nivel)throw Object.assign(new Error('Sua conta não possui acesso a este painel administrativo.'),{status:403});
  const u=mapaUnidades(lista(unidadesApi)),proprias=(me.unidades||[]).map(u.chave).filter(Boolean);
  const base=proprias[0]||(nivel===3?u.chaves[0]:null);if(!base||!regras.UNIDADES.some(([id])=>id===base))throw new Error('Conta sem unidade vinculada. Solicite o ajuste ao Master.');
