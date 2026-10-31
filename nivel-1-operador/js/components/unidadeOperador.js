@@ -94,7 +94,8 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         filtros[k].dataset.opFiltro=k;filtros[k].id=`op-alunos-filtro-${k}`;label.htmlFor=filtros[k].id;
         lupa.dataset.opPesquisar=k;lupa.setAttribute('aria-label',`Pesquisar com todos os filtros: ${t}`);lupa.title='Pesquisar com todos os filtros';
         const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS('http://www.w3.org/2000/svg','use');svg.setAttribute('aria-hidden','true');use.setAttribute('href','#op-search');svg.append(use);lupa.append(svg);
-        linha.append(filtros[k],lupa);grupo.append(label,linha);barra.append(grupo);
+        // Dropdown aplica ao escolher (sem lupa); a lupa fica só na busca por nome ou CPF.
+        if(k==='busca')linha.append(filtros[k],lupa);else{linha.append(filtros[k]);filtros[k].addEventListener('change',pesquisar);}grupo.append(label,linha);barra.append(grupo);
     }
     const limparBusca=botao('Limpar filtros',()=>{Object.values(filtros).forEach(c=>c.value='');filtrosAplicados=filtrosVazios();pagina=1;listar();},'op-button op-button-outline');limparBusca.dataset.opLimparBusca='';const acoesBusca=el('div',undefined,'op-aluno-filter-actions');acoesBusca.append(limparBusca);barra.append(acoesBusca);
     // Só entradas numéricas/pontuadas recebem máscara; nomes com números continuam nomes.

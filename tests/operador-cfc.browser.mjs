@@ -170,7 +170,7 @@ try {
     await evaluate("window.linhaPesquisa=document.querySelector('[data-op-panel=alunos] tbody');document.querySelector('[data-op-pesquisar=busca]').click();document.querySelector('[data-op-pesquisar=busca]').click()");
     await check("window.linhaPesquisa===document.querySelector('[data-op-panel=alunos] tbody')",'Cliques repetidos sem mudanca nao refazem a consulta local');
     await evaluate("var b=document.querySelector('[data-op-busca]');b.value='inexistente';b.dispatchEvent(new Event('input'))");
-    await evaluate("document.querySelector('[data-op-pesquisar=categoria]').click()");
+    await evaluate("document.querySelector('[data-op-filtro=categoria]').dispatchEvent(new Event('change'))");
     await check("document.querySelectorAll('[data-op-aluno]').length===0",'Busca sem resultados');
     for(const cpf of ['52998224725','529.982.247-25','52998224725999']){
         await evaluate("var b=document.querySelector('[data-op-busca]');b.value="+JSON.stringify(cpf)+";b.dispatchEvent(new Event('input'));document.querySelector('[data-op-pesquisar=busca]').click()");
@@ -186,9 +186,9 @@ try {
         await evaluate("document.querySelector('[data-op-limpar-busca]').click();document.querySelector('[data-op-filtro="+key+"]').value="+JSON.stringify(value)+";document.querySelector('[data-op-pesquisar="+key+"]').click()");
         await check("document.querySelector('[data-op-contagem]').textContent.startsWith('"+total+" aluno')&&document.querySelector('[data-op-filtro="+key+"]').value==="+JSON.stringify(value), 'Filtro individual '+key+' '+value);
     }
-    await evaluate("document.querySelector('[data-op-limpar-busca]').click();document.querySelector('[data-op-busca]').value='52998224725';document.querySelector('[data-op-busca]').dispatchEvent(new Event('input'));document.querySelector('[data-op-filtro=categoria]').value='B';document.querySelector('[data-op-filtro=principal]').value='Itaparica';document.querySelector('[data-op-pesquisar=principal]').click()");
+    await evaluate("document.querySelector('[data-op-limpar-busca]').click();document.querySelector('[data-op-busca]').value='52998224725';document.querySelector('[data-op-busca]').dispatchEvent(new Event('input'));document.querySelector('[data-op-filtro=categoria]').value='B';document.querySelector('[data-op-filtro=principal]').value='Itaparica';document.querySelector('[data-op-filtro=principal]').dispatchEvent(new Event('change'))");
     await check("document.querySelectorAll('[data-op-aluno]').length===0&&document.querySelector('[data-op-panel=alunos]').textContent.includes('Nenhum aluno encontrado para os filtros informados.')",'Filtros combinados nao ignoram categoria ao pesquisar CPF');
-    await evaluate("document.querySelector('[data-op-filtro=categoria]').value='AB';document.querySelector('[data-op-pesquisar=carro]').click()");
+    await evaluate("document.querySelector('[data-op-filtro=categoria]').value='AB';document.querySelector('[data-op-filtro=carro]').dispatchEvent(new Event('change'))");
     await check("document.querySelectorAll('[data-op-aluno]').length===1",'Todos os filtros sao aplicados por qualquer lupa');
     await evaluate("document.querySelector('[data-op-limpar-busca]').click();document.querySelector('[data-op-busca]').value='11144477735';document.querySelector('[data-op-busca]').dispatchEvent(new Event('input'));document.querySelector('[data-op-pesquisar=busca]').click()");
     await check("document.querySelectorAll('[data-op-aluno]').length===0",'CPF completo externo nao revela aluno de outra unidade');
