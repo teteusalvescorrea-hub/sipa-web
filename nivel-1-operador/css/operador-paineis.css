@@ -337,3 +337,8 @@ html body.operador-page .op-unidade .op-reset-dialog .op-form-fields :is(label,p
 .op-chave:focus-visible,.op-acao-mais:focus-visible { outline:2px solid #1769aa; outline-offset:2px; }
 .op-acao-mais { min-width:32px; padding:2px 6px; border:0; border-radius:6px; background:none; color:inherit; font-size:20px; line-height:1; cursor:pointer; }
 .op-acao-mais:hover { background:rgba(23,105,170,.12); }
+.op-ordenar { display:inline-flex; align-items:center; gap:6px; padding:0; border:0; background:none; color:inherit; font:inherit; font-weight:inherit; cursor:pointer; text-align:left; }
+.op-ordenar:hover { text-decoration:underline; }
+.op-ordenar:focus-visible { outline:2px solid #1769aa; outline-offset:2px; border-radius:3px; }
+.op-ordenar-seta { font-size:10px; opacity:.55; }
+th[aria-sort=ascending] .op-ordenar-seta, th[aria-sort=descending] .op-ordenar-seta { opacity:1; color:#1769aa; }

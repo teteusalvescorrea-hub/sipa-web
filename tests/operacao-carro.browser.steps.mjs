@@ -2,12 +2,12 @@ export async function validarOperacaoCarro({evaluate,waitFor,check,navigate,send
  await navigate('/nivel-1-operador/html/operador-cfc.html?demo=1&ambiente=local&unidade=Cobil%C3%A2ndia',"!!document.querySelector('.op-unidade')");
  await evaluate("document.querySelector('[data-op-nav=cadastro]').click()");
  for(const categoria of ['A','D','B','AB']){
-  await evaluate(`var f=document.querySelector('[data-op-panel=cadastro] form');f.elements.categoria.value='${categoria}';f.elements.categoria.dispatchEvent(new Event('change'))`);
+  await evaluate(`var f=document.querySelector('[data-op-cadastro-aluno] form');f.elements.categoria.value='${categoria}';f.elements.categoria.dispatchEvent(new Event('change'))`);
   await check(`document.querySelector('[name=tipoCambio]').disabled===${!categoria.includes('B')}`,'Campo de cambio por categoria '+categoria);
  }
  for(const [categoria,tipoCambio,cpf] of [['B','manual','52998224725'],['B','automatico','93541134780'],['AB','manual','11144477735'],['AB','automatico','16899535009']]){
   const count=await evaluate("JSON.parse(localStorage.getItem('sipa.operador.demo.v2'))?.alunos.length||0");
-  await evaluate(`document.querySelector('[data-op-nav=cadastro]').click();var f=document.querySelector('[data-op-panel=cadastro] form');f.elements.categoria.value='${categoria}';f.elements.categoria.dispatchEvent(new Event('change'));f.elements.tipoCambio.value='${tipoCambio}';f.elements.tipoCambio.dispatchEvent(new Event('change'))`);
+  await evaluate(`document.querySelector('[data-op-nav=cadastro]').click();var f=document.querySelector('[data-op-cadastro-aluno] form');f.elements.categoria.value='${categoria}';f.elements.categoria.dispatchEvent(new Event('change'));f.elements.tipoCambio.value='${tipoCambio}';f.elements.tipoCambio.dispatchEvent(new Event('change'))`);
   await check(`document.querySelector('[name=unidadeCarro]').options.length===${tipoCambio==='automatico'?3:7}`,'Unidades de cadastro '+categoria+' '+tipoCambio);
   if(categoria==='B'&&tipoCambio==='automatico'){
    for(const width of [1440,390])for(const theme of ['light','dark']){
@@ -16,7 +16,7 @@ export async function validarOperacaoCarro({evaluate,waitFor,check,navigate,send
    }
    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
   }
-  await evaluate(`var f=document.querySelector('[data-op-panel=cadastro] form');Object.entries({nome:'Aluno Carro ${tipoCambio} ${categoria}',cpf:'${cpf}',nascimento:'2000-01-01',telefone:'27999999999',email:'${cpf}@example.invalid',unidadeCarro:'Cobilândia',quantidadeCarro:'10',quantidadeMoto:'5',observacoes:'Cadastro explicito no teste descartavel.'}).forEach(([k,v])=>f.elements[k].value=v);f.requestSubmit()`);
+  await evaluate(`var f=document.querySelector('[data-op-cadastro-aluno] form');Object.entries({nome:'Aluno Carro ${tipoCambio} ${categoria}',cpf:'${cpf}',nascimento:'2000-01-01',telefone:'27999999999',email:'${cpf}@example.invalid',unidadeCarro:'Cobilândia',quantidadeCarro:'10',quantidadeMoto:'5',observacoes:'Cadastro explicito no teste descartavel.'}).forEach(([k,v])=>f.elements[k].value=v);f.requestSubmit()`);
   await waitFor(()=>evaluate("document.querySelector('[data-op-confirmar-cadastro]').open"),'Confirmacao cadastro');
   await check(`document.querySelector('[data-op-confirmar-cadastro]').textContent.includes('${tipoCambio==='manual'?'Manual':'Automático'}')`,'Revisao mostra cambio '+tipoCambio);
   await evaluate("document.querySelector('[data-op-confirmar-cadastro] .op-button-primary').click()");

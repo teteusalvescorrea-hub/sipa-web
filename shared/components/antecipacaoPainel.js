@@ -4,6 +4,7 @@ import {hojeBrasil,somarDias,formatarData} from '../js/calendario.js';
 import {escopoPermitido} from '../js/permissoesAdministrativas.js';
 import {chaveVaga,mensagemOferta} from '../js/ofertasAntecipacao.js';
 import {dataRelatorio} from '../js/apresentacaoRelatorios.js';
+import {tornarOrdenavel} from '../js/ordenacaoTabela.js';
 const categorias={A:'Moto',B:'Carro',D:'Ônibus'},principal='op-button op-button-primary';
 export async function montarAntecipacaoPainel(host,servico,root){
  host.ofertaController?.abort();const controller=new AbortController();host.ofertaController=controller;
@@ -29,7 +30,7 @@ export async function montarAntecipacaoPainel(host,servico,root){
    corpo.append(el('p',nomeUnidadeInstitucional(vagas[0].unidade)+' · '+categorias[vagas[0].categoria]+' · '+formatarData(vagas[0].data)),el('p',[...new Set(vagas.map(v=>v.inicio+' – '+v.fim))].join(' | ')));
    if(!alunos.length)corpo.append(el('p','Nenhum aluno interessado e elegível encontrado para esta oferta.'));
    else{const tabela=el('table',undefined,'oferta-alunos'),h=el('thead'),hr=el('tr'),body=el('tbody'),colunas=['Aluno','Categoria','Unidade vinculada','Situação','Contato','Ações'];for(const c of colunas){const th=el('th',c);th.scope='col';hr.append(th);}h.append(hr);
-    for(const a of alunos){const r=el('tr'),acao=botao('Enviar oferta',()=>confirmar([a],vagas,d));[a.nome,a.categoria,nomeUnidadeInstitucional(a.unidade),'Elegível · '+a.vagas.length+' vaga(s)',a.telefone||'Não informado',acao].forEach((v,i)=>{const c=el('td');c.dataset.rotulo=colunas[i];c.append(v instanceof Node?v:document.createTextNode(v));r.append(c);});body.append(r);}tabela.append(h,body);corpo.append(tabela);}
+    for(const a of alunos){const r=el('tr'),acao=botao('Enviar oferta',()=>confirmar([a],vagas,d));[a.nome,a.categoria,nomeUnidadeInstitucional(a.unidade),'Elegível · '+a.vagas.length+' vaga(s)',a.telefone||'Não informado',acao].forEach((v,i)=>{const c=el('td');c.dataset.rotulo=colunas[i];c.append(v instanceof Node?v:document.createTextNode(v));r.append(c);});body.append(r);}tabela.append(h,body);tornarOrdenavel(tabela);corpo.append(tabela);}
    const todos=botao('Enviar oferta para todos os interessados',()=>confirmar(alunos,vagas,d),principal);todos.disabled=!alunos.length;const rodape=el('footer');rodape.append(el('span',alunos.length+' destinatário(s) elegível(is).'),todos);d.append(corpo,rodape);d.showModal();
   }catch(e){falha(e);}finally{interessados.disabled=!selecionadas.size;}}
  function confirmar(alunos,vagas,anterior){const d=novoModal('Confirmar oferta de antecipação','ofertaConfirmacao'),corpo=el('div',undefined,'oferta-corpo'),sipa=entrada('checkbox'),whatsapp=entrada('checkbox'),erroModal=el('p'),enviar=botao('Enviar para '+alunos.length+(alunos.length===1?' aluno':' alunos'),async()=>{

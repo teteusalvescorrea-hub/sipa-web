@@ -145,10 +145,10 @@ export async function validarCpfLocal({evaluate,waitFor,check,navigate}){
  await navigate(rota,"!!document.querySelector('[data-op-cpf-ficticio]')");
  await evaluate("document.querySelector('[data-op-nav=cadastro]').click()");
  await check("!document.querySelector('[data-op-cpf-ficticio]').checked",'Excecao desativada por padrao');
- const preencher=async cpf=>evaluate(`var f=document.querySelector('[data-op-panel=cadastro] form');Object.entries({nome:'Aluno CPF Ficticio Teste',cpf:${JSON.stringify(cpf)},nascimento:'2000-01-01',telefone:'27999999999',email:'cpf@example.invalid',categoria:'B',unidadeCarro:'Itaparica',quantidadeCarro:'5',observacoes:'Teste explicito de CPF ficticio.'}).forEach(([k,v])=>f.elements[k].value=v);f.elements.categoria.dispatchEvent(new Event('change'));f.requestSubmit()`);
+ const preencher=async cpf=>evaluate(`var f=document.querySelector('[data-op-cadastro-aluno] form');Object.entries({nome:'Aluno CPF Ficticio Teste',cpf:${JSON.stringify(cpf)},nascimento:'2000-01-01',telefone:'27999999999',email:'cpf@example.invalid',categoria:'B',unidadeCarro:'Itaparica',quantidadeCarro:'5',observacoes:'Teste explicito de CPF ficticio.'}).forEach(([k,v])=>f.elements[k].value=v);f.elements.categoria.dispatchEvent(new Event('change'));f.requestSubmit()`);
  await preencher('111.111.111-11');
  await check("document.querySelector('[name=cpf]').getAttribute('aria-invalid')==='true'&&!document.querySelector('[data-op-confirmar-cadastro]').open",'Digitos invalidos rejeitados sem ativacao');
- await evaluate("var c=document.querySelector('[data-op-cpf-ficticio]');c.checked=true;c.dispatchEvent(new Event('change'));document.querySelector('[data-op-panel=cadastro] form').requestSubmit()");
+ await evaluate("var c=document.querySelector('[data-op-cpf-ficticio]');c.checked=true;c.dispatchEvent(new Event('change'));document.querySelector('[data-op-cadastro-aluno] form').requestSubmit()");
  await waitFor(()=>evaluate("document.querySelector('[data-op-confirmar-cadastro]').open"),'Confirmacao ficticia');
  await check("document.querySelector('[data-op-confirmar-cadastro]').textContent.includes('111.111.111-11')",'CPF repetido aceito localmente e completo na confirmacao');
  await evaluate("document.querySelector('[data-op-confirmar-cadastro] footer .op-button-primary').click()");

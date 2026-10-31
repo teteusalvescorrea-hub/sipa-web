@@ -12,6 +12,7 @@ import {AVISO_ONIBUS,NOMES_CATEGORIA,LOCAIS_ONIBUS} from '../../../shared/js/cat
 import {montarEdicaoCadastro,montarExamesProvas,montarProvasAgendadas,montarLinhaTempo} from './fichaEvolucao.js';
 import {el,botao,campo,select,entrada,modal} from './uiOperador.js';
 import {montarEstruturaOperador} from './painelOperador.js';
+import {tornarOrdenavel,ordenarLinhas,estadoOrdenacao} from '../../../shared/js/ordenacaoTabela.js';
 import {montarAgenda} from './agendaOperador.js';
 import {criarDetalhesAula} from './aulaOperador.js';
 import {UNIDADES,principal,carro,unidade,paresNaUnidade,destinoNovasAulas} from '../dominioOperador.js';
@@ -29,13 +30,13 @@ function chaveSituacao(ativo,nome,aoClicar){const b=el('button',undefined,'op-ch
 function botaoMais(nome,aoClicar,b=botao('⋯',aoClicar)){b.textContent='⋯';b.className='op-acao-mais';b.setAttribute('aria-label','Ver detalhes de '+nome);b.title='Ver detalhes';return b;}
 const situacaoCadastro=a=>a.situacao||(!a.nascimento||!a.email||!a.telefone?'Incompleto':'Pendente');
 function campos(itens) {const dl=el('dl',undefined,'op-fields');for(const [k,v] of itens){const item=el('div');item.append(el('dt',k),el('dd',v==null||v===''?'Não informado':String(v)));dl.append(item);}return dl;}
-function tabela(titulos,linhas,vazio='Nenhum registro disponível.') {
+function tabela(titulos,linhas,vazio='Nenhum registro disponível.',ordem) {
     const wrap=el('div',undefined,'op-table-scroll'), table=el('table',undefined,'op-table'),head=el('thead'),tr=el('tr'),body=el('tbody');
     wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label',titulos.join(', '));
     titulos.forEach(t=>{const th=el('th',t);th.scope='col';tr.append(th);});head.append(tr);
     linhas.forEach(valores=>{const linha=el('tr');valores.forEach(v=>{const td=el('td');td.append(v instanceof Node?v:document.createTextNode(String(v??'Não informado')));linha.append(td);});body.append(linha);});
     if(!linhas.length){const row=el('tr'),td=el('td',vazio,'op-demo-no-results');td.colSpan=titulos.length;row.append(td);body.append(row);}
-    table.append(head,body);wrap.append(table);return wrap;
+    table.append(head,body);tornarOrdenavel(table,ordem);wrap.append(table);return wrap;
 }
 function card(titulo,...filhos){const n=el('article',undefined,'op-card');n.append(el('h2',titulo),...filhos);return n;}
 
@@ -69,7 +70,9 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     $('.sipa-sidebar-logo').href='#visao-geral';$('.sipa-sidebar-logo').addEventListener('click',e=>{e.preventDefault();navegacao.navegar('visao-geral');});
     const antigo=$('[data-op-dialog]');antigo.remove();
     // O listener antigo pertence à estrutura e só abria o diálogo sem dados.
-    const cadastrar=$('[data-op-cadastro]'),novo=cadastrar.cloneNode(true);cadastrar.replaceWith(novo);novo.addEventListener('click',()=>navegacao.navegar('cadastro'));
+    const cadastrar=$('[data-op-cadastro]'),novo=cadastrar.cloneNode(true);cadastrar.replaceWith(novo);novo.addEventListener('click',()=>abrirCadastro());
+    // O cadastro do aluno abre em popup (decisão do João em 31/10): o link do menu e o atalho não trocam de aba.
+    raiz.addEventListener('click',e=>{if(e.target.closest('[data-op-nav=cadastro],[data-op-go=cadastro]')){e.preventDefault();e.stopImmediatePropagation();abrirCadastro();}},true);
 
     const estadoAgenda=()=>({...dados,alunos:[...dados.alunos,...dados.pista],recursos:dados.recursos.map(r=>({...r,unidade:unidade(r.unidade)})),aulas:dados.aulas.map(a=>({...a,unidade:unidade(a.unidade)}))});
     const detalhes=criarDetalhesAula(raiz,estadoAgenda,{servico,executar});
@@ -100,14 +103,15 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     filtros.busca.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();pesquisar();}});
     const lista=el('div'),paginacao=el('nav',undefined,'op-local-pagination');paginacao.setAttribute('aria-label','Páginas de alunos');const quantidade=el('p',undefined,'op-help');quantidade.dataset.opContagem='';
     painel('alunos').replaceChildren(card('Alunos autorizados',barra,quantidade,lista,paginacao));
+    const ordemAlunos=estadoOrdenacao();
     function listar(){
         const f=filtrosAplicados,termo=f.busca.trim().toLocaleLowerCase('pt-BR'),numeros=termo.replace(/\D/g,''),cpf=termoCPF(termo);
         const alunos=dados.alunos.filter(a=>(!termo||(cpf?(numeros.length===11?a.cpf===numeros:a.cpf.includes(numeros)):a.nome.toLocaleLowerCase('pt-BR').includes(termo)))&&(!f.situacao||situacaoCadastro(a)===f.situacao)&&(!f.categoria||a.categoria===f.categoria)&&(!f.principal||principal(a)===f.principal)&&(!f.carro||carro(a)===f.carro));
         const total=Math.ceil(alunos.length/10);pagina=Math.max(1,Math.min(pagina,total||1));quantidade.textContent=`${alunos.length} aluno(s) · somente vínculos autorizados`;
-        lista.replaceChildren(tabela(['Aluno / CPF','Categoria','Unidade principal','Aulas de carro','Cadastro','Acesso','Ações'],alunos.slice((pagina-1)*10,pagina*10).map(a=>{
+        lista.replaceChildren(tabela(['Aluno / CPF','Categoria','Unidade principal','Aulas de carro','Cadastro','Acesso','Ações'],ordenarLinhas(alunos.map(a=>{
             const n=el('div'),abrir=botao(a.nome,()=>abrirFicha(a.id),'op-link');abrir.dataset.opAluno=a.id;n.append(abrir,el('small',formatarCpf(a.cpf)));const acoes=el('div',undefined,'op-linha-acoes');if(servico.corrigirAluno&&permissoes.includes('corrigir-registro')){const ativo=a.situacao!=='Inativo',chave=chaveSituacao(ativo,a.nome,()=>formularioAdministrativo(raiz,(ativo?'Inativar':'Ativar')+' aluno',[['justificativa','Justificativa','textarea','']],async d=>{await servico.corrigirAluno(a.id,{situacao:ativo?'Inativo':'Regular'},d.justificativa);await dadosAtualizados();},{descricao:a.nome+(ativo?' deixa de poder reservar aulas.':' volta a poder reservar aulas.')}));chave.dataset.opSituacaoAluno=a.id;acoes.append(chave);}const mais=botaoMais(a.nome,()=>abrirFicha(a.id));mais.dataset.opAlunoAcoes=a.id;acoes.append(mais);
             return [n,a.categoria,nomeUnidade(principal(a)),carro(a)?nomeUnidade(carro(a)):'Não se aplica',badge(situacaoCadastro(a)),a.acesso||'Não informado',acoes];
-        }),'Nenhum aluno encontrado para os filtros informados.'));
+        }),ordemAlunos).slice((pagina-1)*10,pagina*10),'Nenhum aluno encontrado para os filtros informados.',{estado:ordemAlunos,aoMudar:()=>{pagina=1;listar();}}));
         paginacao.replaceChildren();if(total>1){paginacao.append(botao('Anterior',()=>{pagina=Math.max(1,pagina-1);listar();}));for(let i=Math.max(1,pagina-2);i<=Math.min(total,pagina+2);i++){const b=botao(String(i),()=>{pagina=i;listar();});if(i===pagina)b.setAttribute('aria-current','page');paginacao.append(b);}paginacao.append(botao('Próxima',()=>{pagina=Math.min(total,pagina+1);listar();}));}
     }
 
@@ -138,11 +142,12 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     }
     camposCadastro.categoria.addEventListener('change',categoriaCadastro);camposCadastro.tipoCambio.addEventListener('change',categoriaCadastro);categoriaCadastro();const erroCadastro=el('p','','op-wide');erroCadastro.setAttribute('role','alert');erroCadastro.dataset.opCadastroErro='';
     function mostrarErrosCadastro(erros){for(const [key,controle] of Object.entries(camposCadastro)){const texto=erros[key]||'';avisosCadastro[key].textContent=texto;avisosCadastro[key].hidden=!texto;if(texto)controle.setAttribute('aria-invalid','true');else controle.removeAttribute('aria-invalid');}erroCadastro.textContent=Object.keys(erros).length?'Existem campos pendentes. Confira as informações destacadas.':'';}
-    const revisar=el('button','Confirmar cadastro','op-button op-button-primary');revisar.type='submit';revisar.disabled=!permissoes.includes('cadastrar')||!permissoes.includes('anotar');form.append(erroCadastro,revisar);painel('cadastro').replaceChildren(card('Identificação e vínculos',el('p','Registre as aulas adquiridas por categoria. As aulas adquiridas ficam disponiveis automaticamente para agendamento.','op-help'),form));
+    const revisar=el('button','Confirmar cadastro','op-button op-button-primary');revisar.type='submit';revisar.disabled=!permissoes.includes('cadastrar')||!permissoes.includes('anotar');form.append(erroCadastro,revisar);const dialogoCadastro=modal(raiz,'Cadastrar aluno','opCadastroAluno');dialogoCadastro.append(el('p','Registre as aulas adquiridas por categoria. As aulas adquiridas ficam disponíveis automaticamente para agendamento.','op-help'),form);
+    function abrirCadastro(){if(!dialogoCadastro.open)dialogoCadastro.showModal();}
     const confirmarCadastro=modal(raiz,'Confirmar cadastro?','opConfirmarCadastro'),resumoCadastro=el('div',undefined,'op-confirm-grid'),erroConfirmacao=el('p');erroConfirmacao.setAttribute('role','alert');let cadastroPendente,chaveCadastro;
     let salvandoCadastro=false;
     const voltarCadastro=botao('Voltar',()=>confirmarCadastro.close());
-    const salvarCadastro=botao('Confirmar cadastro',async()=>{if(salvandoCadastro)return;salvandoCadastro=true;salvarCadastro.disabled=true;voltarCadastro.disabled=true;confirmarCadastro.querySelector('.op-close').disabled=true;salvarCadastro.textContent='Criando cadastro e acesso…';confirmarCadastro.setAttribute('aria-busy','true');try{let criado;const nomeCriado=cadastroPendente.nome;const ok=await executar(async()=>{criado=await servico.cadastrar(cadastroPendente,chaveCadastro);},'',()=>{confirmarCadastro.close();form.reset();validacaoIniciada=false;mostrarErrosCadastro({});cadastroPendente=null;chaveCadastro=null;camposCadastro.unidade.value=nomeUnidade(propria);categoriaCadastro();navegacao.navegar('alunos');mostrarSenhaProvisoria(raiz,{titulo:'Acesso do aluno criado',nome:nomeCriado,senha:criado?.senhaProvisoria});});if(!ok)erroConfirmacao.textContent=feedback.textContent;}finally{salvandoCadastro=false;salvarCadastro.disabled=false;voltarCadastro.disabled=false;confirmarCadastro.querySelector('.op-close').disabled=false;salvarCadastro.textContent='Confirmar cadastro';confirmarCadastro.removeAttribute('aria-busy');}},'op-button op-button-primary');
+    const salvarCadastro=botao('Confirmar cadastro',async()=>{if(salvandoCadastro)return;salvandoCadastro=true;salvarCadastro.disabled=true;voltarCadastro.disabled=true;confirmarCadastro.querySelector('.op-close').disabled=true;salvarCadastro.textContent='Criando cadastro e acesso…';confirmarCadastro.setAttribute('aria-busy','true');try{let criado;const nomeCriado=cadastroPendente.nome;const ok=await executar(async()=>{criado=await servico.cadastrar(cadastroPendente,chaveCadastro);},'',()=>{confirmarCadastro.close();form.reset();validacaoIniciada=false;mostrarErrosCadastro({});cadastroPendente=null;chaveCadastro=null;camposCadastro.unidade.value=nomeUnidade(propria);categoriaCadastro();dialogoCadastro.close();navegacao.navegar('alunos');mostrarSenhaProvisoria(raiz,{titulo:'Acesso do aluno criado',nome:nomeCriado,senha:criado?.senhaProvisoria});});if(!ok)erroConfirmacao.textContent=feedback.textContent;}finally{salvandoCadastro=false;salvarCadastro.disabled=false;voltarCadastro.disabled=false;confirmarCadastro.querySelector('.op-close').disabled=false;salvarCadastro.textContent='Confirmar cadastro';confirmarCadastro.removeAttribute('aria-busy');}},'op-button op-button-primary');
     confirmarCadastro.addEventListener('cancel',e=>{if(salvandoCadastro)e.preventDefault();});const rodapeCadastro=el('footer',undefined,'op-confirm-actions');rodapeCadastro.append(voltarCadastro,salvarCadastro);confirmarCadastro.append(resumoCadastro,el('p',servico.senhaPeloServidor?'A conta será vinculada a este cadastro. O servidor gera a senha provisória, mostrada uma única vez, que deve ser trocada no primeiro acesso.':'A conta será vinculada a este cadastro. A senha provisória usa os seis primeiros dígitos do CPF e deve ser trocada no primeiro acesso.','op-help'),erroConfirmacao,rodapeCadastro);
     form.addEventListener('submit',e=>{e.preventDefault();if(salvandoCadastro)return;validacaoIniciada=true;
         if(!permissoes.includes('cadastrar')||!permissoes.includes('anotar')){informar('Permissão insuficiente para confirmar cadastros.',true);return;}
@@ -225,7 +230,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             ['instrutores','Consultar instrutores','Veja os profissionais vinculados à unidade.','users'],
             ['recursos','Veículos e recursos','Consulte veículos e equipamentos da unidade.','car'],
         ]){
-            const atalho=botao('',()=>navegacao.navegar(secao),'op-quick-action'),texto=el('span',undefined,'op-quick-copy');
+            const atalho=botao('',()=>secao==='cadastro'?abrirCadastro():navegacao.navegar(secao),'op-quick-action'),texto=el('span',undefined,'op-quick-copy');
             atalho.dataset.opAtalho=secao;texto.append(el('strong',titulo),el('span',descricao));
             atalho.append(icone(simbolo),texto,icone('arrow'));grade.append(atalho);
         }

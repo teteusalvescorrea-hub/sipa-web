@@ -5,6 +5,7 @@ import {formatarData} from '../../../shared/js/calendario.js';
 import {formatarCpf} from '../../../shared/js/formatacao.js';
 import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {camposDetalhes,intervaloDoRecurso} from './detalhesRecurso.js';
+import {tornarOrdenavel} from '../../../shared/js/ordenacaoTabela.js';
 
 export function abrirFichaInstrutor(raiz,servico,id,{aoEditar}={}){
  const d=modal(raiz,'Detalhes do instrutor','opRecurso');d.classList.add('op-ficha-instrutor','op-resource-details');d.dataset.instrutorId=id;
@@ -29,7 +30,7 @@ export function abrirFichaInstrutor(raiz,servico,id,{aoEditar}={}){
   if(modo!=='periodo'){inicio.value=dados.periodo.inicio;fim.value=dados.periodo.fim;}
   lista.replaceChildren();if(!dados.historico.length){lista.append(el('p','Nenhuma aula encontrada neste per\u00edodo.','op-help'));return;}
   const table=el('table',undefined,'op-table'),head=el('thead'),tr=el('tr'),body=el('tbody');for(const titulo of ['Data','Horário','Aluno','Categoria','Veículo','Unidade','Resultado']){const th=el('th',titulo);th.scope='col';tr.append(th);}head.append(tr);
-  for(const a of dados.historico){const row=el('tr');row.dataset.instrutorAula=a.id;for(const texto of [formatarData(a.data),a.inicio+'–'+a.fim,a.alunoNome,a.categoria,a.veiculoNome,nomeUnidadeInstitucional(a.unidade),a.status===5?'Presença':'Falta']){const td=el('td',texto);td.dataset.label=['Data','Hor\u00e1rio','Aluno','Categoria','Ve\u00edculo','Unidade','Resultado'][row.children.length];row.append(td);}body.append(row);}table.append(head,body);lista.append(table);
+  for(const a of dados.historico){const row=el('tr');row.dataset.instrutorAula=a.id;for(const texto of [formatarData(a.data),a.inicio+'–'+a.fim,a.alunoNome,a.categoria,a.veiculoNome,nomeUnidadeInstitucional(a.unidade),a.status===5?'Presença':'Falta']){const td=el('td',texto);td.dataset.label=['Data','Hor\u00e1rio','Aluno','Categoria','Ve\u00edculo','Unidade','Resultado'][row.children.length];row.append(td);}body.append(row);}table.append(head,body);tornarOrdenavel(table);lista.append(table);
  }catch(e){if(ticket===versao)erro.textContent=e.message;}}
  const atualizar=e=>{if(e.key==='sipa.operador.demo.v2')carregar();};window.addEventListener('storage',atualizar);d.addEventListener('close',()=>{versao++;window.removeEventListener('storage',atualizar);d.remove();},{once:true});d.showModal();carregar();return d;
 }
