@@ -45,6 +45,10 @@ function jornada(a,tentativas){
  const proxima=itens.find(p=>p.estado!=='feito');if(proxima?.estado==='pendente')proxima.estado='atual';
  return itens;
 }
+// A jornada em passos, no topo da aba Cadastro (decisão do João em 31/10: é a primeira coisa que se vê na ficha).
+export function montarJornada(destino,a){const resumo=el('section',undefined,'op-jornada');resumo.dataset.opJornada='';resumo.append(passos('Jornada até a habilitação',jornada(a,provasDoAluno(a))));destino.prepend(resumo);}
+// Status do aluno (sem o antigo "Pendente"): a primeira etapa da jornada ainda não concluída, ou Habilitado.
+export function etapaAtual(a){const p=jornada(a,provasDoAluno(a)).find(x=>x.estado!=='feito'&&x.titulo!=='Habilitação');return p?p.titulo:'Habilitado';}
 function confirmar(ctx,titulo,descricao,acao,conteudo){
  const d=modal(ctx.raiz,titulo,'opConfirmacaoFicha'),f=el('form');f.append(el('p',descricao,'op-help'));if(conteudo)f.append(conteudo);const rodape=el('footer',undefined,'op-ficha-acoes'),voltar=botao('Voltar',()=>d.close()),b=el('button','Confirmar',primario);b.type='submit';rodape.append(voltar,b);f.append(rodape);d.append(f);
  envio(f,async()=>{if(await acao())d.close();});d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();
@@ -90,11 +94,10 @@ export function montarExamesProvas(destino,a,ctx){
   envio(f,()=>ctx.executar(()=>ctx.servico.verificar(a.id,tipo,{status:status.value,data:dia.value,validade:validade.value,fonte:fonte.value}),'Autorização registrada.',ctx.reabrir));destino.append(f);
  }
 }
-// Aba Provas: a jornada no topo e um card por prova. O card só agenda (Não solicitado, Solicitado, Agendado + data);
+// Aba Provas: um card por prova. O card só agenda (Não solicitado, Solicitado, Agendado + data);
 // agendada, mostra a data e Registrar resultado; reprovada ou cancelada, Nova tentativa; aprovada, só o cabeçalho.
 export function montarProvas(destino,a,ctx){
  const permitido=ctx.permissoes.includes('verificar'),tentativas=provasDoAluno(a);
- const resumo=el('section',undefined,'op-jornada');resumo.dataset.opJornada='';resumo.append(passos('Jornada até a habilitação',jornada(a,tentativas)));destino.append(resumo);
  function formularioProva(tipo,atual,host){
   const cfg=PROVAS_FICHA[tipo],f=el('form',undefined,'op-prova-form'),situacao=select(['Não solicitado','Solicitado','Agendado'],atual?.status||'Não solicitado'),dia=entrada('date',atual?.data||''),dataCampo=campo('Data da prova',dia),erro=erroFormulario(f),acoes=el('div',undefined,'op-ficha-acoes');
   f.dataset.opProva=tipo;f.noValidate=true;situacao.name='status';dia.name='data';situacao.disabled=dia.disabled=!permitido||atual?.origem==='oficial';

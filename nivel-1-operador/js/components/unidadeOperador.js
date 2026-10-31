@@ -10,7 +10,7 @@ import {montarReservaRecepcao} from './reservaRecepcao.js';
 import {botaoCadastroRecurso,abrirFormularioInstrutor,abrirFormularioVeiculo} from './cadastroRecurso.js';
 import {AVISO_ONIBUS,NOMES_CATEGORIA,LOCAIS_ONIBUS} from '../../../shared/js/categorias.js';
 import {marcarErrosDoServidor} from '../../../shared/js/errosDeCampo.js';
-import {montarEdicaoCadastro,montarExamesProvas,montarProvas,montarProvasAgendadas,montarLinhaTempo} from './fichaEvolucao.js';
+import {montarEdicaoCadastro,montarJornada,etapaAtual,montarExamesProvas,montarProvas,montarProvasAgendadas,montarLinhaTempo} from './fichaEvolucao.js';
 import {el,botao,campo,select,entrada,modal} from './uiOperador.js';
 import {montarEstruturaOperador} from './painelOperador.js';
 import {tornarOrdenavel,ordenarLinhas,estadoOrdenacao} from '../../../shared/js/ordenacaoTabela.js';
@@ -52,7 +52,11 @@ function menuAcoes(nome,itens){
     caixa.append(gatilho,menu);return {caixa,gatilho};
 }
 function botaoMais(nome,aoClicar,b=botao('⋯',aoClicar)){b.textContent='⋯';b.className='op-acao-mais';b.setAttribute('aria-label','Ver detalhes de '+nome);b.title='Ver detalhes';return b;}
-const situacaoCadastro=a=>a.situacao||(!a.nascimento||!a.email||!a.telefone?'Incompleto':'Pendente');
+// Status do aluno (decisão do João em 31/10): não existe mais o "Pendente". Inativo, Incompleto (faltam dados) ou a etapa
+// da jornada até a habilitação — calculada aqui quando a ficha já trouxe exames e provas, senão a que a API manda.
+const ETAPAS_ALUNO=['Incompleto','Exames','Prova teórica','LADV','Aulas práticas','Prova prática','Habilitado','Inativo'];
+const situacaoCadastro=a=>a.situacao==='Inativo'?'Inativo':a.situacao==='Incompleto'||!a.nascimento||!a.email||!a.telefone?'Incompleto':(a.examesAdministrativos||a.tentativasProvas?etapaAtual(a):a.etapa)||'Exames';
+const etapaDoFiltro=a=>situacaoCadastro(a).startsWith('Prova prática')?'Prova prática':situacaoCadastro(a);
 function campos(itens) {const dl=el('dl',undefined,'op-fields');for(const [k,v] of itens){const item=el('div');item.append(el('dt',k),el('dd',v==null||v===''?'Não informado':String(v)));dl.append(item);}return dl;}
 function tabela(titulos,linhas,vazio='Nenhum registro disponível.',ordem) {
     const wrap=el('div',undefined,'op-table-scroll'), table=el('table',undefined,'op-table'),head=el('thead'),tr=el('tr'),body=el('tbody');
@@ -107,13 +111,13 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         finally{atualizando=false;raiz.removeAttribute('aria-busy');}
     }
     // Consultas que alimentam filtros nunca alteram a coleção persistida.
-    const filtros={busca:entrada('search'),situacao:select([['','Todas'],'Pendente','Verificado','Incompleto']),categoria:select([['','Todas'],'A','B','D','AB']),principal:select([['','Todas'],...UNIDADES]),carro:select([['','Todas'],...UNIDADES])};
+    const filtros={busca:entrada('search'),situacao:select([['','Todas'],...ETAPAS_ALUNO]),categoria:select([['','Todas'],'A','B','D','AB']),principal:select([['','Todas'],...UNIDADES]),carro:select([['','Todas'],...UNIDADES])};
     filtros.busca.placeholder='Nome ou CPF';filtros.busca.dataset.opBusca='';
     const filtrosVazios=()=>Object.fromEntries(Object.keys(filtros).map(k=>[k,'']));let filtrosAplicados=filtrosVazios();
     const barra=el('form',undefined,'op-local-filters');barra.setAttribute('role','search');barra.setAttribute('aria-label','Pesquisa de alunos autorizados');
     function pesquisar(){const novos=Object.fromEntries(Object.entries(filtros).map(([k,c])=>[k,c.value]));if(pagina===1&&JSON.stringify(novos)===JSON.stringify(filtrosAplicados))return;filtrosAplicados=novos;pagina=1;listar();}
     barra.addEventListener('submit',e=>{e.preventDefault();pesquisar();});
-    for(const [k,t] of [['busca','Buscar aluno'],['situacao','Situação cadastral'],['categoria','Categoria'],['principal','Unidade principal'],['carro','Unidade de carro']]){
+    for(const [k,t] of [['busca','Buscar aluno'],['situacao','Etapa'],['categoria','Categoria'],['principal','Unidade principal'],['carro','Unidade de carro']]){
         const grupo=el('div',undefined,'op-aluno-filter'),label=el('label',t),linha=el('div',undefined,'op-aluno-filter-input'),lupa=botao('',pesquisar,'op-aluno-search-button');
         filtros[k].dataset.opFiltro=k;filtros[k].id=`op-alunos-filtro-${k}`;label.htmlFor=filtros[k].id;
         lupa.dataset.opPesquisar=k;lupa.setAttribute('aria-label',`Pesquisar com todos os filtros: ${t}`);lupa.title='Pesquisar com todos os filtros';
@@ -131,9 +135,9 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     const ordemAlunos=estadoOrdenacao();
     function listar(){
         const f=filtrosAplicados,termo=f.busca.trim().toLocaleLowerCase('pt-BR'),numeros=termo.replace(/\D/g,''),cpf=termoCPF(termo);
-        const alunos=dados.alunos.filter(a=>(!termo||(cpf?(numeros.length===11?a.cpf===numeros:a.cpf.includes(numeros)):a.nome.toLocaleLowerCase('pt-BR').includes(termo)))&&(!f.situacao||situacaoCadastro(a)===f.situacao)&&(!f.categoria||a.categoria===f.categoria)&&(!f.principal||principal(a)===f.principal)&&(!f.carro||carro(a)===f.carro));
+        const alunos=dados.alunos.filter(a=>(!termo||(cpf?(numeros.length===11?a.cpf===numeros:a.cpf.includes(numeros)):a.nome.toLocaleLowerCase('pt-BR').includes(termo)))&&(!f.situacao||etapaDoFiltro(a)===f.situacao)&&(!f.categoria||a.categoria===f.categoria)&&(!f.principal||principal(a)===f.principal)&&(!f.carro||carro(a)===f.carro));
         const total=Math.ceil(alunos.length/10);pagina=Math.max(1,Math.min(pagina,total||1));quantidade.textContent=`${alunos.length} aluno(s) · somente vínculos autorizados`;
-        lista.replaceChildren(tabela(['Aluno / CPF','Categoria','Unidade principal','Aulas de carro','Cadastro','Ações'],ordenarLinhas(alunos.map(a=>{
+        lista.replaceChildren(tabela(['Aluno / CPF','Categoria','Unidade principal','Aulas de carro','Etapa','Ações'],ordenarLinhas(alunos.map(a=>{
             const n=el('div'),abrir=botao(a.nome,()=>abrirFicha(a.id),'op-link');abrir.dataset.opAluno=a.id;n.append(abrir,el('small',formatarCpf(a.cpf)));const acoes=el('div',undefined,'op-linha-acoes');{const podeAlterar=!!servico.corrigirAluno&&permissoes.includes('corrigir-registro'),ativo=a.situacao!=='Inativo',chave=chaveSituacao(ativo,a.nome,()=>formularioAdministrativo(raiz,(ativo?'Inativar':'Ativar')+' aluno',[['justificativa','Justificativa','textarea','']],async d=>{await servico.corrigirAluno(a.id,{situacao:ativo?'Inativo':'Regular'},d.justificativa);await dadosAtualizados();},{descricao:a.nome+(ativo?' deixa de poder reservar aulas.':' volta a poder reservar aulas.')}));chave.dataset.opSituacaoAluno=a.id;if(!podeAlterar){chave.disabled=true;chave.title=(ativo?'Ativo':'Inativo')+' · só a Gerência ativa ou inativa o aluno';}acoes.append(chave);}const podeEditar=permissoes.includes('editar-cadastro');
             const menu=menuAcoes(a.nome,[['Visualizar',()=>abrirFicha(a.id),'olho'],['Editar',podeEditar&&(()=>abrirFicha(a.id,'cadastro',{editar:true})),'lapis']]);menu.gatilho.dataset.opAlunoAcoes=a.id;acoes.append(menu.caixa);
             return [n,a.categoria,nomeUnidade(principal(a)),carro(a)?nomeUnidade(carro(a)):'Não se aplica',badge(situacaoCadastro(a)),acoes];
@@ -210,12 +214,13 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             let aulasDeCarro=carro(a)?nomeUnidade(carro(a)):'Não se aplica';
             if(a.categoria.includes('B')){const valor=el('span',undefined,'op-ficha-valor-acao'),alterar=botao('Alterar',()=>abrirTransferencia(a),'op-link');alterar.dataset.opTransferir='';alterar.disabled=!permissoes.includes('transferir');alterar.setAttribute('aria-label','Alterar unidade de aulas de carro');valor.append(aulasDeCarro+' ',alterar);aulasDeCarro=valor;}
             cadastroArea.append(blocoFicha('Dados pessoais',camposFicha([['Nome completo',a.nome],['CPF',formatarCpf(a.cpf)],['Nascimento',textoData(a.nascimento)],['Telefone',telefoneFormatado(a.telefone)],['E-mail',a.email]])),
-                blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Situação do cadastro',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
+                blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Etapa',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
             if(a.categoria==='D')cadastroArea.append(el('p',AVISO_ONIBUS+' '+Object.values(LOCAIS_ONIBUS).map(l=>l.endereco).join(' '),'op-inline-note'));if(a.categoria.includes('A'))cadastroArea.append(el('p',pista.textContent,'op-inline-note'));
             const notas=el('textarea');notas.value=a.observacoes||'';notas.maxLength=2000;notas.rows=3;notas.disabled=!permissoes.includes('anotar');const salvar=botao('Salvar observações',()=>executar(()=>servico.anotar(a.id,notas.value),'Observações salvas.',renderizarFicha),'op-button op-button-primary');salvar.disabled=true;notas.addEventListener('input',()=>{salvar.disabled=notas.disabled||notas.value===(a.observacoes||'');});
             const acoesNotas=el('div',undefined,'op-ficha-acoes-notas');acoesNotas.append(salvar);cadastroArea.append(blocoFicha('Observações administrativas',notas,acoesNotas));notas.setAttribute('aria-label','Observações administrativas');
             // Editar cadastro e correções (Gerência e Master) ficam numa barra no topo; a edição troca a aba pelo formulário.
             const antes=cadastroArea.childElementCount;montarEdicaoCadastro(cadastroArea,a,contextoFicha,{aberto:editarAoAbrir&&abaFicha==='cadastro'});const extras=[...cadastroArea.children].slice(antes);if(extras.length){const barra=el('div',undefined,'op-ficha-barra');barra.append(...extras);cadastroArea.prepend(barra);}
+            if(!cadastroArea.querySelector('[data-op-editar-cadastro]'))montarJornada(cadastroArea,a);
             if(servico.identidade.nivel===3&&permissoes.includes('excluir-cadastro')&&servico.excluirCadastro)cadastroArea.append(botao('Excluir',()=>confirmarExclusao(raiz,servico,'aluno',a,()=>location.reload())));
 
         }

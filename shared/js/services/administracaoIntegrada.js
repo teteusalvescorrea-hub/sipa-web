@@ -119,7 +119,7 @@ export function adaptarAlunoEquipe(a,u){
  const acesso=a.acesso||{};
  return {id:a.id,nome:a.nome,cpf:digitos(a.cpf),email:a.email||'',telefone:digitos(a.telefone),nascimento:a.dataNascimento||'',categoria:cat,unidade:base,unidadePrincipal:base,unidadeCarro:carro,
   ...(cat.includes('B')?{tipoCambio:CAMBIO[numero(m.tipoCambio??a.tipoCambio)]??''}:{}),
-  situacao:a.situacaoCadastral||descricao(m.situacaoAluno??a.situacaoAluno)||undefined,
+  situacao:a.situacaoCadastral||descricao(m.situacaoAluno??a.situacaoAluno)||undefined,etapa:a.etapa||undefined,
   ...(financeiro?{financeiro,verificacaoFinanceira:{situacao:financeiro,origem:'api'}}:{}),
   ...(saldos.length?{creditos,aulasAdquiridas:Object.fromEntries(Object.entries(creditos).map(([k,v])=>[k,v.contratadas]))}:{}),
   observacoes:a.observacoes||'',bloqueioAdministrativo:{ativo:(m.bloqueioAdministrativo??a.bloqueioAdministrativo)===true},
