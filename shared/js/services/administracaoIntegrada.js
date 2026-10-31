@@ -50,7 +50,7 @@ const semRota=e=>e?.status===404||e?.status===405;
 export function comoErro(e){
  if(!e||e instanceof Error&&e.name!=='ApiErro')return e;
  const n=new Error(semRota(e)&&!e.erros?.some(x=>typeof (x?.mensagem??x)==='string'&&(x?.mensagem??x)!=='Não encontrado.')?'Registro não encontrado ou operação ainda não disponível no servidor.':textoErro(e));
- n.status=e.status;if(Array.isArray(e.erros))n.campos=Object.fromEntries(e.erros.filter(x=>x?.campo).map(x=>[x.campo,x.mensagem]));return n;
+ n.status=e.status;if(Array.isArray(e.erros))n.mensagens=e.erros.map(x=>x?.mensagem??x).filter(x=>typeof x==='string');if(Array.isArray(e.erros))n.campos=Object.fromEntries(e.erros.filter(x=>x?.campo).map(x=>[x.campo,x.mensagem]));return n;
 }
 const chamar=async p=>{try{return await p;}catch(e){throw comoErro(e);}};
 // Rota nova ainda ausente no back (404/405): devolve o reserva para a leitura.

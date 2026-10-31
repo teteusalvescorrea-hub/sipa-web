@@ -2,6 +2,7 @@
 // no modo integrado; cadastro interno permanece em template inerte no HTML.
 import {normalizarCpfEntrada,formatarCpfEntrada,ativarMascaraCpf} from '../shared/js/formatacao.js';
 import '../shared/js/selectsComBusca.js';
+import '../shared/js/errosDeCampo.js';
 export const normalizarCPF=normalizarCpfEntrada;
 export const formatarCPF=formatarCpfEntrada;
 export function validarCPF(valor) {

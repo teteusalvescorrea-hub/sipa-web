@@ -10,10 +10,10 @@
     aplicar(ler());
 })();
 
-// Dropdowns com busca (shared/js/selectsComBusca.js) em todas as páginas que carregam o tema.
+// Dropdowns com busca (shared/js/selectsComBusca.js) e erro de campo (shared/js/errosDeCampo.js) em todas as páginas que carregam o tema.
 (() => {
     const origem = document.currentScript?.src;
     if (!origem) return;
-    const carregar = () => import(new URL('./selectsComBusca.js', origem).href).catch(() => {});
+    const carregar = () => { for (const m of ['./selectsComBusca.js', './errosDeCampo.js']) import(new URL(m, origem).href).catch(() => {}); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', carregar, { once: true }); else carregar();
 })();

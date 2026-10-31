@@ -9,6 +9,7 @@ import {CAMBIOS,nomeCambio,unidadeCarroPermitida} from '../../../shared/js/opera
 import {montarReservaRecepcao} from './reservaRecepcao.js';
 import {botaoCadastroRecurso,abrirFormularioInstrutor,abrirFormularioVeiculo} from './cadastroRecurso.js';
 import {AVISO_ONIBUS,NOMES_CATEGORIA,LOCAIS_ONIBUS} from '../../../shared/js/categorias.js';
+import {marcarErrosDoServidor} from '../../../shared/js/errosDeCampo.js';
 import {montarEdicaoCadastro,montarExamesProvas,montarProvas,montarProvasAgendadas,montarLinhaTempo} from './fichaEvolucao.js';
 import {el,botao,campo,select,entrada,modal} from './uiOperador.js';
 import {montarEstruturaOperador} from './painelOperador.js';
@@ -102,7 +103,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     async function executar(acao,mensagem,apos) {
         if(atualizando)return false;atualizando=true;raiz.setAttribute('aria-busy','true');
         try{await acao();dados=await servico.consultar();atualizar();informar(mensagem);await apos?.();return true;}
-        catch(e){informar(e.message||'Não foi possível concluir a operação.',true);return false;}
+        catch(e){const campos=marcarErrosDoServidor(e);informar(campos?(campos>1?'Corrija os campos destacados em vermelho.':'Corrija o campo destacado em vermelho.'):e.message||'Não foi possível concluir a operação.',true);return false;}
         finally{atualizando=false;raiz.removeAttribute('aria-busy');}
     }
     // Consultas que alimentam filtros nunca alteram a coleção persistida.
