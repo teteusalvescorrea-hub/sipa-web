@@ -149,6 +149,15 @@ export function montarProvasAgendadas(destino,a,ctx){
 }
 // Histórico enxuto: filtros numa linha (aplicam ao mudar) e um evento por linha, com a hora, o título e um resumo.
 const datasBrasileiras=t=>String(t).replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g,'$3/$2/$1');
+// O histórico vem da auditoria (colunas do banco): some com o técnico (ids, chaves, datas de controle) e traduz o resto.
+const CAMPOS_HISTORICO={NOME:'Nome',EMAIL:'E-mail',TELEFONE:'Telefone',DOCUMENTO:'CPF',CPF:'CPF',DATA_NASCIMENTO:'Nascimento',OBSERVACOES:'Observações',QUANTIDADE_AULAS:'Aulas',ACEITA_WHATSAPP:'Aceita WhatsApp',RECEBE_OFERTAS_ANTECIPACAO:'Ofertas de antecipação',BLOQUEIO_ADMINISTRATIVO:'Bloqueio administrativo',LOGIN:'Login',DATA:'Data',VALIDADE:'Validade',FONTE:'Fonte',ORDEM:'Tentativa',MOTIVO:'Motivo',JUSTIFICATIVA:'Justificativa'};
+const GUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const tecnico=c=>/^id$|_id$|^id_|_em$|^criado|^atualizado|^deletado|senha|hash|token/i.test(c);
+function valorHistorico(v){if(v===null||v===undefined||v==='')return 'vazio';if(typeof v==='object')return '';const t=String(v);if(/^true$/i.test(t))return 'Sim';if(/^false$/i.test(t))return 'Não';const d=/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(t);if(d)return `${d[3]}/${d[2]}/${d[1]}`;return t.length>60?t.slice(0,57)+'…':t;}
+function dadosLegiveis(h){
+ if(/cria[çc][aã]o$/i.test(h.titulo||''))return [];
+ return (h.dados||[]).filter(d=>d?.campo&&!tecnico(d.campo)&&!GUID.test(String(d.depois??''))&&typeof d.depois!=='object').map(d=>{const nome=CAMPOS_HISTORICO[String(d.campo).toUpperCase()]||String(d.campo).toLowerCase().replace(/_/g,' ').replace(/^./,x=>x.toUpperCase());return d.antes!==undefined&&d.antes!==null?`${nome}: ${valorHistorico(d.antes)} → ${valorHistorico(d.depois)}`:`${nome}: ${valorHistorico(d.depois)}`;});
+}
 export function montarLinhaTempo(destino,eventos,{abrirAula}={}){
  const box=el('section',undefined,'op-linha-tempo');box.dataset.opLinhaTempo='';box.setAttribute('aria-label','Histórico do aluno');
  const filtros=el('form',undefined,'op-timeline-filtros'),tipo=select([['','Todos os eventos'],['cadastro','Cadastro e alterações'],['aulas','Aulas e pacotes'],['exames','Exames'],['provas','Provas'],['unidades','Unidades'],['acessos','Acessos']]),inicio=entrada('date'),fim=entrada('date'),erro=erroFormulario(filtros),lista=el('div',undefined,'op-timeline-lista'),paginacao=el('nav',undefined,'op-timeline-paginas');let pagina=1;
@@ -164,7 +173,7 @@ export function montarLinhaTempo(destino,eventos,{abrirAula}={}){
    const chave=dia(h.em);if(chave!==grupo){grupo=chave;lista.append(el('h5',chave?data(chave):'Data não informada','op-timeline-dia'));}
    const item=el('article',undefined,'op-timeline-evento'),corpo=el('div',undefined,'op-timeline-corpo'),titulo=el('div',undefined,'op-timeline-titulo');item.dataset.opEvento=h.id;item.dataset.opGrupo=h.grupo;
    titulo.append(el('strong',h.titulo));if(h.grupo==='aulas'&&h.referencia&&abrirAula)titulo.append(botao('Ver aula',()=>abrirAula(h.referencia),'op-link'));corpo.append(titulo);
-   const resumo=[h.descricao&&datasBrasileiras(h.descricao),...(h.dados||[]).map(d=>`${d.campo}: ${d.antes!==undefined?String(d.antes)+' → ':''}${typeof d.depois==='object'?JSON.stringify(d.depois):d.depois??'Não informado'}`),h.motivo&&'Motivo: '+h.motivo,h.mantidas&&`${h.mantidas.length} aula(s) mantida(s), ${h.canceladas?.length||0} cancelada(s)`,h.responsavel&&'Por '+h.responsavel].filter(Boolean);
+   const resumo=[h.descricao&&datasBrasileiras(h.descricao),...dadosLegiveis(h),h.motivo&&'Motivo: '+h.motivo,h.mantidas&&`${h.mantidas.length} aula(s) mantida(s), ${h.canceladas?.length||0} cancelada(s)`,h.responsavel&&'Por '+h.responsavel].filter(Boolean);
    if(resumo.length)corpo.append(el('small',resumo.join(' · '),'op-timeline-detalhe'));
    item.append(el('time',chave?new Date(h.em).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}):'—','op-timeline-hora'),corpo);lista.append(item);
   }

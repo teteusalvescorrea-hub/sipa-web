@@ -227,13 +227,21 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         if(abaFicha==='etapas')montarExamesProvas(fichaConteudo,a,contextoFicha);
         if(abaFicha==='provas'){montarProvas(fichaConteudo,a,contextoFicha);const painel=el('section');painel.dataset.opProvasAgendadas='';montarProvasAgendadas(painel,a,contextoFicha);fichaConteudo.append(painel);}
         if(abaFicha==='creditos'){
-            fichaConteudo.append(campos([['Situação financeira',a.financeiro],['Motivo do bloqueio',resumoLiberacao.motivoBloqueio||'Sem bloqueio financeiro ou de saldo; exames e recursos continuam sujeitos à validação.']]));
-            const grade=el('div',undefined,'op-resumo-aulas');
+            // Aba Aulas enxuta: uma faixa com a liberação (bloqueio em destaque) e, por categoria, o progresso das aulas
+            // realizadas sobre as adquiridas e os números que importam para agendar.
+            const bloqueio=resumoLiberacao.motivoBloqueio,faixa=el('div',undefined,'op-aulas-liberacao'+(bloqueio?' op-aulas-bloqueada':''));faixa.setAttribute('role',bloqueio?'alert':'status');
+            faixa.append(el('strong',bloqueio?'Agendamento bloqueado':'Liberado para agendar'),el('span',bloqueio?bloqueio:`Financeiro: ${a.financeiro||'não informado'}`));fichaConteudo.append(faixa);
+            const grade=el('div',undefined,'op-resumo-aulas'),numero=(chave,v)=>{const n=el('strong',v===null||v===undefined?'—':String(v));n.dataset.opTotal=chave;return n;};
             for(const [c,resumo] of Object.entries(resumoAulas)){
-                const item=el('section',undefined,'op-resumo-aulas-card');item.dataset.opResumoCategoria=c;item.append(el('h4',`Aulas de ${NOMES_CATEGORIA[c].toLocaleLowerCase('pt-BR')} — Categoria ${c}`));
-                const numeros=el('dl'),saldos=resumoLiberacao.categorias[c];for(const [chave,titulo] of [['adquiridas','Aulas adquiridas'],['disponiveis','Aulas disponíveis para agendamento'],['reservadas','Aulas reservadas'],['realizadas','Aulas realizadas'],['faltas','Faltas']]){const linha=el('div'),dado=chave==='adquiridas'?resumo.adquiridas:chave==='faltas'?resumo.faltas:saldos[chave],valor=el('dd',dado===null?'Não informado':String(dado));valor.dataset.opTotal=chave;linha.append(el('dt',titulo),valor);numeros.append(linha);}item.append(numeros);grade.append(item);
+                const saldos=resumoLiberacao.categorias[c],item=el('section',undefined,'op-resumo-aulas-card');item.dataset.opResumoCategoria=c;
+                const topo=el('header'),progresso=el('p',undefined,'op-resumo-progresso');progresso.append(numero('realizadas',saldos.realizadas),' de ',numero('adquiridas',resumo.adquiridas),' realizadas');
+                topo.append(el('h4',`${NOMES_CATEGORIA[c]} · Categoria ${c}`),progresso);
+                const total=Math.max(Number(resumo.adquiridas)||0,1),barra=el('div',undefined,'op-resumo-barra'),feitas=el('span',undefined,'op-resumo-barra-feitas'),reservadas=el('span',undefined,'op-resumo-barra-reservadas');
+                feitas.style.width=Math.min(100,(Number(saldos.realizadas)||0)/total*100)+'%';reservadas.style.width=Math.min(100,(Number(saldos.reservadas)||0)/total*100)+'%';barra.append(feitas,reservadas);barra.setAttribute('aria-hidden','true');
+                const numeros=el('dl');for(const [chave,titulo,v] of [['disponiveis','Disponíveis',saldos.disponiveis],['reservadas','Reservadas',saldos.reservadas],['faltas','Faltas',resumo.faltas]]){const linha=el('div'),dd=el('dd');dd.append(numero(chave,v));linha.append(el('dt',titulo),dd);numeros.append(linha);}
+                item.append(topo,barra,numeros);grade.append(item);
             }
-            fichaConteudo.append(grade,el('p','Totais calculados a partir dos registros de aulas do aluno.','op-help'));
+            fichaConteudo.append(grade);
         }
         if(abaFicha==='historico')montarLinhaTempo(fichaConteudo,linhaTempo,{abrirAula:id=>{const aula=aulas.find(a=>a.id===id);if(aula)detalhes.abrir(aula);}});
         if(abaFicha==='acesso'){fichaConteudo.append(campos([['Login previsto (CPF)',formatarCpf(a.cpf)],['Ativação',a.acesso],['Convite',a.convite?.status||'Não emitido / integração pendente'],['Primeiro acesso',a.primeiroAcessoEm?dataHora(a.primeiroAcessoEm):'Não informado'],['Troca obrigatória de senha',a.contaId?'Obrigatória no primeiro acesso':'Validação pendente na API'],['Último acesso',dataHora(a.ultimoAcessoEm)]]),el('p',a.contaId?'Acesso vinculado ao cadastro do aluno.':'Nenhuma credencial foi emitida para este cadastro legado.','op-inline-note'));

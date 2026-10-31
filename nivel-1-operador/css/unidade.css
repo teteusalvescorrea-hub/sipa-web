@@ -327,3 +327,27 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-unidade [data-op-ficha] .op-timeline-detalhe{display:block;margin-top:2px;font-size:12px;line-height:1.35;color:var(--op-muted);overflow-wrap:anywhere}
 .op-unidade [data-op-ficha] .op-timeline-paginas{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px;font-size:13px}
 @media(max-width:600px){.op-unidade [data-op-ficha] .op-timeline-filtros{grid-template-columns:minmax(0,1fr)}}
+
+/* Lista de alunos: a coluna Etapa (5ª) centralizada. */
+.op-unidade [data-op-panel=alunos] table :is(th,td):nth-child(5){text-align:center}
+.op-unidade [data-op-panel=alunos] table th:nth-child(5) .op-ordenar{justify-content:center}
+
+/* Aba Aulas: faixa de liberação e um card por categoria com o progresso. */
+.op-unidade [data-op-ficha] .op-aulas-liberacao{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:0 0 16px;padding:10px 14px;border-radius:10px;background:#e3f4ea;color:#1d6b3a;font-size:13px}
+.op-unidade [data-op-ficha] .op-aulas-liberacao.op-aulas-bloqueada{background:#fdecea;color:#b42318}
+.op-unidade [data-op-ficha] .op-aulas-liberacao span{color:inherit;opacity:.9}
+.op-unidade [data-op-ficha] .op-resumo-aulas{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card{margin:0;padding:14px 16px;border:1px solid var(--op-line);border-radius:12px;background:none}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card>header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card h4{margin:0;font-size:14px}
+.op-unidade [data-op-ficha] .op-resumo-progresso{margin:0;font-size:12px;color:var(--op-muted)}
+.op-unidade [data-op-ficha] .op-resumo-progresso strong{color:var(--sipa-texto-neutro,inherit);font-size:14px}
+.op-unidade [data-op-ficha] .op-resumo-barra{display:flex;height:6px;margin:0 0 12px;overflow:hidden;border-radius:3px;background:var(--op-soft)}
+.op-resumo-barra-feitas{background:var(--progress-blue,#1769aa)}
+.op-resumo-barra-reservadas{background:#9cc3e4}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card dl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card dl>div{display:flex;flex-direction:column-reverse;gap:2px;margin:0;padding:0;border:0}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card dt{font-size:12px;color:var(--op-muted)}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card dd{margin:0;font-size:16px}
+[data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-liberacao{background:#123524;color:#9fe0b8}
+[data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-liberacao.op-aulas-bloqueada{background:#3b1512;color:#ffb4ab}
