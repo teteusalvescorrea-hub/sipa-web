@@ -347,3 +347,4 @@ html body.operador-page .op-unidade .op-reset-dialog .op-form-fields :is(label,p
 th[aria-sort=ascending] .op-ordenar-seta::after, th[aria-sort=descending] .op-ordenar-seta::before { display:none; }
 th[aria-sort=ascending] .op-ordenar-seta::before { border-bottom-width:6px; border-left-width:5px; border-right-width:5px; opacity:1; }
 th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-left-width:5px; border-right-width:5px; opacity:1; }
+.op-chave:disabled { cursor:not-allowed; opacity:.55; }
