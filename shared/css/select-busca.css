@@ -1,0 +1,27 @@
+/* Select com busca (shared/components/selectComBusca.js), no estilo dos filtros do Simplea. */
+.sipa-select-busca { position:relative; flex:1 1 0; width:100%; min-width:0; font-weight:400; text-transform:none; letter-spacing:normal; }
+.sipa-select-busca[hidden] { display:none; }
+.sipa-select-busca > select { position:absolute !important; left:0; bottom:0; width:100% !important; height:1px !important; min-height:0 !important; padding:0 !important; border:0 !important; opacity:0; pointer-events:none; }
+.sipa-select-busca-botao { position:relative; display:block; width:100%; min-height:40px; box-sizing:border-box; padding:8px 30px 8px 12px; border:1px solid #bacddd; border-radius:8px; background:var(--progress-card,#fff); color:inherit; font:inherit; font-size:14px; text-align:left; cursor:pointer; }
+.sipa-select-busca-botao::after { content:''; position:absolute; right:11px; top:50%; margin-top:-3px; border-left:6px solid transparent; border-right:6px solid transparent; border-top:7px solid currentColor; }
+.sipa-select-busca-botao[aria-expanded=true], .sipa-select-busca-botao:focus-visible { border-color:#1769aa; outline:2px solid #479cee; outline-offset:1px; }
+.sipa-select-busca-botao > span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sipa-select-busca-vazio { text-transform:uppercase; opacity:.6; }
+.sipa-select-busca-painel { position:absolute; z-index:30; left:0; min-width:max(100%, 240px); max-width:min(480px, 90vw); top:calc(100% + 4px); padding:8px 0 6px; border:1px solid #d3dde6; border-radius:10px; background:var(--progress-card,#fff); color:var(--sipa-texto-neutro,#14263a); box-shadow:0 8px 24px rgba(15,40,70,.18); }
+.sipa-select-busca-painel > input { display:block !important; flex:none !important; width:calc(100% - 16px) !important; min-width:0 !important; height:auto !important; margin:0 8px 6px; box-sizing:border-box; min-height:38px; padding:6px 12px; border:1px solid #bacddd; border-radius:8px; background:transparent; color:inherit; font:inherit; font-size:14px; }
+.sipa-select-busca-painel > input::placeholder { text-transform:uppercase; }
+.sipa-select-busca-lista { max-height:300px; overflow-y:auto; overflow-x:hidden; }
+.sipa-select-busca-opcao { padding:11px 16px; cursor:pointer; font-size:14px; white-space:normal; overflow-wrap:anywhere; }
+.sipa-select-busca-recuo { padding-left:24px; }
+.sipa-select-busca-limpar { text-align:center; text-transform:uppercase; opacity:.6; }
+.sipa-select-busca-opcao:hover, .sipa-select-busca-ativa, .sipa-select-busca-opcao[aria-selected=true] { background:var(--progress-card-hover,#e6f1fb); }
+.sipa-select-busca-grupo { padding:10px 16px 4px; font-size:12px; font-weight:700; letter-spacing:.03em; opacity:.75; }
+.sipa-select-busca-nada { padding:11px 16px; opacity:.7; }
+[data-theme=dark] .sipa-select-busca-botao { background:#152b40; border-color:#3c536a; }
+[data-theme=dark] .sipa-select-busca-painel { background:#152b40; border-color:#3c536a; color:#d6e7f6; }
+[data-theme=dark] .sipa-select-busca-opcao:hover, [data-theme=dark] .sipa-select-busca-ativa, [data-theme=dark] .sipa-select-busca-opcao[aria-selected=true] { background:#20435f; }
+.sipa-select-busca-desabilitada { opacity:.45; cursor:default; }
+.sipa-select-busca-botao:disabled { cursor:default; opacity:.6; }
+.sipa-select-busca-painel > input:focus { outline:2px solid var(--progress-blue,#1769aa); outline-offset:0; border-color:var(--progress-blue,#1769aa); }
+.sipa-select-busca-opcao[aria-selected=true] { color:var(--progress-blue,#1769aa); font-weight:600; }
+.sipa-select-busca-botao[aria-expanded=true], .sipa-select-busca-botao:focus-visible { border-color:var(--progress-blue,#1769aa); }

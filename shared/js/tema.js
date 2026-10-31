@@ -9,3 +9,11 @@
     globalThis.addEventListener('storage',e=>{if(e.key===chave)aplicar(e.newValue);});
     aplicar(ler());
 })();
+
+// Dropdowns com busca (shared/js/selectsComBusca.js) em todas as páginas que carregam o tema.
+(() => {
+    const origem = document.currentScript?.src;
+    if (!origem) return;
+    const carregar = () => import(new URL('./selectsComBusca.js', origem).href).catch(() => {});
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', carregar, { once: true }); else carregar();
+})();

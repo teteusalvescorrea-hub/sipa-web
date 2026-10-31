@@ -163,14 +163,18 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
 
     const ficha=modal(raiz,'Ficha completa do aluno','opFicha'),fichaConteudo=el('div');ficha.append(fichaConteudo);let abaFicha='cadastro',consultaFicha=0;
     async function abrirFicha(id,aba='cadastro') {alunoAtual=id;abaFicha=aba;try{await renderizarFicha();if(!ficha.open)ficha.showModal();}catch(e){informar(e.message,true);}}
-    async function renderizarFicha(){
-        const consulta=++consultaFicha,carregando=el('p','Consultando registros…','op-help');carregando.setAttribute('role','status');fichaConteudo.prepend(carregando);fichaConteudo.setAttribute('aria-busy','true');
-        let resposta;try{resposta=await servico.ficha(alunoAtual);}catch(erro){if(consulta===consultaFicha){fichaConteudo.replaceChildren(el('p','Não foi possível consultar os registros. Feche e reabra a ficha para tentar novamente.','op-help'));}throw erro;}finally{carregando.remove();if(consulta===consultaFicha)fichaConteudo.removeAttribute('aria-busy');}
+    // Trocar de aba reaproveita a última consulta do mesmo aluno; abrir a ficha ou salvar algo (reabrir) consulta de novo.
+    let fichaEmCache=null;
+    async function renderizarFicha(recarregar=true){
+        const consulta=++consultaFicha;let resposta;
+        if(!recarregar&&fichaEmCache?.id===alunoAtual)resposta=fichaEmCache.resposta;
+        else{const carregando=el('p','Consultando registros…','op-help');carregando.setAttribute('role','status');fichaConteudo.prepend(carregando);fichaConteudo.setAttribute('aria-busy','true');
+        try{resposta=await servico.ficha(alunoAtual);fichaEmCache={id:alunoAtual,resposta};}catch(erro){if(consulta===consultaFicha){fichaConteudo.replaceChildren(el('p','Não foi possível consultar os registros. Feche e reabra a ficha para tentar novamente.','op-help'));}throw erro;}finally{carregando.remove();if(consulta===consultaFicha)fichaConteudo.removeAttribute('aria-busy');}}
         if(consulta!==consultaFicha)return;
         ficha.dataset.opAba=abaFicha;
         const {aluno:a,resumoAulas,resumoLiberacao,aulas,linhaTempo}=resposta;fichaConteudo.replaceChildren(el('h3',a.nome));
         const abas=el('div',undefined,'op-local-tabs');abas.setAttribute('aria-label','Seções da ficha');
-        for(const [id,titulo] of [['cadastro','Cadastro'],['etapas','Exames e agendamento de prova'],['creditos','Aulas'],['provas','Provas marcadas'],['historico','Histórico'],['acesso','Acesso'],['senha','Redefinir senha']]){const b=botao(titulo,()=>{abaFicha=id;renderizarFicha().catch(e=>informar(e.message,true));});b.dataset.opFichaAba=id;b.setAttribute('aria-pressed',String(abaFicha===id));abas.append(b);}fichaConteudo.append(abas);
+        for(const [id,titulo] of [['cadastro','Cadastro'],['etapas','Exames e agendamento de prova'],['creditos','Aulas'],['provas','Provas marcadas'],['historico','Histórico'],['acesso','Acesso'],['senha','Redefinir senha']]){const b=botao(titulo,()=>{abaFicha=id;renderizarFicha(false).catch(e=>informar(e.message,true));});b.dataset.opFichaAba=id;b.setAttribute('aria-pressed',String(abaFicha===id));abas.append(b);}fichaConteudo.append(abas);
         const contextoFicha={raiz,servico,permissoes,executar,reabrir:renderizarFicha};
         if(abaFicha==='cadastro'){
             const cadastroArea=el('section');fichaConteudo.append(cadastroArea);
