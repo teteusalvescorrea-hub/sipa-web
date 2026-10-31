@@ -256,3 +256,7 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
  .op-ficha-instrutor .op-instrutor-historico td::before{content:attr(data-label);display:block;font-size:.9em;font-weight:600}
 }
 @media(max-width:600px){.op-ficha-instrutor .op-instrutor-total-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.op-ficha-instrutor .op-instrutor-indicadores{gap:8px}.op-ficha-instrutor .op-instrutor-filtros>label{flex-basis:120px}}
+/* Ficha do aluno com tamanho fixo (o da aba Cadastro): trocar de aba não mexe no tamanho; o conteúdo rola por dentro. */
+.op-unidade dialog[data-op-ficha][open]{display:flex;flex-direction:column;height:min(820px,calc(100vh - 48px));overflow:hidden}
+.op-unidade dialog[data-op-ficha] > .op-dialog-heading{flex:none}
+.op-unidade dialog[data-op-ficha] .op-ficha-conteudo{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:6px}

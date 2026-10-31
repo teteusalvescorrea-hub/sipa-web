@@ -162,7 +162,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         if(!confirmarCadastro.open)confirmarCadastro.showModal();
     });
 
-    const ficha=modal(raiz,'Ficha completa do aluno','opFicha'),fichaConteudo=el('div');ficha.append(fichaConteudo);let abaFicha='cadastro',consultaFicha=0;
+    const ficha=modal(raiz,'Ficha completa do aluno','opFicha'),fichaConteudo=el('div',undefined,'op-ficha-conteudo');ficha.append(fichaConteudo);let abaFicha='cadastro',consultaFicha=0;
     async function abrirFicha(id,aba='cadastro') {alunoAtual=id;abaFicha=aba;try{await renderizarFicha();if(!ficha.open)ficha.showModal();}catch(e){informar(e.message,true);}}
     // Trocar de aba reaproveita a última consulta do mesmo aluno; abrir a ficha ou salvar algo (reabrir) consulta de novo.
     let fichaEmCache=null;
