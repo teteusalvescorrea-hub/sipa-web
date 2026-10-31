@@ -188,7 +188,8 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     });
 
     const ficha=modal(raiz,'Ficha completa do aluno','opFicha'),fichaConteudo=el('div',undefined,'op-ficha-conteudo');ficha.append(fichaConteudo);let abaFicha='cadastro',consultaFicha=0;
-    async function abrirFicha(id,aba='cadastro',{editar=false}={}) {alunoAtual=id;abaFicha=aba;try{await renderizarFicha();if(!ficha.open)ficha.showModal();if(editar)[...ficha.querySelectorAll('.op-ficha-barra button')].find(b=>b.textContent==='Editar cadastro')?.click();}catch(e){informar(e.message,true);}}
+    let editarAoAbrir=false;
+    async function abrirFicha(id,aba='cadastro',{editar=false}={}) {alunoAtual=id;abaFicha=aba;editarAoAbrir=editar;ficha.dataset.opAlunoAtual=id;try{await renderizarFicha();if(!ficha.open)ficha.showModal();}catch(e){informar(e.message,true);}finally{editarAoAbrir=false;}}
     // Trocar de aba reaproveita a última consulta do mesmo aluno; abrir a ficha ou salvar algo (reabrir) consulta de novo.
     let fichaEmCache=null;
     async function renderizarFicha(recarregar=true){
@@ -214,7 +215,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             const notas=el('textarea');notas.value=a.observacoes||'';notas.maxLength=2000;notas.rows=3;notas.disabled=!permissoes.includes('anotar');const salvar=botao('Salvar observações',()=>executar(()=>servico.anotar(a.id,notas.value),'Observações salvas.',renderizarFicha),'op-button op-button-primary');salvar.disabled=true;notas.addEventListener('input',()=>{salvar.disabled=notas.disabled||notas.value===(a.observacoes||'');});
             const acoesNotas=el('div',undefined,'op-ficha-acoes-notas');acoesNotas.append(salvar);cadastroArea.append(blocoFicha('Observações administrativas',notas,acoesNotas));notas.setAttribute('aria-label','Observações administrativas');
             // Editar cadastro e correções (Gerência e Master) ficam numa barra no topo; a edição troca a aba pelo formulário.
-            const antes=cadastroArea.childElementCount;montarEdicaoCadastro(cadastroArea,a,contextoFicha);const extras=[...cadastroArea.children].slice(antes);if(extras.length){const barra=el('div',undefined,'op-ficha-barra');barra.append(...extras);cadastroArea.prepend(barra);}
+            const antes=cadastroArea.childElementCount;montarEdicaoCadastro(cadastroArea,a,contextoFicha,{aberto:editarAoAbrir&&abaFicha==='cadastro'});const extras=[...cadastroArea.children].slice(antes);if(extras.length){const barra=el('div',undefined,'op-ficha-barra');barra.append(...extras);cadastroArea.prepend(barra);}
             if(servico.identidade.nivel===3&&permissoes.includes('excluir-cadastro')&&servico.excluirCadastro)cadastroArea.append(botao('Excluir',()=>confirmarExclusao(raiz,servico,'aluno',a,()=>location.reload())));
 
         }

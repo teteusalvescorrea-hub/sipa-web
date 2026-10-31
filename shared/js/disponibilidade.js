@@ -24,8 +24,9 @@ export function validarHorario(data, hora, grade = GRADE_CENTRO, instrutor, cate
     const fechado = motivoFechamento(data, grade); if (fechado) return fechado;
     if (!/^\d{2}:00$/.test(hora)) return "Aulas de 50 minutos, com início em hora inteira";
     const h = Number(hora.slice(0, 2)), sabado = diaSemana(data) === 6;
-    if(instrutor){const almoço=motivoAlmoco(instrutor,hora);if(almoço)return almoço;}
     if (!horariosDaCategoria(data,categoria,grade).includes(h)) return "Fora do expediente";
+    // Sábado de meio período (carro e moto, 7h às 11h) não tem intervalo de almoço; o ônibus faz o dia inteiro e mantém.
+    if(instrutor&&!(sabado&&categoria!=='D')){const almoço=motivoAlmoco(instrutor,hora);if(almoço)return almoço;}
     const fechamento = sabado && categoria!=='D' ? grade.fechaManha : grade.fechaTarde;
     return h * 60 + DURACAO_AULA > fechamento * 60 ? "A duração ultrapassa o expediente" : "";
 }
