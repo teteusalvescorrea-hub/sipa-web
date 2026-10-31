@@ -5,6 +5,28 @@ import path from 'node:path';
 import os from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {prepararIntegrado} from '../dev/preparar-integrado.mjs';
+test('API sem URL configurada falha antes de enviar uma requisicao relativa',()=>{
+ const saida=execFileSync(process.execPath,['--input-type=module','-e',`
+  globalThis.window={location:{hostname:'sipa.example'}};
+  globalThis.sessionStorage={getItem:()=>null};
+  let requisicoes=0;globalThis.fetch=async()=>{requisicoes++;return new Response('{}');};
+  const {Get}=await import('./shared/js/api.js');
+  let status=null;try{await Get('alunos/me');}catch(erro){status=erro.status;}
+  console.log(JSON.stringify({status,requisicoes}));
+ `],{encoding:'utf8',cwd:new URL('../',import.meta.url)});
+ assert.deepEqual(JSON.parse(saida),{status:0,requisicoes:0});
+});
+test('API configurada mantem o destino e o processamento da resposta',()=>{
+ const saida=execFileSync(process.execPath,['--input-type=module','-e',`
+  globalThis.window={location:{hostname:'127.0.0.1'}};
+  globalThis.localStorage={getItem:()=> 'https://api.example.test/api'};
+  globalThis.sessionStorage={getItem:()=>null};
+  let destino;globalThis.fetch=async url=>{destino=url;return new Response('{"ok":true}',{status:200});};
+  const {Get}=await import('./shared/js/api.js');
+  const resposta=await Get('alunos/me');console.log(JSON.stringify({destino,resposta}));
+ `],{encoding:'utf8',cwd:new URL('../',import.meta.url)});
+ assert.deepEqual(JSON.parse(saida),{destino:'https://api.example.test/api/alunos/me',resposta:{ok:true}});
+});
 test('aplicação normal não aceita laboratório, URL ou preferência persistente',()=>{
  const saida=execFileSync(process.execPath,['--input-type=module','-e',`globalThis.sessionStorage={getItem:()=>null,setItem(){},removeItem(){}};const {desenvolvimentoAtivo}=await import('./shared/js/ambiente.js');console.log(JSON.stringify(['http://127.0.0.1:5500/login.html?demo=1&ambiente=local','https://sipa.example/?demo=1'].map(desenvolvimentoAtivo)));`],{encoding:'utf8'});assert.deepEqual(JSON.parse(saida),[false,false]);
 });
