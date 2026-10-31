@@ -28,9 +28,8 @@ export function ordenarLinhas(linhas, estado) {
 export function tornarOrdenavel(table, { estado = estadoOrdenacao(), aoMudar } = {}) {
   const ths = [...(table.tHead?.rows[0]?.cells || [])];
   const marcar = () => ths.forEach((th, i) => {
-    if (!th.dataset.ordenavel) return;
+    if (!('ordenavel' in th.dataset)) return;
     th.setAttribute('aria-sort', estado.coluna === i ? (estado.direcao > 0 ? 'ascending' : 'descending') : 'none');
-    th.querySelector('.op-ordenar-seta').textContent = estado.coluna === i ? (estado.direcao > 0 ? '▲' : '▼') : '↕';
   });
   function ordenarDom() {
     const corpo = table.tBodies[0]; if (!corpo || estado.coluna == null) return;
@@ -43,7 +42,7 @@ export function tornarOrdenavel(table, { estado = estadoOrdenacao(), aoMudar } =
     const b = document.createElement('button'), seta = document.createElement('span');
     b.type = 'button'; b.className = 'op-ordenar'; b.title = 'Ordenar por ' + titulo;
     seta.className = 'op-ordenar-seta'; seta.setAttribute('aria-hidden', 'true');
-    b.append(titulo, seta); th.replaceChildren(b); th.dataset.ordenavel = '';
+    b.append(seta, titulo); th.replaceChildren(b); th.dataset.ordenavel = '';
     b.addEventListener('click', () => {
       estado.direcao = estado.coluna === i ? -estado.direcao : 1; estado.coluna = i;
       if (aoMudar) aoMudar(estado); else { ordenarDom(); marcar(); }

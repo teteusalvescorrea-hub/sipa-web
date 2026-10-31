@@ -340,5 +340,10 @@ html body.operador-page .op-unidade .op-reset-dialog .op-form-fields :is(label,p
 .op-ordenar { display:inline-flex; align-items:center; gap:6px; padding:0; border:0; background:none; color:inherit; font:inherit; font-weight:inherit; cursor:pointer; text-align:left; }
 .op-ordenar:hover { text-decoration:underline; }
 .op-ordenar:focus-visible { outline:2px solid #1769aa; outline-offset:2px; border-radius:3px; }
-.op-ordenar-seta { font-size:10px; opacity:.55; }
-th[aria-sort=ascending] .op-ordenar-seta, th[aria-sort=descending] .op-ordenar-seta { opacity:1; color:#1769aa; }
+.op-ordenar-seta { display:inline-flex; flex-direction:column; justify-content:center; gap:2px; width:8px; flex:none; }
+.op-ordenar-seta::before, .op-ordenar-seta::after { content:''; border-left:4px solid transparent; border-right:4px solid transparent; opacity:.6; }
+.op-ordenar-seta::before { border-bottom:4px solid currentColor; }
+.op-ordenar-seta::after { border-top:4px solid currentColor; }
+th[aria-sort=ascending] .op-ordenar-seta::after, th[aria-sort=descending] .op-ordenar-seta::before { display:none; }
+th[aria-sort=ascending] .op-ordenar-seta::before { border-bottom-width:6px; border-left-width:5px; border-right-width:5px; opacity:1; }
+th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-left-width:5px; border-right-width:5px; opacity:1; }

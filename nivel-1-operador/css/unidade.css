@@ -28,7 +28,7 @@
 html[data-theme=dark] .op-unidade [data-op-panel=cadastro] [aria-invalid=true] {border-color:#ffb4b7}
 html[data-theme=dark] .op-unidade .op-cadastro-erro {color:#ffb4b7}
 @media(max-width:760px){.op-unidade .op-cadastro-quantidades{grid-template-columns:minmax(0,1fr)}}
-.op-unidade .op-local-filters {display:grid;grid-template-columns:minmax(160px,1.4fr) repeat(4,minmax(100px,1fr));gap:10px;margin-bottom:12px}
+.op-unidade .op-local-filters {display:grid;grid-template-columns:minmax(160px,1.4fr) repeat(4,minmax(100px,1fr)) auto;gap:10px;margin-bottom:12px}
 .op-unidade .op-aluno-filter {display:grid;gap:6px;min-width:0;align-content:start}
 .op-unidade .op-aluno-filter-input {display:flex;align-items:stretch;gap:5px;min-width:0}
 .op-unidade .op-aluno-filter-input :is(input,select) {min-width:0;flex:1;width:0}
@@ -37,7 +37,7 @@ html[data-theme=dark] .op-unidade .op-cadastro-erro {color:#ffb4b7}
 .op-unidade .op-aluno-search-button {display:grid;place-items:center;width:38px;min-height:40px;flex-shrink:0;border:1px solid var(--op-line);border-radius:8px;background:var(--op-soft);color:var(--progress-blue)}
 .op-unidade .op-aluno-search-button svg {width:16px;height:16px}
 .op-unidade .op-aluno-search-button:hover {border-color:var(--progress-blue);background:var(--progress-card-hover)}
-.op-unidade .op-aluno-filter-actions {grid-column:1/-1;display:flex;justify-content:flex-end}
+.op-unidade .op-aluno-filter-actions {display:flex;align-items:flex-end}
 .op-unidade .op-aluno-filter-actions button {min-height:32px;padding:6px 10px;font-size:11px}
 @media(max-width:760px){.op-unidade .op-local-filters>.op-aluno-filter:first-child{grid-column:1/-1}}
 .op-unidade .op-help {color:var(--sipa-texto-neutro);font-size:12px;line-height:1.65;margin:8px 0}
