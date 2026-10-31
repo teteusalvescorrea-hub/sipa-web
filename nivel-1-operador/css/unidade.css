@@ -260,3 +260,19 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-unidade dialog[data-op-ficha][open]{display:flex;flex-direction:column;height:min(820px,calc(100vh - 48px));overflow:hidden}
 .op-unidade dialog[data-op-ficha] > .op-dialog-heading{flex:none}
 .op-unidade dialog[data-op-ficha] .op-ficha-conteudo{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-right:6px}
+/* Ficha do aluno: abas sublinhadas numa linha, nome no título, blocos com rótulos discretos. */
+.op-unidade [data-op-ficha] .op-ficha-subtitulo{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-6px 0 14px;font-size:13px;color:var(--progress-text-secondary,#4c6278)}
+.op-unidade [data-op-ficha] .op-local-tabs{flex-wrap:nowrap;gap:2px;overflow-x:auto;border-bottom:1px solid var(--op-line,#d3dde6);margin-bottom:16px;scrollbar-width:thin}
+.op-unidade [data-op-ficha] .op-local-tabs .op-ficha-aba{flex:none;min-height:0;padding:10px 14px;border:0;border-bottom:3px solid transparent;border-radius:0;background:none;color:var(--progress-text-secondary,#4c6278);font-weight:600;white-space:nowrap}
+.op-unidade [data-op-ficha] .op-local-tabs .op-ficha-aba:hover{color:var(--progress-blue,#1769aa);background:none}
+.op-unidade [data-op-ficha] .op-local-tabs .op-ficha-aba[aria-pressed=true]{color:var(--progress-blue,#1769aa);border-bottom-color:var(--progress-blue,#1769aa);background:none}
+.op-unidade [data-op-ficha] .op-ficha-bloco{margin:0 0 14px;padding:14px 16px;border:1px solid var(--op-line,#d3dde6);border-radius:10px}
+.op-unidade [data-op-ficha] .op-ficha-bloco>h4{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--progress-text-secondary,#4c6278)}
+.op-unidade [data-op-ficha] .op-ficha-campos{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 20px;margin:0}
+.op-unidade [data-op-ficha] .op-ficha-campos dt{font-size:12px;color:var(--progress-text-secondary,#5d7286);margin:0 0 2px}
+.op-unidade [data-op-ficha] .op-ficha-campos dd{margin:0;font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.op-unidade [data-op-ficha] .op-ficha-valor-acao{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.op-unidade [data-op-ficha] .op-ficha-valor-acao .op-link{font-size:13px;font-weight:600}
+.op-unidade [data-op-ficha] .op-ficha-bloco textarea{width:100%;box-sizing:border-box;min-height:70px}
+.op-unidade [data-op-ficha] .op-ficha-acoes-notas{display:flex;justify-content:flex-end;margin-top:8px}
+.op-unidade [data-op-ficha] .op-ficha-barra{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;margin-bottom:12px}

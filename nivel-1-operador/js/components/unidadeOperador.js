@@ -24,9 +24,23 @@ import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 const nomeUnidade=u=>nomeUnidadeInstitucional(unidade(u));
 const textoData=d=>d?formatarData(d):'Não informada';
 const dataHora=d=>d?new Date(d).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'Não informado';
+const dataHoraCurta=d=>{if(!d)return 'Não informado';const t=new Date(d);return t.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})+' às '+t.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});};
+const telefoneFormatado=t=>{const d=String(t||'').replace(/\D/g,'');return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:d.length===10?`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`:(t||'Não informado');};
+// Campos da ficha: o valor pode ser texto ou nó (etiqueta, link de ação).
+function camposFicha(itens){const dl=el('dl',undefined,'op-fields op-ficha-campos');for(const [k,v] of itens){const item=el('div'),dd=el('dd');dd.append(v instanceof Node?v:document.createTextNode(v==null||v===''?'Não informado':String(v)));item.append(el('dt',k),dd);dl.append(item);}return dl;}
+function blocoFicha(titulo,...filhos){const s=el('section',undefined,'op-ficha-bloco');s.append(el('h4',titulo),...filhos);return s;}
 const badge=t=>el('span',t,'op-badge');
 // Coluna Ações das listas (como no Simplea): chave ativo/inativo e o ⋯ que abre os detalhes.
 function chaveSituacao(ativo,nome,aoClicar){const b=el('button',undefined,'op-chave');b.type='button';b.setAttribute('role','switch');b.setAttribute('aria-checked',String(!!ativo));b.setAttribute('aria-label',(ativo?'Inativar ':'Ativar ')+nome);b.title=ativo?'Ativo: clique para inativar':'Inativo: clique para ativar';b.onclick=aoClicar;return b;}
+function menuAcoes(nome,itens){
+    const caixa=el('div',undefined,'op-menu-acoes'),gatilho=botaoMais(nome,null),menu=el('div',undefined,'op-menu-acoes-lista');menu.setAttribute('role','menu');menu.hidden=true;gatilho.setAttribute('aria-haspopup','menu');gatilho.setAttribute('aria-expanded','false');gatilho.title='Ações';gatilho.setAttribute('aria-label','Ações de '+nome);
+    const fechar=()=>{menu.hidden=true;gatilho.setAttribute('aria-expanded','false');};
+    for(const [rotulo,acao,bloqueio] of itens){const b=botao(rotulo,()=>{fechar();acao();},'op-menu-acoes-item');b.setAttribute('role','menuitem');b.dataset.opAcao=rotulo.toLocaleLowerCase('pt-BR');if(bloqueio){b.disabled=true;b.title=bloqueio;}menu.append(b);}
+    gatilho.onclick=()=>{const abrir=menu.hidden;document.querySelectorAll('.op-menu-acoes-lista:not([hidden])').forEach(m=>{m.hidden=true;});menu.hidden=!abrir;gatilho.setAttribute('aria-expanded',String(abrir));if(abrir)menu.querySelector('button:not(:disabled)')?.focus();};
+    caixa.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){e.stopPropagation();fechar();gatilho.focus();}});
+    document.addEventListener('pointerdown',e=>{if(!caixa.contains(e.target))fechar();});
+    caixa.append(gatilho,menu);return {caixa,gatilho};
+}
 function botaoMais(nome,aoClicar,b=botao('⋯',aoClicar)){b.textContent='⋯';b.className='op-acao-mais';b.setAttribute('aria-label','Ver detalhes de '+nome);b.title='Ver detalhes';return b;}
 const situacaoCadastro=a=>a.situacao||(!a.nascimento||!a.email||!a.telefone?'Incompleto':'Pendente');
 function campos(itens) {const dl=el('dl',undefined,'op-fields');for(const [k,v] of itens){const item=el('div');item.append(el('dt',k),el('dd',v==null||v===''?'Não informado':String(v)));dl.append(item);}return dl;}
@@ -110,7 +124,8 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         const alunos=dados.alunos.filter(a=>(!termo||(cpf?(numeros.length===11?a.cpf===numeros:a.cpf.includes(numeros)):a.nome.toLocaleLowerCase('pt-BR').includes(termo)))&&(!f.situacao||situacaoCadastro(a)===f.situacao)&&(!f.categoria||a.categoria===f.categoria)&&(!f.principal||principal(a)===f.principal)&&(!f.carro||carro(a)===f.carro));
         const total=Math.ceil(alunos.length/10);pagina=Math.max(1,Math.min(pagina,total||1));quantidade.textContent=`${alunos.length} aluno(s) · somente vínculos autorizados`;
         lista.replaceChildren(tabela(['Aluno / CPF','Categoria','Unidade principal','Aulas de carro','Cadastro','Ações'],ordenarLinhas(alunos.map(a=>{
-            const n=el('div'),abrir=botao(a.nome,()=>abrirFicha(a.id),'op-link');abrir.dataset.opAluno=a.id;n.append(abrir,el('small',formatarCpf(a.cpf)));const acoes=el('div',undefined,'op-linha-acoes');{const podeAlterar=!!servico.corrigirAluno&&permissoes.includes('corrigir-registro'),ativo=a.situacao!=='Inativo',chave=chaveSituacao(ativo,a.nome,()=>formularioAdministrativo(raiz,(ativo?'Inativar':'Ativar')+' aluno',[['justificativa','Justificativa','textarea','']],async d=>{await servico.corrigirAluno(a.id,{situacao:ativo?'Inativo':'Regular'},d.justificativa);await dadosAtualizados();},{descricao:a.nome+(ativo?' deixa de poder reservar aulas.':' volta a poder reservar aulas.')}));chave.dataset.opSituacaoAluno=a.id;if(!podeAlterar){chave.disabled=true;chave.title=(ativo?'Ativo':'Inativo')+' · só a Gerência ativa ou inativa o aluno';}acoes.append(chave);}const mais=botaoMais(a.nome,()=>abrirFicha(a.id));mais.dataset.opAlunoAcoes=a.id;acoes.append(mais);
+            const n=el('div'),abrir=botao(a.nome,()=>abrirFicha(a.id),'op-link');abrir.dataset.opAluno=a.id;n.append(abrir,el('small',formatarCpf(a.cpf)));const acoes=el('div',undefined,'op-linha-acoes');{const podeAlterar=!!servico.corrigirAluno&&permissoes.includes('corrigir-registro'),ativo=a.situacao!=='Inativo',chave=chaveSituacao(ativo,a.nome,()=>formularioAdministrativo(raiz,(ativo?'Inativar':'Ativar')+' aluno',[['justificativa','Justificativa','textarea','']],async d=>{await servico.corrigirAluno(a.id,{situacao:ativo?'Inativo':'Regular'},d.justificativa);await dadosAtualizados();},{descricao:a.nome+(ativo?' deixa de poder reservar aulas.':' volta a poder reservar aulas.')}));chave.dataset.opSituacaoAluno=a.id;if(!podeAlterar){chave.disabled=true;chave.title=(ativo?'Ativo':'Inativo')+' · só a Gerência ativa ou inativa o aluno';}acoes.append(chave);}const podeEditar=identidade.nivel>=2&&permissoes.includes('editar-cadastro');
+            const menu=menuAcoes(a.nome,[['Visualizar',()=>abrirFicha(a.id)],['Editar',()=>abrirFicha(a.id,'cadastro',{editar:true}),podeEditar?null:'A edição do cadastro é feita pela Gerência.']]);menu.gatilho.dataset.opAlunoAcoes=a.id;acoes.append(menu.caixa);
             return [n,a.categoria,nomeUnidade(principal(a)),carro(a)?nomeUnidade(carro(a)):'Não se aplica',badge(situacaoCadastro(a)),acoes];
         }),ordemAlunos).slice((pagina-1)*10,pagina*10),'Nenhum aluno encontrado para os filtros informados.',{estado:ordemAlunos,aoMudar:()=>{pagina=1;listar();}}));
         paginacao.replaceChildren();if(total>1){paginacao.append(botao('Anterior',()=>{pagina=Math.max(1,pagina-1);listar();}));for(let i=Math.max(1,pagina-2);i<=Math.min(total,pagina+2);i++){const b=botao(String(i),()=>{pagina=i;listar();});if(i===pagina)b.setAttribute('aria-current','page');paginacao.append(b);}paginacao.append(botao('Próxima',()=>{pagina=Math.min(total,pagina+1);listar();}));}
@@ -163,7 +178,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     });
 
     const ficha=modal(raiz,'Ficha completa do aluno','opFicha'),fichaConteudo=el('div',undefined,'op-ficha-conteudo');ficha.append(fichaConteudo);let abaFicha='cadastro',consultaFicha=0;
-    async function abrirFicha(id,aba='cadastro') {alunoAtual=id;abaFicha=aba;try{await renderizarFicha();if(!ficha.open)ficha.showModal();}catch(e){informar(e.message,true);}}
+    async function abrirFicha(id,aba='cadastro',{editar=false}={}) {alunoAtual=id;abaFicha=aba;try{await renderizarFicha();if(!ficha.open)ficha.showModal();if(editar)[...ficha.querySelectorAll('.op-ficha-barra button')].find(b=>b.textContent==='Editar cadastro')?.click();}catch(e){informar(e.message,true);}}
     // Trocar de aba reaproveita a última consulta do mesmo aluno; abrir a ficha ou salvar algo (reabrir) consulta de novo.
     let fichaEmCache=null;
     async function renderizarFicha(recarregar=true){
@@ -172,18 +187,24 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         else{const carregando=el('p','Consultando registros…','op-help');carregando.setAttribute('role','status');fichaConteudo.prepend(carregando);fichaConteudo.setAttribute('aria-busy','true');
         try{resposta=await servico.ficha(alunoAtual);fichaEmCache={id:alunoAtual,resposta};}catch(erro){if(consulta===consultaFicha){fichaConteudo.replaceChildren(el('p','Não foi possível consultar os registros. Feche e reabra a ficha para tentar novamente.','op-help'));}throw erro;}finally{carregando.remove();if(consulta===consultaFicha)fichaConteudo.removeAttribute('aria-busy');}}
         if(consulta!==consultaFicha)return;
+        if(abaFicha==='senha')abaFicha='acesso';
         ficha.dataset.opAba=abaFicha;
-        const {aluno:a,resumoAulas,resumoLiberacao,aulas,linhaTempo}=resposta;fichaConteudo.replaceChildren(el('h3',a.nome));
+        const {aluno:a,resumoAulas,resumoLiberacao,aulas,linhaTempo}=resposta;ficha.querySelector('.op-dialog-heading h2').textContent=a.nome;
+        const subtitulo=el('p',undefined,'op-ficha-subtitulo');subtitulo.append(`${formatarCpf(a.cpf)} · Categoria ${a.categoria||'não informada'} · `,badge(situacaoCadastro(a)));fichaConteudo.replaceChildren(subtitulo);
         const abas=el('div',undefined,'op-local-tabs');abas.setAttribute('aria-label','Seções da ficha');
-        for(const [id,titulo] of [['cadastro','Cadastro'],['etapas','Exames e agendamento de prova'],['creditos','Aulas'],['provas','Provas marcadas'],['historico','Histórico'],['acesso','Acesso'],['senha','Redefinir senha']]){const b=botao(titulo,()=>{abaFicha=id;renderizarFicha(false).catch(e=>informar(e.message,true));});b.dataset.opFichaAba=id;b.setAttribute('aria-pressed',String(abaFicha===id));abas.append(b);}fichaConteudo.append(abas);
+        for(const [id,titulo] of [['cadastro','Cadastro'],['etapas','Exames e agendamento de prova'],['creditos','Aulas'],['provas','Provas marcadas'],['historico','Histórico'],['acesso','Acesso']]){const b=botao(titulo,()=>{abaFicha=id;renderizarFicha(false).catch(e=>informar(e.message,true));});b.dataset.opFichaAba=id;b.setAttribute('aria-pressed',String(abaFicha===id));b.className='op-ficha-aba';abas.append(b);}fichaConteudo.append(abas);
         const contextoFicha={raiz,servico,permissoes,executar,reabrir:renderizarFicha};
         if(abaFicha==='cadastro'){
             const cadastroArea=el('section');fichaConteudo.append(cadastroArea);
-            cadastroArea.append(campos([['Nome',a.nome],['CPF',formatarCpf(a.cpf)],['Nascimento',textoData(a.nascimento)],['Telefone',a.telefone],['E-mail',a.email],['Categoria',a.categoria],['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',carro(a)?nomeUnidade(carro(a)):'Não se aplica'],['Cadastro',situacaoCadastro(a)],['Criado em',dataHora(a.criadoEm)]]));
+            let aulasDeCarro=carro(a)?nomeUnidade(carro(a)):'Não se aplica';
+            if(a.categoria.includes('B')){const valor=el('span',undefined,'op-ficha-valor-acao'),alterar=botao('Alterar',()=>abrirTransferencia(a),'op-link');alterar.dataset.opTransferir='';alterar.disabled=!permissoes.includes('transferir');alterar.setAttribute('aria-label','Alterar unidade de aulas de carro');valor.append(aulasDeCarro+' ',alterar);aulasDeCarro=valor;}
+            cadastroArea.append(blocoFicha('Dados pessoais',camposFicha([['Nome completo',a.nome],['CPF',formatarCpf(a.cpf)],['Nascimento',textoData(a.nascimento)],['Telefone',telefoneFormatado(a.telefone)],['E-mail',a.email]])),
+                blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Situação do cadastro',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
             if(a.categoria==='D')cadastroArea.append(el('p',AVISO_ONIBUS+' '+Object.values(LOCAIS_ONIBUS).map(l=>l.endereco).join(' '),'op-inline-note'));if(a.categoria.includes('A'))cadastroArea.append(el('p',pista.textContent,'op-inline-note'));
-            if(a.categoria.includes('B')){const b=botao('Alterar unidade de aulas de carro',()=>abrirTransferencia(a));b.dataset.opTransferir='';b.disabled=!permissoes.includes('transferir');cadastroArea.append(b);}
-            const notas=el('textarea');notas.value=a.observacoes||'';notas.maxLength=2000;notas.rows=3;notas.disabled=!permissoes.includes('anotar');const salvar=botao('Salvar observações',()=>executar(()=>servico.anotar(a.id,notas.value),'Observações locais salvas.',renderizarFicha));salvar.disabled=notas.disabled;cadastroArea.append(campo('Observações administrativas',notas),salvar);
-            montarEdicaoCadastro(cadastroArea,a,contextoFicha);
+            const notas=el('textarea');notas.value=a.observacoes||'';notas.maxLength=2000;notas.rows=3;notas.disabled=!permissoes.includes('anotar');const salvar=botao('Salvar observações',()=>executar(()=>servico.anotar(a.id,notas.value),'Observações salvas.',renderizarFicha),'op-button op-button-primary');salvar.disabled=true;notas.addEventListener('input',()=>{salvar.disabled=notas.disabled||notas.value===(a.observacoes||'');});
+            const acoesNotas=el('div',undefined,'op-ficha-acoes-notas');acoesNotas.append(salvar);cadastroArea.append(blocoFicha('Observações administrativas',notas,acoesNotas));notas.setAttribute('aria-label','Observações administrativas');
+            // Editar cadastro e correções (Gerência e Master) ficam numa barra no topo; a edição troca a aba pelo formulário.
+            const antes=cadastroArea.childElementCount;montarEdicaoCadastro(cadastroArea,a,contextoFicha);const extras=[...cadastroArea.children].slice(antes);if(extras.length){const barra=el('div',undefined,'op-ficha-barra');barra.append(...extras);cadastroArea.prepend(barra);}
             if(servico.identidade.nivel===3&&permissoes.includes('excluir-cadastro')&&servico.excluirCadastro)cadastroArea.append(botao('Excluir',()=>confirmarExclusao(raiz,servico,'aluno',a,()=>location.reload())));
 
         }
@@ -202,7 +223,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         if(abaFicha==='acesso'){fichaConteudo.append(campos([['Login previsto (CPF)',formatarCpf(a.cpf)],['Ativação',a.acesso],['Convite',a.convite?.status||'Não emitido / integração pendente'],['Primeiro acesso',a.primeiroAcessoEm?dataHora(a.primeiroAcessoEm):'Não informado'],['Troca obrigatória de senha',a.contaId?'Obrigatória no primeiro acesso':'Validação pendente na API'],['Último acesso',dataHora(a.ultimoAcessoEm)]]),el('p',a.contaId?'Acesso vinculado ao cadastro do aluno.':'Nenhuma credencial foi emitida para este cadastro legado.','op-inline-note'));
 
         }
-        if(abaFicha==='senha')await montarAcessoAluno(fichaConteudo,a,contextoFicha);
+        if(abaFicha==='acesso')await montarAcessoAluno(fichaConteudo,a,contextoFicha);
     }
 
     const transfer=modal(raiz,'Alterar unidade de aulas de carro','opTransferencia'),tcorpo=el('div');transfer.append(tcorpo);let versaoPrevia=0;
