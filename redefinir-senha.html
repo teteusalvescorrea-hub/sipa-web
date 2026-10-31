@@ -10,45 +10,81 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <link rel="stylesheet" href="shared/css/escala.css">
+    <style>
+        /* Uma coluna só, centralizada (a tela de login tem a apresentação à esquerda). */
+        .redefinir-pagina { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px 16px; background: #eaf4fc; box-sizing: border-box; }
+        .redefinir-pagina .login-logo { color: #10233f; text-decoration: none; }
+        .redefinir-pagina .login-card { max-width: 480px; }
+        .redefinir-requisitos { display: grid; gap: 6px; margin: -4px 0 18px; padding: 0; list-style: none; font-size: 13px; color: #6a7f99; }
+        .redefinir-requisitos li { display: flex; align-items: center; gap: 8px; }
+        .redefinir-requisitos li::before { content: '\f111'; font: var(--fa-font-regular); font-size: 12px; }
+        .redefinir-requisitos li.ok { color: #1d6b3a; }
+        .redefinir-requisitos li.ok::before { content: '\f058'; font: var(--fa-font-solid); }
+        .redefinir-sucesso { display: grid; justify-items: center; gap: 12px; padding: 8px 0 4px; text-align: center; }
+        .redefinir-sucesso i { font-size: 44px; color: #1d6b3a; }
+        .redefinir-sucesso h2 { margin: 0; }
+        .redefinir-sucesso p { margin: 0 0 8px; color: #4c6278; }
+        .redefinir-sucesso a { width: 100%; text-decoration: none; justify-content: center; }
+    </style>
 </head>
 <!-- Página do link de redefinição (e-mail do esqueci-senha e do "Enviar link de redefinição" da recepção):
      lê o token do #token=, pede a senha nova e chama POST usuarios/redefinir-senha. -->
 <body data-sipa-escala="login" class="login-page">
-<div class="login-container">
-    <section class="login-form-area">
-        <div class="login-card">
-            <div class="access-panel active">
-                <div class="login-header">
-                    <span class="form-eyebrow">REDEFINIR SENHA</span>
-                    <h2>Crie sua nova senha</h2>
-                    <p>A senha deve ter de 8 a 100 caracteres, com letras e números.</p>
-                </div>
-                <div id="redefinir-mensagem" role="alert" aria-live="polite" class="form-message"></div>
-                <form id="redefinir-form" novalidate class="login-form">
-                    <div class="form-field">
-                        <label for="nova-senha">Nova senha</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="nova-senha" name="novaSenha" required minlength="8" maxlength="100" autocomplete="new-password" placeholder="Digite a nova senha">
-                        </div>
-                    </div>
-                    <div class="form-field">
-                        <label for="confirmar-senha">Confirmar nova senha</label>
-                        <div class="input-wrapper">
-                            <i class="fa-solid fa-lock"></i>
-                            <input type="password" id="confirmar-senha" name="confirmarSenha" required maxlength="100" autocomplete="new-password" placeholder="Repita a nova senha">
-                        </div>
-                    </div>
-                    <button type="submit" id="redefinir-enviar" class="primary-button">
-                        <span>Salvar nova senha</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </form>
-                <p id="redefinir-login" hidden><a href="login.html" class="primary-button" style="text-decoration:none;justify-content:center">Ir para o login</a></p>
-            </div>
+<main class="redefinir-pagina">
+    <a href="login.html" class="login-logo" aria-label="SIPA, ir para o login">
+        <div class="login-logo-symbol">
+            <svg viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M52 12H29C17 12 9 20 9 31C9 40 14 46 23 48L42 52C46 53 48 55 48 58C48 61 46 63 41 63H18" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 58H41C53 58 61 50 61 39C61 30 56 24 47 22L28 18C24 17 22 15 22 12" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
         </div>
-    </section>
-</div>
+        <div><strong>SIPA</strong><span>SISTEMA INTELIGENTE<br>PARA AGENDAMENTOS</span></div>
+    </a>
+    <div class="login-card">
+        <div id="redefinir-painel" class="access-panel active">
+            <div class="login-header">
+                <span class="form-eyebrow">REDEFINIR SENHA</span>
+                <h2>Crie sua nova senha</h2>
+                <p>Depois de salvar, entre com seu CPF e a nova senha.</p>
+            </div>
+            <div id="redefinir-mensagem" role="alert" aria-live="polite" class="form-message"></div>
+            <form id="redefinir-form" novalidate class="login-form">
+                <div class="form-field">
+                    <label for="nova-senha">Nova senha</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="nova-senha" name="novaSenha" required minlength="8" maxlength="100" autocomplete="new-password" placeholder="Digite a nova senha" aria-describedby="redefinir-requisitos">
+                        <button type="button" class="password-toggle" data-mostrar="nova-senha" aria-label="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="confirmar-senha">Confirmar nova senha</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="confirmar-senha" name="confirmarSenha" required maxlength="100" autocomplete="new-password" placeholder="Repita a nova senha">
+                        <button type="button" class="password-toggle" data-mostrar="confirmar-senha" aria-label="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+                <ul id="redefinir-requisitos" class="redefinir-requisitos" aria-live="polite">
+                    <li data-requisito="tamanho">Pelo menos 8 caracteres</li>
+                    <li data-requisito="letra">Uma letra</li>
+                    <li data-requisito="numero">Um número</li>
+                    <li data-requisito="iguais">As duas senhas iguais</li>
+                </ul>
+                <button type="submit" id="redefinir-enviar" class="primary-button">
+                    <span>Salvar nova senha</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+        <div id="redefinir-sucesso" class="redefinir-sucesso" hidden>
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <h2>Senha alterada</h2>
+            <p>Agora é só entrar com seu CPF e a nova senha.</p>
+            <a href="login.html" class="primary-button"><span>Ir para o login</span><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </div>
+</main>
 <script type="module" src="js/redefinirSenha.js"></script>
 </body>
 </html>
