@@ -1,66 +1,70 @@
-# SIPA — Sistema Inteligente para Agendamentos
+# SIPA — frontend para integração
 
-O **SIPA (Sistema Inteligente para Agendamentos)** é uma aplicação web desenvolvida para facilitar o gerenciamento e o agendamento de aulas práticas em autoescolas.
+HTML, CSS e JavaScript nativos, com módulos ES. Fonte completo dos painéis
+Aluno, Instrutor, Recepção (ADM 1), Gerência (ADM 2) e Master (ADM 3).
 
-O sistema foi desenvolvido com foco em organização, praticidade e controle dos agendamentos de alunos, instrutores, veículos e categorias de habilitação.
+**Preparado para integração; ainda não homologado para produção.**
+Leia [o contrato e as pendências de integração](ENTREGA-FRONTEND-SIPA.md) e
+[o plano de entrega](docs/PLANO-ENTREGA-BIGAS.md).
 
-## Acesse o sistema
+## Executar
 
-[**Acessar o SIPA**](https://teteusalvescorrea-hub.github.io/sipa-web/)
+Abra a raiz deste projeto no VS Code. No `index.html` ou `login.html`,
+clique em **Open with Live Server**. Endereço habitual:
+`http://127.0.0.1:5500/index.html`. Não usar `file://` nem entradas dos
+worktrees históricos.
 
-O site publica a branch `prod`. As telas ligadas na API só funcionam no site depois que a API estiver num servidor; até lá, rode local (veja abaixo).
+O laboratório está **desligado por padrão**, inclusive em localhost.
+Parâmetros de URL e dados antigos do navegador não liberam demonstrações.
+O login exige a API e um perfil autorizado; não há conta pré-carregada ou
+senha universal. Os três perfis administrativos aguardam contrato de identidade,
+unidade e permissões no servidor. Autoescola não equivale a Master.
 
-## Funcionalidades
+A API local está configurada em `shared/js/config-api.js`, atualmente
+`http://localhost:5080/api`. Homologação/produção precisam de URL e CORS próprios.
+Não inserir credenciais, tokens ou configurações de banco no frontend.
 
-- Cadastro e gerenciamento de alunos
-- Login e controle de acesso
-- Agendamento de aulas práticas
-- Agendamento para categoria A (Moto)
-- Agendamento para categoria B (Carro)
-- Suporte à categoria AB (Carro + Moto)
-- Seleção de múltiplos horários
-- Controle de disponibilidade de instrutores
-- Identificação do veículo utilizado na aula
-- Bloqueio de domingos para agendamento
-- Bloqueio de datas anteriores à data atual
-- Controle da quantidade de aulas disponíveis
-- Visualização das aulas agendadas
-- Cancelamento de aulas
-- Dashboard do aluno
-- Página de progresso do aluno
-- Armazenamento dos agendamentos no sistema
+## Estrutura
 
-## Tecnologias utilizadas
+| Pasta | Conteúdo |
+|---|---|
+| `index.html`, `login.html`, `css/`, `js/` | Entradas públicas e autenticação |
+| `aluno/` | Dashboard, agendamento, aulas, progresso, perfil, pacotes e mensagens |
+| `instrutor/` | Início, agenda, frequência, histórico e perfil |
+| `nivel-1-operador/` | Recepção e atendimento da unidade |
+| `nivel-2-gerencia/` | Gerência da unidade-base |
+| `nivel-3-master/` | Administração global |
+| `shared/` | Regras, serviços HTTP, componentes, temas e PDF |
+| `dev/` | Adaptadores de referência e preparação; fora da distribuição pública |
+| `tests/` | Testes e fixtures sintéticas isoladas; fora da distribuição pública |
+| `docs/` | Contratos, regras e relatórios |
 
-- HTML5
-- CSS3
-- JavaScript
-- Módulos ES (`js/modules`, no padrão de pastas do front do Simplea)
-- API do SIPA em .NET 10 (repositório `sipa-api`)
-- Font Awesome
+Os worktrees históricos permanecem intactos e fora da entrega. A navegação atual
+não depende deles. Os caminhos antigos movidos estão em `docs/movimentacoes.json`.
 
-## Estrutura do projeto
+## Testes e distribuição
 
-```text
-sipa-web/
-│
-├── assets/
-├── css/
-├── docs/
-├── js/
-├── agendamento.html
-├── autoescola.html      # login com CNPJ: pacotes à venda e pedidos dos alunos
-├── cadastro.html
-├── dashboard.html
-├── index.html
-├── login.html
-├── meu-perfil.html
-├── meu-progresso.html
-├── minhas-aulas.html
-├── pacotes.html
-└── README.md
+Node.js 24; Microsoft Edge para os testes de navegador.
 
-## Rodar local
+```powershell
+node tests/executar.mjs
+node tests/integrado.browser.mjs
+node tests/auditoria-etapa2.mjs
+node dev/preparar-integrado.mjs "$env:TEMP\SIPA-ENTREGA-nova"
+```
 
-- Banco (Docker), API em `http://localhost:5080` e front em `http://localhost:5500`: veja `js/README.md`.
-- Como ligar uma tela numa rota da API: `docs/como-integrar-uma-api.md`.
+O executor habilita os adaptadores somente no processo/perfil descartável do
+teste. Não habilitar flags na aplicação para executar a suíte.
+
+O preparador exige destino novo fora do projeto; exclui `dev/`, `tests/`, Git
+e worktrees, remove imports de demonstração e gera um manifesto. Não publica.
+O fonte Git e a distribuição pública têm finalidades diferentes: o fonte preserva
+os adaptadores necessários à integração e às regressões automatizadas.
+
+Etapa 2: **271 testes automatizados e 555 verificações de navegador aprovados**,
+sem falhas nas execuções finais. Veja [o relatório](docs/RELATORIO-VALIDACAO-ETAPA-2.md).
+São testes isolados; não certificam API, SQL Server ou implantação.
+
+Não importar automaticamente dados antigos do navegador para o servidor.
+A classificação e eventual limpeza desses dados continuam manuais e reversíveis,
+conforme a documentação de integração. Nenhum armazenamento pessoal foi limpo.

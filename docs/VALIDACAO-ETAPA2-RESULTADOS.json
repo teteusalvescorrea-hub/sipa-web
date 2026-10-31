@@ -1,0 +1,61 @@
+{
+  "etapa": 2,
+  "unitarios": {
+    "aprovados": 271,
+    "reprovados": 0
+  },
+  "navegador": [
+    {
+      "cenario": "integrado",
+      "aprovados": 10,
+      "reprovados": 0,
+      "evidencias": "sipa-instrutor-ui-3rRb9k"
+    },
+    {
+      "cenario": "medico",
+      "aprovados": 52,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-KK8pCc"
+    },
+    {
+      "cenario": "escopo-medico",
+      "aprovados": 26,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-dusn6z"
+    },
+    {
+      "cenario": "exclusoes-master",
+      "aprovados": 17,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-TcDRNK"
+    },
+    {
+      "cenario": "escala-global",
+      "aprovados": 221,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-HlpmZP"
+    },
+    {
+      "cenario": "relatorios-pdf",
+      "aprovados": 25,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-r4pwP4"
+    },
+    {
+      "cenario": "redefinicao-aluno",
+      "aprovados": 174,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-lBF3Tg"
+    },
+    {
+      "cenario": "aulas-realizadas",
+      "aprovados": 30,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-7TwRMS"
+    }
+  ],
+  "totalVerificacoesNavegador": 555,
+  "armazenamentoPessoal": "Nao acessado nem limpo",
+  "apiReal": "Nao validada; contratos administrativos pendentes",
+  "etapa3": "Nao iniciada"
+}

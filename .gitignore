@@ -1,0 +1,33 @@
+# Worktrees independentes: nunca adicionar ao repositorio principal
+/.entrega-aluno/
+/.instrutor-local/
+
+# Metadados privados de preservacao, fora da entrega
+/docs/referencia-anterior.md
+/docs/preservacao.json
+/docs/local/
+
+# Roteiros antigos de provisionamento de contas: referencia local apenas
+/docs/MASTER-TESTE-LOCAL.md
+/docs/ACESSOS-LOCAIS-V2.md
+
+# Credenciais, bancos, backups e artefatos locais
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+*.bak
+*.zip
+*.7z
+*.log
+*.tmp
+*.har
+/backups/
+/artifacts/
+/test-results/
+/node_modules/
+.DS_Store
+Thumbs.db

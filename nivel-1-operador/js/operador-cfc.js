@@ -1,0 +1,4 @@
+import {desenvolvimentoAtivo} from '../../shared/js/ambiente.js';
+if(desenvolvimentoAtivo()){
+ try{const {exigirPerfil,vigiarPerfil}=await import('../../dev/autenticacao.js');await exigirPerfil('operador');const {iniciarAtendimentoLocal}=await import('../../dev/operador/atendimentoLocal.js');await iniciarAtendimentoLocal(document.getElementById('operador-conteudo'),document.getElementById('operador-template'),location.href);document.getElementById('operador-acesso').hidden=true;vigiarPerfil('operador',document.getElementById('operador-conteudo'));}catch{document.getElementById('operador-conteudo').replaceChildren();location.replace('/login.html');}
+}else{document.getElementById('acesso-orientacao').textContent='O acesso administrativo aguarda a integração de perfil, unidade e permissões.';}

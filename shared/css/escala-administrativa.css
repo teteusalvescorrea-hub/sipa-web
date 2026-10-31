@@ -1,0 +1,116 @@
+/* Dimensoes administrativas compartilhadas. Valores de referencia da Gerencia. */
+body.operador-page{
+ --ger-sidebar:var(--sipa-sidebar,244px);
+ --ger-xs:var(--sipa-font-xs,11px);--ger-sm:var(--sipa-font-sm,12.1px);--ger-base:var(--sipa-font-control,13.2px);--ger-md:var(--sipa-font-body,14.3px);--ger-lg:var(--sipa-font-lg,15.4px);
+ font-size:var(--sipa-font-body,14.3px);
+}
+body.operador-page .op-unidade .op-main{margin-left:var(--ger-sidebar);padding:0 35px 27px;max-width:1980px;min-width:0}
+/* !important somente nas medidas que a sidebar compartilhada já força dessa forma. */
+body.operador-page .op-unidade .op-sidebar{width:var(--ger-sidebar)!important;padding:24px 15px!important;overflow-x:hidden;min-width:0}
+/* A translação de 2px do hover fazia o menu de 199px rolar até 201px. */
+body.operador-page .op-unidade .sipa-sidebar-menu{flex:1 1 auto;min-width:0;min-height:0;max-width:100%;overflow-y:auto;overflow-x:hidden;align-items:stretch;gap:5.5px!important;margin-top:27px!important}
+body.operador-page .op-unidade .sipa-sidebar-link{box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:46.2px!important;font-size:11px!important;padding:9px 11px!important;gap:11px!important;transform:none;overflow-wrap:break-word}
+body.operador-page .op-unidade .sipa-sidebar-link:hover{transform:none}
+body.operador-page .op-unidade .sipa-sidebar-icon{width:30.8px!important;min-width:30.8px!important;flex:0 0 30px;height:30.8px!important}
+body.operador-page .op-unidade .sipa-sidebar-link svg{width:18.7px;height:18.7px;flex-shrink:0}
+body.operador-page .op-unidade .sipa-sidebar-logo{padding:0 9px 22px!important;gap:11px;flex-shrink:0}
+body.operador-page .op-unidade .sipa-sidebar-logo-symbol{width:37px!important;min-width:37px!important;height:37px!important}
+body.operador-page .op-unidade .sipa-sidebar-logo-symbol svg{width:37px!important;height:37px!important}
+body.operador-page .op-unidade .sipa-sidebar-logo-text strong{font-size:18.7px!important}
+body.operador-page .op-unidade .sipa-sidebar-logo-text span{font-size:6.6px!important}
+body.operador-page .op-unidade .op-operator-label{gap:11px;flex-shrink:0;min-width:0}
+body.operador-page .op-unidade .op-operator-label strong{font-size:var(--ger-sm);overflow-wrap:anywhere}
+body.operador-page .op-unidade .op-operator-label small{font-size:9.9px}
+body.operador-page .op-unidade .op-avatar{width:38px;height:38px;font-size:11px;flex-shrink:0}
+body.operador-page .op-unidade .sipa-sidebar-title{font-size:7.7px!important}
+body.operador-page .op-unidade .sipa-sidebar-bottom{min-width:0;flex-shrink:0}
+body.operador-page .op-unidade .sipa-sidebar-unit-text{min-width:0;overflow-wrap:anywhere}
+body.operador-page .op-unidade .sipa-sidebar-unit-text strong{font-size:8.8px!important}
+body.operador-page .op-unidade .sipa-sidebar-unit-text small{font-size:7.7px!important}
+body.operador-page .op-unidade .sipa-sidebar-logout{font-size:9.9px!important;min-height:42px!important;padding:0 12px}
+
+body.operador-page .op-unidade .op-topbar{min-height:76px;font-size:var(--ger-sm);gap:17px}
+body.operador-page .op-unidade .op-header{margin:32px 0 25px;gap:22px}
+body.operador-page .op-unidade .op-header h1{font-size:var(--sipa-font-title,29.7px)}
+body.operador-page .op-unidade .op-header [data-op-description]{font-size:var(--ger-base)}
+body.operador-page .op-unidade .op-eyebrow{font-size:11px}
+body.operador-page .op-unidade .op-unit-chip{font-size:11px;padding:9px 12px}
+body.operador-page .op-unidade .op-header-context{gap:13px}
+body.operador-page .op-unidade button.sipa-theme-control{font-size:var(--ger-base);min-height:40px;padding:9px 12px}
+body.operador-page .op-unidade button.sipa-theme-control svg{width:20px;height:20px}
+body.operador-page .op-unidade .op-card{padding:var(--sipa-card-padding,20px)}
+body.operador-page .op-unidade .op-card h2{font-size:16.5px}
+body.operador-page .op-unidade .op-card-heading p{font-size:var(--ger-sm)}
+body.operador-page .op-unidade :is(.op-help,.adm-nota,.adm-empty,.op-copy,.op-inline-note){font-size:var(--ger-base)}
+body.operador-page .op-unidade :is(.op-button,.op-link){font-size:var(--ger-base)}
+body.operador-page .op-unidade .op-button{min-height:var(--sipa-button-height,45px);padding:12px 17px;gap:10px}
+body.operador-page .op-unidade .op-button svg{width:19px;height:19px}
+body.operador-page .op-unidade :is(label,.op-form-fields label,.op-instrutor-fields label,.op-instrutor-filtros>label){font-size:var(--ger-base);gap:7px}
+body.operador-page .op-unidade :is(input,select,textarea){font-size:var(--ger-base);min-height:var(--sipa-field-height,44px);padding:10px 12px}
+body.operador-page .op-unidade .op-form-fields :is(input,select){height:var(--sipa-field-height,44px)}
+body.operador-page .op-unidade :is(input[type=checkbox],input[type=radio]){min-height:0;height:20px;width:20px;padding:0}
+body.operador-page .op-unidade .op-local-filters{gap:11px}
+body.operador-page .op-unidade .op-aluno-filter-input input::placeholder{font-size:15.4px}
+body.operador-page .op-unidade .op-aluno-filter-input select{font-size:15.4px}
+body.operador-page .op-unidade .op-aluno-search-button{width:42px;min-height:var(--sipa-field-height,44px)}
+body.operador-page .op-unidade :is(.op-form-grid,.op-instrutor-fields){gap:17px}
+body.operador-page .op-unidade :is(.adm-filtros,.adm-form){gap:13px;margin:13px 0}
+body.operador-page .op-unidade .op-table{font-size:var(--ger-base)}
+body.operador-page .op-unidade .op-table th{font-size:11px;padding:13px 11px}
+body.operador-page .op-unidade .op-table td{padding:12px 11px}
+body.operador-page .op-unidade .op-badge{font-size:9.9px;padding:5.5px 9px}
+body.operador-page .op-unidade :is(.op-fields dt,.op-aula-dados dt){font-size:var(--ger-sm)}
+body.operador-page .op-unidade :is(.op-fields dd,.op-aula-dados dd){font-size:var(--ger-md)}
+body.operador-page .op-unidade .adm-stats{gap:11px;margin:15px 0}
+body.operador-page .op-unidade .adm-stat{padding:13px;gap:7px}
+body.operador-page .op-unidade .adm-stat span{font-size:var(--ger-base)}
+body.operador-page .op-unidade .adm-stat strong{font-size:24.2px}
+body.operador-page .op-unidade .op-quick-grid{gap:13px}
+body.operador-page .op-unidade .op-quick-action{font-size:17.6px;padding:18px;gap:13px;min-height:58px}
+body.operador-page .op-unidade .op-quick-action strong{font-size:17.6px}
+body.operador-page .op-unidade :is(.op-local-pagination,.adm-pagination){gap:9px;font-size:var(--ger-base)}
+body.operador-page .op-unidade .op-footer{font-size:9.9px;padding:22px 0;margin-top:33px}
+
+/* A grade mantém estrutura, cores e espessuras; as faixas crescem só ~10%. */
+body.operador-page .op-unidade .op-agenda-seletor{font-size:14.3px;gap:7px}
+body.operador-page .op-unidade .op-agenda-seletor select{font-size:15.4px;min-height:var(--sipa-field-height,44px);height:44px;padding:9px 11px}
+body.operador-page .op-unidade .op-agenda-nav h2{font-size:14.3px}
+body.operador-page .op-unidade .op-agenda-veiculo-heading h2{font-size:15.4px}
+body.operador-page .op-unidade .op-agenda-nav .op-button{min-height:42px;padding:8px 11px}
+body.operador-page .op-unidade :is(.op-day-heading h3,.op-day-heading span,.op-week-hours>*,.op-agenda-slot>time,.op-month-weekday,.op-month-count,.op-month-special,.op-month-event,.op-agenda-local,.op-evento-horario,.op-slot-closed){font-size:var(--ger-sm)}
+body.operador-page .op-unidade :is(.op-evento-categoria,.op-agenda-legenda){font-size:11px}
+body.operador-page .op-unidade .op-evento-nome{font-size:var(--ger-base)}
+body.operador-page .op-unidade .op-agenda-slot{min-height:var(--sipa-field-height,44px)}
+body.operador-page .op-unidade .op-week-grid .op-agenda-slot{min-height:48px}
+body.operador-page .op-unidade .op-slot-disponivel{font-size:var(--ger-sm);min-height:35px;padding:6px 11px}
+body.operador-page .op-unidade .op-month-day{padding:13px;gap:8px}
+body.operador-page .op-unidade .op-month-day>strong{font-size:var(--ger-base)}
+
+body.operador-page .op-unidade .op-dialog{font-size:var(--ger-md);padding:var(--sipa-dialog-padding,25px);width:min(700px,calc(100vw - 32px));max-height:calc(100dvh - 32px);min-width:0}
+body.operador-page .op-unidade :is([data-op-ficha],.op-medical-dialog,.adm-dialog){width:min(990px,calc(100vw - 32px))}
+body.operador-page .op-unidade .op-aula-dialog{width:min(836px,calc(100vw - 32px))}
+body.operador-page .op-unidade .op-dialog-heading h2{font-size:25.3px}
+body.operador-page .op-unidade .op-dialog :is(p,summary){font-size:var(--ger-md)}
+body.operador-page .op-unidade .op-confirm-item{font-size:var(--ger-md);padding:11px 13px}
+body.operador-page .op-unidade .op-dialog-actions{gap:13px;padding-top:22px;flex-wrap:wrap}
+body.operador-page .op-unidade .op-dialog button{max-width:100%;white-space:normal}
+body.operador-page .op-unidade .adm-medical-history li{padding:13px}
+body.operador-page .op-unidade .adm-medical-history :is(dl,time){font-size:var(--ger-base)}
+body.operador-page .op-unidade .adm-medical-history strong{font-size:var(--ger-md)}
+@media(max-width:1150px){body.operador-page .op-unidade .op-main{padding-right:24px;padding-left:24px}}
+@media(max-width:760px){
+ body.operador-page .op-unidade .op-main{margin-left:0;padding:0 17px 27px}
+ /* Prioridades limitadas às duas dimensões já fixadas por !important no CSS legado. */
+ body.operador-page .op-unidade .op-sidebar{width:min(var(--ger-sidebar),calc(100vw - 24px))!important;padding:24px 15px!important}
+ body.operador-page .op-unidade .op-sidebar .sipa-sidebar-menu{overflow-x:hidden;overflow-y:auto;flex-direction:column}
+ body.operador-page .op-unidade .op-topbar{gap:9px;min-height:64px}
+ body.operador-page .op-unidade .op-header{margin:24px 0 22px}
+ body.operador-page .op-unidade .op-card{padding:16px}
+ body.operador-page .op-unidade .op-dialog{padding:var(--sipa-card-padding,20px);width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
+ body.operador-page .op-unidade .op-form-grid{grid-template-columns:minmax(0,1fr)}
+ body.operador-page .op-unidade .op-month-day{padding:6px 4px}
+}
+
+body.operador-page .op-unidade:is([data-op-secao=visao-geral],[data-op-secao=agenda]) .op-header h1{font-size:var(--sipa-font-title,29.7px)}
+body.operador-page .op-unidade .op-dialog.op-resource-details{font-size:var(--ger-md);width:min(990px,calc(100vw - 32px))}
+@media(max-width:600px){body.operador-page .op-unidade .op-dialog.op-resource-details{width:calc(100vw - 24px)}}

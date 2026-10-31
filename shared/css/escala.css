@@ -1,0 +1,116 @@
+@import url('./escala-administrativa.css');
+/* Referência: componentes da Gerência ampliados por medidas reais, em 100%.
+   Cores, estados e organização das grades continuam nas folhas de cada tela. */
+:root{
+ --sipa-font-family:Inter,Arial,sans-serif;
+ --sipa-font-xs:11px;--sipa-font-sm:12.1px;--sipa-font-control:13.2px;
+ --sipa-font-body:14.3px;--sipa-font-lg:15.4px;--sipa-font-section:16.5px;
+ --sipa-font-title:29.7px;--sipa-font-dialog:25.3px;--sipa-font-indicator:24.2px;
+ --sipa-sidebar:244px;--sipa-nav-height:46.2px;--sipa-nav-icon:18.7px;
+ --sipa-field-height:44px;--sipa-button-height:45px;--sipa-compact-height:38px;
+ --sipa-icon-button:42px;--sipa-icon:19px;--sipa-card-padding:20px;
+ --sipa-dialog-padding:25px;--sipa-radius:8px;--sipa-card-radius:12px;
+ --sipa-gap:13px;--sipa-page-padding:35px;
+}
+body[data-sipa-escala]{font-family:var(--sipa-font-family);font-size:var(--sipa-font-body)}
+body[data-sipa-escala] :is(button,input,select,textarea){font-family:var(--sipa-font-family)}
+body[data-sipa-escala] :is(input,select,textarea){box-sizing:border-box;max-width:100%;min-width:0}
+
+/* Áreas principais: somente dimensões, sem mexer no grid de cada página. */
+html body[data-sipa-escala] :is(.dashboard-main,.booking-main,.lessons-main,.profile-main,.progress-main,.in-main){margin-left:var(--sipa-sidebar);padding-left:var(--sipa-page-padding);padding-right:var(--sipa-page-padding);min-width:0}
+html body[data-sipa-escala] :is(main>header h1,.in-shell .in-header h1),body[data-sipa-escala] .op-unidade .op-header h1{font-size:var(--sipa-font-title);line-height:1.25}
+html body[data-sipa-escala] :is(.dashboard-header,.booking-header,.lessons-header,.profile-header,.progress-header,.in-header){margin-top:32px;margin-bottom:25px}
+html body[data-sipa-escala] main>header :is(p,.header-greeting){font-size:var(--sipa-font-control);line-height:1.6}
+html body[data-sipa-escala] :is(main>footer,.in-footer){font-size:var(--sipa-font-xs);padding-top:22px;padding-bottom:22px}
+
+/* Navegação: uma largura e uma hierarquia em todos os perfis. */
+html body[data-sipa-escala] :is(.sipa-sidebar,.in-sidebar){box-sizing:border-box;width:var(--sipa-sidebar);height:100dvh;display:flex;flex-direction:column;padding:24px 15px;overflow:visible}
+html body[data-sipa-escala] :is(.sipa-sidebar-menu,.in-sidebar nav){display:flex;flex-direction:column;align-items:stretch;flex:1 1 auto;min-height:0;min-width:0;max-width:100%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth;overscroll-behavior-y:contain;gap:5.5px;margin-top:27px;padding-top:0}
+body[data-sipa-escala] :is(.sipa-sidebar-menu,.in-sidebar nav)::-webkit-scrollbar{display:none;width:0;height:0}
+html body[data-sipa-escala] :is(.sipa-sidebar-link,.in-sidebar nav a){box-sizing:border-box;display:flex;align-items:center;width:100%;max-width:100%;min-width:0;min-height:var(--sipa-nav-height);font-size:var(--sipa-font-xs);padding:9px 11px;gap:11px;border-radius:9px;transform:none;white-space:normal;overflow-wrap:break-word}
+html body[data-sipa-escala] :is(.sipa-sidebar-link,.in-sidebar nav a):hover{transform:none}
+html body[data-sipa-escala] :is(.sipa-sidebar-icon){width:30.8px;min-width:30.8px;height:30.8px;flex:0 0 30.8px}
+html body[data-sipa-escala] :is(.sipa-sidebar-link svg,.sipa-sidebar .sipa-nav-icon,.in-sidebar nav .in-icon){width:var(--sipa-nav-icon);height:var(--sipa-nav-icon);flex-shrink:0}
+html body[data-sipa-escala] :is(.sipa-sidebar-logo,.in-brand){padding:0 9px 22px;gap:11px;flex-shrink:0;min-width:0;max-width:100%}
+html body[data-sipa-escala] :is(.sipa-sidebar-logo-symbol,.sipa-sidebar-logo-symbol svg,.in-brand>svg){width:37px;min-width:37px;height:37px}
+html body[data-sipa-escala] :is(.sipa-sidebar-logo-text strong,.in-brand strong){font-size:18.7px}
+html body[data-sipa-escala] :is(.sipa-sidebar-logo-text span,.in-brand small){font-size:6.6px}
+html body[data-sipa-escala] :is(.sipa-sidebar-title,.in-nav-label){font-size:7.7px;flex-shrink:0}
+html body[data-sipa-escala] :is(.sipa-sidebar-bottom,.in-sidebar footer){flex-shrink:0;min-width:0;max-width:100%;margin-top:auto}
+html body[data-sipa-escala] :is(.sipa-sidebar-logout,.in-sidebar footer button){font-size:9.9px;min-height:42px;padding:0 12px}
+html body[data-sipa-escala] :is(.op-operator-label strong){font-size:var(--sipa-font-sm);overflow-wrap:anywhere}
+html body[data-sipa-escala] :is(.op-operator-label small){font-size:9.9px}
+
+/* Campos e ações equivalentes. Botões de calendário, horários e cartões de
+   seleção conservam sua geometria; ícones e ações compactas têm níveis próprios. */
+html body[data-sipa-escala] :is(main,dialog,.login-form,.local-form) :is(label,legend){font-size:var(--sipa-font-control)}
+html body[data-sipa-escala] :is(main,dialog,.login-form,.local-form) :is(input:not([type=checkbox],[type=radio],[type=hidden],[type=button],[type=submit]),select){height:var(--sipa-field-height);min-height:var(--sipa-field-height);font-size:var(--sipa-font-control);line-height:1.4;padding:10px 12px;border-radius:var(--sipa-radius)}
+html body[data-sipa-escala] :is(main,dialog,.login-form,.local-form) textarea{min-height:88px;font-size:var(--sipa-font-control);line-height:1.5;padding:10px 12px;border-radius:var(--sipa-radius);resize:vertical}
+html body[data-sipa-escala] :is(input[type=checkbox],input[type=radio]){width:20px;height:20px;min-height:0;flex-shrink:0;padding:0}
+html body[data-sipa-escala] :is(input,textarea)::placeholder{font-size:var(--sipa-font-sm);opacity:1;color:var(--sipa-texto-neutro,#000)}
+html body[data-sipa-escala] :is(.op-button,.in-button,.primary-button,.secondary-button,.action-button,.new-lesson-button,.profile-security-button,.progress-action-button,.confirm-booking-button,.booking-dialog-actions>a,.booking-dialog-actions>button,.lesson-cancel-dialog footer button,.profile-password-dialog button,.mensagem-dialog button,.local-form button){box-sizing:border-box;height:auto;min-height:var(--sipa-button-height);font-size:var(--sipa-font-control);line-height:1.4;padding:12px 17px;border-radius:var(--sipa-radius)}
+html body[data-sipa-escala] :is(.op-button,.in-button,.primary-button) svg{width:var(--sipa-icon);height:var(--sipa-icon);flex-shrink:0}
+html body[data-sipa-escala] :is(.in-toolbar,.in-history-controls,.in-history-tabs,.in-history-situations,.op-local-pagination,.adm-pagination,.local-lesson-tabs,.booking-mode-choice,.booking-pending-row,.local-lesson-history,.local-lesson-cancel,.profile-tabs) :is(button,a){min-height:var(--sipa-compact-height);font-size:var(--sipa-font-control);padding:8px 12px;line-height:1.4}
+html body[data-sipa-escala] :is(.local-lesson-cancel,.booking-batch-action,.resource-options button){min-height:var(--sipa-compact-height);font-size:var(--sipa-font-control)}
+html body[data-sipa-escala] :is(.in-icon-button,.sipa-theme-toggle,.op-close,.dialog-close,.password-toggle){box-sizing:border-box;width:var(--sipa-icon-button);height:var(--sipa-icon-button);min-height:var(--sipa-icon-button);padding:8px;flex-shrink:0}
+html body[data-sipa-escala] :is(.in-icon-button,.sipa-theme-toggle,.op-close,.dialog-close) svg{width:var(--sipa-icon);height:var(--sipa-icon)}
+
+/* Aluno: mapeamento das famílias existentes, sem substituir seus layouts. */
+html body[data-sipa-escala=aluno][data-sipa-aluno] :is(.booking-main,.profile-main,.lessons-main,.dashboard-main,.progress-main) :is(input:not([type=checkbox],[type=radio],[type=hidden]),select,textarea){font-size:var(--sipa-font-control)}
+html body[data-sipa-escala=aluno] :is(.booking-card,.profile-info-card,.profile-security-card,.lessons-card,.next-lesson-card,.quick-actions-card,.progress-card,.progress-detail-card,.student-preferences){padding:var(--sipa-card-padding);border-radius:var(--sipa-card-radius)}
+html body[data-sipa-escala=aluno] :is(.card-header,.booking-card-header,.lessons-card-header,.progress-card-header,.progress-section-header,.profile-section-header,.student-preferences) h2{font-size:var(--sipa-font-section)}
+html body[data-sipa-escala=aluno] :is(.summary-card,.credit-card){padding:13px;border-radius:var(--sipa-card-radius)}
+html body[data-sipa-escala=aluno] :is(.summary-card,.credit-card) :is(.summary-number,.credit-value strong,.summary-value){font-size:var(--sipa-font-indicator)}
+html body[data-sipa-escala=aluno] :is(.profile-label,.profile-info-label,.local-lesson-fields dt,.profile-info-card dt,.summary-item span){font-size:var(--sipa-font-sm)}
+html body[data-sipa-escala=aluno] :is(.local-lesson-fields dd,.profile-info-card dd,.profile-value,.profile-info-value,.booking-pending-row strong,.booking-pending-row span,.mensagem-item){font-size:var(--sipa-font-body)}
+html body[data-sipa-escala=aluno] :is(.student-preferences p,.lesson-attendance p,.lesson-attendance>strong,.unit-map-link,.calendar-legend,.calendar-reasons,.availability-status){font-size:var(--sipa-font-control);line-height:1.5}
+
+/* Instrutor: densidade e hierarquia iguais, preservando linhas fixas da agenda. */
+html body[data-sipa-escala=instrutor] :is(.in-card:not(.in-agenda)){padding:var(--sipa-card-padding);border-radius:var(--sipa-card-radius)}
+html body[data-sipa-escala=instrutor] :is(.in-card h2,.in-card-heading h2){font-size:var(--sipa-font-section)}
+html body[data-sipa-escala=instrutor] :is(.in-metric){padding:13px}
+html body[data-sipa-escala=instrutor] .in-metric span{font-size:var(--sipa-font-control)}
+html body[data-sipa-escala=instrutor] .in-metric strong{font-size:var(--sipa-font-indicator)}
+html body[data-sipa-escala=instrutor] .in-dl dt{font-size:var(--sipa-font-sm)}
+html body[data-sipa-escala=instrutor] .in-dl dd{font-size:var(--sipa-font-body)}
+html body[data-sipa-escala=instrutor] :is(.in-shell .in-header p,.in-history-summary,.in-history-empty,.in-register-note){font-size:var(--sipa-font-control)}
+
+/* Tabelas e modais: mantém colunas, painéis internos, ações e áreas roláveis. */
+html body[data-sipa-escala] :is(main,dialog) table{font-size:var(--sipa-font-control)}
+html body[data-sipa-escala] :is(main,dialog) th{font-size:var(--sipa-font-xs);padding:13px 11px}
+html body[data-sipa-escala] :is(main,dialog) td{padding:12px 11px;line-height:1.5}
+html body[data-sipa-escala] dialog{font-family:var(--sipa-font-family);font-size:var(--sipa-font-body);max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);min-width:0}
+html body[data-sipa-escala] dialog :is(h2,header h2,.op-dialog-heading h2){font-size:var(--sipa-font-dialog);line-height:1.3}
+html body[data-sipa-escala] dialog :is(p,dd,.resource-options span){font-size:var(--sipa-font-body);line-height:1.6}
+html body[data-sipa-escala] dialog :is(dt,label){font-size:var(--sipa-font-control)}
+html body[data-sipa-escala] :is(.in-dialog,.login-dialog,.profile-password-dialog,.mensagem-dialog){padding:var(--sipa-dialog-padding);overflow-y:auto}
+html body[data-sipa-escala] .op-unidade .oferta-modal{padding:0}
+
+/* Calendários: somente a escala dos textos. Células, bordas pretas, estados,
+   colunas e faixas de 50 minutos permanecem nas regras específicas. */
+html body[data-sipa-escala] :is(.calendar-month>span,.calendar-weekdays span,.in-slot-time,.in-agenda-meta,.op-week-hours>*,.op-agenda-slot>time,.op-month-weekday,.op-month-count,.op-agenda-local){font-size:var(--sipa-font-sm)}
+html body[data-sipa-escala] :is(.calendar-day,.in-agenda-body strong,.in-slot-content,.op-evento-nome){font-size:var(--sipa-font-control)}
+html body[data-sipa-escala] :is(.calendar-month strong,.calendar-header h2,.in-agenda-date h2){font-size:var(--sipa-font-section)}
+
+/* Login: preserva o painel institucional e normaliza somente o formulário. */
+html body[data-sipa-escala=login] .login-header h2{font-size:var(--sipa-font-title)}
+html body[data-sipa-escala=login] :is(.login-header p,.login-help,.login-support p,.login-support-link,.form-message,.login-options button){font-size:var(--sipa-font-control)}
+html body[data-sipa-escala=login] .login-form .form-field label{font-size:var(--sipa-font-control)}
+html body[data-sipa-escala=login] .login-form .input-wrapper{height:var(--sipa-field-height)}
+html body[data-sipa-escala=login] .login-form .input-wrapper :is(input,select){height:100%;min-height:0;font-size:var(--sipa-font-control)}
+html body[data-sipa-escala=login] .password-toggle{height:40px;min-height:40px}
+
+@media(max-width:1150px){:root{--sipa-page-padding:24px}}
+@media(max-width:900px){html body[data-sipa-escala=aluno] :is(.dashboard-main,.booking-main,.lessons-main,.profile-main,.progress-main){margin-left:0;padding-left:17px;padding-right:17px}}
+@media(max-width:760px){
+ :root{--sipa-card-padding:16px;--sipa-dialog-padding:20px;--sipa-page-padding:17px}
+ html body[data-sipa-escala] :is(.sipa-sidebar,.in-sidebar){width:min(var(--sipa-sidebar),calc(100vw - 24px))}
+ html body[data-sipa-escala] .op-unidade .op-main{margin-left:0}
+ html body[data-sipa-escala] :is(.dashboard-header,.booking-header,.lessons-header,.profile-header,.progress-header,.in-header){margin-top:24px;margin-bottom:22px}
+ html body[data-sipa-escala] :is(main>header h1,.in-shell .in-header h1){font-size:26.4px}
+ html body[data-sipa-escala] dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
+}
+@media(prefers-reduced-motion:reduce){body[data-sipa-escala] :is(.sipa-sidebar-menu,.in-sidebar nav){scroll-behavior:auto}}
+
+@media(max-width:700px){html body[data-sipa-escala=instrutor] .in-main{margin-left:0;padding-left:17px;padding-right:17px}}
+html body[data-sipa-escala=login] .login-form .input-wrapper :is(input,select){padding-left:44px;padding-right:44px}

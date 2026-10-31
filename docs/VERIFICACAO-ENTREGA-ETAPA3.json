@@ -1,0 +1,76 @@
+{
+  "etapa": 3,
+  "data": "2026-10-29",
+  "resultado": "PRONTO PARA AUTORIZACAO DE ENTREGA PARA INTEGRACAO",
+  "repositorio": "teteusalvescorrea-hub/sipa-web",
+  "branchAtual": "feature/organizacao-estrutura-sipa",
+  "head": "5a9667de517f5da26ed70165bcc5a29200f0789b",
+  "branchProposta": "feature/entrega-frontend-integracao",
+  "gitEscritaExecutada": false,
+  "sincronizacaoExecutada": false,
+  "manifesto": "ARQUIVOS-ENTREGA-BIGAS.tsv",
+  "sha256Manifesto": "d0c6b75bff80783e7d3e89e7159009dcb919f9df58edb005a5be6856bbb82ca3",
+  "contagem": {
+    "A": 276,
+    "M": 15,
+    "D": 58,
+    "=": 6
+  },
+  "totalCaminhos": 355,
+  "arquivosExistentes": 297,
+  "naoEnviar": [
+    ".entrega-aluno/",
+    ".instrutor-local/",
+    "docs/referencia-anterior.md",
+    "docs/preservacao.json",
+    "docs/local/",
+    "docs/MASTER-TESTE-LOCAL.md",
+    "docs/ACESSOS-LOCAIS-V2.md",
+    "backups e artefatos de navegador",
+    "credenciais ou arquivos .env"
+  ],
+  "revisao": {
+    "textosRevisados": 290,
+    "achados": [],
+    "limite": "Revisao dos caminhos selecionados; nao acessa armazenamento pessoal nem atesta o historico remoto.",
+    "contatoRecepcao": "Link existente preservado; confirmar destino institucional antes de producao."
+  },
+  "testesEtapa3": {
+    "automatizados": {
+      "aprovados": 271,
+      "reprovados": 0
+    },
+    "navegadorMultipaineis": {
+      "aprovados": 29,
+      "reprovados": 0,
+      "evidencias": "sipa-operador-ui-vJsDc1"
+    },
+    "navegadorIntegrado": {
+      "aprovados": 10,
+      "reprovados": 0,
+      "evidencias": "sipa-instrutor-ui-OJGunO"
+    },
+    "referencias": {
+      "arquivos": 151,
+      "referencias": 547,
+      "ausentes": 0
+    }
+  },
+  "resultadosEtapa2": "RELATORIO-VALIDACAO-ETAPA-2.md",
+  "apiRealValidada": false,
+  "backendAlterado": false,
+  "sqlAlterado": false,
+  "armazenamentoPessoal": "Nao acessado, exportado ou limpo",
+  "worktreesHistoricos": "Preservados, excluidos da entrega",
+  "distribuicao": "Gerada separadamente por dev/preparar-integrado.mjs; exclui dev e tests e transforma entrypoints. Nao publicar a raiz do fonte.",
+  "producaoHomologada": false,
+  "revisaoPreCommit": {
+    "escopo": "Todas as extensoes textuais dos arquivos do inventario, inclusive .fixture",
+    "fixtureLegadaAnonimizada": "tests/legado/login-conta-anterior.browser.mjs.fixture",
+    "automatizados": {
+      "aprovados": 271,
+      "reprovados": 0
+    },
+    "pushAutorizado": false
+  }
+}

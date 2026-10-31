@@ -1,90 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <meta
-        name="description"
-        content="SIPA - Sistema Inteligente Para Agendamentos"
-    >
-
-    <title>
-        SIPA | Sistema Inteligente Para Agendamentos
-    </title>
-
-
-    <!-- =========================================
-         FONTE
-         ========================================= -->
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
-
-
-    <!-- =========================================
-         CSS
-         ========================================= -->
-
-    <link
-        rel="stylesheet"
-        href="css/style.css"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SIPA — Sistema Inteligente para Agendamentos. Organize e acompanhe suas aulas práticas em um só lugar.">
+    <title>SIPA | Sistema Inteligente para Agendamentos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="shared/css/escala.css">
 </head>
-
-
-<body>
-
-    <!-- =========================================
-         SIPA — PÁGINA INICIAL
-         ========================================= -->
-
-    <main class="sipa-page">
-
-
-        <!-- =====================================
-             HEADER
-             ===================================== -->
-
+<body data-sipa-escala="publico">
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+    <div class="sipa-page">
         <header class="header">
-
-
-            <!-- =================================
-                 LOGO
-                 ================================= -->
-
-            <a
-                href="index.html"
-                class="logo"
-                aria-label="SIPA"
-            >
-
-                <div
-                    class="logo-symbol"
-                    aria-hidden="true"
-                >
-
-                    <svg
+            <a href="index.html" class="logo" aria-label="SIPA — Página inicial">
+                <span class="logo-symbol" aria-hidden="true"><svg
                         viewBox="0 0 70 70"
                         xmlns="http://www.w3.org/2000/svg"
                     >
@@ -107,399 +39,66 @@
                             stroke-linejoin="round"
                         />
 
-                    </svg>
-
-                </div>
-
-
-                <div class="logo-text">
-
-                    <strong>
-                        SIPA
-                    </strong>
-
-                    <span>
-                        SISTEMA INTELIGENTE
-                        <br>
-                        PARA AGENDAMENTOS
-                    </span>
-
-                </div>
-
+                    </svg></span>
+                <span class="logo-text"><strong>SIPA</strong><span>SISTEMA INTELIGENTE<br>PARA AGENDAMENTOS</span></span>
             </a>
-
-
-            <!-- =================================
-                 WHATSAPP
-                 ================================= -->
-
-            <a
-                href="#"
-                class="whatsapp-button"
-                id="whatsapp-button"
-            >
-
-                <div class="whatsapp-icon">
-    📞
-</div>
-
-                <div class="whatsapp-text">
-
-                    <strong>
-                        Fale conosco
-                    </strong>
-
-                    <span>
-                        WhatsApp da autoescola
-                    </span>
-
-                </div>
-
-            </a>
-
+            <nav aria-label="Navegação principal">
+                <a class="header-link" href="#unidades">Nossas unidades <span aria-hidden="true">↗</span></a>
+            </nav>
         </header>
 
-
-        <!-- =====================================
-             HERO
-             ===================================== -->
-
-        <section class="hero">
-
-
-            <!-- =================================
-                 CONTEÚDO ESQUERDO
-                 ================================= -->
-
-            <div class="hero-content">
-
-
-                <!-- =================================
-                     TAG
-                     ================================= -->
-
-                <div class="hero-tag">
-
-                    <span class="tag-dot"></span>
-
-                    SEU CAMINHO, NOSSA DIREÇÃO
-
-                </div>
-
-
-                <!-- =================================
-                     TÍTULO
-                     ================================= -->
-
-                <h1>
-
-                    Agende suas
-
-                    <span>
-                        aulas práticas
-                    </span>
-
-                    de forma fácil
-
-                </h1>
-
-
-                <!-- =================================
-                     DESCRIÇÃO
-                     ================================= -->
-
-                <p class="hero-description">
-
-                    Com o SIPA, você agenda suas aulas,
-                    acompanha seu progresso e conquista
-                    sua liberdade no trânsito.
-
-                </p>
-
-
-                <!-- =================================
-                     BOTÕES
-                     ================================= -->
-
-                <div class="hero-actions">
-
-
-                    <!-- =================================
-                         LOGIN
-                         ================================= -->
-
-                    <a
-                        href="login.html"
-                        class="action-button action-primary"
-                        id="student-login-btn"
-                    >
-
-                        <div class="action-icon">
-                            ♙
-                        </div>
-
-                        <div class="action-text">
-
-                            <strong>
-                                Já sou aluno
-                            </strong>
-
-                            <span>
-                                Fazer login
-                            </span>
-
-                        </div>
-
-                    </a>
-
-
-                    <!-- =================================
-                         CADASTRO
-                         ================================= -->
-
-                    <a
-                        href="login.html?cadastro=true"
-                        class="action-button action-secondary"
-                        id="register-btn"
-                    >
-
-                        <div class="action-icon">
-                            ♙+
-                        </div>
-
-                        <div class="action-text">
-
-                            <strong>
-                                Quero me cadastrar
-                            </strong>
-
-                            <span>
-                                Criar minha conta
-                            </span>
-
-                        </div>
-
-                    </a>
-
-                </div>
-
-
-                <!-- =================================
-                     UNIDADE
-                     ================================= -->
-
-                <div class="unit-info">
-
-                    <span class="unit-status"></span>
-
-                    <div>
-
-                        <strong>
-                            Unidade Centro
-                        </strong>
-
-                        <span>
-                            Atendimento presencial
-                        </span>
-
+        <main id="conteudo" tabindex="-1">
+            <section class="hero" aria-labelledby="hero-titulo">
+                <div class="hero-content">
+                    <p class="hero-tag"><span class="tag-dot" aria-hidden="true"></span>SEU CAMINHO, NOSSA DIREÇÃO</p>
+                    <h1 id="hero-titulo">Agende suas <span>aulas práticas</span> de forma fácil</h1>
+                    <p class="hero-description">Consulte seus agendamentos e acompanhe suas aulas práticas em um só lugar, com mais organização em cada etapa.</p>
+                    <div class="hero-actions">
+                        <a href="login.html" class="action-button action-primary" id="account-login-btn">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M13 8l4 4-4 4M9 12h12"/></svg>
+                            <span>Acessar minha conta</span>
+                            <span class="action-arrow" aria-hidden="true">→</span>
+                        </a>
                     </div>
-
                 </div>
-
-            </div>
-
-
-            <!-- =================================
-                 IMAGEM DIREITA
-                 ================================= -->
-
-            <div class="hero-image-area">
-
-                <div class="hero-image-wrapper">
-
-                    <img
-                        src="assets/images/aula-pratica.png"
-                        alt="Instrutor acompanhando aluna durante aula prática de direção"
-                        class="hero-image"
-                    >
-
+                <div class="hero-image-area">
+                    <div class="hero-image-wrapper">
+                        <img src="assets/images/aula-pratica.png" alt="Instrutor acompanhando aluna durante aula prática de direção" class="hero-image" width="1536" height="1024" fetchpriority="high" decoding="async">
+                    </div>
                 </div>
+            </section>
 
-            </div>
+            <section class="sipa-features" aria-labelledby="funcionalidades-titulo">
+                <h2 id="funcionalidades-titulo" class="sr-only">Organização para suas aulas práticas</h2>
+                <article class="feature">
+                    <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 5h2m4 0h2"/></svg></span>
+                    <div><h3>Agendamento organizado</h3><p>Consulte e organize suas aulas práticas em um só lugar.</p></div>
+                </article>
+                <article class="feature">
+                    <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v15H4V5a2 2 0 0 1 2-2Zm2 0v4h8V3m-8 11 3 3 5-5"/></svg></span>
+                    <div><h3>Acompanhamento das aulas</h3><p>Visualize seus agendamentos e acompanhe sua evolução.</p></div>
+                </article>
+                <article class="feature">
+                    <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg></span>
+                    <div><h3>Acesso simplificado</h3><p>Entre com sua conta e acesse os recursos disponíveis ao seu perfil.</p></div>
+                </article>
+            </section>
 
-        </section>
+            <section id="unidades" class="units" aria-labelledby="unidades-titulo">
+                <div class="section-heading"><p class="eyebrow">PRESENÇA E PROXIMIDADE</p><h2 id="unidades-titulo">Nossas unidades</h2><p>Conheça as unidades atendidas pelo SIPA.</p></div>
+                <!-- Fonte única dos nomes na página pública. Sem seleção ou vínculo de conta. -->
+                <ul class="units-grid">
+                    <li>Unidade Cobilândia</li>
+                    <li>Unidade Santa Rita</li>
+                    <li>Unidade Vila Velha</li>
+                    <li>Unidade Itaparica</li>
+                    <li>Unidade Terra Vermelha</li>
+                    <li>Unidade Novo Milênio</li>
+                </ul>
+            </section>
+        </main>
 
-
-        <!-- =====================================
-             INFORMAÇÕES DA AULA
-             ===================================== -->
-
-        <section class="lesson-summary">
-
-
-            <!-- =================================
-                 PRÓXIMA AULA
-                 ================================= -->
-
-            <div class="summary-item">
-
-                <div class="summary-icon">
-                    ▣
-                </div>
-
-                <div class="summary-content">
-
-                    <span class="summary-label">
-                        PRÓXIMA AULA
-                    </span>
-
-                    <strong>
-                        Terça-feira, 13/05
-                    </strong>
-
-                    <span class="summary-detail">
-                        ◷ 14:00
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================
-                 CATEGORIA
-                 ================================= -->
-
-            <div class="summary-item">
-
-                <div class="summary-icon">
-                    🚗
-                </div>
-
-                <div class="summary-content">
-
-                    <span class="summary-label">
-                        CATEGORIA
-                    </span>
-
-                    <strong>
-                        Categoria B
-                    </strong>
-
-                    <span class="summary-detail">
-                        Aulas práticas
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================
-                 PROGRESSO
-                 ================================= -->
-
-            <div class="summary-item progress-item">
-
-                <div class="progress-circle">
-
-                    <span>
-                        75%
-                    </span>
-
-                </div>
-
-                <div class="summary-content">
-
-                    <span class="summary-label">
-                        SEU PROGRESSO
-                    </span>
-
-                    <strong>
-                        Você está indo
-                    </strong>
-
-                    <span class="summary-detail">
-                        muito bem!
-                    </span>
-
-                </div>
-
-            </div>
-
-        </section>
-
-                <!-- =====================================
-             ESTATÍSTICAS DO SIPA
-             ===================================== -->
-
-        <section class="sipa-stats">
-
-            <div class="sipa-stat-card">
-                <div class="sipa-stat-icon">👥</div>
-
-                <div class="sipa-stat-content">
-                    <strong>+5.000</strong>
-                    <span>Alunos conectados</span>
-                </div>
-            </div>
-
-
-            <div class="sipa-stat-card">
-                <div class="sipa-stat-icon">📅</div>
-
-                <div class="sipa-stat-content">
-                    <strong>+12.000</strong>
-                    <span>Aulas agendadas</span>
-                </div>
-            </div>
-
-
-            <div class="sipa-stat-card">
-                <div class="sipa-stat-icon">🚗</div>
-
-                <div class="sipa-stat-content">
-                    <strong>+8.500</strong>
-                    <span>Aulas realizadas</span>
-                </div>
-            </div>
-
-
-            <div class="sipa-stat-card">
-                <div class="sipa-stat-icon">★</div>
-
-                <div class="sipa-stat-content">
-                    <strong>98%</strong>
-                    <span>Satisfação dos alunos</span>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- =====================================
-             RODAPÉ
-             ===================================== -->
-
-        <footer class="footer">
-
-            <span>
-                SIPA — Sistema Inteligente Para Agendamentos
-            </span>
-
-            <span>
-                Unidade Centro
-            </span>
-
-        </footer>
-
-
-    </main>
-
-
-    <!-- =========================================
-         JAVASCRIPT
-         ========================================= -->
-
+        <footer class="footer"><div><strong>SIPA</strong><span>Sistema Inteligente para Agendamentos</span></div><span>Organização para as aulas práticas.</span></footer>
+    </div>
 </body>
-
 </html>
