@@ -6,6 +6,7 @@ import { STATUS_AGENDAMENTO, motivoNovoAgendamento, motivoFechamento, paresDispo
 import { ordenarAulas } from "../consultasOperador.js";
 import { cardAula, criarDetalhesAula } from "./aulaOperador.js";
 import { el, botao, campo, select, entrada } from "./uiOperador.js";
+import {aprimorarSelect} from '../../../shared/components/selectComBusca.js';
 
 export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAula, unidade = 'Centro', obterPares = paresDisponiveis } = {}) {
     let data = hojeBrasil(), modo = "semana";
@@ -30,7 +31,7 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
     controles.prepend(dataInput.parentElement);
     const seletorVeiculo=select([["","Selecionar veículo"]]);seletorVeiculo.dataset.agendaVeiculo='';
     seletorVeiculo.addEventListener('change',()=>{const r=veiculosAutorizados().find(r=>r.id===seletorVeiculo.value);if(r)selecionar(r);else{filtros.veiculoId='';renderizar();}});
-    const campoVeiculo=campo('Selecione o veículo para visualizar a agenda',seletorVeiculo);campoVeiculo.className='op-agenda-seletor';
+    const campoVeiculo=campo('Selecione o veículo para visualizar a agenda',seletorVeiculo);campoVeiculo.className='op-agenda-seletor';aprimorarSelect(seletorVeiculo,{placeholder:'Busque o veículo...',busca:'Buscar placa, modelo ou instrutor...',vazio:'Nenhum veículo encontrado.'});
     for (const [key, titulo, tipo] of [["instrutorId", "Instrutor", "Instrutores"], ["veiculoId", "Veículo", "Veículos"]]) {
         if(key==='veiculoId')continue;
         const controle = select([["", "Todos"], ...obterEstado().recursos.filter(r => (recursoCategoriaD(r)?recursosOperacionaisD(obterEstado().recursos).some(x=>x.id===r.id):recursoMotoCentral(r)||recursoCarroConsultavel(r,unidade)) && r.tipo === tipo).map(r => [r.id, r.nome])]);
