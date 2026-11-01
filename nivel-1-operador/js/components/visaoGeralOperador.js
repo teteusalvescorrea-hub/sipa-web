@@ -1,7 +1,7 @@
 import { consultarVisaoGeral, formatarCpf, horariosLivres } from "../consultasOperador.js";
 import { TIPOS_EXAME, pendencias, apto, concluido } from "../exames.js";
 import { formatarData } from "../../../shared/js/calendario.js";
-import { el, botao, campo, entrada, modal } from "./uiOperador.js";
+import { el, botao, campo, entrada, modal, iconeSvg } from "./uiOperador.js";
 import { cardAula } from "./aulaOperador.js";
 const INDICADORES = [
     ["alunos", "Alunos da unidade", "Todos os cadastros vinculados", "users"],
@@ -14,10 +14,6 @@ const INDICADORES = [
     ["instrutores", "Instrutores", "Ativos na unidade", "users"],
     ["livres", "Horários livres hoje", "Inícios futuros com recursos livres", "grid"]
 ];
-function icone(nome) {
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"), use = document.createElementNS(svg.namespaceURI, "use");
-    svg.setAttribute("aria-hidden", "true"); use.setAttribute("href", `#op-${nome}`); svg.append(use); return svg;
-}
 export function montarVisaoGeral(raiz, painel, obterEstado, { verAluno, verAula, agendar, navegar }) {
     // Substitui apenas a apresentação da visão geral. Dados/regras permanecem nos módulos existentes.
     const metrics = el("div", undefined, "op-metrics op-dashboard-metrics"), proximas = el("article", undefined, "op-card op-proximas");
@@ -96,7 +92,7 @@ export function montarVisaoGeral(raiz, painel, obterEstado, { verAluno, verAula,
             const card = botao("", () => abrirIndicador(id), "op-card op-metric op-metric-button"); card.dataset.indicador = id;
             card.setAttribute("aria-label", `${titulo}: ${snapshot.grupos[id].length}. Ver registros`);
             card.title = complemento;
-            const cabecalho = el("span", undefined, "op-metric-heading"); cabecalho.append(el("span", titulo), icone(simbolo));
+            const cabecalho = el("span", undefined, "op-metric-heading"); cabecalho.append(el("span", titulo), iconeSvg(simbolo));
             const rodape = el("span", "Ver registros →", "op-metric-footer");
             card.append(cabecalho, el("strong", String(snapshot.grupos[id].length)), rodape); return card;
         }));

@@ -1,8 +1,7 @@
-import {ativarMascaraCpf,formatarCpf} from '../js/formatacao.js';
+import {ativarMascaraCpf,formatarCpf,semAcento} from '../js/formatacao.js';
 
 // Campo único de busca com sugestões (como o autocomplete dos filtros do Simplea): ao focar lista as opções,
 // ao digitar filtra por nome ou CPF e a escolha vem da lista. Só dígitos: máscara e limite de CPF (14).
-const semAcento=v=>String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLocaleLowerCase('pt-BR');
 const ehCpf=v=>/^[\d.\-\s]+$/.test(v);
 let sequencia=0;
 

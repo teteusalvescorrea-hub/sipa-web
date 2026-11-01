@@ -2,17 +2,16 @@
 // interface do repositório local ({dados(), agendaHoje(), registrar(id, status)}),
 // então o painel não muda. O servidor autoriza; aqui só se converte o formato.
 import * as api from '../../../shared/js/api.js';
-import {hojeBrasil,somarDias,agoraBrasil} from '../../../shared/js/calendario.js';
+import {textoErro} from '../../../shared/js/apiErro.js';
+import {hojeBrasil,somarDias,agoraBrasil,comFusoBrasil} from '../../../shared/js/calendario.js';
 import {agendaDeHoje} from '../agenda.js';
 
 const numero=v=>v?.valor??v;
 const LETRA=Object.freeze({1:'A',2:'B',3:'D'});
 const CAMBIO=Object.freeze({1:'manual',2:'automatico'});
 const categoria=c=>typeof c==='string'?c:/^[ABD]$/.test(c?.descricao)?c.descricao:LETRA[numero(c)];
-const dataBrasil=v=>v&&!/(Z|[+-]\d\d:\d\d)$/.test(v)?v+'-03:00':v;
 // Tipo do evento (TIPOS_EVENTO_AGENDAMENTO) → status que o painel sabe nomear.
 const STATUS_DO_EVENTO=Object.freeze({2:1,3:4,5:2,6:5,7:6,10:2});
-function textoErro(e){return (e?.erros||[]).map(x=>x?.mensagem??x).filter(x=>typeof x==='string'&&x).join(' ')||e?.message||'Não foi possível concluir a operação.';}
 const comoErro=e=>{const n=new Error(textoErro(e));n.status=e?.status;return n;};
 const semRota=e=>e?.status===404||e?.status===405;
 
@@ -23,10 +22,10 @@ export function adaptarEvento(e){
 
 // AgendamentoReadDto (& historico) → aula do painel. Status 7 aparece como Cancelada.
 export function adaptarAulaInstrutor(a){
- const status=numero(a.status),cat=categoria(a.categoria),inicio=dataBrasil(a.dataHoraInicio);
+ const status=numero(a.status),cat=categoria(a.categoria),inicio=comFusoBrasil(a.dataHoraInicio);
  return {id:a.id,aluno:{id:a.alunoId,nome:a.alunoNome||'Aluno não identificado'},instrutorId:a.motoristaId,instrutor:{nome:a.motoristaNome},
   veiculoId:a.veiculoId,veiculo:a.veiculoId?{id:a.veiculoId,modelo:a.veiculoModelo,placa:a.veiculoPlaca}:null,
-  categoria:cat,unidade:a.unidade||'',unidadeId:a.unidadeId,inicio,fim:a.dataHoraFim?dataBrasil(a.dataHoraFim):null,data:inicio?.slice(0,10),
+  categoria:cat,unidade:a.unidade||'',unidadeId:a.unidadeId,inicio,fim:a.dataHoraFim?comFusoBrasil(a.dataHoraFim):null,data:inicio?.slice(0,10),
   status:status===7?2:status,statusApi:status,tipoCambio:CAMBIO[numero(a.veiculoTipoCambio)]??null,
   ...(a.local&&cat==='B'?{localReal:{nome:a.local.nome,endereco:a.local.endereco,mapsUrl:a.local.mapsUrl}}:{}),
   endereco:a.local?.endereco||a.localAula||'',historico:(a.historico||[]).map(adaptarEvento)};

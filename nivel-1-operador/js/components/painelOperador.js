@@ -1,6 +1,7 @@
 // Somente estrutura de interface, sem dados, permissões, persistência ou API.
 // Em ambiente real só integrar após autorização do operador/unidade no servidor.
 // A demonstração local injeta callbacks próprios e nunca utiliza a sessão real.
+import { iconeSvg } from "./uiOperador.js";
 
 const SECOES = Object.freeze({
     "visao-geral": ["Visão geral", "Visão geral da unidade", "Acompanhe os alunos e organize as etapas do atendimento."],
@@ -97,6 +98,6 @@ export function montarEstruturaOperador(raiz, template, { aoSair, aoSelecionarRe
     return { navegar, registrarSecao(id,titulo,descricao=''){
         secoes[id]=[titulo,titulo,descricao];let painel=$(`[data-op-panel="${id}"]`);
         if(!painel){painel=document.createElement('section');painel.dataset.opPanel=id;painel.hidden=true;$('.op-footer').before(painel);}
-        let link=$(`[data-op-nav="${id}"]`);if(!link){link=document.createElement('a');link.className='sipa-sidebar-link';link.href='#'+id;link.dataset.opNav=id;const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS(svg.namespaceURI,'use');use.setAttribute('href','#op-grid');svg.setAttribute('aria-hidden','true');svg.append(use);link.append(svg,document.createTextNode(titulo));$('.sipa-sidebar-menu').append(link);link.onclick=e=>{e.preventDefault();navegar(id);$('.op-sidebar').classList.remove('op-open');$('.op-menu-mobile')?.setAttribute('aria-expanded','false');};}return painel;
+        let link=$(`[data-op-nav="${id}"]`);if(!link){link=document.createElement('a');link.className='sipa-sidebar-link';link.href='#'+id;link.dataset.opNav=id;link.append(iconeSvg('grid'),document.createTextNode(titulo));$('.sipa-sidebar-menu').append(link);link.onclick=e=>{e.preventDefault();navegar(id);$('.op-sidebar').classList.remove('op-open');$('.op-menu-mobile')?.setAttribute('aria-expanded','false');};}return painel;
     }};
 }

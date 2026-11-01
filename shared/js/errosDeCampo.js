@@ -2,11 +2,11 @@
 // abaixo dele, em todos os formulários. A data impossível (ano com 5 dígitos, dia inexistente) é barrada antes do
 // envio; o erro que a API devolve para um campo ("O campo validade tem um valor inválido.") vai para o campo de mesmo
 // nome no último formulário enviado.
+import { semAcento as normalizar } from './formatacao.js';
 const ANO_MINIMO = 1900, ANO_MAXIMO = 2100;
 export const MOTIVO_DATA = `Data inválida. Use dd/mm/aaaa, com ano entre ${ANO_MINIMO} e ${ANO_MAXIMO}.`;
 const MOTIVO_GENERICO = 'Valor inválido. Confira o que foi digitado.';
 const CAMPO_DA_API = /O campo (\S+) tem um valor inválido/i;
-const normalizar = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 let sequencia = 0, ultimoFormulario = null;
 
 if (!document.querySelector('style[data-erros-campo]')) {

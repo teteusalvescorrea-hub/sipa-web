@@ -2,8 +2,8 @@
 // e a lista com os grupos (optgroup). O <select> original continua sendo a fonte do valor (fica invisível dentro da
 // caixa e recebe 'change'), então quem já usava o select não muda nada: trocar as opções, o value, o disabled ou o
 // hidden por código atualiza a caixa, e a validação (required) continua aparecendo no lugar dele.
+import { semAcento } from '../js/formatacao.js';
 let sequencia = 0;
-const semAcento = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR');
 const VALOR = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
 const INDICE = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
 

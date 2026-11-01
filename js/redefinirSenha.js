@@ -1,6 +1,7 @@
 // Página do link de redefinição de senha: o token vem no #token= (nunca vai ao servidor na URL), a senha nova segue
 // a política da API (8 a 100 caracteres, letras e números) e o POST usuarios/redefinir-senha consome o link.
 import {Post} from '../shared/js/api.js';
+import {textoErro} from '../shared/js/apiErro.js';
 import {marcarErroCampo} from '../shared/js/errosDeCampo.js';
 
 const form = document.getElementById('redefinir-form'), mensagem = document.getElementById('redefinir-mensagem');
@@ -39,6 +40,6 @@ form.addEventListener('submit', async e => {
         document.getElementById('redefinir-painel').hidden = true;
         document.getElementById('redefinir-sucesso').hidden = false;
     } catch (erro) {
-        avisar((erro?.erros || []).map(x => x?.mensagem ?? x).filter(x => typeof x === 'string').join(' ') || erro?.message || 'Não foi possível salvar a nova senha.');
+        avisar(textoErro(erro, 'Não foi possível salvar a nova senha.'));
     } finally { enviar.disabled = false; }
 });

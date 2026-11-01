@@ -4,12 +4,12 @@
 // formato do front e as regras de tela continuam as do front. Comandos: vão
 // direto para a rota da API. O servidor é a autoridade (escopo e permissão).
 // Unidades pela chave do catálogo na tela e pelo Guid da API no fio (M7).
-import {Get,Post,Put,Patch,Delete,ComParams} from '../api.js';
+import {Get,ComParams,Post as PostApi,Put as PutApi,Patch as PatchApi,Delete as DeleteApi} from '../api.js';
 import {servicoOperador} from '../../../nivel-1-operador/js/servicoOperador.js';
 import * as regras from '../../../nivel-1-operador/js/dominioOperador.js';
 import {NIVEIS,permissoesDoPerfil,exigirCapacidade,escopoPermitido} from '../permissoesAdministrativas.js';
 import {obterUnidadeInstitucional} from '../catalogoUnidades.js';
-import {hojeBrasil,somarDias} from '../calendario.js';
+import {hojeBrasil,somarDias,comFusoBrasil} from '../calendario.js';
 import {fimDaAula} from '../disponibilidade.js';
 import {localCarro} from '../operacaoCarro.js';
 import {aulaSemAdministracaoAlheia,vinculoAdministrativoAluno} from '../escopoAlunoAdministrativo.js';
@@ -17,7 +17,8 @@ import {validarAtestado} from '../solicitacoesMedicas.js';
 import {gerarRelatorio} from '../relatoriosAdministrativos.js';
 import {MOTIVOS_ADMIN} from '../administracao.js';
 import {identificarMotivo,MOTIVOS_CANCELAMENTO} from '../../../aluno/js/domain/agendamentoAluno.js';
-import {adaptarSolicitacao,textoErro} from '../../../aluno/js/services/alunoIntegrado.js';
+import {adaptarSolicitacao} from '../../../aluno/js/services/alunoIntegrado.js';
+import {textoErro} from '../apiErro.js';
 import {adaptarEvento} from '../../../instrutor/js/services/instrutorIntegrado.js';
 
 const numero=v=>v?.valor??v??null;
@@ -183,26 +184,38 @@ function adaptarProvas(itens,a){
  return {...a,tentativasProvas:tentativas};
 }
 const adaptarHistoricoAluno=itens=>lista(itens).map(h=>({id:h.id,tipo:h.grupo,titulo:h.titulo,em:h.em,responsavel:h.responsavel?.nome??h.responsavel,depois:h.descricao||'',dados:h.dados||[],referencia:h.referencia}));
-const quando=v=>v&&!/(Z|[+-]\d\d:\d\d)$/.test(v)?v+'-03:00':v;
 function adaptarAuditoria(itens){
- return lista(itens).map(x=>({id:x.id,em:quando(x.quando??x.em),usuario:x.usuario?.id??x.usuario,responsavel:x.usuario?.id,responsavelNome:x.usuario?.nome,...(x.usuario?.id&&x.usuario.id===x.registroId?{contaNome:x.usuario.nome}:{}),tipo:[descricao(x.acao),x.tabela].filter(Boolean).join(' · ').toLowerCase()||'registro',unidade:x.unidade||'',referencia:x.registroId,justificativa:x.justificativa||''}));
+ return lista(itens).map(x=>({id:x.id,em:comFusoBrasil(x.quando??x.em),usuario:x.usuario?.id??x.usuario,responsavel:x.usuario?.id,responsavelNome:x.usuario?.nome,...(x.usuario?.id&&x.usuario.id===x.registroId?{contaNome:x.usuario.nome}:{}),tipo:[descricao(x.acao),x.tabela].filter(Boolean).join(' · ').toLowerCase()||'registro',unidade:x.unidade||'',referencia:x.registroId,justificativa:x.justificativa||''}));
 }
 // O "ate" da API é exclusivo (início < ate): a primeira janela vai até amanhã para trazer as aulas de hoje.
 const janelas=(hoje=hojeBrasil())=>[{de:somarDias(hoje,-91),ate:somarDias(hoje,1)},{de:somarDias(hoje,1),ate:somarDias(hoje,92)}];
 const dataHora=(data,inicio)=>data+'T'+inicio+':00';
+// Por quanto tempo uma listagem lida da API é reaproveitada (ver GetCache).
+const VALIDADE_CACHE=15000;
 
 // ---------------------------------------------------------------- serviço
 export function criarServicoAdministrativoIntegrado(identidade,u){
  const op=identidade,master=op.nivel===3;
  const negado={alterar:async()=>{throw new Error('Operação local indisponível no modo integrado.');}};
  const filtroUnidade=()=>op.unidadeConsulta?{unidadeId:u.guid(op.unidadeConsulta)}:{};
- // Snapshot de leitura no formato do front, refeito a cada consulta.
+ // Listagens reaproveitadas por alguns segundos: trocar de seção, abrir um diálogo ou encadear ações baixava tudo de novo
+ // (até 25 GETs ao abrir a Gerência). Quem pede durante a consulta espera a mesma requisição. Todo comando (Post, Put,
+ // Patch, Delete) descarta o cache ao terminar, com sucesso ou erro: depois de salvar, a tela relê do servidor como antes.
+ let cache=new Map();
+ const descartarCache=()=>{cache=new Map();};
+ function GetCache(rota){
+  const guardado=cache.get(rota);if(guardado&&Date.now()-guardado.em<VALIDADE_CACHE)return guardado.p;
+  const mapa=cache,p=Get(rota);mapa.set(rota,{p,em:Date.now()});p.catch(()=>{if(mapa.get(rota)?.p===p)mapa.delete(rota);});return p;
+ }
+ const comando=enviar=>(...args)=>{const p=enviar(...args);p.then(descartarCache,descartarCache);return p;};
+ const Post=comando(PostApi),Put=comando(PutApi),Patch=comando(PatchApi),Delete=comando(DeleteApi);
+ // Snapshot de leitura no formato do front, remontado a cada consulta (objetos novos: quem altera o retorno não suja o cache).
  async function ler(){
   const [alunos,vinculos,solicitacoes,...aulas]=await Promise.all([
-   chamar(Get(ComParams('alunos',filtroUnidade()))),
-   chamar(Get(ComParams('vinculos',{status:2,...filtroUnidade()}))),
-   opcional(Get(ComParams('solicitacoes-medicas',{pagina:1,tamanho:100,...filtroUnidade()})),[]),
-   ...janelas().map(j=>chamar(Get(ComParams('agendamentos',{...j,status:[1,2,3,4,5,6,7],...filtroUnidade()}))))]);
+   chamar(GetCache(ComParams('alunos',filtroUnidade()))),
+   chamar(GetCache(ComParams('vinculos',{status:2,...filtroUnidade()}))),
+   opcional(GetCache(ComParams('solicitacoes-medicas',{pagina:1,tamanho:100,...filtroUnidade()})),[]),
+   ...janelas().map(j=>chamar(GetCache(ComParams('agendamentos',{...j,status:[1,2,3,4,5,6,7],...filtroUnidade()}))))]);
   const porId=new Map(lista(alunos).map(a=>[a.id,adaptarAlunoEquipe(a,u)]));
   const unicas=new Map(aulas.flatMap(lista).map(a=>[a.id,adaptarAulaEquipe(a,u)]));
   for(const s of lista(solicitacoes)){const sol=s.solicitacao??s,aulaId=sol.aulaIds?.[0]??sol.aulaId??s.aula?.id,aula=unicas.get(aulaId);if(aula)aula.solicitacaoMedica=adaptarSolicitacao({...sol,aulaIds:sol.aulaIds||[aulaId]},aula.alunoId);}
@@ -232,7 +245,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
  }
  async function consultarAcessos(){
   exigirCapacidade(op,'gestao-acessos',3);
-  const [equipe,alunos,motoristas]=await Promise.all([chamar(Get(ComParams('equipe',filtroUnidade()))),chamar(Get(ComParams('alunos',filtroUnidade()))),opcional(Get(ComParams('motoristas',filtroUnidade())),[])]);
+  const [equipe,alunos,motoristas]=await Promise.all([chamar(GetCache(ComParams('equipe',filtroUnidade()))),chamar(GetCache(ComParams('alunos',filtroUnidade()))),opcional(GetCache(ComParams('motoristas',filtroUnidade())),[])]);
   const contas=[
    ...lista(equipe).map(m=>({id:m.id,nome:m.nome,login:digitos(m.cpf)||m.email,cpf:digitos(m.cpf),email:m.email,perfil:PERFIL_DO_PAINEL[numero(m.painel??m.papel?.painel)]||'operador',papelId:m.papel?.id,unidade:u.chave(m.unidades?.[0]),unidades:(m.unidades||[]).map(u.chave),ativa:m.ativo!==false,trocaObrigatoria:!!m.deveTrocarSenha,permissoesNegadas:m.permissoesNegadas||[],origemConta:'equipe'})),
    ...lista(alunos).map(a=>({id:a.id,alunoId:a.id,nome:a.nome,login:digitos(a.cpf),cpf:digitos(a.cpf),perfil:'aluno',unidade:u.chave(a.unidadeBase||a.matricula?.unidadeBase||a.unidades?.[0]),ativa:a.ativo!==false,trocaObrigatoria:!!(a.acesso?.deveTrocarSenha??a.deveTrocarSenha),origemConta:'aluno'})),
@@ -271,7 +284,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   consultar:base.consultar,
   async estado(){
    const e=permitido(await ler());let auditoria=[];
-   if(master&&op.permissoes.includes('auditoria')){const hoje=hojeBrasil();auditoria=adaptarAuditoria(await opcional(Get(ComParams('auditoria',{de:somarDias(hoje,-30),ate:hoje,pagina:1,tamanho:100})),[]));}
+   if(master&&op.permissoes.includes('auditoria')){const hoje=hojeBrasil();auditoria=adaptarAuditoria(await opcional(GetCache(ComParams('auditoria',{de:somarDias(hoje,-30),ate:hoje,pagina:1,tamanho:100})),[]));}
    return {responsaveis:[],alunos:e.alunos,recursos:e.recursos,aulas:e.aulas,excecoesAgenda:[],ofertasAntecipacao:[],configuracoesUnidades:{},auditoria};
   },
   async ficha(id){return leitor(await lerComAluno(id)).ficha(id);},

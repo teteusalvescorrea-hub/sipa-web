@@ -4,19 +4,18 @@ import {montarAntecipacaoPainel} from './antecipacaoPainel.js';
 import {apresentarRelatorio,dataRelatorio,metadadosRelatorio} from '../js/apresentacaoRelatorios.js';
 import {exportarPdfRelatorio} from '../js/pdfRelatorios.js';
 import {montarHistoricoMedico} from './historicoMedico.js';
-import {el,botao,campo,entrada,select,modal} from '../../nivel-1-operador/js/components/uiOperador.js';
+import {el,botao,campo,entrada,select,modal,card,iconeSvg} from '../../nivel-1-operador/js/components/uiOperador.js';
 import {formularioAdministrativo} from './formularioAdministrativo.js';
 import {mostrarSenhaProvisoria} from './senhaProvisoria.js';
 import {UNIDADES_INSTITUCIONAIS} from '../js/catalogoUnidades.js';
 import {NOMES_PERFIL,permissoesDoPerfil} from '../js/permissoesAdministrativas.js';
-import {hojeBrasil,formatarData,somarDias,diaSemana} from '../js/calendario.js';
+import {hojeBrasil,formatarData,somarDias} from '../js/calendario.js';
 import {formatarCpf} from '../js/formatacao.js';
 import {creditoDoAtestado,STATUS_MEDICO} from '../js/solicitacoesMedicas.js';
 import {MOTIVOS_ADMIN} from '../js/administracao.js';
 import {tornarOrdenavel,ordenarLinhas,estadoOrdenacao} from '../js/ordenacaoTabela.js';
 const nomesStatus={1:'Confirmada',2:'Cancelada',3:'Aguardando aceite',4:'Recusada',5:'Realizada',6:'Falta'},primario='op-button op-button-primary';
 const rotulosIndicadores={agendadas:'Agendadas',realizadas:'Realizadas',presencas:'Presenças',faltas:'Faltas',canceladas:'Canceladas',elegiveis:'Horários elegíveis',ocupados:'Horários ocupados',disponiveis:'Horários disponíveis',ocupacao:'Taxa de ocupação',solicitacoes:'Solicitações',pendentes:'Pendentes',aprovadas:'Aprovadas',reprovadas:'Reprovadas',creditosDevolvidos:'Créditos devolvidos',naoDevolvidos:'Sem devolução'};
-const card=(titulo,...filhos)=>{const c=el('article',undefined,'op-card');c.append(el('h2',titulo),...filhos);return c;};
 const grupo=(...itens)=>{const d=el('div',undefined,'adm-actions');d.append(...itens);return d;};
 const notas=t=>el('p',t,'adm-nota');
 function gradeTabela(titulos,linhas,ordem){const w=el('div',undefined,'op-table-scroll'),t=el('table',undefined,'op-table'),h=el('thead'),r=el('tr'),b=el('tbody');for(const titulo of titulos){const c=el('th',titulo);c.scope='col';r.append(c);}h.append(r);for(const linha of linhas){const row=el('tr');for(const v of linha){const c=el('td');c.append(v instanceof Node?v:document.createTextNode(String(v??'')));row.append(c);}b.append(row);}if(!linhas.length){const c=el('td','Nenhum registro encontrado.');c.colSpan=titulos.length;const r=el('tr');r.append(c);b.append(r);}t.append(h,b);tornarOrdenavel(t,ordem);w.append(t);return w;}
@@ -52,7 +51,7 @@ export async function montarAdministracao(root,servico,ui){
    ['relatorios','Relat\u00f3rios','Consultar indicadores operacionais.','file','relatorios'],
    ...(!master?[['antecipacao','Antecipa\u00e7\u00e3o de aulas','Consultar interessados e preparar ofertas.','users','antecipar']]:[])
   ];
-  function icone(id){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS('http://www.w3.org/2000/svg','use');svg.setAttribute('aria-hidden','true');svg.setAttribute('viewBox','0 0 24 24');use.setAttribute('href','#op-'+id);svg.append(use);return svg;}
+  const icone=id=>iconeSvg(id,'0 0 24 24');
   for(const [id,titulo,descricao,simbolo]of acoes.filter(a=>op.permissoes.includes(a[4]))){
    const b=botao('',()=>{ui.navegar(id);render(id);},'op-quick-action'),texto=el('span',undefined,'op-quick-copy');b.dataset.opAtalho=id;texto.append(el('strong',titulo),el('span',descricao));b.append(icone(simbolo),texto,icone('arrow'));atalhos.append(b);
   }

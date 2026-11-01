@@ -3,7 +3,7 @@
    PARTE 1 — CARREGAR DADOS DO ALUNO
    ========================================= */
 
-import { formatarCpf } from '../../shared/js/formatacao.js';
+import { formatarCpf, formatarTelefone } from '../../shared/js/formatacao.js';
 import { exigirLogin } from "../../shared/js/sessao.js";
 import { sair } from "../../shared/js/services/authService.js";
 import { obterAlunoLogado } from "../../shared/js/services/alunos.service.js";
@@ -69,63 +69,6 @@ const profileSchool =
     document.getElementById(
         "profile-school"
     );
-
-
-/* =========================================
-   FORMATAR CPF
-   ========================================= */
-
-/* =========================================
-   FORMATAR TELEFONE
-   ========================================= */
-
-function formatarTelefone(telefone) {
-
-    if (!telefone) {
-
-        return "-";
-
-    }
-
-
-    const numero =
-        String(telefone).replace(
-            /\D/g,
-            ""
-        );
-
-
-    if (numero.length === 11) {
-
-        return (
-            "(" +
-            numero.substring(0, 2) +
-            ") " +
-            numero.substring(2, 7) +
-            "-" +
-            numero.substring(7, 11)
-        );
-
-    }
-
-
-    if (numero.length === 10) {
-
-        return (
-            "(" +
-            numero.substring(0, 2) +
-            ") " +
-            numero.substring(2, 6) +
-            "-" +
-            numero.substring(6, 10)
-        );
-
-    }
-
-
-    return telefone;
-
-}
 
 
 /* =========================================
@@ -288,7 +231,8 @@ async function carregarPerfil() {
 
         profilePhone.textContent =
             formatarTelefone(
-                aluno.telefone
+                aluno.telefone,
+                "-"
             );
 
     }

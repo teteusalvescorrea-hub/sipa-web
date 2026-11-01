@@ -1,8 +1,9 @@
-import {STATUS_MEDICO,creditoDoAtestado,etapasDoAtestado,ultimaAtualizacaoAtestado} from '../../../shared/js/solicitacoesMedicas.js';
+import {creditoDoAtestado,etapasDoAtestado,ultimaAtualizacaoAtestado} from '../../../shared/js/solicitacoesMedicas.js';
 import {situacaoMedica} from '../../../shared/components/situacaoMedica.js';
 import {nomeLocalDaReserva} from '../../../shared/components/localAula.js';
+import {dataHoraBrasilia} from '../../../shared/js/calendario.js';
 const el=(tag,texto,classe)=>{const n=document.createElement(tag);if(texto!==undefined)n.textContent=texto;if(classe)n.className=classe;return n;};
-const data=v=>v&&Number.isFinite(Date.parse(v))?new Date(v).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'}):'Não informada';
+const data=v=>v&&Number.isFinite(Date.parse(v))?dataHoraBrasilia(v):'Não informada';
 async function visualizarDocumento(servico,id,origem){
  const d=el('dialog',undefined,'lesson-cancel-dialog medical-document-viewer'),h=el('h2','Atestado enviado'),conteudo=el('div'),fechar=el('button','Fechar');h.id='medical-viewer-title';h.tabIndex=-1;d.setAttribute('aria-labelledby',h.id);d.dataset.medicalViewer='';fechar.type='button';fechar.onclick=()=>d.close();conteudo.textContent='Consultando documento autorizado…';let url;
  d.append(h,conteudo,fechar);d.addEventListener('close',()=>{if(url)URL.revokeObjectURL(url);d.remove();if(origem.isConnected)origem.focus();},{once:true});document.body.append(d);d.showModal();h.focus();

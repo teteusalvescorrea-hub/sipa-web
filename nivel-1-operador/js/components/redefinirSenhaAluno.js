@@ -1,6 +1,7 @@
-import {el,botao,modal} from './uiOperador.js';
+import {el,botao,modal,mostrarAviso} from './uiOperador.js';
 import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {formatarCpf} from '../../../shared/js/formatacao.js';
+import {dataBrasilia} from '../../../shared/js/calendario.js';
 import {mostrarSenhaProvisoria} from '../../../shared/components/senhaProvisoria.js';
 
 export async function montarAcessoAluno(host,aluno,{raiz,servico,reabrir}){
@@ -8,7 +9,7 @@ export async function montarAcessoAluno(host,aluno,{raiz,servico,reabrir}){
  if(!servico.identidade.permissoes.includes('redefinir-senha-aluno')){secao.append(el('p','Sem permissão para redefinir a senha deste aluno.','op-help'));return;}
  let acesso;try{acesso=await servico.acessoAluno(aluno.id);}catch(e){secao.append(el('p','Redefinição indisponível: '+e.message,'op-help'));return;}
  const situacao=!acesso.possuiConta?'Sem conta de acesso':!acesso.ativa?'Conta desativada':acesso.trocaObrigatoria?(acesso.ultimaRedefinicao?'Redefinição pendente':'Primeiro acesso pendente'):'Ativa';
- secao.append(el('p',`Situação do acesso: ${situacao}${acesso.ultimaRedefinicao?' · última redefinição em '+new Date(acesso.ultimaRedefinicao).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):''}`,'op-help'));
+ secao.append(el('p',`Situação do acesso: ${situacao}${acesso.ultimaRedefinicao?' · última redefinição em '+dataBrasilia(acesso.ultimaRedefinicao):''}`,'op-help'));
  if(servico.enviarRedefinicaoAluno&&!(acesso.possuiConta&&!acesso.ativa)){
   // Com a API: o link de redefinição vai para o e-mail do cadastro (vale por tempo limitado, uso único).
   const aviso=el('p','','op-help'),enviar=botao(aluno.email?'Enviar link de redefinição':'Cadastre um e-mail para redefinir',async()=>{
@@ -47,13 +48,12 @@ function abrirRedefinicao(raiz,id,acesso,servico,reabrir,origem){
    const resultado=await servico.redefinirSenhaAluno(id,{justificativa:'Recupera\u00e7\u00e3o de acesso solicitada pelo atendimento administrativo.'});
    d.close();
    let atualizada=true;try{await reabrir();}catch{atualizada=false;}
-   const sucesso=modal(raiz,resultado.acessoCriado?'Acesso criado com sucesso!':'Senha redefinida com sucesso!','opSenhaRedefinida');sucesso.classList.add('op-reset-dialog');
-   sucesso.append(el('p',resultado.acessoCriado?'O acesso do aluno '+acesso.nome+' foi criado com sucesso.':'A senha de acesso de '+acesso.nome+' foi redefinida com sucesso.','op-help'));
-   if(resultado.acessoCriado)sucesso.append(el('p','O acesso do aluno foi criado e vinculado ao cadastro existente.','op-inline-note'));
+   const mensagens=[el('p',resultado.acessoCriado?'O acesso do aluno '+acesso.nome+' foi criado com sucesso.':'A senha de acesso de '+acesso.nome+' foi redefinida com sucesso.','op-help')];
+   if(resultado.acessoCriado)mensagens.push(el('p','O acesso do aluno foi criado e vinculado ao cadastro existente.','op-inline-note'));
+   mensagens.push(el('p',resultado.senhaProvisoria?'A nova senha provis\u00f3ria ser\u00e1 mostrada uma \u00fanica vez ao fechar este aviso.':'A nova senha provis\u00f3ria corresponde aos seis primeiros n\u00fameros do CPF cadastrado, sem pontos ou tra\u00e7os.','op-help'),el('p','O aluno j\u00e1 pode acessar o SIPA utilizando seu CPF e essa senha. No pr\u00f3ximo acesso, dever\u00e1 cadastrar uma nova senha pessoal de sua prefer\u00eancia, que substituir\u00e1 a senha provis\u00f3ria.','op-help'),el('p','A redefini\u00e7\u00e3o foi registrada no hist\u00f3rico do sistema.','op-help'));
+   if(!atualizada)mensagens.push(el('p','N\u00e3o foi poss\u00edvel atualizar a ficha. Feche e reabra para consultar a situa\u00e7\u00e3o atual.','op-help'));
+   const sucesso=mostrarAviso(raiz,resultado.acessoCriado?'Acesso criado com sucesso!':'Senha redefinida com sucesso!','opSenhaRedefinida',...mensagens);sucesso.classList.add('op-reset-dialog');
    if(resultado.senhaProvisoria)sucesso.addEventListener('close',()=>mostrarSenhaProvisoria(raiz,{titulo:'Nova senha provis\u00f3ria',nome:acesso.nome,senha:resultado.senhaProvisoria}),{once:true});
-   sucesso.append(el('p',resultado.senhaProvisoria?'A nova senha provis\u00f3ria ser\u00e1 mostrada uma \u00fanica vez ao fechar este aviso.':'A nova senha provis\u00f3ria corresponde aos seis primeiros n\u00fameros do CPF cadastrado, sem pontos ou tra\u00e7os.','op-help'),el('p','O aluno j\u00e1 pode acessar o SIPA utilizando seu CPF e essa senha. No pr\u00f3ximo acesso, dever\u00e1 cadastrar uma nova senha pessoal de sua prefer\u00eancia, que substituir\u00e1 a senha provis\u00f3ria.','op-help'),el('p','A redefini\u00e7\u00e3o foi registrada no hist\u00f3rico do sistema.','op-help'));
-   if(!atualizada)sucesso.append(el('p','N\u00e3o foi poss\u00edvel atualizar a ficha. Feche e reabra para consultar a situa\u00e7\u00e3o atual.','op-help'));
-   sucesso.append(botao('Entendi',()=>sucesso.close(),'op-button op-button-primary'));sucesso.addEventListener('close',()=>sucesso.remove(),{once:true});sucesso.showModal();
   }catch(e){erro.textContent=e.message;}
   finally{salvando=false;d.removeAttribute('aria-busy');d.querySelectorAll('button,input,textarea').forEach(n=>n.disabled=false);enviar.textContent='Sim, redefinir senha';}
  });

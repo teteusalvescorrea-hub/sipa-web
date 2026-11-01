@@ -1,9 +1,9 @@
 import {escopoPermitido} from '../../shared/js/permissoesAdministrativas.js';
-import {resolverInstrutorCarro,recursoNaOperacaoCarro,CAMBIOS,DESLOCAMENTOS_CARRO,cambioValido,unidadeCarroPermitida,recursoCarroCompativel,recursoCarroConsultavel,operacaoCarro,localCarro,motivoCarro} from '../../shared/js/operacaoCarro.js';
+import {resolverInstrutorCarro,recursoNaOperacaoCarro,DESLOCAMENTOS_CARRO,cambioValido,unidadeCarroPermitida,recursoCarroCompativel,recursoCarroConsultavel,operacaoCarro,localCarro,motivoCarro} from '../../shared/js/operacaoCarro.js';
 // Regras puras do atendimento. O adaptador integrado deverá repetir as autorizações
 // no servidor: estas funções não substituem a autorização da API.
 import { UNIDADES_INSTITUCIONAIS, normalizarChaveUnidade } from '../../shared/js/catalogoUnidades.js';
-import { hojeBrasil, dataValida, agoraBrasil } from '../../shared/js/calendario.js';
+import { dataValida, agoraBrasil } from '../../shared/js/calendario.js';
 import { GRADE_CENTRO,motivoNovoAgendamento, validarHorario, fimDaAula, conflito, ocupaRecurso, recursoAtivo } from '../../shared/js/disponibilidade.js';
 import { calcularPrazoCancelamento, criarCancelamento,identificarMotivo,POLITICA_CANCELAMENTO } from '../../aluno/js/domain/agendamentoAluno.js';
 import { TIPOS_EXAME } from './exames.js';

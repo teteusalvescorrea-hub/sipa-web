@@ -1,10 +1,11 @@
 import {validarAtestado,LIMITE_ATESTADO} from '../../../shared/js/solicitacoesMedicas.js';
 import {nomeLocalDaReserva} from '../../../shared/components/localAula.js';
+import {dataHoraBrasilia} from '../../../shared/js/calendario.js';
 const el=(t,v)=>{const n=document.createElement(t);if(v!==undefined)n.textContent=v;return n;};
 export function abrirSolicitacaoMedica({aula,servico,origem,aoConcluir}){
  const d=el('dialog');d.className='lesson-cancel-dialog medical-request-dialog';d.setAttribute('aria-labelledby','medical-request-title');d.dataset.medicalRequest='';
  const h=el('h2','Solicitar cancelamento por motivo médico');h.id='medical-request-title';h.tabIndex=-1;
- const data=new Date(aula.inicio).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'});
+ const data=dataHoraBrasilia(aula.inicio);
  const resumo=el('p',`${data} · Categoria ${aula.categoria} · ${nomeLocalDaReserva(aula)}`);
  const aviso=el('p','Sua aula será cancelada imediatamente. O crédito correspondente ficará pendente de análise e somente poderá ser devolvido caso a gerência aprove seu atestado médico.');aviso.className='lesson-cancel-policy';
  const form=el('form'),arq=el('input');arq.type='file';arq.accept='.jpg,.jpeg,.png,.pdf';arq.required=true;arq.name='atestado';arq.id='medical-file';

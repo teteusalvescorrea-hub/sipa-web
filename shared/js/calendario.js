@@ -17,6 +17,13 @@ export function somarDias(iso, dias) {
 }
 export const diaSemana = iso => new Date(`${iso}T12:00:00Z`).getUTCDay();
 export const formatarData = iso => dataValida(iso) ? iso.split("-").reverse().join("/") : "—";
+// Instantes (ISO) para leitura no horário de Brasília: 31/10/2026 · 14:30 · 31/10/2026, 14:30.
+const BRASILIA = { timeZone: "America/Sao_Paulo" };
+export const dataBrasilia = instante => new Date(instante).toLocaleDateString("pt-BR", BRASILIA);
+export const horaBrasilia = instante => new Date(instante).toLocaleTimeString("pt-BR", { ...BRASILIA, hour: "2-digit", minute: "2-digit" });
+export const dataHoraBrasilia = instante => new Date(instante).toLocaleString("pt-BR", { ...BRASILIA, dateStyle: "short", timeStyle: "short" });
+// Data e hora de aula chegam da API em Brasília sem fuso (D17): os adaptadores põem -03:00; com fuso, ficam como vieram.
+export const comFusoBrasil = valor => valor && !/(Z|[+-]\d\d:\d\d)$/.test(valor) ? valor + "-03:00" : valor;
 export function pascoa(ano) {
     const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100;
     const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);

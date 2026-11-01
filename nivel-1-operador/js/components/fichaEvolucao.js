@@ -1,6 +1,6 @@
 import {el,botao,campo,select,entrada,modal} from './uiOperador.js';
 import {EXAMES_FICHA,SITUACOES_EXAME,PROVAS_FICHA,SITUACOES_PROVA,lerExameFicha,provasDoAluno} from '../fichaOperador.js';
-import {formatarData,dataValida,hojeBrasil} from '../../../shared/js/calendario.js';
+import {formatarData,dataValida,hojeBrasil,horaBrasilia} from '../../../shared/js/calendario.js';
 import {ETAPAS,etapaParaAgendamento} from '../../../shared/js/elegibilidadeAluno.js';
 import {formularioAdministrativo} from '../../../shared/components/formularioAdministrativo.js';
 import {UNIDADES_INSTITUCIONAIS} from '../../../shared/js/catalogoUnidades.js';
@@ -49,10 +49,6 @@ function jornada(a,tentativas){
 export function montarJornada(destino,a){const resumo=el('section',undefined,'op-jornada');resumo.dataset.opJornada='';resumo.append(passos('Jornada até a habilitação',jornada(a,provasDoAluno(a))));destino.prepend(resumo);}
 // Status do aluno (sem o antigo "Pendente"): a primeira etapa da jornada ainda não concluída, ou Habilitado.
 export function etapaAtual(a){const p=jornada(a,provasDoAluno(a)).find(x=>x.estado!=='feito'&&x.titulo!=='Habilitação');return p?p.titulo:'Habilitado';}
-function confirmar(ctx,titulo,descricao,acao,conteudo){
- const d=modal(ctx.raiz,titulo,'opConfirmacaoFicha'),f=el('form');f.append(el('p',descricao,'op-help'));if(conteudo)f.append(conteudo);const rodape=el('footer',undefined,'op-ficha-acoes'),voltar=botao('Voltar',()=>d.close()),b=el('button','Confirmar',primario);b.type='submit';rodape.append(voltar,b);f.append(rodape);d.append(f);
- envio(f,async()=>{if(await acao())d.close();});d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();
-}
 export function montarEdicaoCadastro(destino,a,ctx,{aberto=false}={}){
  if(!ctx.permissoes.includes('editar-cadastro'))return;
  if(ctx.servico.corrigirAluno&&ctx.permissoes.includes('corrigir-registro'))destino.append(botao('Vínculo e situação cadastral',()=>formularioAdministrativo(ctx.raiz,'Correção administrativa',[['unidadePrincipal','Unidade principal','select',a.unidadePrincipal||a.unidade,UNIDADES_INSTITUCIONAIS.filter(u=>ctx.servico.identidade.nivel===3||ctx.servico.identidade.unidades?.includes(u.id)).map(u=>[u.id,u.nome])],['situacao','Situação cadastral','select',a.situacao||'Pendente',['Pendente','Regular','Inativo']],['bloqueado','Bloquear novos agendamentos','checkbox',a.bloqueioAdministrativo?.ativo===true],['justificativa','Justificativa','textarea','']],d=>ctx.executar(()=>ctx.servico.corrigirAluno(a.id,{unidadePrincipal:d.unidadePrincipal,situacao:d.situacao,bloqueioAdministrativo:{ativo:d.bloqueado,motivo:d.justificativa}},d.justificativa),'Correção registrada.',ctx.reabrir))));
@@ -132,7 +128,7 @@ export function montarProvas(destino,a,ctx){
  }
 }
 // Histórico das tentativas encerradas (só aparece quando há alguma) e a correção de registro.
-export function montarProvasAgendadas(destino,a,ctx){
+export function montarHistoricoProvas(destino,a,ctx){
  const tentativas=provasDoAluno(a);
  const corrigir=ctx.servico.corrigirProva&&tentativas.length&&botao('Corrigir registro de prova',()=>formularioAdministrativo(ctx.raiz,'Correção de prova',[['tentativa','Tentativa','select',tentativas[0].id,tentativas.map(p=>[p.id,PROVAS_FICHA[p.tipo].nome+' · Tentativa '+p.ordem+' · '+p.status])],['data','Data da prova','date',tentativas[0].data||hojeBrasil()],['status','Situação corrigida','select',tentativas[0].status,SITUACOES_PROVA],['justificativa','Justificativa','textarea','']],d=>ctx.executar(()=>ctx.servico.corrigirProva(a.id,d.tentativa,d),'Correção preservada no histórico.',ctx.reabrir)),'op-link');
  const encerradas=tentativas.filter(p=>p.arquivada||final(p.status)||!SITUACOES_PROVA.includes(p.status));
@@ -175,7 +171,7 @@ export function montarLinhaTempo(destino,eventos,{abrirAula}={}){
    titulo.append(el('strong',h.titulo));if(h.grupo==='aulas'&&h.referencia&&abrirAula)titulo.append(botao('Ver aula',()=>abrirAula(h.referencia),'op-link'));corpo.append(titulo);
    const resumo=[h.descricao&&datasBrasileiras(h.descricao),...dadosLegiveis(h),h.motivo&&'Motivo: '+h.motivo,h.mantidas&&`${h.mantidas.length} aula(s) mantida(s), ${h.canceladas?.length||0} cancelada(s)`,h.responsavel&&'Por '+h.responsavel].filter(Boolean);
    if(resumo.length)corpo.append(el('small',resumo.join(' · '),'op-timeline-detalhe'));
-   item.append(el('time',chave?new Date(h.em).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}):'—','op-timeline-hora'),corpo);lista.append(item);
+   item.append(el('time',chave?horaBrasilia(h.em):'—','op-timeline-hora'),corpo);lista.append(item);
   }
   if(!resultado.length)lista.append(el('p','Nenhum evento encontrado para os filtros informados.','op-help'));
   if(total>1){const anterior=botao('Anterior',()=>{pagina--;render();},'op-link'),proximo=botao('Próxima',()=>{pagina++;render();},'op-link');anterior.disabled=pagina===1;proximo.disabled=pagina===total;paginacao.append(anterior,el('span',`Página ${pagina} de ${total}`),proximo);}

@@ -4,8 +4,9 @@
 // cancelarReservaLocal, solicitarCancelamentoMedico, documentoMedico etc.
 // O servidor é a autoridade: aqui só se converte o formato.
 import * as api from '../../../shared/js/api.js';
+import {textoErro} from '../../../shared/js/apiErro.js';
 import {sair} from '../../../shared/js/services/authService.js';
-import {hojeBrasil,somarDias} from '../../../shared/js/calendario.js';
+import {hojeBrasil,somarDias,comFusoBrasil} from '../../../shared/js/calendario.js';
 import {MOTIVOS_CANCELAMENTO,identificarMotivo} from '../domain/agendamentoAluno.js';
 
 const numero=v=>v?.valor??v;
@@ -13,11 +14,8 @@ const LETRA=Object.freeze({1:'A',2:'B',3:'D'}),NUMERO=Object.freeze({A:1,B:2,D:3
 const CAMBIO=Object.freeze({1:'manual',2:'automatico'});
 const STATUS_MEDICO_API=Object.freeze({1:'recepcao',2:'gerencia',3:'aprovado',4:'rejeitado'});
 const categoria=c=>typeof c==='string'?c:/^[ABD]$/.test(c?.descricao)?c.descricao:LETRA[numero(c)];
-// Data e hora de aula chegam em Brasília sem fuso (D17): o adaptador põe -03:00.
-const dataBrasil=v=>v&&!/(Z|[+-]\d\d:\d\d)$/.test(v)?v+'-03:00':v;
 const nomeDe=v=>v?.nome??v??'';
 const statusMedico=v=>STATUS_MEDICO_API[numero(v)]??v;
-export function textoErro(e){return (e?.erros||[]).map(x=>x?.mensagem??x).filter(x=>typeof x==='string'&&x).join(' ')||e?.message||'Não foi possível concluir a operação.';}
 const comoErro=e=>{const n=new Error(textoErro(e));n.status=e?.status;return n;};
 const chaveOperacao=()=>crypto.randomUUID();
 
@@ -40,14 +38,14 @@ function adaptarCancelamento(a,status,solicitacao){
 // AgendamentoReadDto → aula do painel. O status 7 (cancelada com ônus) aparece
 // como Cancelada (2), com o crédito retido no cancelamento.
 export function adaptarAula(a,alunoId,solicitacoes={}){
- const status=numero(a.status),cat=categoria(a.categoria),inicio=dataBrasil(a.dataHoraInicio);
+ const status=numero(a.status),cat=categoria(a.categoria),inicio=comFusoBrasil(a.dataHoraInicio);
  const solicitacao=a.solicitacaoMedica?(solicitacoes[a.solicitacaoMedica.id]||adaptarSolicitacao({...a.solicitacaoMedica,aulaIds:[a.id],categoria:a.categoria},alunoId)):null;
  const cancelamento=adaptarCancelamento(a,status,solicitacao);
  return {id:a.id,tipo:'aula',nome:'Aula prática',aluno:a.alunoId??alunoId,alunoId:a.alunoId??alunoId,categoria:cat,
   unidade:a.unidade||'',unidadeId:a.unidadeId,enderecoReserva:a.local?.endereco||a.localAula||'',localAula:a.localAula||'',localAulaId:a.localAulaId,
   ...(a.local&&cat==='B'?{localReal:{nome:a.local.nome,endereco:a.local.endereco,mapsUrl:a.local.mapsUrl}}:{}),
   instrutor:a.motoristaId,instrutorId:a.motoristaId,veiculo:a.veiculoId,veiculoId:a.veiculoId,tipoCambio:CAMBIO[numero(a.veiculoTipoCambio)]??null,
-  inicio,fim:a.dataHoraFim?dataBrasil(a.dataHoraFim):null,data:inicio?.slice(0,10),status:status===7?2:status,statusApi:status,
+  inicio,fim:a.dataHoraFim?comFusoBrasil(a.dataHoraFim):null,data:inicio?.slice(0,10),status:status===7?2:status,statusApi:status,
   cancelamento,...(cancelamento?.motivo?{motivoCancelamento:cancelamento.motivo}:{}),solicitacaoMedica:solicitacao,
   podeCancelar:a.podeCancelar,horasUteisAteAula:a.horasUteisAteAula,historico:[],api:a};
 }

@@ -1,13 +1,13 @@
 import {montarHistoricoMedico} from '../../../shared/components/historicoMedico.js';
 import {situacaoMedica} from '../../../shared/components/situacaoMedica.js';
-import {agoraBrasil} from '../../../shared/js/calendario.js';
+import {agoraBrasil,dataHoraBrasilia} from '../../../shared/js/calendario.js';
 import {el,botao,campo,entrada,select,modal} from './uiOperador.js';
 import {STATUS_MEDICO} from '../../../shared/js/solicitacoesMedicas.js';
 import {formatarCpf,ativarMascaraCpf} from '../../../shared/js/formatacao.js';
 import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {nomeLocalDaReserva} from '../../../shared/components/localAula.js';
 import {ordenarLinhas,estadoOrdenacao} from '../../../shared/js/ordenacaoTabela.js';
-const data=v=>v?new Date(v).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'}):'Não informado';
+const data=v=>v?dataHoraBrasilia(v):'Não informado';
 export function montarVerificacoesMedicas(raiz,painel,servico,executar,tabela){
  const metricas=el('div',undefined,'op-medical-metrics'),form=el('form',undefined,'op-medical-filters op-form-fields'),lista=el('div'),paginas=el('nav',undefined,'op-local-pagination');paginas.setAttribute('aria-label','Páginas das solicitações médicas');
  const busca=entrada('search'),status=select([['','Todos'],...Object.entries(STATUS_MEDICO)]),unidade=select([['','Todas as autorizadas']]),inicio=entrada('date'),fim=entrada('date');busca.placeholder='Nome ou CPF';ativarMascaraCpf(busca,{permitirNome:true});

@@ -1,4 +1,3 @@
-import {formatarCpf} from '../../../shared/js/formatacao.js';
 import {ativarMascaraCpf} from '../../../shared/js/formatacao.js';
 import {el,botao,campo,select,entrada,modal} from './uiOperador.js';
 import {ALMOCOS,INTERVALOS_ALMOCO} from '../../../shared/js/categorias.js';

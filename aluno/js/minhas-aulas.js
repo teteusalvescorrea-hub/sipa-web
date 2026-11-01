@@ -1,4 +1,4 @@
-import {localDaAula,orientacoesComparecimento} from '../../shared/components/localAula.js';
+import {orientacoesComparecimento} from '../../shared/components/localAula.js';
 /* =========================================
    SIPA — MINHAS AULAS
    As aulas vêm da API. Cancelar e ver o

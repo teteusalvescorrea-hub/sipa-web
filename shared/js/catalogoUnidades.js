@@ -1,5 +1,6 @@
 // Dados institucionais fornecidos pelo responsável pelo projeto, sem verificação externa.
 // A ordem e os IDs legados são preservados; não são IDs de banco/API nem dados de demonstração.
+import {semAcento} from './formatacao.js';
 export const UNIDADES_INSTITUCIONAIS=Object.freeze([
   {
     "id": "Cobilândia",
@@ -73,7 +74,7 @@ export const UNIDADES_INSTITUCIONAIS=Object.freeze([
     "enderecoCompleto": "Av. Santa Leopoldina, 840 - 03 - Coqueiral de Itaparica, Vila Velha - ES, 29102-041"
   }
 ].map(u=>Object.freeze({...u,aliases:Object.freeze(u.aliases||[])})));
-const chave=valor=>String(valor||'').trim().replace(/^Unidade\s+/i,'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+const chave=valor=>semAcento(String(valor||'').trim().replace(/^Unidade\s+/i,''));
 export function obterUnidadeInstitucional(idOuAlias){const k=chave(idOuAlias);return UNIDADES_INSTITUCIONAIS.find(u=>[u.id,u.nome,...u.aliases].some(v=>chave(v)===k))||null;}
 export function normalizarChaveUnidade(valor){return obterUnidadeInstitucional(valor)?.id||String(valor||'').trim().replace(/^Unidade\s+/i,'');}
 export function nomeUnidadeInstitucional(valor){return obterUnidadeInstitucional(valor)?.nome||normalizarChaveUnidade(valor)||'Unidade não informada';}

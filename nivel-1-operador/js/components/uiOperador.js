@@ -21,7 +21,14 @@ export function modal(raiz, titulo, id) {
     const fechar = botao("×", () => node.close(), "op-close"); fechar.setAttribute("aria-label", "Fechar detalhes");
     heading.append(h, fechar); node.append(heading); raiz.append(node); return node;
 }
-export function resumoLista(titulo, itens) {
-    const card = el("article", undefined, "op-card"); card.append(el("h2", titulo)); const lista = el("ul", undefined, "op-summary-list");
-    itens.forEach(item => lista.append(el("li", item))); card.append(lista); return card;
+// Aviso de um botão só ("Entendi"): abre na hora e sai do DOM ao fechar.
+export function mostrarAviso(raiz, titulo, id, ...conteudo) {
+    const node = modal(raiz, titulo, id); node.append(...conteudo, botao("Entendi", () => node.close(), "op-button op-button-primary"));
+    node.addEventListener("close", () => node.remove(), { once: true }); node.showModal(); return node;
+}
+export function card(titulo, ...filhos) { const node = el("article", undefined, "op-card"); node.append(el("h2", titulo), ...filhos); return node; }
+// Ícone decorativo do sprite da página (<symbol id="op-…">). Alguns painéis fixam o viewBox do <svg>.
+export function iconeSvg(nome, viewBox) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"), use = document.createElementNS(svg.namespaceURI, "use");
+    svg.setAttribute("aria-hidden", "true"); if (viewBox) svg.setAttribute("viewBox", viewBox); use.setAttribute("href", `#op-${nome}`); svg.append(use); return svg;
 }

@@ -10,23 +10,20 @@ import {montarReservaRecepcao} from './reservaRecepcao.js';
 import {botaoCadastroRecurso,abrirFormularioInstrutor,abrirFormularioVeiculo} from './cadastroRecurso.js';
 import {AVISO_ONIBUS,NOMES_CATEGORIA,LOCAIS_ONIBUS} from '../../../shared/js/categorias.js';
 import {marcarErrosDoServidor} from '../../../shared/js/errosDeCampo.js';
-import {montarEdicaoCadastro,montarJornada,etapaAtual,montarExamesProvas,montarProvas,montarProvasAgendadas,montarLinhaTempo} from './fichaEvolucao.js';
-import {el,botao,campo,select,entrada,modal} from './uiOperador.js';
+import {montarEdicaoCadastro,montarJornada,etapaAtual,montarExamesProvas,montarProvas,montarHistoricoProvas,montarLinhaTempo} from './fichaEvolucao.js';
+import {el,botao,campo,select,entrada,modal,card,iconeSvg} from './uiOperador.js';
 import {montarEstruturaOperador} from './painelOperador.js';
 import {tornarOrdenavel,ordenarLinhas,estadoOrdenacao} from '../../../shared/js/ordenacaoTabela.js';
 import {montarAgenda} from './agendaOperador.js';
 import {criarDetalhesAula} from './aulaOperador.js';
-import {UNIDADES,principal,carro,unidade,paresNaUnidade,destinoNovasAulas} from '../dominioOperador.js';
-import {hojeBrasil,formatarData,agoraBrasil} from '../../../shared/js/calendario.js';
-import {STATUS_AGENDAMENTO,fimDaAula,validarHorario} from '../../../shared/js/disponibilidade.js';
-import {formatarCpf,ativarMascaraCpf} from '../../../shared/js/formatacao.js';
+import {UNIDADES,principal,carro,unidade,paresNaUnidade} from '../dominioOperador.js';
+import {hojeBrasil,formatarData,dataBrasilia,horaBrasilia} from '../../../shared/js/calendario.js';
+import {formatarCpf,ativarMascaraCpf,formatarTelefone} from '../../../shared/js/formatacao.js';
 import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 
 const nomeUnidade=u=>nomeUnidadeInstitucional(unidade(u));
 const textoData=d=>d?formatarData(d):'Não informada';
-const dataHora=d=>d?new Date(d).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'Não informado';
-const dataHoraCurta=d=>{if(!d)return 'Não informado';const t=new Date(d);return t.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})+' às '+t.toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});};
-const telefoneFormatado=t=>{const d=String(t||'').replace(/\D/g,'');return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:d.length===10?`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`:(t||'Não informado');};
+const dataHoraCurta=d=>d?dataBrasilia(d)+' às '+horaBrasilia(d):'Não informado';
 // Campos da ficha: o valor pode ser texto ou nó (etiqueta, link de ação).
 function camposFicha(itens){const dl=el('dl',undefined,'op-fields op-ficha-campos');for(const [k,v] of itens){const item=el('div'),dd=el('dd');dd.append(v instanceof Node?v:document.createTextNode(v==null||v===''?'Não informado':String(v)));item.append(el('dt',k),dd);dl.append(item);}return dl;}
 function blocoFicha(titulo,...filhos){const s=el('section',undefined,'op-ficha-bloco');s.append(el('h4',titulo),...filhos);return s;}
@@ -66,7 +63,6 @@ function tabela(titulos,linhas,vazio='Nenhum registro disponível.',ordem) {
     if(!linhas.length){const row=el('tr'),td=el('td',vazio,'op-demo-no-results');td.colSpan=titulos.length;row.append(td);body.append(row);}
     table.append(head,body);tornarOrdenavel(table,ordem);wrap.append(table);return wrap;
 }
-function card(titulo,...filhos){const n=el('article',undefined,'op-card');n.append(el('h2',titulo),...filhos);return n;}
 
 export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}) {
     const identidade=servico.identidade, propria=unidade(identidade.unidade), permissoes=identidade.permissoes;
@@ -121,7 +117,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         const grupo=el('div',undefined,'op-aluno-filter'),label=el('label',t),linha=el('div',undefined,'op-aluno-filter-input'),lupa=botao('',pesquisar,'op-aluno-search-button');
         filtros[k].dataset.opFiltro=k;filtros[k].id=`op-alunos-filtro-${k}`;label.htmlFor=filtros[k].id;
         lupa.dataset.opPesquisar=k;lupa.setAttribute('aria-label',`Pesquisar com todos os filtros: ${t}`);lupa.title='Pesquisar com todos os filtros';
-        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS('http://www.w3.org/2000/svg','use');svg.setAttribute('aria-hidden','true');use.setAttribute('href','#op-search');svg.append(use);lupa.append(svg);
+        lupa.append(iconeSvg('search'));
         // Dropdown aplica ao escolher (sem lupa); a lupa fica só na busca por nome ou CPF.
         if(k==='busca')linha.append(filtros[k],lupa);else{linha.append(filtros[k]);filtros[k].addEventListener('change',pesquisar);}grupo.append(label,linha);barra.append(grupo);
     }
@@ -213,7 +209,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             const cadastroArea=el('section');fichaConteudo.append(cadastroArea);
             let aulasDeCarro=carro(a)?nomeUnidade(carro(a)):'Não se aplica';
             if(a.categoria.includes('B')){const valor=el('span',undefined,'op-ficha-valor-acao'),alterar=botao('Alterar',()=>abrirTransferencia(a),'op-link');alterar.dataset.opTransferir='';alterar.disabled=!permissoes.includes('transferir');alterar.setAttribute('aria-label','Alterar unidade de aulas de carro');valor.append(aulasDeCarro+' ',alterar);aulasDeCarro=valor;}
-            cadastroArea.append(blocoFicha('Dados pessoais',camposFicha([['Nome completo',a.nome],['CPF',formatarCpf(a.cpf)],['Nascimento',textoData(a.nascimento)],['Telefone',telefoneFormatado(a.telefone)],['E-mail',a.email]])),
+            cadastroArea.append(blocoFicha('Dados pessoais',camposFicha([['Nome completo',a.nome],['CPF',formatarCpf(a.cpf)],['Nascimento',textoData(a.nascimento)],['Telefone',formatarTelefone(a.telefone)],['E-mail',a.email]])),
                 blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Etapa',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
             if(a.categoria==='D')cadastroArea.append(el('p',AVISO_ONIBUS+' '+Object.values(LOCAIS_ONIBUS).map(l=>l.endereco).join(' '),'op-inline-note'));if(a.categoria.includes('A'))cadastroArea.append(el('p',pista.textContent,'op-inline-note'));
             const notas=el('textarea');notas.value=a.observacoes||'';notas.maxLength=2000;notas.rows=3;notas.disabled=!permissoes.includes('anotar');const salvar=botao('Salvar observações',()=>executar(()=>servico.anotar(a.id,notas.value),'Observações salvas.',renderizarFicha),'op-button op-button-primary');salvar.disabled=true;notas.addEventListener('input',()=>{salvar.disabled=notas.disabled||notas.value===(a.observacoes||'');});
@@ -225,7 +221,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
 
         }
         if(abaFicha==='etapas')montarExamesProvas(fichaConteudo,a,contextoFicha);
-        if(abaFicha==='provas'){montarProvas(fichaConteudo,a,contextoFicha);const painel=el('section');painel.dataset.opProvasAgendadas='';montarProvasAgendadas(painel,a,contextoFicha);fichaConteudo.append(painel);}
+        if(abaFicha==='provas'){montarProvas(fichaConteudo,a,contextoFicha);const painel=el('section');painel.dataset.opProvasAgendadas='';montarHistoricoProvas(painel,a,contextoFicha);fichaConteudo.append(painel);}
         if(abaFicha==='creditos'){
             // Aba Aulas enxuta: uma faixa com a liberação (bloqueio em destaque) e, por categoria, o progresso das aulas
             // realizadas sobre as adquiridas e os números que importam para agendar.
@@ -268,10 +264,6 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     function inicio(){
         const indicador=card('Alunos vinculados',el('strong',String(dados.alunos.length)));
         indicador.dataset.opMetrica='alunos';indicador.classList.add('op-home-count');
-        function icone(id){
-            const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS('http://www.w3.org/2000/svg','use');
-            svg.setAttribute('aria-hidden','true');use.setAttribute('href',`#op-${id}`);svg.append(use);return svg;
-        }
         const grade=el('div',undefined,'op-quick-grid');
         for(const [secao,titulo,descricao,simbolo] of [
             ['cadastro','Cadastrar aluno','Abra o formulário de cadastro e vínculos do aluno.','plus'],
@@ -282,7 +274,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         ]){
             const atalho=botao('',()=>secao==='cadastro'?abrirCadastro():navegacao.navegar(secao),'op-quick-action'),texto=el('span',undefined,'op-quick-copy');
             atalho.dataset.opAtalho=secao;texto.append(el('strong',titulo),el('span',descricao));
-            atalho.append(icone(simbolo),texto,icone('arrow'));grade.append(atalho);
+            atalho.append(iconeSvg(simbolo),texto,iconeSvg('arrow'));grade.append(atalho);
         }
         painel('visao-geral').replaceChildren(indicador,card('Funções rápidas',grade));
     }

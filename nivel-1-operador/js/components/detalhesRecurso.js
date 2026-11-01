@@ -1,5 +1,5 @@
 import {el} from './uiOperador.js';
-import {INTERVALOS_ALMOCO,ALMOCOS,LOCAIS_ONIBUS,NOMES_CATEGORIA} from '../../../shared/js/categorias.js';
+import {INTERVALOS_ALMOCO,ALMOCOS,LOCAIS_ONIBUS} from '../../../shared/js/categorias.js';
 import {CAMBIOS} from '../../../shared/js/operacaoCarro.js';
 import {obterUnidadeInstitucional,nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {dataValida,formatarData} from '../../../shared/js/calendario.js';

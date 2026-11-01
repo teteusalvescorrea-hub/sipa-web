@@ -1,6 +1,6 @@
 import { TIPOS_EXAME, STATUS_EXAME, atualizarExame, pendencias, apto } from "../exames.js";
 import { formatarData } from "../../../shared/js/calendario.js";
-import { el, botao, campo, select, entrada, modal } from "./uiOperador.js";
+import { el, campo, select, entrada, modal } from "./uiOperador.js";
 
 export function criarFichaAluno(raiz, obterAluno, salvarAluno, informar) {
     const dialogo = modal(raiz, "Ficha do aluno", "opFicha");

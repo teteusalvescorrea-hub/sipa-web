@@ -29,8 +29,3 @@ export function pendenciasAgendamento(aluno,data){
   return [{tipo,nome,situacao:vencido?'Vencido':status}];
  });
 }
-
-export function motivoEtapasAgendamento(aluno,data){
- const pendencias=pendenciasAgendamento(aluno,data);
- return pendencias.length?'Acompanhamento administrativo: '+pendencias.map(p=>p.nome+' — '+p.situacao).join('; ')+'. Consulte a recepção para informações sobre o processo.':'';
-}

@@ -42,3 +42,10 @@ export class ApiErro extends Error {
             : [mensagem];
     }
 }
+
+
+// Texto do erro para a tela: as mensagens da API juntas ({ mensagem } ou texto) ou, sem elas, a mensagem do erro.
+export function textoErro(erro, padrao = "Não foi possível concluir a operação.") {
+
+    return (erro?.erros || []).map((x) => x?.mensagem ?? x).filter((x) => typeof x === "string" && x).join(" ") || erro?.message || padrao;
+}
