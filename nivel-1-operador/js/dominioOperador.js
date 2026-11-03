@@ -320,6 +320,8 @@ export function motivoRecursoIndisponivel(estado,identidade,data,inicio,filtros=
     autorizar(identidade,'consultar');
     const horario=motivoNovoAgendamento(data,inicio,agoraBrasil(instante),filtros.categoria);if(horario)return horario;
     const recursos=consultarRecursos(estado,identidade),v=recursos.find(r=>r.id===filtros.veiculoId&&r.tipo==='Veículos');
+    // Agenda do instrutor (sem veículo escolhido): o motivo vem do instrutor; o veículo é escolhido ao agendar.
+    if(!v&&filtros.instrutorId){const i=recursos.find(r=>r.id===filtros.instrutorId&&r.tipo==='Instrutores');if(!i)return 'Instrutor não cadastrado ou sem autorização operacional';if(!recursoAtivo(i))return 'Instrutor indisponível';if(!(new Date(data+'T12:00:00Z').getUTCDay()===6&&filtros.categoria!=='D')){const almoco=motivoAlmoco(i,inicio);if(almoco)return almoco;}if(!livreNaData(i,data,inicio,fimDaAula(inicio)))return 'Instrutor fora da jornada ou bloqueado nesta data';return 'Instrutor ou veículos ocupados neste horário';}
     if(!v)return 'Veículo não cadastrado ou sem autorização operacional';
     if(!recursoAtivo(v))return 'Veículo indisponível';
     if(!livreNaData(v,data,inicio,fimDaAula(inicio)))return 'Veículo fora da jornada ou bloqueado nesta data';

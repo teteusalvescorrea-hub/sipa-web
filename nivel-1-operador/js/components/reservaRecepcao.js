@@ -24,7 +24,9 @@ export function montarReservaRecepcao(raiz,servico,executar){
    }
    const pares=await servico.pares(data,hora,filtros);if(ticket!==versao)return;
    if(!pares.length)throw new Error('Nenhum instrutor e veículo disponível neste horário. Confira a jornada, o almoço e os conflitos.');
-   const par=select(pares.map((p,i)=>[String(i),`${dados.recursos.find(r=>r.id===p.instrutorId)?.nome||'Instrutor'} · ${dados.recursos.find(r=>r.id===p.veiculoId)?.nome||'Veículo'} · Categoria ${p.categoria}${p.categoria==='B'?' · '+nomeCambio(dados.recursos.find(r=>r.id===p.veiculoId)?.tipoCambio):''}`]),'0');par.dataset.opReservaPar='';
+   // Vindo da agenda do instrutor, a escolha é só do veículo (os dele livres no horário).
+   const soVeiculo=!!filtros.instrutorId&&!filtros.veiculoId,veiculoDo=p=>dados.recursos.find(r=>r.id===p.veiculoId);
+   const par=select(pares.map((p,i)=>[String(i),[...(soVeiculo?[]:[dados.recursos.find(r=>r.id===p.instrutorId)?.nome||'Instrutor']),[veiculoDo(p)?.modelo||veiculoDo(p)?.nome||'Veículo',veiculoDo(p)?.placa].filter(Boolean).join(' '),`Categoria ${p.categoria}${p.categoria==='B'?' · '+nomeCambio(veiculoDo(p)?.tipoCambio):''}`].join(' · ')]),'0');par.dataset.opReservaPar='';
    const busca=entrada('search');busca.placeholder='Buscar aluno por nome ou CPF';busca.dataset.opReservaBusca='';
    const lista=el('div',undefined,'op-reserva-resultados'),saldo=el('p','Selecione um aluno para consultar seus créditos.','op-help'),erro=el('p');erro.setAttribute('role','alert');
    let selecionado=null,buscando=0,ocupado=false;
@@ -50,7 +52,7 @@ export function montarReservaRecepcao(raiz,servico,executar){
    const local=el('p',undefined,'op-help');
    const atualizarLocal=()=>{const p=pares[Number(par.value)];local.textContent='Local da aula: '+(p.categoria==='D'?localCategoriaD(data)?.nome:p.categoria==='A'?obterUnidadeInstitucional('Vila Velha')?.nome:localCarro({unidadeCarro:servico.identidade.unidade},data)?.nome||'Conforme operação autorizada');};
    par.addEventListener('change',atualizarLocal);atualizarLocal();
-   corpo.replaceChildren(el('p',`${formatarData(data)} · ${hora}–${fimDaAula(hora)}`),campo('Instrutor responsável · veículo selecionado · categoria',par),local,campo('Selecionar aluno · nome ou CPF',busca),lista,saldo,erro,acoes);
+   corpo.replaceChildren(el('p',`${formatarData(data)} · ${hora}–${fimDaAula(hora)}`),campo(soVeiculo?`Veículo da aula · ${dados.recursos.find(r=>r.id===filtros.instrutorId)?.nome||'instrutor'}`:'Instrutor responsável · veículo selecionado · categoria',par),local,campo('Selecionar aluno · nome ou CPF',busca),lista,saldo,erro,acoes);
    await pesquisar();if(!janela.open)janela.showModal();busca.focus();
   }catch(e){
    mostrarAviso(raiz,'Não foi possível agendar','opReservaErro',el('p',e?.message||'Não foi possível concluir a operação.','op-help'));

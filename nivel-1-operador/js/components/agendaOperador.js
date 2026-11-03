@@ -1,6 +1,6 @@
 import {recursoMotoCentral,motivoRecursoIndisponivel} from '../dominioOperador.js';
 import {resolverInstrutorCarro,recursoCarroConsultavel,operacaoCarro,localCarro} from '../../../shared/js/operacaoCarro.js';
-import {recursoCategoriaD,recursosOperacionaisD,almocoConfigurado} from '../../../shared/js/categorias.js';
+import {recursosOperacionaisD,almocoConfigurado} from '../../../shared/js/categorias.js';
 import { hojeBrasil, somarDias, diaSemana, formatarData, dataPorExtenso, datasDoMes, feriadosBrasileiros, dataValida } from "../../../shared/js/calendario.js";
 import { STATUS_AGENDAMENTO, motivoNovoAgendamento, motivoFechamento, paresDisponiveis } from "../../../shared/js/disponibilidade.js";
 import { ordenarAulas } from "../consultasOperador.js";
@@ -29,19 +29,15 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
     const controles = el("div", undefined, "op-agenda-filters op-form-fields");
 
     controles.prepend(dataInput.parentElement);
-    const seletorVeiculo=select([["","Selecionar veículo"]]);seletorVeiculo.dataset.agendaVeiculo='';
-    seletorVeiculo.addEventListener('change',()=>{const r=veiculosAutorizados().find(r=>r.id===seletorVeiculo.value);if(r)selecionar(r);else{filtros.veiculoId='';renderizar();}});
-    const campoVeiculo=campo('Selecione o veículo para visualizar a agenda',seletorVeiculo);campoVeiculo.className='op-agenda-seletor';aprimorarSelect(seletorVeiculo,{placeholder:'Busque o veículo...',busca:'Buscar placa, modelo ou instrutor...',vazio:'Nenhum veículo encontrado.'});
-    for (const [key, titulo, tipo] of [["instrutorId", "Instrutor", "Instrutores"], ["veiculoId", "Veículo", "Veículos"]]) {
-        if(key==='veiculoId')continue;
-        const controle = select([["", "Todos"], ...obterEstado().recursos.filter(r => (recursoCategoriaD(r)?recursosOperacionaisD(obterEstado().recursos).some(x=>x.id===r.id):recursoMotoCentral(r)||recursoCarroConsultavel(r,unidade)) && r.tipo === tipo).map(r => [r.id, r.nome])]);
-        controle.dataset.agendaFiltro = key; controle.addEventListener("change", () => { filtros[key] = controle.value; renderizar(); }); controles.append(campo(titulo, controle));
-    }
+    // A agenda é do instrutor (decisão do João em 31/10): o veículo é escolhido no Agendar, entre os dele livres no horário.
+    const seletorInstrutor=select([["","Selecionar instrutor"]]);seletorInstrutor.dataset.agendaInstrutor='';
+    seletorInstrutor.addEventListener('change',()=>{const i=instrutoresAutorizados().find(r=>r.id===seletorInstrutor.value);if(i)selecionar(i);else{filtros.instrutorId='';renderizar();}});
+    const campoInstrutor=campo('Selecione o instrutor para visualizar a agenda',seletorInstrutor);campoInstrutor.className='op-agenda-seletor';aprimorarSelect(seletorInstrutor,{placeholder:'Busque o instrutor...',busca:'Buscar instrutor, categoria ou veículo...',vazio:'Nenhum instrutor encontrado.'});
     for (const [key, titulo, opcoes] of [["categoria", "Categoria", [["", "Todas"], "A", "B", "D"]], ["status", "Situação", [["", "Todas"], ...Object.entries(STATUS_AGENDAMENTO)]]]) {
         const controle = select(opcoes); controle.dataset.agendaFiltro = key;
         controle.addEventListener("change", () => { filtros[key] = controle.value; renderizar(); }); controles.append(campo(titulo, controle));
     }
-    const limpar = botao("Limpar filtros", () => { for(const k of ['instrutorId','status'])filtros[k]=''; controles.querySelectorAll("select").forEach(s => { if(['instrutorId','status'].includes(s.dataset.agendaFiltro))s.value = ""; }); renderizar(); });
+    const limpar = botao("Limpar filtros", () => { filtros.status=''; controles.querySelectorAll("select").forEach(s => { if(s.dataset.agendaFiltro==='status')s.value = ""; }); renderizar(); });
     painelFiltros.append(resumoFiltros, controles, limpar);
     const feedback = el("p", "", "op-agenda-success"); feedback.hidden = true; feedback.setAttribute("role", "status"); feedback.tabIndex = -1;
     const legenda = el("div", undefined, "op-agenda-legenda");
@@ -49,13 +45,13 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
     const conteudo = el("div", undefined, "op-agenda-content");
     const diagnostico=el('p',undefined,'op-help');diagnostico.setAttribute('role','status');
     const escolha=el('section',undefined,'op-agenda-escolha'), cabecalho=el('div',undefined,'op-agenda-veiculo-heading');
-    toolbar.prepend(campoVeiculo);painel.append(toolbar,escolha,cabecalho, painelFiltros, diagnostico, feedback, legenda, conteudo);
-    // O veículo é escolhido na central, nunca implicitamente pelo primeiro recurso.
-    seletorVeiculo.parentElement.hidden=false;
+    toolbar.prepend(campoInstrutor);painel.append(toolbar,escolha,cabecalho, painelFiltros, diagnostico, feedback, legenda, conteudo);
+    // O instrutor é escolhido na central, nunca implicitamente pelo primeiro recurso.
+    seletorInstrutor.parentElement.hidden=false;
     controles.querySelector('[data-agenda-filtro=categoria]').parentElement.hidden=true;
     function aulasConsultaveis(){const e=obterEstado();return filtros.categoria==='D'?(e.agendaOnibus||e.aulas):filtros.categoria==='A'?(e.agendaMotos||e.aulas):e.aulas;}
-    function selecionar(r){filtros.veiculoId=r.id;filtros.categoria=r.categoria;filtros.instrutorId='';filtros.status='';controles.querySelectorAll('select').forEach(s=>s.value=s.dataset.agendaFiltro==='categoria'?r.categoria:'');renderizar();}
-    function central(){escolha.replaceChildren(el('p','Selecione um veículo para consultar os horários e agendamentos.','op-help'));}
+    function selecionar(i){const cats=categoriasDoInstrutor(i);filtros.instrutorId=i.id;filtros.veiculoId='';filtros.categoria=cats.length===1?cats[0]:'';filtros.status='';controles.querySelectorAll('select').forEach(s=>s.value=s.dataset.agendaFiltro==='categoria'?filtros.categoria:'');renderizar();}
+    function central(){escolha.replaceChildren(el('p','Selecione um instrutor para consultar os horários e agendamentos.','op-help'));}
     function aulasData(d) {
         // A porta de dados já restringe alunos autorizados. D usa a unidade
         // operacional Cobilândia, mesmo para alunos vinculados à recepção atual.
@@ -83,10 +79,11 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
             aulasData(d).forEach(a => secao.append(cardAula(obterEstado(), a, detalhes.abrir, modo === "semana" ? "semana" : "agenda"))); return secao;
         }
         if(modo==='semana'){heading.replaceChildren(el('h3',['DOM','SEG','TER','QUA','QUI','SEX','SAB'][diaSemana(d)]),el('span',formatarData(d).slice(0,5)));heading.title=dataPorExtenso(d);if(d===hojeBrasil())heading.setAttribute('aria-current','date');}
-        if(filtros.categoria==='B'&&operacaoCarro({unidadeCarro:unidade},d)?.deslocamento)heading.append(el('small','Local: '+localCarro({unidadeCarro:unidade},d).nome,'op-agenda-local'));
+        if(categoriasAtuais.includes('B')&&operacaoCarro({unidadeCarro:unidade},d)?.deslocamento)heading.append(el('small','Local: '+localCarro({unidadeCarro:unidade},d).nome,'op-agenda-local'));
         const aulas = aulasData(d);
         for (let h = 7; h <= 18; h++) {
-            const hora = `${String(h).padStart(2, "0")}:00`, pares = obterPares(obterEstado(), d, hora, filtros).filter(p=>p.veiculoId===filtros.veiculoId&&p.categoria===filtros.categoria), motivo = motivoNovoAgendamento(d, hora, undefined, filtros.categoria || (pares.some(p=>p.categoria==='D')?'D':undefined));
+            const hora = `${String(h).padStart(2, "0")}:00`, pares = categoriasAtuais.flatMap(c=>obterPares(obterEstado(), d, hora, {...filtros,categoria:c}).filter(p=>p.instrutorId===filtros.instrutorId&&p.categoria===c));
+            const categoriaHorario = pares[0]?.categoria || categoriasAtuais[0], motivo = motivoNovoAgendamento(d, hora, undefined, categoriaHorario);
             const linha = el("div", undefined, "op-agenda-slot"); linha.dataset.agendaHorario = hora;
             linha.append(el("time", hora)); const celula = el("div", undefined, "op-slot-conteudo");
             const ocupadas = aulas.filter(a => a.inicio === hora);
@@ -94,13 +91,13 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
             if (!motivo && pares.length) {
                 const categorias = [...new Set(pares.map(p => p.categoria))].join(" / ");
                 const livre = botao("", () => {
-                    if (!aoAgendar?.(d, hora,{...filtros})) { feedback.textContent = "Este horário não está mais disponível. Confira a grade atualizada."; feedback.hidden = false; renderizar(); }
+                    if (!aoAgendar?.(d, hora,{...filtros,categoria:categoriaHorario,unidade:veiculosDoInstrutor(selecionadoAtual).find(v=>v.categoria===categoriaHorario)?.unidade})) { feedback.textContent = "Este horário não está mais disponível. Confira a grade atualizada."; feedback.hidden = false; renderizar(); }
                 }, "op-slot-disponivel");
                 livre.dataset.agendarHorario = hora; livre.dataset.agendarData = d; livre.disabled = !aoAgendar;
                 livre.setAttribute("aria-label", `Agendar ${formatarData(d)} às ${hora}, categoria ${categorias}`);
                 livre.append(el("strong", "＋ Agendar"), el("span", `Categoria ${categorias}`)); celula.append(livre);
             } else if (!ocupadas.length) {
-                const mensagem = motivo || motivoRecursoIndisponivel(obterEstado(),{id:'consulta-agenda',unidade,permissoes:['consultar']},d,hora,filtros);
+                const mensagem = motivo || motivoRecursoIndisponivel(obterEstado(),{id:'consulta-agenda',unidade,permissoes:['consultar']},d,hora,{...filtros,categoria:categoriaHorario});
                 const curto = mensagem.startsWith('Horário passado')?'Passado':mensagem.includes('almoço')||mensagem.includes('Intervalo')?'Intervalo':mensagem;
                 const bloqueado = el("p", curto, `op-slot-closed${mensagem.includes("almoço") ? " op-slot-almoco" : ""}`); bloqueado.title = mensagem; celula.append(bloqueado);
             } else {
@@ -131,26 +128,29 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
         return grid;
     }
     function veiculosAutorizados(){return obterEstado().recursos.filter(r=>r.tipo==='Veículos'&&(r.categoria==='D'?recursosOperacionaisD(obterEstado().recursos).some(x=>x.id===r.id):r.categoria==='A'?recursoMotoCentral(r):r.categoria==='B'&&recursoCarroConsultavel(r,unidade)));}
-    function instrutorVinculado(r){return obterEstado().recursos.find(i=>i.tipo==='Instrutores'&&i.categorias?.includes(r.categoria)&&(r.categoria==='B'?i.id===resolverInstrutorCarro(obterEstado().recursos,r):r.categoria==='A'?i.veiculoIds?.includes(r.id):!i.veiculoIds?.length||i.veiculoIds.includes(r.id)));}
-    function atualizarSeletor(recursos){
-        seletorVeiculo.replaceChildren();const vazio=el('option','Selecionar veículo');vazio.value='';seletorVeiculo.append(vazio);
-        for(const [categoria,nome] of [['B','CARROS DA UNIDADE'],['A','MOTOS — CATEGORIA A'],['D','ÔNIBUS — CATEGORIA D']]){const g=el('optgroup');g.label=nome;for(const r of recursos.filter(r=>r.categoria===categoria)){const i=instrutorVinculado(r);const o=el('option',[...(r.categoria==='B'?[r.placa||r.identificacao,r.modelo||r.nome,r.tipoCambio==='automatico'?'Automático':r.tipoCambio==='manual'?'Manual':'Câmbio pendente']:[r.nome]),i?.nome||'Instrutor não vinculado'].filter(Boolean).join(' — '));o.value=r.id;g.append(o);}if(g.children.length)seletorVeiculo.append(g);}
+    // O instrutor atende o veículo: carro pelo vínculo do carro, moto pelos veículos do instrutor, ônibus compartilhado.
+    function atende(i,v){return i.tipo==='Instrutores'&&i.categorias?.includes(v.categoria)&&(v.categoria==='B'?i.id===resolverInstrutorCarro(obterEstado().recursos,v):v.categoria==='A'?i.veiculoIds?.includes(v.id):!i.veiculoIds?.length||i.veiculoIds.includes(v.id));}
+    function veiculosDoInstrutor(i){return i?veiculosAutorizados().filter(v=>atende(i,v)):[];}
+    function categoriasDoInstrutor(i){return ['B','A','D'].filter(c=>veiculosDoInstrutor(i).some(v=>v.categoria===c));}
+    function instrutoresAutorizados(){return obterEstado().recursos.filter(i=>i.tipo==='Instrutores'&&i.ativo!==false&&veiculosDoInstrutor(i).length).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));}
+    let selecionadoAtual=null,categoriasAtuais=[];
+    function atualizarSeletor(instrutores){
+        seletorInstrutor.replaceChildren();const vazio=el('option','Selecionar instrutor');vazio.value='';seletorInstrutor.append(vazio);
+        for(const i of instrutores){const o=el('option',[i.nome,'Categoria '+categoriasDoInstrutor(i).join(', '),veiculosDoInstrutor(i).map(v=>v.modelo||v.nome).join(', ')].join(' — '));o.value=i.id;seletorInstrutor.append(o);}
     }
     function renderizar() {
-        const recursos=veiculosAutorizados();
-        atualizarSeletor(recursos);
-        if(!recursos.some(r=>r.id===filtros.veiculoId))filtros.veiculoId='';
-        const selecionado=recursos.find(r=>r.id===filtros.veiculoId);
+        const instrutores=instrutoresAutorizados();
+        atualizarSeletor(instrutores);
+        if(!instrutores.some(i=>i.id===filtros.instrutorId))filtros.instrutorId='';
+        const selecionado=instrutores.find(i=>i.id===filtros.instrutorId);selecionadoAtual=selecionado||null;categoriasAtuais=categoriasDoInstrutor(selecionado);
         escolha.hidden=!!selecionado;
         for(const n of [cabecalho,painelFiltros,diagnostico,legenda,conteudo])n.hidden=!selecionado;
-        seletorVeiculo.value=filtros.veiculoId;
-        if(!selecionado){for(const n of [navegacao,modos,dataInput.parentElement])n.hidden=true;conteudo.replaceChildren();feedback.hidden=true;central(recursos);return;}
-        const vinculado=instrutorVinculado(selecionado);
-        cabecalho.replaceChildren(el('h2',`Agenda de: ${selecionado.nome}`),el('p',`Categoria ${selecionado.categoria} · ${selecionado.categoria==='D'?'Ônibus · operação compartilhada':selecionado.categoria==='A'?'Moto · Centro de Vila Velha':`Carro · ${selecionado.unidade}`}${vinculado?' · '+vinculado.nome:''}`,'op-help'));
-        if(selecionado.categoria==='B'&&operacaoCarro({unidadeCarro:unidade},data)?.deslocamento)cabecalho.append(el('p','Local das aulas hoje: '+localCarro({unidadeCarro:unidade},data).nome+'. Unidade responsável pelo aluno preservada.','op-agenda-local'));
-        const instrutores=obterEstado().recursos.filter(r=>r.tipo==='Instrutores'&&r.categorias?.includes(selecionado.categoria)&&(selecionado.categoria==='B'?r.id===resolverInstrutorCarro(obterEstado().recursos,selecionado):selecionado.categoria==='A'?r.veiculoIds?.includes(selecionado.id):!r.veiculoIds?.length||r.veiculoIds.includes(selecionado.id)));
-        const filtroInstrutor=controles.querySelector('[data-agenda-filtro=instrutorId]');if(!instrutores.some(i=>i.id===filtros.instrutorId))filtros.instrutorId='';filtroInstrutor.replaceChildren(...[['','Todos'],...instrutores.map(i=>[i.id,i.nome])].map(([id,nome])=>{const o=el('option',nome);o.value=id;return o;}));filtroInstrutor.value=filtros.instrutorId;
-        diagnostico.textContent=!recursos.length?'Sem veículos ativos nesta unidade. Cadastre os recursos ou prepare o cenário fictício local.':!instrutores.length?'Sem instrutores ativos nesta unidade. Cadastre o profissional e sua disponibilidade.':instrutores.some(i=>!almocoConfigurado(i))?'Há instrutores sem almoço configurado: 11h, 12h e 13h ficam bloqueados para esses profissionais. Cadastros existentes não serão alterados automaticamente.':'Selecione um veículo e uma data futura. Os horários livres consideram jornada, almoço, bloqueios e reservas existentes.';
+        seletorInstrutor.value=filtros.instrutorId;
+        if(!selecionado){for(const n of [navegacao,modos,dataInput.parentElement])n.hidden=true;conteudo.replaceChildren();feedback.hidden=true;central();return;}
+        const veiculos=veiculosDoInstrutor(selecionado);
+        cabecalho.replaceChildren(el('h2',`Agenda de: ${selecionado.nome}`),el('p',`Categoria ${categoriasAtuais.join(', ')} · ${veiculos.map(v=>[v.modelo||v.nome,v.placa].filter(Boolean).join(' ')).join(', ')} · o veículo é escolhido ao agendar`,'op-help'));
+        if(categoriasAtuais.includes('B')&&operacaoCarro({unidadeCarro:unidade},data)?.deslocamento)cabecalho.append(el('p','Local das aulas hoje: '+localCarro({unidadeCarro:unidade},data).nome+'. Unidade responsável pelo aluno preservada.','op-agenda-local'));
+        diagnostico.textContent=!almocoConfigurado(selecionado)?'Instrutor sem almoço configurado: 11h, 12h e 13h ficam bloqueados. Cadastros existentes não são alterados automaticamente.':'Os horários livres consideram jornada, almoço, bloqueios e reservas existentes; o veículo é escolhido ao agendar.';
         diagnostico.hidden=true;cabecalho.title=diagnostico.textContent;
         for(const n of [navegacao,modos,dataInput.parentElement])n.hidden=!selecionado;
         dataInput.value = data;
