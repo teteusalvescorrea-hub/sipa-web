@@ -41,7 +41,10 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
     painelFiltros.append(resumoFiltros, controles, limpar);
     const feedback = el("p", "", "op-agenda-success"); feedback.hidden = true; feedback.setAttribute("role", "status"); feedback.tabIndex = -1;
     const legenda = el("div", undefined, "op-agenda-legenda");
-    for (const [texto, classe] of [["Disponível", "livre"], ["Confirmada", "confirmada"], ["Aguardando aceite", "aguardando"], ["Cancelada", "cancelada"], ["Fechado / bloqueado", "fechado"], ["Feriado", "feriado"], ["Ponto facultativo", "facultativo"]]) legenda.append(el("span", texto, `op-legenda-${classe}`));
+    // A legenda mostra só o que aparece na grade (atualizarLegenda depois de cada renderização).
+    const LEGENDA = [["Disponível", "livre", ".op-slot-disponivel"], ["Confirmada", "confirmada", ".op-aula-st-1"], ["Aguardando aceite", "aguardando", ".op-aula-st-3"], ["Cancelada", "cancelada", ".op-aula-st-2"], ["Realizada", "realizada", ".op-aula-st-5"], ["Fechado / almoço", "fechado", ".op-dia-fechado,.op-slot-almoco"], ["Feriado ou ponto facultativo", "feriado", ".op-day-special"]];
+    for (const [texto, classe, seletor] of LEGENDA) { const item = el("span", texto, `op-legenda-${classe}`); item.dataset.legenda = seletor; legenda.append(item); }
+    const atualizarLegenda = () => { for (const item of legenda.children) item.hidden = !conteudo.querySelector(item.dataset.legenda); };
     const conteudo = el("div", undefined, "op-agenda-content");
     const diagnostico=el('p',undefined,'op-help');diagnostico.setAttribute('role','status');
     const escolha=el('section',undefined,'op-agenda-escolha'), cabecalho=el('div',undefined,'op-agenda-veiculo-heading');
@@ -79,12 +82,13 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
             aulasData(d).forEach(a => secao.append(cardAula(obterEstado(), a, detalhes.abrir, modo === "semana" ? "semana" : "agenda"))); return secao;
         }
         if(modo==='semana'){heading.replaceChildren(el('h3',['DOM','SEG','TER','QUA','QUI','SEX','SAB'][diaSemana(d)]),el('span',formatarData(d).slice(0,5)));heading.title=dataPorExtenso(d);if(d===hojeBrasil())heading.setAttribute('aria-current','date');}
-        if(categoriasAtuais.includes('B')&&operacaoCarro({unidadeCarro:unidade},d)?.deslocamento)heading.append(el('small','Local: '+localCarro({unidadeCarro:unidade},d).nome,'op-agenda-local'));
+        if(categoriasAtuais.includes('B')&&operacaoCarro({unidadeCarro:unidade},d)?.deslocamento)heading.append(el('small',localCarro({unidadeCarro:unidade},d).nome.replace(/^Unidade\s+/i,''),'op-agenda-local op-agenda-local-etiqueta'));
         const aulas = aulasData(d);
         for (let h = 7; h <= 18; h++) {
             const hora = `${String(h).padStart(2, "0")}:00`, pares = categoriasAtuais.flatMap(c=>obterPares(obterEstado(), d, hora, {...filtros,categoria:c}).filter(p=>p.instrutorId===filtros.instrutorId&&p.categoria===c));
             const categoriaHorario = pares[0]?.categoria || categoriasAtuais[0], motivo = motivoNovoAgendamento(d, hora, undefined, categoriaHorario);
             const linha = el("div", undefined, "op-agenda-slot"); linha.dataset.agendaHorario = hora;
+            if (d === hojeBrasil() && Number(new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }).format(new Date())) === h) linha.classList.add("op-slot-agora");
             linha.append(el("time", hora)); const celula = el("div", undefined, "op-slot-conteudo");
             const ocupadas = aulas.filter(a => a.inicio === hora);
             ocupadas.forEach(a => celula.append(cardAula(obterEstado(), a, detalhes.abrir, modo === "semana" ? "semana" : "agenda")));
@@ -98,8 +102,15 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
                 livre.append(el("strong", "＋ Agendar"), el("span", `Categoria ${categorias}`)); celula.append(livre);
             } else if (!ocupadas.length) {
                 const mensagem = motivo || motivoRecursoIndisponivel(obterEstado(),{id:'consulta-agenda',unidade,permissoes:['consultar']},d,hora,{...filtros,categoria:categoriaHorario});
-                const curto = mensagem.startsWith('Horário passado')?'Passado':mensagem.includes('almoço')||mensagem.includes('Intervalo')?'Intervalo':mensagem;
-                const bloqueado = el("p", curto, `op-slot-closed${mensagem.includes("almoço") ? " op-slot-almoco" : ""}`); bloqueado.title = mensagem; celula.append(bloqueado);
+                // Sem texto repetido em cada horário: o dia fechado diz o motivo uma vez (no primeiro horário); passado e fora do
+                // expediente ficam vazios (o motivo continua no title); o almoço é uma faixa com "Almoço".
+                const diaFechado = fechado && mensagem.startsWith(fechado), almoco = mensagem.includes('almoço') || mensagem.includes('Intervalo');
+                let bloqueado;
+                if (diaFechado) bloqueado = h === 7 ? el("p", fechado, "op-slot-closed op-dia-fechado") : el("div", undefined, "op-slot-vazio op-slot-fechado");
+                else if (mensagem.startsWith('Horário passado')) bloqueado = el("div", undefined, "op-slot-vazio op-slot-passado");
+                else if (mensagem === 'Fora do expediente') bloqueado = el("div", undefined, "op-slot-vazio op-slot-fora");
+                else bloqueado = el("p", almoco ? 'Almoço' : mensagem, `op-slot-closed${almoco ? " op-slot-almoco" : ""}`);
+                bloqueado.title = mensagem; linha.classList.toggle('op-slot-indisponivel', !almoco); celula.append(bloqueado);
             } else {
                 // O próprio evento já identifica a ocupação; evita um segundo
                 // bloco repetitivo abaixo da aula, sem liberar outro agendamento.
@@ -155,7 +166,7 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
         for(const n of [navegacao,modos,dataInput.parentElement])n.hidden=!selecionado;
         dataInput.value = data;
         for (const b of modos.children) b.setAttribute("aria-pressed", String(b.dataset.agendaModo === modo));
-        resumoFiltros.textContent = `Filtros da agenda${Object.values(filtros).some(Boolean) ? ` · ${Object.values(filtros).filter(Boolean).length} ativo(s)` : ""}`;
+        resumoFiltros.textContent = `Filtros da agenda${filtros.status ? " · 1 ativo" : ""}`;
         const primeiro = somarDias(data, -((diaSemana(data) + 6) % 7));
         periodo.textContent = modo === "dia" ? dataPorExtenso(data) : modo === "semana" ? `${formatarData(primeiro)} — ${formatarData(somarDias(primeiro, 6))}` : new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${data}T12:00:00Z`));
         conteudo.replaceChildren(); conteudo.dataset.agendaVista = modo;
@@ -165,6 +176,7 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
             const horas=el('div',undefined,'op-week-hours');horas.append(el('strong','Horário'));for(let h=7;h<=18;h++)horas.append(el('time',String(h).padStart(2,'0')+':00'));semana.append(horas);
             for (let i = 0; i < 7; i++) semana.append(gradeDoDia(somarDias(primeiro, i))); conteudo.append(semana);
         } else conteudo.append(gradeDoDia(data));
+        atualizarLegenda();
     }
     renderizar(); return {
         atualizar: renderizar,

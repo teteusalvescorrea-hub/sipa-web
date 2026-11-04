@@ -16,11 +16,11 @@ export function cardAula(estado, aula, abrir, variante = "completo") {
     if (typeof variante === "boolean") variante = variante ? "semana" : "completo";
     const nomes = identificarAula(estado, aula);
     if (["agenda", "semana"].includes(variante)) {
-        const evento = botao("", () => abrir(aula), `op-aula-card op-aula-evento${variante === "semana" ? " op-aula-compact" : ""}`);
+        const evento = botao("", () => abrir(aula), `op-aula-card op-aula-evento op-aula-st-${aula.status}${variante === "semana" ? " op-aula-compact" : ""}`);
         evento.dataset.aulaId = aula.id;
         evento.setAttribute("aria-label", `Ver detalhes: ${nomes.aluno}, ${aula.inicio} às ${aula.fim}, categoria ${aula.categoria}, ${STATUS_AGENDAMENTO[aula.status]}`);
         const nome = el("span", nomes.aluno, "op-evento-nome"); nome.title = nomes.aluno;
-        evento.append(nome, el("span", `${aula.inicio} às ${aula.fim}`, "op-evento-horario"), el("span", aula.categoria, "op-evento-categoria"),
+        evento.append(nome, el("span", `${aula.inicio} às ${aula.fim}`, "op-evento-horario"), el("span", [aula.categoria, nomes.veiculo !== "Veículo não informado" ? nomes.veiculo : ""].filter(Boolean).join(" · "), "op-evento-categoria"),
             el("span", STATUS_AGENDAMENTO[aula.status], `op-badge op-aula-status-${aula.status}`));
         evento.querySelector(".op-badge").title = STATUS_AGENDAMENTO[aula.status];
         return evento;
