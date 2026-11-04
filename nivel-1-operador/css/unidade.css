@@ -357,9 +357,10 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-unidade [data-op-ficha] .op-resumo-barra{gap:2px;height:14px;border-radius:7px}
 .op-resumo-seg{display:block;height:100%}
 .op-resumo-seg:first-child{border-radius:7px 0 0 7px}.op-resumo-seg:last-child{border-radius:0 7px 7px 0}
-.op-resumo-realizadas{--cor:#1769aa}.op-resumo-reservadas{--cor:#6aa6d8}.op-resumo-faltas{--cor:#b42318}.op-resumo-disponiveis{--cor:#2e8b57}
+/* Sóbrio: tons do azul do SIPA; disponível é o trilho claro. */
+.op-resumo-realizadas{--cor:#1769aa}.op-resumo-reservadas{--cor:#7fb0dc}.op-resumo-faltas{--cor:#8a9bad}.op-resumo-disponiveis{--cor:#d6e4f0}
 .op-resumo-seg{background:var(--cor)}
-.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item{padding:10px 8px;border-radius:10px;border-top:4px solid var(--cor);background:color-mix(in srgb,var(--cor) 8%,transparent);text-align:center}
-.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item dd{color:var(--cor)}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item{padding:4px 8px;text-align:center}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item dt::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:var(--cor);vertical-align:middle;box-shadow:inset 0 0 0 1px rgba(16,35,63,.12)}
 .op-unidade [data-op-ficha] .op-aulas-pendentes{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#fff4e0;color:#8a5300;font-size:13px}
 [data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-pendentes{background:#3a2a0e;color:#ffd38a}

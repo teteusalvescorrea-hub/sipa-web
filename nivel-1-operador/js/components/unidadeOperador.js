@@ -244,17 +244,15 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
                 item.append(topo,barra,numeros);grade.append(item);
             }
             fichaConteudo.append(grade);
-            const pendentes=(a.contratacoes||[]).filter(c=>c.status==='Pendente');
-            if(pendentes.length){const aviso=el('p',undefined,'op-aulas-pendentes');aviso.setAttribute('role','status');aviso.append(el('strong','Aguardando aprovação: '),pendentes.map(c=>`${c.pacote?'Pacote '+c.pacote:'Avulsa'} (${c.quantidade} aulas${c.categorias.length?' · '+c.categorias.join('/'):''})`).join('; ')+'. Só entra no saldo depois que a Gerência aprovar o pagamento.');fichaConteudo.append(aviso);}
             // Aulas extras (decisão do João em 03/11): pacote da autoescola ou aulas avulsas por categoria, aqui na aba Aulas.
             if(permissoes.includes('cadastrar')&&servico.contratarPacote){
-                const acoes=el('div',undefined,'op-ficha-acoes op-aulas-extras'),aprova=identidade.nivel>=2,cats=['A','B','D'].filter(c=>String(a.categoria).includes(c));
+                const acoes=el('div',undefined,'op-ficha-acoes op-aulas-extras'),cats=['A','B','D'].filter(c=>String(a.categoria).includes(c));
                 const pacote=botao('Contratar pacote',async()=>{
                     let pacotes;try{pacotes=await servico.pacotes();}catch(e){informar(e.message,true);return;}
                     if(!pacotes.length){informar('Nenhum pacote cadastrado nesta autoescola.',true);return;}
-                    formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,[p.nome,/aulas/i.test(p.nome)?'':p.quantidade+' aulas',p.categorias.length&&!p.nome.includes(p.categorias.join('/'))?'Categoria '+p.categorias.join('/'):''].filter(Boolean).join(' · ')])],...(aprova?[['aprovar','Pagamento recebido: aprovar agora','checkbox',true]]:[])],
-                        d=>executar(()=>servico.contratarPacote(a.id,d.pacote,d.aprovar===true),aprova&&d.aprovar?'Pacote contratado e aprovado.':'Pacote contratado. Aguarda a aprovação da Gerência.',()=>renderizarFicha()),
-                        {confirmacao:false,descricao:`${a.nome}. `+(aprova?'Sem marcar o pagamento, a contratação fica pendente.':'A contratação fica pendente até a Gerência aprovar o pagamento.')});
+                    formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,[p.nome,/aulas/i.test(p.nome)?'':p.quantidade+' aulas',p.categorias.length&&!p.nome.includes(p.categorias.join('/'))?'Categoria '+p.categorias.join('/'):''].filter(Boolean).join(' · ')])]],
+                        d=>executar(()=>servico.contratarPacote(a.id,d.pacote),'Pacote contratado.',()=>renderizarFicha()),
+                        {confirmacao:false,descricao:`${a.nome}. As aulas do pacote entram já liberadas para agendar.`});
                 });pacote.dataset.opContratarPacote='';
                 const avulsas=botao('Adicionar aulas avulsas',()=>formularioAdministrativo(raiz,'Adicionar aulas avulsas',[['categoria','Categoria','select',cats[0]||'B',(cats.length?cats:['A','B','D']).map(c=>[c,`${NOMES_CATEGORIA[c]} · Categoria ${c}`])],['quantidade','Quantidade de aulas','number','1']],
                     d=>executar(()=>servico.adicionarAulasAvulsas(a.id,d.categoria,d.quantidade),'Aulas adicionadas.',()=>renderizarFicha()),{confirmacao:false,descricao:`${a.nome}. As aulas entram já liberadas para agendar.`}));avulsas.dataset.opAulasAvulsas='';

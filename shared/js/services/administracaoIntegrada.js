@@ -157,7 +157,7 @@ export function adaptarRecursos(vinculos,u){
  for(const v of vinculos){
   const cats=(v.motoristaCategorias||[]).map(categoria).filter(Boolean),unidades=(v.unidades||[]).map(u.chave).filter(Boolean),veiculos=v.veiculos||[];
   const ativo=v.ativo??!(v.cnhVencida||v.credenciamentoVencido);
-  if(!recursos.has(v.motoristaId))recursos.set(v.motoristaId,{id:v.motoristaId,vinculoId:v.id,tipo:'Instrutores',nome:v.motoristaNome,cpf:digitos(v.motoristaCpf),identificacao:digitos(v.motoristaCpf),telefone:v.motoristaTelefone||'',email:v.motoristaEmail||'',
+  if(!recursos.has(v.motoristaId))recursos.set(v.motoristaId,{id:v.motoristaId,vinculoId:v.id,tipo:'Instrutores',nome:v.motoristaNome,cpf:digitos(v.motoristaCpf),identificacao:String(v.motoristaCodigo??'')||digitos(v.motoristaCpf),telefone:v.motoristaTelefone||'',email:v.motoristaEmail||'',
    categorias:cats,unidade:unidades[0]||'',unidades,ativo:ativo===true,disponivel:v.disponivel??true,horarioAlmoco:v.horarioAlmoco??null,observacoes:v.observacoes||'',
    veiculoIds:veiculos.map(x=>x.id??x.veiculoId),...(jornadaLocal(v.jornada,cats)?{disponibilidade:jornadaLocal(v.jornada,cats)}:{}),deveTrocarSenha:v.deveTrocarSenha,podeRedefinirAcesso:v.podeRedefinirAcesso,origem:'api'});
   for(const x of veiculos){const id=x.id??x.veiculoId;if(recursos.has(id))continue;const c=categoria(x.categoria);
@@ -315,12 +315,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   },
   // Pacotes da autoescola para contratar no balcão.
   async pacotes(){return lista(await chamar(GetCache('pacotes'))).map(p=>({id:p.id,nome:p.nomeExibicao||p.nome,quantidade:p.quantidadeAulas,preco:p.preco,categorias:(p.categorias||[]).map(categoria).filter(Boolean)}));},
-  // A contratação nasce pendente; com aprovar (pagamento recebido), a Gerência e o Master já aprovam.
-  async contratarPacote(alunoId,pacoteId,aprovar=false){
-   const r=await chamar(Post('contratacoes',{pacoteId,alunoId}));
-   if(aprovar&&op.nivel>=2&&r?.id)await chamar(Post(`contratacoes/${r.id}/aprovar`,{}));
-   return r;
-  },
+  // No balcão o pacote entra já aprovado (o financeiro fica em outro sistema).
+  async contratarPacote(alunoId,pacoteId){return chamar(Post('contratacoes',{pacoteId,alunoId}));},
   // Aulas extras avulsas no balcão: já aprovadas, como as do cadastro.
   async adicionarAulasAvulsas(alunoId,categoria,quantidade){return chamar(Post('contratacoes',{alunoId,categoria:NUMERO[categoria],quantidadeAulas:Number(quantidade)}));},
   async alunosAgendaveis(data,inicio,par){
