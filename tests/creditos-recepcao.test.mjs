@@ -37,8 +37,9 @@ test('legado adquirido sem segunda liberacao; saldo liquido, retencao, falta e z
  a.creditos.D.disponiveis=999;assert.equal(resumirCreditosRecepcao(a,aulas).categorias.D.disponiveis,6);
  a.creditos.D.disponiveis=0;assert.equal(resumirCreditosRecepcao(a,[]).categorias.D.disponiveis,0);
 });
-test('bloqueios administrativos e financeiros explicitos preservam saldo armazenado',()=>{
- for(const alteracao of [{financeiro:'Em atraso'},{financeiro:'Pendente',verificacaoFinanceira:{origem:'manual-local'}},{bloqueioAdministrativo:{ativo:true}},{bloqueioAgendamento:{ativo:true}}]){
+test('bloqueios administrativos preservam saldo armazenado; financeiro nao bloqueia (sem integracao, 03/11)',()=>{
+ for(const alteracao of [{financeiro:'Em atraso'},{financeiro:'Pendente',verificacaoFinanceira:{origem:'manual-local'}}]){const a={...aluno(),...alteracao};assert.equal(resumirCreditosRecepcao(a,[]).motivoBloqueio,'');}
+ for(const alteracao of [{bloqueioAdministrativo:{ativo:true}},{bloqueioAgendamento:{ativo:true}}]){
   const a={...aluno(),...alteracao},antes=structuredClone(a);assert.equal(resumirCreditosRecepcao(a,[]).categorias.D.disponiveis,0);assert.ok(resumirCreditosRecepcao(a,[]).motivoBloqueio);assert.deepEqual(a,antes);
  }
 });

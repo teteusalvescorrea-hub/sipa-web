@@ -16,7 +16,6 @@ function motivoInelegivel(a,p,dados,data,hora){
  const v=dados.recursos.find(r=>r.id===p.veiculoId);
  if(p.categoria==='B'&&a.tipoCambio&&v?.tipoCambio&&a.tipoCambio!==v.tipoCambio)return `câmbio ${nomeCambio(a.tipoCambio).toLocaleLowerCase('pt-BR')}, e este veículo é ${nomeCambio(v.tipoCambio).toLocaleLowerCase('pt-BR')}`;
  if(a.bloqueioAdministrativo?.ativo)return 'agendamento bloqueado pela administração';
- if(a.financeiro==='Em atraso')return 'financeiro em atraso';
  const c=a.creditos?.[p.categoria];if(c&&!(c.disponiveis>0))return `sem aulas disponíveis na categoria ${p.categoria}`;
  if(dados.aulas.some(x=>x.alunoId===a.id&&x.data===data&&x.inicio===hora&&ocupaRecurso(x)))return 'já tem aula neste horário';
  return 'não elegível neste horário (confira a ficha do aluno)';

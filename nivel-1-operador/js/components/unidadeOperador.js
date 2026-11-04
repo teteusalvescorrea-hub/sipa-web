@@ -243,7 +243,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             // realizadas sobre as adquiridas e os números que importam para agendar.
             const bloqueio=resumoLiberacao.motivoBloqueio,semSaldo=!bloqueio&&Object.values(resumoLiberacao.categorias||{}).every(s=>!(s?.disponiveis>0));
             const faixa=el('div',undefined,'op-aulas-liberacao'+(bloqueio?' op-aulas-bloqueada':semSaldo?' op-aulas-sem-saldo':''));faixa.setAttribute('role',bloqueio?'alert':'status');
-            faixa.append(el('strong',bloqueio?'Agendamento bloqueado':semSaldo?'Sem aulas disponíveis':'Liberado para agendar'),el('span',bloqueio?bloqueio:semSaldo?'Todas as aulas já estão reservadas ou realizadas. Contrate um pacote na aba Cadastro.':`Financeiro: ${a.financeiro||'não informado'}`));fichaConteudo.append(faixa);
+            faixa.append(el('strong',bloqueio?'Agendamento bloqueado':semSaldo?'Sem aulas disponíveis':'Liberado para agendar'),el('span',bloqueio?bloqueio:semSaldo?'Todas as aulas já estão reservadas ou realizadas. Contrate um pacote na aba Cadastro.':'Há aulas disponíveis para agendar.'));fichaConteudo.append(faixa);
             const grade=el('div',undefined,'op-resumo-aulas'),numero=(chave,v)=>{const n=el('strong',v===null||v===undefined?'—':String(v));n.dataset.opTotal=chave;return n;};
             for(const [c,resumo] of Object.entries(resumoAulas)){
                 const saldos=resumoLiberacao.categorias[c],item=el('section',undefined,'op-resumo-aulas-card');item.dataset.opResumoCategoria=c;

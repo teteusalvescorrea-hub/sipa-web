@@ -4,7 +4,7 @@ import {progressoPorCategoria} from './dominioAluno.js';
 // podem impedir o uso das aulas adquiridas; Pendente inicial nao e liberacao.
 export function motivoBloqueioCreditos(aluno){
  if(aluno.bloqueioAdministrativo?.ativo===true||aluno.bloqueioAgendamento?.ativo===true)return 'Agendamento bloqueado administrativamente. Consulte a recepção.';
- if(aluno.financeiro==='Em atraso'||(aluno.financeiro==='Pendente'&&aluno.verificacaoFinanceira))return 'Situação financeira com bloqueio registrado. Consulte a recepção.';
+ // Sem integração financeira por enquanto (decisão do João em 03/11): a situação financeira não bloqueia, como na API.
  return '';
 }
 // Projecao sem migracao: saldo liquido ja debitado nunca sofre segundo desconto.

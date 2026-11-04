@@ -11,7 +11,8 @@ test('cadastro adquirido habilita saldo sem pagamento; atalho anterior desativad
  const contexto={aluno:a,aulas:[],recursos:[],ocupacoes:[]},antes=structuredClone(contexto),d=projetarContaRecepcao(contexto);
  assert.equal(d.resumo.categorias.D.disponiveis,10);assert.equal(elegibilidadeContaRecepcao(d),'');assert.deepEqual(contexto,antes);
  assert.throws(()=>criarLiberacaoAgendaTeste(url,()=>url)(contexto,op,'d'),/desativada/);
- a.verificacaoFinanceira={origem:'manual-local'};assert.match(elegibilidadeContaRecepcao(projetarContaRecepcao(contexto)),/bloqueio/);
+ // Sem integração financeira (03/11): o financeiro conferido também não bloqueia.
+ a.verificacaoFinanceira={origem:'manual-local'};assert.equal(elegibilidadeContaRecepcao(projetarContaRecepcao(contexto)),'');
 });
 
 test('máscara progressiva limita a 11 números sem validar matematicamente CPF fictício',()=>{
