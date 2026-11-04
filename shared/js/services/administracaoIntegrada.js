@@ -446,7 +446,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
     vagas:(a.vagas||vagas).map(x=>x.inicio?x:porChave.get(x.dataHoraInicio+'|'+x.motoristaId+'|'+x.veiculoId)).filter(Boolean)}));
   },
   async enviarCampanha({campanhaId,alunoIds,vagas,canais,confirmado}){
-   exigirCapacidade(op,'antecipar',1);if(confirmado!==true||!alunoIds?.length||!canais||!canais.sipa&&!canais.whatsapp)throw new Error('Confirme os destinatários e ao menos um canal.');
+   exigirCapacidade(op,'antecipar',1);if(confirmado!==true||!alunoIds?.length||!canais||!canais.sipa&&!canais.whatsapp&&!canais.email)throw new Error('Confirme os destinatários e ao menos um canal.');
    return chamar(Post('antecipacoes/campanhas',{campanhaId,vagas:vagas.map(v=>v.api||{dataHoraInicio:dataHora(v.data,v.inicio),motoristaId:v.instrutorId,veiculoId:v.veiculoId}),alunoIds,canais},comChave(campanhaId)));
   },
   async historicoOfertas(){
