@@ -343,8 +343,6 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-unidade [data-op-ficha] .op-resumo-progresso{margin:0;font-size:13px;color:var(--op-muted);white-space:nowrap}
 .op-unidade [data-op-ficha] .op-resumo-progresso strong{color:var(--sipa-texto-neutro,inherit);font-size:18px}
 .op-unidade [data-op-ficha] .op-resumo-barra{display:flex;height:10px;margin:0 0 18px;overflow:hidden;border-radius:3px;background:var(--op-soft)}
-.op-resumo-barra-feitas{background:var(--progress-blue,#1769aa)}
-.op-resumo-barra-reservadas{background:#9cc3e4}
 .op-unidade [data-op-ficha] .op-resumo-aulas-card dl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0}
 .op-unidade [data-op-ficha] .op-resumo-aulas-card dl>div{display:flex;flex-direction:column-reverse;gap:2px;margin:0;padding:0;border:0}
 .op-unidade [data-op-ficha] .op-resumo-aulas-card dt{font-size:13px;color:var(--op-muted)}
@@ -354,3 +352,14 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-unidade [data-op-ficha] .op-aulas-liberacao.op-aulas-sem-saldo{background:#fff4e0;color:#8a5300}
 [data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-liberacao.op-aulas-sem-saldo{background:#3a2a0e;color:#ffd38a}
 .op-unidade [data-op-ficha] .op-aulas-extras{justify-content:flex-end;margin-top:14px}
+
+/* Aulas: cores por situação (barra e números). */
+.op-unidade [data-op-ficha] .op-resumo-barra{gap:2px;height:14px;border-radius:7px}
+.op-resumo-seg{display:block;height:100%}
+.op-resumo-seg:first-child{border-radius:7px 0 0 7px}.op-resumo-seg:last-child{border-radius:0 7px 7px 0}
+.op-resumo-realizadas{--cor:#1769aa}.op-resumo-reservadas{--cor:#6aa6d8}.op-resumo-faltas{--cor:#b42318}.op-resumo-disponiveis{--cor:#2e8b57}
+.op-resumo-seg{background:var(--cor)}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item{padding:10px 8px;border-radius:10px;border-top:4px solid var(--cor);background:color-mix(in srgb,var(--cor) 8%,transparent);text-align:center}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item dd{color:var(--cor)}
+.op-unidade [data-op-ficha] .op-aulas-pendentes{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#fff4e0;color:#8a5300;font-size:13px}
+[data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-pendentes{background:#3a2a0e;color:#ffd38a}

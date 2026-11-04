@@ -144,6 +144,8 @@ export function cadastrarRecurso(estado,identidade,dados,id){
  const referencia=dados.categoria==='A'?'Vila Velha':dados.categoria==='D'?'Cobilândia':unidade(identidade.unidade);
  if(referencia!==unidade(identidade.unidade)||dados.unidade&&unidade(dados.unidade)!==referencia)throw new Error('Cadastro fora do escopo administrativo da unidade de referência da categoria.');
  if(dados.inicio==null&&dados.fim==null)dados={...dados,inicio:String(Math.min(...GRADE_CENTRO.semana)).padStart(2,'0')+':00',fim:String(GRADE_CENTRO.fechaTarde).padStart(2,'0')+':00'};
+ // A identificação do instrutor é um número sequencial do sistema (decisão do João em 03/11), nunca digitada.
+ if(dados.tipo==='Instrutores')dados={...dados,identificacao:String(Math.max(0,...estado.recursos.filter(r=>r.tipo==='Instrutores').map(r=>Number(r.identificacao)).filter(Number.isFinite))+1)};
  if(!['Instrutores','Veículos'].includes(dados.tipo)||String(dados.nome||'').trim().length<3||!String(dados.identificacao||'').trim())throw new Error('Informe nome, identificação e tipo do recurso.');
  if(dados.tipo==='Instrutores'?!/^(?=.)A?B?D?$/.test(dados.categoria||''):!['A','B','D'].includes(dados.categoria))throw new Error('Categoria de recurso inválida.');
  if(dados.categoria==='D'&&estado.recursos.some(r=>recursoCategoriaD(r)&&!onibusTemporario(r)&&r.tipo===dados.tipo&&r.ativo===true&&r.disponivel!==false))throw new Error('Já existe um recurso ativo desse tipo na agenda única da Categoria D. Consulte o cadastro existente; não será criada outra agenda.');

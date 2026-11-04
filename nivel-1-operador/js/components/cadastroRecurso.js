@@ -16,6 +16,8 @@ function abrirFormularioRecurso(raiz,tipo,servico,executar,atualizar,r){
  const u=select([[r?.unidade||servico.identidade.unidade,nomeUnidadeInstitucional(r?.unidade||servico.identidade.unidade)]],r?.unidade||servico.identidade.unidade);u.disabled=true;const unidadeCampo=campo('Unidade administrativa',u);unidadeCampo.dataset.opRecursoUnidade='';
  const almoco=select([['',edicao?'Manter intervalo atual':'Selecione'],...INTERVALOS_ALMOCO],INTERVALOS_ALMOCO.some(([id])=>id===r?.horarioAlmoco)?r.horarioAlmoco:''),observacoes=el('textarea');observacoes.value=r?.observacoes||'';observacoes.maxLength=2000;
  for(const [k,c] of Object.entries({nome,identificacao,categoria,horarioAlmoco:almoco,observacoes})){c.name=k;c.required=['nome','identificacao','categoria'].includes(k);}almoco.required=instrutor&&!edicao;nome.maxLength=120;identificacao.maxLength=30;
+ // Instrutor: a identificação é o número sequencial gerado pelo sistema (só leitura; no cadastro novo, sai ao salvar).
+ if(instrutor){identificacao.readOnly=true;identificacao.required=false;identificacao.setAttribute('aria-readonly','true');identificacao.placeholder='Gerada pelo sistema ao salvar';identificacao.dataset.opCodigoInstrutor='';}
  if(edicao&&!instrutor)categoria.disabled=true;
  const grade=el('div',undefined,'op-instrutor-fields');grade.append(campo(instrutor?'Nome completo':'Nome / modelo',nome),campo(instrutor?'Identificação do instrutor':'Placa / identificação do veículo',identificacao),campo('Categoria autorizada',categorias?categorias.elemento:categoria),unidadeCampo);
  const cpf=entrada('text',r?.cpf||'');cpf.name='cpf';cpf.maxLength=14;cpf.inputMode='numeric';cpf.required=instrutor&&!edicao;cpf.readOnly=edicao;ativarMascaraCpf(cpf);

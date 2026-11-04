@@ -236,20 +236,23 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
                 const saldos=resumoLiberacao.categorias[c],item=el('section',undefined,'op-resumo-aulas-card');item.dataset.opResumoCategoria=c;
                 const topo=el('header'),progresso=el('p',undefined,'op-resumo-progresso');progresso.append(numero('adquiridas',resumo.adquiridas),' aulas adquiridas');
                 topo.append(el('h4',`${NOMES_CATEGORIA[c]} · Categoria ${c}`),progresso);
-                const total=Math.max(Number(resumo.adquiridas)||0,1),barra=el('div',undefined,'op-resumo-barra'),feitas=el('span',undefined,'op-resumo-barra-feitas'),reservadas=el('span',undefined,'op-resumo-barra-reservadas');
-                feitas.style.width=Math.min(100,(Number(saldos.realizadas)||0)/total*100)+'%';reservadas.style.width=Math.min(100,(Number(saldos.reservadas)||0)/total*100)+'%';barra.append(feitas,reservadas);barra.setAttribute('aria-hidden','true');
-                const numeros=el('dl');for(const [chave,titulo,v] of [['disponiveis','Disponíveis',saldos.disponiveis],['reservadas','Reservadas',saldos.reservadas],['realizadas','Realizadas',saldos.realizadas],['faltas','Faltas',resumo.faltas]]){const linha=el('div'),dd=el('dd');dd.append(numero(chave,v));linha.append(el('dt',titulo),dd);numeros.append(linha);}
+                // Barra em segmentos com a mesma cor de cada número: realizadas, reservadas, faltas e disponíveis.
+                const partes=[['realizadas','Realizadas',saldos.realizadas],['reservadas','Reservadas',saldos.reservadas],['faltas','Faltas',resumo.faltas],['disponiveis','Disponíveis',saldos.disponiveis]];
+                const total=Math.max(Number(resumo.adquiridas)||0,partes.reduce((t,[,,v])=>t+(Number(v)||0),0),1),barra=el('div',undefined,'op-resumo-barra');barra.setAttribute('aria-hidden','true');
+                for(const [chave,,v] of partes){const seg=el('span',undefined,'op-resumo-seg op-resumo-'+chave);seg.style.width=Math.min(100,(Number(v)||0)/total*100)+'%';barra.append(seg);}
+                const numeros=el('dl');for(const [chave,titulo,v] of [partes[3],partes[1],partes[0],partes[2]]){const linha=el('div',undefined,'op-resumo-item op-resumo-'+chave),dd=el('dd');dd.append(numero(chave,v));linha.append(el('dt',titulo),dd);numeros.append(linha);}
                 item.append(topo,barra,numeros);grade.append(item);
             }
             fichaConteudo.append(grade);
+            const pendentes=(a.contratacoes||[]).filter(c=>c.status==='Pendente');
+            if(pendentes.length){const aviso=el('p',undefined,'op-aulas-pendentes');aviso.setAttribute('role','status');aviso.append(el('strong','Aguardando aprovação: '),pendentes.map(c=>`${c.pacote?'Pacote '+c.pacote:'Avulsa'} (${c.quantidade} aulas${c.categorias.length?' · '+c.categorias.join('/'):''})`).join('; ')+'. Só entra no saldo depois que a Gerência aprovar o pagamento.');fichaConteudo.append(aviso);}
             // Aulas extras (decisão do João em 03/11): pacote da autoescola ou aulas avulsas por categoria, aqui na aba Aulas.
             if(permissoes.includes('cadastrar')&&servico.contratarPacote){
                 const acoes=el('div',undefined,'op-ficha-acoes op-aulas-extras'),aprova=identidade.nivel>=2,cats=['A','B','D'].filter(c=>String(a.categoria).includes(c));
-                const real=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
                 const pacote=botao('Contratar pacote',async()=>{
                     let pacotes;try{pacotes=await servico.pacotes();}catch(e){informar(e.message,true);return;}
                     if(!pacotes.length){informar('Nenhum pacote cadastrado nesta autoescola.',true);return;}
-                    formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,`${p.nome} · ${p.quantidade} aulas · ${p.categorias.join('/')||'—'} · ${real(p.preco)}`])],...(aprova?[['aprovar','Pagamento recebido: aprovar agora','checkbox',true]]:[])],
+                    formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,[p.nome,/aulas/i.test(p.nome)?'':p.quantidade+' aulas',p.categorias.length&&!p.nome.includes(p.categorias.join('/'))?'Categoria '+p.categorias.join('/'):''].filter(Boolean).join(' · ')])],...(aprova?[['aprovar','Pagamento recebido: aprovar agora','checkbox',true]]:[])],
                         d=>executar(()=>servico.contratarPacote(a.id,d.pacote,d.aprovar===true),aprova&&d.aprovar?'Pacote contratado e aprovado.':'Pacote contratado. Aguarda a aprovação da Gerência.',()=>renderizarFicha()),
                         {confirmacao:false,descricao:`${a.nome}. `+(aprova?'Sem marcar o pagamento, a contratação fica pendente.':'A contratação fica pendente até a Gerência aprovar o pagamento.')});
                 });pacote.dataset.opContratarPacote='';
