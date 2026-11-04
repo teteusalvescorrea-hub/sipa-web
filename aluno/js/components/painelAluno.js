@@ -257,16 +257,18 @@ async function iniciarReservaAlunoLocal(servico, inicial) {
     $('.booking-warning p').textContent='Após confirmar, as aulas válidas serão confirmadas e os créditos correspondentes serão utilizados.';
     function pintar(){document.querySelectorAll('#time-slots button:not([data-ocupado])').forEach(b=>{const selecionada=selecoes.has(chave(data,b.dataset.hora));b.classList.toggle('selected',selecionada);b.setAttribute('aria-pressed',String(selecionada));b.disabled=ocupada||!!impedimentoConsulta||(!selecionada&&selecoes.size>=(dados.resumo.categorias[categoria].disponiveis||0));});}
     // Horário ocupado por outro aluno: "Tenho interesse" avisa a Recepção quando ele vagar; nunca entra na reserva.
-    // Só dá para remarcar aula com 48 horas úteis de antecedência: sem nenhuma aula posterior nesse prazo, o botão fica
-    // desabilitado (a API confere de novo ao marcar).
-    const prazoRemarcacao=POLITICA_CANCELAMENTO.minutosMinimos/60;
-    const semAulaNoPrazo='Você não tem aula que possa ser remarcada: só dá para remarcar aulas com '+prazoRemarcacao+' horas úteis de antecedência.';
-    const temAulaParaAntecipar=hora=>dados.aulas.some(a=>a.categoria===categoria&&[1,3].includes(a.status)&&Date.parse(a.inicio)>Date.parse(data+'T'+hora+':00-03:00')&&!(a.horasUteisAteAula<prazoRemarcacao));
+    // Só dá para remarcar aula que esteja a pelo menos o prazo de cancelamento da autoescola (prazoCancelamentoHorasUteis
+    // da aula; 48 horas úteis no modo local): sem nenhuma aula posterior nesse prazo, o botão fica desabilitado (a API
+    // confere de novo ao marcar). A API só manda horasUteisAteAula na aula confirmada; na aguardando aceite a conta é local.
+    const prazoDaAula=a=>Number(a.api?.prazoCancelamentoHorasUteis)||POLITICA_CANCELAMENTO.minutosMinimos/60;
+    const noPrazo=a=>a.horasUteisAteAula!=null?a.horasUteisAteAula>=prazoDaAula(a):calcularPrazoCancelamento(a,dados.registros,new Date(),{...POLITICA_CANCELAMENTO,minutosMinimos:prazoDaAula(a)*60}).dentroPrazo;
+    const semAulaNoPrazo=()=>'Você não tem aula que possa ser remarcada: só dá para remarcar aulas com '+prazoDaAula(dados.aulas.find(a=>a.api)||{})+' horas úteis de antecedência.';
+    const temAulaParaAntecipar=hora=>dados.aulas.some(a=>a.categoria===categoria&&[1,3].includes(a.status)&&Date.parse(a.inicio)>Date.parse(data+'T'+hora+':00-03:00')&&noPrazo(a));
     function botaoInteresse(h){
         const b=document.createElement('button'),hora=document.createElement('span'),rotulo=document.createElement('small'),marcado=!!h.interesseId;
         b.type='button';b.className='time-slot unavailable time-slot-interesse';b.dataset.hora=h.hora;b.dataset.ocupado='';b.setAttribute('aria-pressed',String(marcado));
         hora.textContent=h.hora;rotulo.textContent=marcado?'Interesse marcado ✓':'Ocupado · Tenho interesse';b.append(hora,rotulo);b.setAttribute('aria-label',h.hora+' · '+rotulo.textContent);
-        b.disabled=!marcado&&!temAulaParaAntecipar(h.hora);b.title=b.disabled?semAulaNoPrazo:marcado?'Clique para desmarcar o interesse.':'A recepção avisa você se este horário vagar.';
+        b.disabled=!marcado&&!temAulaParaAntecipar(h.hora);b.title=b.disabled?semAulaNoPrazo():marcado?'Clique para desmarcar o interesse.':'A recepção avisa você se este horário vagar.';
         b.onclick=async()=>{
             if(ocupada||b.disabled)return;b.disabled=true;
             try{

@@ -168,7 +168,7 @@ revogação real ou implantação. Bigas deverá validar esses contratos e trans
 | `node tests/reorganizacao.browser.mjs` | 35 verificações: preservação integral de conta e saldos anteriores (7 carro/9 moto), Live Server, index/login, entrada livre sem conta, seis páginas, Instrutor, realização/falta, sessão, temas e isolamento |
 | `node tests/login.browser.mjs` | 120 verificações: múltiplas aulas, recursos em lote/individuais, reservas, falhas atômicas, créditos, modais, cancelamentos, progresso, histórico e endereços |
 | `SIPA_TEST_CENARIO=automatico` | 46 verificações: automático, preferências, penalidade, atestado/72h, cancelamento pontual e multiunidade |
-| `SIPA_TEST_CENARIO=preferencias` | 21 verificações: horários por dia, teclado, persistência, preservação e temas |
+| `SIPA_TEST_CENARIO=preferencias` | 21 verificações: horários por dia, teclado, persistência, preservação e temas (cenário removido em 04/11 com as preferências de antecipação; hoje cai no padrão) |
 | `SIPA_TEST_CENARIO=calendario` | 122 verificações: grade, feriados, restrições, contraste, responsividade e menus das seis páginas |
 | `SIPA_TEST_CENARIO=enderecos` | 17 verificações: endereços das seis unidades e links de mapas |
 | `node tests/operador-cfc.browser.mjs` | 134 verificações: bloqueio real, interface, ICFC pendente, agenda, recursos, conflitos, persistência e responsividade |

@@ -220,7 +220,6 @@ A	shared/css/sidebar.css	publico-candidato
 A	shared/css/solicitacoesMedicas.css	publico-candidato
 A	shared/js/administracao.js	publico-candidato
 A	shared/js/ambiente.js	publico-candidato
-A	shared/js/antecipacaoAdministrativa.js	publico-candidato
 A	shared/js/api.js	publico-candidato
 A	shared/js/apiErro.js	publico-candidato
 A	shared/js/apresentacaoRelatorios.js	publico-candidato
@@ -238,7 +237,6 @@ A	shared/js/escopoAlunoAdministrativo.js	publico-candidato
 A	shared/js/formatacao.js	publico-candidato
 A	shared/js/historicoAcessos.js	publico-candidato
 A	shared/js/mensagensAluno.js	publico-candidato
-A	shared/js/ofertasAntecipacao.js	publico-candidato
 A	shared/js/operacaoCarro.js	publico-candidato
 A	shared/js/pdfRelatorios.js	publico-candidato
 A	shared/js/permissoesAdministrativas.js	publico-candidato
@@ -259,7 +257,6 @@ A	shared/js/services/pacotes.service.js	publico-candidato
 A	shared/js/services/unidades.service.js	publico-candidato
 A	shared/js/services/veiculos.service.js	publico-candidato
 A	shared/js/services/vinculos.service.js	publico-candidato
-A	shared/js/servicoAntecipacao.js	publico-candidato
 A	shared/js/sessao.js	publico-candidato
 A	shared/js/solicitacoesMedicas.js	publico-candidato
 A	shared/js/tema.js	publico-candidato
@@ -279,8 +276,6 @@ A	tests/ajustes-administrativos.browser.steps.mjs	teste-isolado
 A	tests/aluno-recepcao.browser.steps.mjs	teste-isolado
 A	tests/aluno-recepcao.test.mjs	teste-isolado
 A	tests/ambiente-isolado.mjs	teste-isolado
-A	tests/antecipacao-mensagens.test.mjs	teste-isolado
-A	tests/antecipacao.browser.steps.mjs	teste-isolado
 A	tests/auditoria-etapa2.mjs	teste-isolado
 A	tests/aulas-realizadas.browser.steps.mjs	teste-isolado
 A	tests/carros-legados.browser.steps.mjs	teste-isolado

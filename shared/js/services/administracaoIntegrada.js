@@ -203,11 +203,13 @@ const SITUACAO_INTERESSE=Object.freeze({1:'Aguardando',2:'Contatado',3:'Remarcad
 const nomeOu=(v,...extras)=>v?.nome??(typeof v==='string'?v:null)??extras.find(Boolean)??'';
 export function adaptarLiberado(h,u){
  const i=String(h.dataHoraInicio||''),inicio=i.slice(11,16);
- return {unidade:u.chave(h.unidade??h.unidadeId),unidadeNome:nomeOu(h.unidade,h.unidadeNome),categoria:categoria(h.categoria),data:i.slice(0,10),inicio,fim:String(h.dataHoraFim||'').slice(11,16)||fimDaAula(inicio),prazo:h.prazoHorasUteis??48,
-  pares:(h.pares||[]).map(p=>({instrutorId:p.motoristaId,veiculoId:p.veiculoId,instrutor:nomeOu(p.motorista,p.motoristaNome,p.instrutor?.nome)||'Instrutor',
-   veiculo:[p.veiculo?.modelo??p.veiculoModelo??(typeof p.veiculo==='string'?p.veiculo:''),p.veiculo?.placa??p.veiculoPlaca].filter(Boolean).join(' · ')||'Veículo'})),
-  interessados:(h.interessados||[]).map(x=>({id:x.interesseId??x.id,alunoId:x.aluno?.id??x.alunoId,aluno:nomeOu(x.aluno,x.alunoNome)||'Aluno não informado',telefone:x.telefone??x.aluno?.telefone??'',
-   situacao:SITUACAO_INTERESSE[numero(x.situacao)]??descricao(x.situacao)??'Aguardando',marcadoEm:x.marcadoEm??x.criadoEm??null,contatadoEm:x.contatadoEm??null,observacao:x.observacao??'',
+ // Formato da API (HorarioLiberadoReadDto): unidadeId e unidade em texto; o par traz instrutor (texto), modelo e placa;
+ // o interessado traz alunoId e nome soltos.
+ return {unidade:u.chave(h.unidadeId??h.unidade),unidadeNome:nomeOu(h.unidade),categoria:categoria(h.categoria),data:i.slice(0,10),inicio,fim:String(h.dataHoraFim||'').slice(11,16)||fimDaAula(inicio),prazo:h.prazoHorasUteis??48,
+  pares:(h.pares||[]).map(p=>({instrutorId:p.motoristaId,veiculoId:p.veiculoId,instrutor:nomeOu(p.instrutor)||'Instrutor',
+   veiculo:[p.modelo,p.placa].filter(Boolean).join(' · ')||'Veículo'})),
+  interessados:(h.interessados||[]).map(x=>({id:x.interesseId,alunoId:x.alunoId,aluno:nomeOu(x.nome)||'Aluno não informado',telefone:x.telefone??'',
+   situacao:SITUACAO_INTERESSE[numero(x.situacao)]??descricao(x.situacao)??'Aguardando',marcadoEm:x.marcadoEm??null,contatadoEm:x.contatadoEm??null,observacao:x.observacao??'',
    aulas:(x.aulas||[]).map(a=>{const ai=String(a.dataHoraInicio||'');return {id:a.id??a.agendamentoId,data:ai.slice(0,10),inicio:ai.slice(11,16),horasUteis:a.horasUteis??null,dentroPrazo:a.dentroPrazo!==false};})}))};
 }
 function observacaoInteresse(v){const t=String(v??'').trim();if(t.length>500)throw new Error('Use no máximo 500 caracteres na observação.');return t||null;}

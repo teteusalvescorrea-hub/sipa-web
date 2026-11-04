@@ -6,7 +6,8 @@ import {dataRelatorio} from '../js/apresentacaoRelatorios.js';
 import {formatarTelefone} from '../js/formatacao.js';
 import {menuAcoes} from './menuAcoes.js';
 // Antecipação (Recepção e Gerência): horários ocupados que vagaram e os alunos que marcaram interesse neles.
-// A equipe liga para o aluno e remarca; a aula desmarcada precisa estar a pelo menos 48 horas úteis (prazo da autoescola).
+// A equipe liga para o aluno e remarca; a aula desmarcada precisa estar a pelo menos o prazo da autoescola (48 horas úteis
+// por padrão; a API manda o valor em cada horário).
 // Padrão da tela de alunos: filtros numa linha, contagem, tabela e Ações ⋯. Agrupada por horário, na ordem de quem marcou primeiro.
 const categorias={A:'Moto',B:'Carro',D:'Ônibus'},principal='op-button op-button-primary',DIAS=14;
 const plural=(n,um,varios)=>n+' '+(n===1?um:varios);
@@ -27,7 +28,9 @@ export async function montarAntecipacaoPainel(host,servico,root){
   filtros[k].addEventListener(k==='busca'?'input':'change',k==='busca'?desenhar:consultar);
  }
  const limpar=botao('Limpar filtros',()=>{for(const [k,c] of Object.entries(filtros))c.value=iniciais[k];consultar();},'op-button op-button-outline');limpar.dataset.antLimpar='';const acoes=el('div',undefined,'ant-filtro-acoes');acoes.append(limpar);barra.append(acoes);
- const ajuda=el('p','Horários ocupados que vagaram, com os alunos que marcaram interesse (quem marcou primeiro aparece primeiro). Ligue para o aluno e remarque uma aula dele que esteja a pelo menos 48 horas úteis.','adm-nota');
+ // O prazo vem da API em cada horário (prazoHorasUteis); antes da consulta, o texto não cita número.
+ const textoAjuda=prazo=>'Horários ocupados que vagaram, com os alunos que marcaram interesse (quem marcou primeiro aparece primeiro). Ligue para o aluno e remarque uma aula dele que esteja a pelo menos '+(prazo?prazo+' horas úteis':'o prazo de cancelamento da autoescola')+'.';
+ const ajuda=el('p',textoAjuda(),'adm-nota');
  const quantidade=el('p',undefined,'op-help');quantidade.dataset.antContagem='';const retorno=el('p',undefined,'ant-retorno');retorno.setAttribute('role','status');const lista=el('div');
  host.replaceChildren(card('Antecipação de aulas',ajuda,barra,retorno,quantidade,lista));
  const avisar=()=>root.dispatchEvent(new Event('sipa-antecipacao-atualizada'));
@@ -35,7 +38,7 @@ export async function montarAntecipacaoPainel(host,servico,root){
   const pedido=++revisao;retorno.textContent='';
   if(!filtros.de.value||!filtros.ate.value||filtros.de.value>filtros.ate.value||filtros.ate.value>somarDias(filtros.de.value,DIAS)){liberados=[];retorno.textContent='Informe um período de até '+DIAS+' dias.';desenhar();return;}
   lista.replaceChildren(el('p','Consultando horários…','op-help'));
-  try{const r=await servico.consultarLiberados({unidade:filtros.unidade.value,categoria:filtros.categoria.value,de:filtros.de.value,ate:filtros.ate.value});if(pedido!==revisao)return;liberados=r;}
+  try{const r=await servico.consultarLiberados({unidade:filtros.unidade.value,categoria:filtros.categoria.value,de:filtros.de.value,ate:filtros.ate.value});if(pedido!==revisao)return;liberados=r;if(r[0]?.prazo)ajuda.textContent=textoAjuda(r[0].prazo);}
   catch(e){if(pedido!==revisao)return;liberados=[];retorno.textContent=e.message;}
   desenhar();
  }

@@ -20,12 +20,13 @@ const {antecipacaoLocal}=await import('../dev/operador/antecipacaoLocal.js');
 
 const UNIDADES=[{id:'g-cobi',nome:'Cobilândia'},{id:'g-centro',nome:'Centro de Vila Velha'}];
 const recepcao=(extra={})=>({id:'eq1',nome:'Recepção',perfil:'operador',nivel:1,unidade:'Cobilândia',unidades:['Cobilândia'],permissoes:permissoesDoPerfil('operador'),...extra});
-const liberado={unidade:{id:'g-cobi',nome:'Cobilândia'},categoria:{valor:2,descricao:'B'},dataHoraInicio:'2026-11-10T09:00:00',dataHoraFim:'2026-11-10T09:50:00',
- pares:[{motoristaId:'m1',motoristaNome:'Instrutor Um',veiculoId:'v1',veiculoModelo:'Onix',veiculoPlaca:'ABC1D23'}],
+// Formato do HorarioLiberadoReadDto da API (InteressesAntecipacaoDtos.cs).
+const liberado={unidadeId:'g-cobi',unidade:'Cobilândia',categoria:{valor:2,descricao:'B'},dataHoraInicio:'2026-11-10T09:00:00',dataHoraFim:'2026-11-10T09:50:00',prazoHorasUteis:48,
+ pares:[{motoristaId:'m1',instrutor:'Instrutor Um',veiculoId:'v1',modelo:'Onix',placa:'ABC1D23'}],
  interessados:[
-  {interesseId:'i1',aluno:{id:'al1',nome:'Ana Souza'},telefone:'27999990000',situacao:{valor:1,descricao:'Aguardando'},marcadoEm:'2026-11-04T12:00:00Z',
-   aulas:[{id:'a1',dataHoraInicio:'2026-11-20T10:00:00',horasUteis:96,dentroPrazo:true},{id:'a0',dataHoraInicio:'2026-11-11T08:00:00',horasUteis:20,dentroPrazo:false}]},
-  {interesseId:'i2',alunoId:'al2',alunoNome:'Bruno Lima',situacao:{valor:2},contatadoEm:'2026-11-04T13:00:00Z',observacao:'Ligar à tarde',aulas:[]}]};
+  {interesseId:'i1',alunoId:'al1',nome:'Ana Souza',telefone:'27999990000',situacao:{valor:1,descricao:'Aguardando'},marcadoEm:'2026-11-04T12:00:00Z',contatadoEm:null,observacao:null,
+   aulas:[{id:'a1',dataHoraInicio:'2026-11-20T10:00:00',dataHoraFim:'2026-11-20T10:50:00',horasUteis:96,dentroPrazo:true},{id:'a0',dataHoraInicio:'2026-11-11T08:00:00',dataHoraFim:'2026-11-11T08:50:00',horasUteis:20,dentroPrazo:false}]},
+  {interesseId:'i2',alunoId:'al2',nome:'Bruno Lima',telefone:'27988880000',situacao:{valor:2,descricao:'Contatado'},marcadoEm:'2026-11-04T12:30:00Z',contatadoEm:'2026-11-04T13:00:00Z',observacao:'Ligar à tarde',aulas:[]}]};
 
 test('Recepção: horários liberados vêm agrupados, com pares, interessados na ordem e aulas com prazo',async()=>{
  respostas=[rota('GET','antecipacoes/horarios-liberados?',[liberado])];chamadas.length=0;

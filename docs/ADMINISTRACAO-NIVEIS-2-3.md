@@ -111,7 +111,7 @@ Armazenamento e código controlados pelo próprio navegador **não são seguran�
 Novos:
 
 - `nivel-2-gerencia/html/gerencia.html` e `nivel-3-master/html/master.html`.
-- `shared/js/entradaAdministrativa.js`, `permissoesAdministrativas.js`, `administracao.js`, `auditoria.js`, `relatoriosAdministrativos.js`, `antecipacaoAdministrativa.js`.
+- `shared/js/entradaAdministrativa.js`, `permissoesAdministrativas.js`, `administracao.js`, `auditoria.js`, `relatoriosAdministrativos.js` (`antecipacaoAdministrativa.js` saiu em 04/11 com a antecipação por interesse; ver `ANTECIPACAO-E-MENSAGENS.md`).
 - `shared/components/painelAdministrativo.js`, `formularioAdministrativo.js` e `shared/css/administracao.css`.
 - `dev/servicoAdministrativo.js`, `contasAdministrativas.js`, `inicializar-administracao.html` e `inicializar-administracao.js`.
 - `tests/administracao.test.mjs`, `tests/administracao.browser.steps.mjs` e esta documentação.
