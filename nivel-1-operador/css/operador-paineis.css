@@ -363,3 +363,11 @@ th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-
 .op-toast-erro { background:#b42318; }
 @keyframes op-toast-entra { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @media (prefers-reduced-motion: reduce) { .op-toast { animation:none; } }
+
+/* Agendar: aluno encontrado que não pode agendar, com o motivo (não é selecionável). */
+.op-reserva-inelegivel { display:flex; flex-direction:column; gap:2px; margin:6px 0; padding:10px 14px; border:1px dashed #d3dde6; border-radius:10px; }
+.op-reserva-inelegivel strong { color:#4c6278; }
+.op-reserva-inelegivel span { color:#b42318; font-size:13px; }
+[data-theme=dark] .op-reserva-inelegivel { border-color:#3c536a; }
+[data-theme=dark] .op-reserva-inelegivel strong { color:#a9bccd; }
+[data-theme=dark] .op-reserva-inelegivel span { color:#ffb4ab; }

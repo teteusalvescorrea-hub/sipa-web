@@ -4,10 +4,23 @@ import {nomeCambio,localCarro} from '../../../shared/js/operacaoCarro.js';
 import {el,botao,campo,select,entrada,modal,mostrarAviso} from './uiOperador.js';
 import {formatarCpf} from '../../../shared/js/formatacao.js';
 import {formatarData} from '../../../shared/js/calendario.js';
-import {fimDaAula} from '../../../shared/js/disponibilidade.js';
+import {fimDaAula,ocupaRecurso} from '../../../shared/js/disponibilidade.js';
 import {localCategoriaD} from '../../../shared/js/categorias.js';
 import {obterUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 
+// Por que um aluno encontrado na busca não pode agendar neste par. A API é quem decide a elegibilidade; isto só explica
+// na tela o motivo mais provável (decisão do João em 03/11: o aluno aparece, sem poder ser escolhido, com a pendência).
+function motivoInelegivel(a,p,dados,data,hora){
+ if(a.situacao==='Inativo')return 'aluno inativo';
+ if(!String(a.categoria||'').includes(p.categoria))return `não tem a categoria ${p.categoria}`;
+ const v=dados.recursos.find(r=>r.id===p.veiculoId);
+ if(p.categoria==='B'&&a.tipoCambio&&v?.tipoCambio&&a.tipoCambio!==v.tipoCambio)return `câmbio ${nomeCambio(a.tipoCambio).toLocaleLowerCase('pt-BR')}, e este veículo é ${nomeCambio(v.tipoCambio).toLocaleLowerCase('pt-BR')}`;
+ if(a.bloqueioAdministrativo?.ativo)return 'agendamento bloqueado pela administração';
+ if(a.financeiro==='Em atraso')return 'financeiro em atraso';
+ const c=a.creditos?.[p.categoria];if(c&&!(c.disponiveis>0))return `sem aulas disponíveis na categoria ${p.categoria}`;
+ if(dados.aulas.some(x=>x.alunoId===a.id&&x.data===data&&x.inicio===hora&&ocupaRecurso(x)))return 'já tem aula neste horário';
+ return 'não elegível neste horário (confira a ficha do aluno)';
+}
 // Consulta e confirmação passam pelo serviço autorizado; nenhuma identidade vem da URL.
 export function montarReservaRecepcao(raiz,servico,executar){
  const janela=modal(raiz,'Agendar aula','opAgendar'),corpo=el('div');janela.append(corpo);
@@ -44,7 +57,10 @@ export function montarReservaRecepcao(raiz,servico,executar){
     try{const p=pares[Number(par.value)],alunos=await alunosDoPar(Number(par.value)),termo=busca.value.trim().toLocaleLowerCase('pt-BR'),numeros=termo.replace(/\D/g,'');if(id!==buscando)return;
      const encontrados=alunos.filter(a=>!termo||a.nome.toLocaleLowerCase('pt-BR').includes(termo)||(numeros&&/^[\d.\-\s]+$/.test(termo)&&a.cpf?.includes(numeros)));
      for(const a of encontrados){const b=botao('',()=>{selecionado=a;lista.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));saldo.textContent=`${a.nome} · Créditos disponíveis: ${a.saldo} · Reservadas: ${a.agendadas} · Categoria ${p.categoria}${p.categoria==='B'?' · '+nomeCambio(a.tipoCambio)+' · Local: '+a.localAula:''}`;confirmar.disabled=false;});b.dataset.opReservaAluno=a.id;b.setAttribute('aria-pressed','false');b.append(el('strong',a.nome),el('span',`${a.cpf?'CPF: '+formatarCpf(a.cpf):'Consulta restrita ao vínculo operacional da pista'} · Categoria ${a.categoria} · Unidade cadastrada: ${a.unidadeAulas}${p.categoria==='B'?' · '+nomeCambio(a.tipoCambio)+' · Local da aula: '+a.localAula:''}`));lista.append(b);}
-     if(!encontrados.length)lista.append(el('p','Nenhum aluno autorizado e elegível encontrado. Confira categoria, créditos, bloqueios administrativos e conflitos do aluno.','op-help'));
+     // Com algo digitado, quem não é elegível também aparece, sem poder ser escolhido, com o motivo.
+     const elegiveis=new Set(alunos.map(a=>a.id)),outros=termo?dados.alunos.filter(a=>!elegiveis.has(a.id)&&(a.nome.toLocaleLowerCase('pt-BR').includes(termo)||(numeros&&/^[\d.\-\s]+$/.test(termo)&&a.cpf?.includes(numeros)))).slice(0,10):[];
+     for(const a of outros){const linha=el('div',undefined,'op-reserva-inelegivel');linha.dataset.opReservaInelegivel=a.id;linha.append(el('strong',a.nome),el('span',`${a.cpf?'CPF: '+formatarCpf(a.cpf)+' · ':''}Não pode agendar: ${motivoInelegivel(a,p,dados,data,hora)}`));lista.append(linha);}
+     if(!encontrados.length&&!outros.length)lista.append(el('p','Nenhum aluno autorizado e elegível encontrado. Confira categoria, créditos, bloqueios administrativos e conflitos do aluno.','op-help'));
     }catch(e){erro.textContent=e.message;}
    }
    busca.addEventListener('input',pesquisar);par.addEventListener('change',pesquisar);

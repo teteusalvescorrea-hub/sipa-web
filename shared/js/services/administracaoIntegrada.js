@@ -121,7 +121,8 @@ export function adaptarAlunoEquipe(a,u){
  return {id:a.id,nome:a.nome,cpf:digitos(a.cpf),email:a.email||'',telefone:digitos(a.telefone),nascimento:a.dataNascimento||'',categoria:cat,unidade:base,unidadePrincipal:base,unidadeCarro:carro,
   ...(cat.includes('B')?{tipoCambio:CAMBIO[numero(m.tipoCambio??a.tipoCambio)]??''}:{}),
   situacao:a.situacaoCadastral||descricao(m.situacaoAluno??a.situacaoAluno)||undefined,etapa:a.etapa||undefined,
-  ...(financeiro?{financeiro,verificacaoFinanceira:{situacao:financeiro,origem:'api'}}:{}),
+  // Como a API (BloqueiaReserva): o financeiro Pendente só conta como verificado (e bloqueia) depois de conferido (financeiroEm).
+  ...(financeiro?{financeiro,...(financeiro!=='Pendente'||m.financeiroEm?{verificacaoFinanceira:{situacao:financeiro,origem:'api',em:m.financeiroEm||null}}:{})}:{}),
   ...(saldos.length?{creditos,aulasAdquiridas:Object.fromEntries(Object.entries(creditos).map(([k,v])=>[k,v.contratadas]))}:{}),
   observacoes:a.observacoes||'',bloqueioAdministrativo:{ativo:(m.bloqueioAdministrativo??a.bloqueioAdministrativo)===true},
   acesso:acesso.possuiConta===false?'Sem conta de acesso':(acesso.deveTrocarSenha??a.deveTrocarSenha)?'Conta criada · primeiro acesso pendente':'Ativo',contaId:acesso.possuiConta===false?null:a.id,
