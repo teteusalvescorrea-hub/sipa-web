@@ -83,6 +83,24 @@ function pedirNovaSenha(trocar) {
         document.body.append(d); d.showModal(); nova.focus();
     });
 }
+// Uma conta, vários perfis (decisão do João em 03/11): o mesmo CPF pode ser aluno e instrutor. O login pergunta com qual entrar.
+function escolherPerfil(perfis) {
+    return new Promise(resolve => {
+        const nomes = { 1: "Aluno", 2: "Instrutor" };
+        const d = document.createElement("dialog"); d.className = "login-provisoria"; d.setAttribute("aria-labelledby", "perfil-titulo");
+        d.innerHTML = '<form method="dialog"><h2 id="perfil-titulo">Como deseja entrar?</h2><p>Este CPF tem mais de um acesso no SIPA.</p><div data-perfis style="display:grid;gap:8px"></div><footer><button type="button" data-perfil-cancelar>Cancelar</button></footer></form>';
+        let escolhido = null;
+        for (const p of perfis) {
+            const valor = p?.valor ?? p, b = document.createElement("button");
+            b.type = "button"; b.textContent = nomes[valor] || p?.descricao || String(valor);
+            b.onclick = () => { escolhido = valor; d.close(); };
+            d.querySelector("[data-perfis]").append(b);
+        }
+        d.querySelector("[data-perfil-cancelar]").onclick = () => d.close();
+        d.addEventListener("close", () => { d.remove(); resolve(escolhido); }, { once: true });
+        document.body.append(d); d.showModal(); d.querySelector("[data-perfis] button")?.focus();
+    });
+}
 form.addEventListener("submit", async event => {
     event.preventDefault(); if (enviando) return;
     enviando = true; entrar.disabled = true; form.setAttribute("aria-busy", "true");
@@ -101,10 +119,15 @@ form.addEventListener("submit", async event => {
         const identificacao = porEmail ? cpf.value.trim() : normalizarCPF(cpf.value);
         const { login, trocarSenhaProvisoria } = await import("../shared/js/services/authService.js");
         const { limparSessao } = await import('../shared/js/sessao.js');
-        let resposta = await login(identificacao, senha.value);
+        let resposta = await login(identificacao, senha.value), perfilEscolhido = null;
+        if (!resposta?.token && resposta?.perfis?.length > 1) {
+            perfilEscolhido = await escolherPerfil(resposta.perfis);
+            if (!perfilEscolhido) { limparSessao(); informar('Escolha com qual acesso deseja entrar.', 'info'); return; }
+            resposta = await login(identificacao, senha.value, perfilEscolhido);
+        }
         if (resposta?.deveTrocarSenha && !resposta.token) {
             informar('Sua senha é provisória. Crie uma nova senha para continuar.', 'info');
-            resposta = await pedirNovaSenha(nova => trocarSenhaProvisoria(identificacao, senha.value, nova));
+            resposta = await pedirNovaSenha(nova => trocarSenhaProvisoria(identificacao, senha.value, nova, perfilEscolhido));
             if (!resposta?.token) { limparSessao(); informar('A nova senha não foi salva. Entre novamente para tentar de novo.', 'info'); return; }
         }
         senha.value = '';

@@ -356,7 +356,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    const r=await chamar(Post('alunos/pela-autoescola',{nome:String(dados.nome).trim(),cpf:digitos(dados.cpf),dataNascimento:dados.nascimento,email:String(dados.email).trim(),telefone:digitos(dados.telefone),categorias:categoriasId(cat),
     unidadeId:u.guid(op.unidade),unidadeCarroId:cat.includes('B')?u.guid(dados.unidadeCarro):null,tipoCambioId:cat.includes('B')?CAMBIO_ID[dados.tipoCambio]??null:null,observacoes:String(dados.observacoes||'').trim(),
     aulas:['A','B','D'].filter(c=>cat.includes(c)).map(c=>({categoria:NUMERO[c],quantidade:Number(quantidades[c])}))},comChave(solicitacaoId)));
-   return {id:r?.id,...respostaSenha(r),linkAcesso:r?.linkAcesso||null};
+   return {id:r?.id,contaExistente:!!r?.contaExistente,...respostaSenha(r),linkAcesso:r?.linkAcesso||null};
   },
   anotar:async(id,texto)=>{regras.autorizar(op,'anotar');if(String(texto).length>2000)throw new Error('Use até 2000 caracteres nas observações.');await chamar(Put(`alunos/${id}/observacoes`,{observacoes:String(texto)}));},
   financeiro:async(id,situacao,fonte)=>{regras.autorizar(op,'verificar');if(!FINANCEIRO_ID[situacao]||!String(fonte||'').trim())throw new Error('Informe situação e fonte da informação manual.');await chamar(Put(`alunos/${id}/financeiro`,{situacaoFinanceiraId:FINANCEIRO_ID[situacao],fonte:String(fonte).trim().slice(0,240)}));},
@@ -406,7 +406,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
     // Os veículos escolhidos passam para o instrutor novo (PUT responsavel move as aulas futuras de cada um).
     const falhas=[];for(const veiculoId of dados.veiculoIds||[]){try{await chamar(Put(`veiculos/${veiculoId}/responsavel`,{motoristaId:r?.id},comChave()));}catch(e){falhas.push(e.message);}}
     if(falhas.length)throw new Error('Instrutor cadastrado, mas nem todos os veículos foram vinculados: '+falhas.join(' '));
-    return {id:r?.id,...respostaSenha(r)};
+    return {id:r?.id,contaExistente:!!r?.contaExistente,...respostaSenha(r)};
    }
    if(dados.tipo!=='Veículos')throw new Error('Informe nome, identificação e tipo do recurso.');
    return chamar(Post('veiculos/pela-autoescola',{placa:String(dados.identificacao||'').trim(),modelo:String(dados.nome||'').trim(),categoria:NUMERO[dados.categoria],tipoCambioId:dados.categoria==='B'?CAMBIO_ID[dados.tipoCambio]??null:null,motoristaId:dados.instrutorId||null},comChave()));
