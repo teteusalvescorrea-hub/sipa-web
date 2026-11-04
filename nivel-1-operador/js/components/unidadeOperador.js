@@ -255,8 +255,10 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
                         d=>executar(()=>servico.contratarPacote(a.id,d.pacote),'Pacote contratado.',()=>renderizarFicha()),
                         {confirmacao:false,descricao:`${a.nome}. As aulas do pacote entram já liberadas para agendar.`});
                 });pacote.dataset.opContratarPacote='';
-                const avulsas=botao('Adicionar aulas avulsas',()=>formularioAdministrativo(raiz,'Adicionar aulas avulsas',[['categoria','Categoria','select',cats[0]||'B',cats.map(c=>[c,`${NOMES_CATEGORIA[c]} · Categoria ${c}`])],['quantidade','Quantidade de aulas','number','1']],
-                    d=>executar(()=>servico.adicionarAulasAvulsas(a.id,d.categoria,d.quantidade),'Aulas adicionadas.',()=>renderizarFicha()),{confirmacao:false,descricao:`${a.nome}. As aulas entram já liberadas para agendar.`}));avulsas.dataset.opAulasAvulsas='';
+                // Uma quantidade por categoria do aluno (ex.: A e B de uma vez); categoria com 0 fica de fora.
+                const avulsas=botao('Adicionar aulas avulsas',()=>formularioAdministrativo(raiz,'Adicionar aulas avulsas',cats.map(c=>['qtd'+c,`Aulas de ${NOMES_CATEGORIA[c].toLocaleLowerCase('pt-BR')} · Categoria ${c}`,'number',cats.length===1?'1':'0']),
+                    d=>{const pedidos=cats.map(c=>[c,Number(d['qtd'+c])||0]).filter(([,q])=>q>0);if(!pedidos.length)throw new Error('Informe a quantidade de aulas em pelo menos uma categoria.');if(pedidos.some(([,q])=>q>100||!Number.isInteger(q)))throw new Error('Informe de 1 a 100 aulas por categoria.');
+                        return executar(async()=>{for(const [c,q] of pedidos)await servico.adicionarAulasAvulsas(a.id,c,q);},'Aulas adicionadas.',()=>renderizarFicha());},{confirmacao:false,descricao:`${a.nome}. As aulas entram já liberadas para agendar.`}));avulsas.dataset.opAulasAvulsas='';
                 acoes.append(pacote,avulsas);fichaConteudo.append(acoes);
             }
         }
