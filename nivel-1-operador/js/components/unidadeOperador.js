@@ -13,6 +13,7 @@ import {marcarErrosDoServidor} from '../../../shared/js/errosDeCampo.js';
 import {montarEdicaoCadastro,montarJornada,etapaAtual,montarExamesProvas,montarProvas,montarHistoricoProvas,montarLinhaTempo} from './fichaEvolucao.js';
 import {el,botao,campo,select,entrada,modal,card,iconeSvg,mostrarToast} from './uiOperador.js';
 import {montarEstruturaOperador} from './painelOperador.js';
+import {menuAcoes} from '../../../shared/components/menuAcoes.js';
 import {tornarOrdenavel,ordenarLinhas,estadoOrdenacao} from '../../../shared/js/ordenacaoTabela.js';
 import {montarAgenda} from './agendaOperador.js';
 import {criarDetalhesAula} from './aulaOperador.js';
@@ -32,28 +33,9 @@ function blocoFicha(titulo,...filhos){const s=el('section',undefined,'op-ficha-b
 const badge=t=>el('span',t,'op-badge');
 // Coluna Ações das listas (como no Simplea): chave ativo/inativo e o ⋯ que abre os detalhes.
 function chaveSituacao(ativo,nome,aoClicar){const b=el('button',undefined,'op-chave');b.type='button';b.setAttribute('role','switch');b.setAttribute('aria-checked',String(!!ativo));b.setAttribute('aria-label',(ativo?'Inativar ':'Ativar ')+nome);b.title=ativo?'Ativo: clique para inativar':'Inativo: clique para ativar';b.onclick=aoClicar;return b;}
-const ICONES_ACAO={olho:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',lapis:'<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>'};
-function iconeAcao(nome){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.setAttribute('class','op-acao-icone');svg.innerHTML=ICONES_ACAO[nome]||'';return svg;}
-// Ações da linha no padrão do Simplea: o ⋯ abre um menu só com as ações permitidas (item sem ação fica de fora).
-// O menu é fixo na tela, para a rolagem da tabela não cortá-lo, e abre para cima quando falta espaço embaixo.
-const fecharMenusAcoes=()=>document.querySelectorAll('.op-menu-acoes-lista:not([hidden])').forEach(m=>{m.hidden=true;m.previousElementSibling?.setAttribute('aria-expanded','false');});
-document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('.op-menu-acoes'))fecharMenusAcoes();});
-window.addEventListener('scroll',e=>{if(!e.target.closest?.('.op-menu-acoes-lista'))fecharMenusAcoes();},true);window.addEventListener('resize',fecharMenusAcoes);
-function menuAcoes(nome,itens){
-    const caixa=el('div',undefined,'op-menu-acoes'),gatilho=botaoMais(nome,null),menu=el('div',undefined,'op-menu-acoes-lista');menu.setAttribute('role','menu');menu.hidden=true;gatilho.setAttribute('aria-haspopup','menu');gatilho.setAttribute('aria-expanded','false');gatilho.title='Ações';gatilho.setAttribute('aria-label','Ações de '+nome);
-    const fechar=()=>{menu.hidden=true;gatilho.setAttribute('aria-expanded','false');};
-    for(const [rotulo,acao,icone] of itens.filter(i=>i[1])){const b=botao(rotulo,()=>{fechar();acao();},'op-menu-acoes-item');if(icone)b.prepend(iconeAcao(icone));b.setAttribute('role','menuitem');b.dataset.opAcao=rotulo.toLocaleLowerCase('pt-BR');menu.append(b);}
-    gatilho.onclick=()=>{const abrir=menu.hidden;fecharMenusAcoes();if(!abrir)return;menu.hidden=false;gatilho.setAttribute('aria-expanded','true');
-        const r=gatilho.getBoundingClientRect(),h=menu.offsetHeight,emCima=innerHeight-r.bottom<h+8&&r.top>h+8;
-        Object.assign(menu.style,{position:'fixed',left:'auto',right:Math.max(8,innerWidth-r.right)+'px',top:emCima?'auto':(r.bottom+4)+'px',bottom:emCima?(innerHeight-r.top+4)+'px':'auto'});
-        menu.querySelector('button:not(:disabled)')?.focus();};
-    caixa.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){e.stopPropagation();fechar();gatilho.focus();}});
-    caixa.append(gatilho,menu);return {caixa,gatilho};
-}
 // Ação principal da seção no cabeçalho da página (como o "+ Cadastrar aluno"): um botão por seção, mostrado só nela.
 function colocarNoTopo(secao,botaoAcao){const ancora=document.querySelector('[data-op-cadastro]');if(!ancora)return;document.querySelector(`[data-op-acao-topo="${secao}"]`)?.remove();
     botaoAcao.className='op-button op-button-primary';botaoAcao.dataset.opAcaoTopo=secao;if(!botaoAcao.querySelector('svg'))botaoAcao.prepend(iconeSvg('plus'));ancora.after(botaoAcao);}
-function botaoMais(nome,aoClicar,b=botao('⋯',aoClicar)){b.textContent='⋯';b.className='op-acao-mais';b.setAttribute('aria-label','Ver detalhes de '+nome);b.title='Ver detalhes';return b;}
 // Status do aluno (decisão do João em 31/10): não existe mais o "Pendente". Inativo, Incompleto (faltam dados) ou a etapa
 // da jornada até a habilitação — calculada aqui quando a ficha já trouxe exames e provas, senão a que a API manda.
 const ETAPAS_ALUNO=['Incompleto','Exames','Prova teórica','Aulas práticas','Prova prática','Habilitado','Inativo'];

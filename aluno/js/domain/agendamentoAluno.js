@@ -115,26 +115,3 @@ export function criarCancelamento(aula, registros, motivo, aceite, instante = ne
     return { ...prazo, em, motivoId:m.id, credito:prazo.semConsumoOriginal?'nao_consumido':prazo.dentroPrazo?'devolvido':'retido', frequencia:prazo.dentroPrazo||prazo.semConsumoOriginal?'cancelada':m.id==='saude'?'justificativa_pendente':'falta',
         justificativa:!prazo.dentroPrazo && !prazo.semConsumoOriginal && m.id === 'saude' ? { estado:'aguardando_apresentacao', prazoApresentacao:new Date(Date.parse(em)+POLITICA_CANCELAMENTO.horasAtestado*3600000).toISOString(), resultado:null } : null };
 }
-
-export function normalizarAntecipacao(valor) {
-    if (!valor || typeof valor.ativo !== 'boolean' || typeof valor.notificacoes !== 'boolean') throw new Error('Informe as preferências de antecipação.');
-    const observacoes = String(valor.observacoes || '').trim();
-    if (observacoes.length > 240) throw new Error('Use no máximo 240 caracteres nas observações.');
-    return { ativo:valor.ativo, notificacoes:valor.notificacoes, categorias:lista(valor.categorias || [],['A','B','D'],'categorias'), unidades:lista((valor.unidades || []).map(normalizarChaveUnidade),unidades,'unidades'), dias:lista(valor.dias || [],[1,2,3,4,5,6],'dias'), horarios:lista(valor.horarios || [],HORAS_AGENDAMENTO,'horários'), observacoes };
-}
-
-// Disponibilidade de interesse, independente de reservas e de recursos livres.
-export function horariosAntecipacao(dia,categoria){
-    if(!Number.isInteger(dia)||dia<1||dia>6)throw new Error('Dia de disponibilidade inválido.');
-    return (dia===6&&categoria!=='D'?GRADE_CENTRO.sabado:GRADE_CENTRO.semana).filter(h=>h!==12).map(h=>String(h).padStart(2,'0')+':00');
-}
-export function normalizarDisponibilidadeAntecipacao(valor,ativa=false,categoria){
-    if(!valor||typeof valor!=='object'||Array.isArray(valor)||Object.keys(valor).some(d=>!['1','2','3','4','5','6'].includes(d)))throw new Error('Informe dias e horários válidos para antecipação.');
-    const normalizado=Object.fromEntries([1,2,3,4,5,6].map(d=>{
-        const horas=valor[d]||[];
-        if(!Array.isArray(horas)||horas.some(h=>!horariosAntecipacao(d,categoria).includes(h)))throw new Error('Selecione apenas horários da grade de cada dia.');
-        return [d,[...new Set(horas)].sort()];
-    }));
-    if(ativa&&!Object.values(normalizado).some(h=>h.length))throw new Error('Selecione pelo menos um dia com um horário disponível.');
-    return normalizado;
-}

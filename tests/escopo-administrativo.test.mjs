@@ -13,7 +13,7 @@ test('Recepção e Gerência ignoram listas legadas de múltiplas unidades e nã
  assert.doesNotThrow(()=>exigirCapacidade(identidade('master'),'gestao-acessos',3));
 });
 test('Master consulta todas as unidades ou filtra uma sem ampliar o perfil inferior',async()=>{
- const e={alunos:[{id:'centro',unidade:'Vila Velha'},{id:'itaparica',unidade:'Itaparica'}],recursos:[],aulas:[],excecoesAgenda:[],ofertasAntecipacao:[],auditoria:[],configuracoesUnidades:{}};
+ const e={alunos:[{id:'centro',unidade:'Vila Velha'},{id:'itaparica',unidade:'Itaparica'}],recursos:[],aulas:[],excecoesAgenda:[],auditoria:[],configuracoesUnidades:{}};
  const adaptador={ler:async()=>structuredClone(e),alterar:async fn=>fn(structuredClone(e))};
  const global=criarServicoAdministrativo(adaptador,identidade('master'));assert.equal((await global.estado()).alunos.length,2);
  const local=criarServicoAdministrativo(adaptador,identidade('master',{unidade:'Itaparica',unidadeConsulta:'Itaparica'}));assert.deepEqual((await local.estado()).alunos.map(a=>a.id),['itaparica']);

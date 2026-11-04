@@ -1993,6 +1993,11 @@ html #calendar-days .calendar-day.calendar-blocked:disabled { background:var(--s
 [data-sipa-aluno] .booking-main .time-slot:is(:disabled,.unavailable) { color:var(--sipa-texto-neutro); background:var(--booking-subtle); border-style:dashed; cursor:default; }
 [data-sipa-aluno] .booking-main .time-slot.selected.unavailable { border-style:dashed; color:var(--sipa-texto-neutro); background:var(--booking-subtle); }
 [data-sipa-aluno] .booking-main .time-slot small { font-size:12px; white-space:normal; }
+/* Horário ocupado com "Tenho interesse": clicável quando o aluno tem aula para antecipar. */
+[data-sipa-aluno] .booking-main .time-slot-interesse { flex-direction:column; gap:2px; font-weight:500; }
+[data-sipa-aluno] .booking-main .time-slot-interesse:not(:disabled) { cursor:pointer; }
+[data-sipa-aluno] .booking-main .time-slot-interesse:not(:disabled):hover, [data-sipa-aluno] .booking-main .time-slot-interesse[aria-pressed=true] { border-color:var(--booking-blue); }
+[data-sipa-aluno] .booking-main .time-slot-interesse:disabled { opacity:.65; cursor:not-allowed; }
 [data-sipa-aluno] .booking-main .empty-time-state { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:12px; min-height:180px; padding:24px; border:1px dashed var(--booking-line); border-radius:10px; background:var(--booking-subtle); color:var(--sipa-texto-neutro); text-align:center; }
 [data-sipa-aluno] .booking-main .empty-time-state p { max-width:270px; font-size:14px; line-height:1.6; color:var(--sipa-texto-neutro); margin:0; }
 [data-sipa-aluno] .booking-main .time-slots > :not(button) { grid-column:1/-1; }

@@ -99,5 +99,11 @@ export function montarEstruturaOperador(raiz, template, { aoSair, aoSelecionarRe
         secoes[id]=[titulo,titulo,descricao];let painel=$(`[data-op-panel="${id}"]`);
         if(!painel){painel=document.createElement('section');painel.dataset.opPanel=id;painel.hidden=true;$('.op-footer').before(painel);}
         let link=$(`[data-op-nav="${id}"]`);if(!link){link=document.createElement('a');link.className='sipa-sidebar-link';link.href='#'+id;link.dataset.opNav=id;link.append(iconeSvg('grid'),document.createTextNode(titulo));$('.sipa-sidebar-menu').append(link);link.onclick=e=>{e.preventDefault();navegar(id);$('.op-sidebar').classList.remove('op-open');$('.op-menu-mobile')?.setAttribute('aria-expanded','false');};}return painel;
+    },
+    // Contador no item do menu (como o de mensagens do aluno): some com zero e é anunciado ao mudar.
+    marcarContador(id,n,descricao){
+        const link=$(`[data-op-nav="${id}"]`);if(!link)return;let badge=link.querySelector('.sipa-message-count');
+        if(!badge){badge=document.createElement('span');badge.className='sipa-message-count';badge.setAttribute('aria-live','polite');link.append(badge);}
+        n=Math.max(0,Number(n)||0);badge.textContent=n>99?'99+':String(n);badge.hidden=!n;badge.title=n?n+' '+descricao:'';badge.setAttribute('aria-label',badge.title);
     }};
 }

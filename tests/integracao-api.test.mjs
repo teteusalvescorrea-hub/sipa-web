@@ -58,6 +58,30 @@ test('aluno: horários viram pares instrutor × veículo; reserva manda Idempote
  assert.ok(cancelar.cabecalhos['Idempotency-Key']);
 });
 
+test('aluno: horário ocupado vira slot com interesse; passado e aula própria saem; marcar e desmarcar usam as rotas novas',async()=>{
+ respostas=[
+  rota('GET','horarios-disponiveis',{data:'2026-11-03',fechado:false,horarios:[
+   {horario:'08:00',dataHoraInicio:'2026-11-03T08:00:00',dataHoraFim:'2026-11-03T08:50:00',disponivel:false,motivo:'passado',motoristas:[]},
+   {horario:'09:00',dataHoraInicio:'2026-11-03T09:00:00',dataHoraFim:'2026-11-03T09:50:00',disponivel:false,motivo:'ocupado',interesseId:'i1',motoristas:[]},
+   {horario:'10:00',dataHoraInicio:'2026-11-03T10:00:00',dataHoraFim:'2026-11-03T10:50:00',disponivel:false,motivo:'alunoOcupado',motoristas:[]},
+   {horario:'11:00',dataHoraInicio:'2026-11-03T11:00:00',dataHoraFim:'2026-11-03T11:50:00',disponivel:false,motivo:'ocupado',motoristas:[]}]}),
+  rota('POST','alunos/me/interesses-antecipacao',{id:'i2',categoria:{valor:2,descricao:'B'},dataHoraInicio:'2026-11-03T11:00:00',situacao:{valor:1,descricao:'Aguardando'}},201),
+  rota('DELETE','alunos/me/interesses-antecipacao/i1',undefined,204),
+  rota('GET','alunos/me/interesses-antecipacao',[{id:'i1',categoria:{valor:2},dataHoraInicio:'2026-11-03T09:00:00',situacao:{valor:2,descricao:'Contatado'},unidade:{id:'u1',nome:'Cobilândia'}}])];
+ const s=criarServicoAluno();assert.equal(s.capacidades.interesse,true);assert.equal(s.capacidades.antecipacao,undefined);
+ const c=await s.consultarRecursosLocal({categoria:'B',data:'2026-11-03'});
+ assert.deepEqual(c.horarios.map(h=>[h.hora,h.ocupado,h.interesseId,h.pares.length]),[['09:00',true,'i1',0],['11:00',true,null,0]]);
+ assert.equal(c.mensagem,'Nenhum horário com instrutor e veículo livres nesta data.');
+ chamadas.length=0;
+ const novo=await s.marcarInteresse({categoria:'B',data:'2026-11-03',hora:'11:00'});
+ const post=chamadas.find(x=>x.metodo==='POST');assert.deepEqual(JSON.parse(post.corpo),{categoria:2,dataHoraInicio:'2026-11-03T11:00:00'});assert.ok(post.cabecalhos['Idempotency-Key']);
+ assert.deepEqual([novo.id,novo.hora,novo.situacao,novo.aberto],['i2','11:00','Aguardando',true]);
+ await s.desmarcarInteresse('i1');assert.equal(chamadas.at(-1).metodo,'DELETE');assert.match(chamadas.at(-1).url,/alunos\/me\/interesses-antecipacao\/i1$/);
+ const [i]=await s.listarInteresses();assert.deepEqual([i.id,i.data,i.hora,i.categoria,i.unidade,i.situacao,i.aberto],['i1','2026-11-03','09:00','B','Cobilândia','Em contato',true]);
+ respostas=[rota('POST','alunos/me/interesses-antecipacao',{title:'Conflito',listErrors:[{mensagem:'Esse horário está livre: reserve direto.'}]},409)];
+ await assert.rejects(s.marcarInteresse({categoria:'B',data:'2026-11-03',hora:'12:00'}),/reserve direto/);
+});
+
 test('aluno: 400 na consulta de horários vira motivo de elegibilidade, sem quebrar a tela',async()=>{
  respostas=[rota('GET','horarios-disponiveis',{title:'Erro de validação.',listErrors:[{campo:'categoria',mensagem:'Sem saldo nesta categoria.'}]},400)];
  const c=await criarServicoAluno().consultarRecursosLocal({categoria:'A',data:'2026-11-03'});

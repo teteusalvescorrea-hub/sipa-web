@@ -1,5 +1,4 @@
 import {lerMensagemAluno} from '../../shared/js/mensagensAluno.js';
-import {preferenciaAntecipacao} from '../../shared/js/antecipacaoAdministrativa.js';
 import {validarAtestado,solicitarMedico} from '../../shared/js/solicitacoesMedicas.js';
 import {guardarAtestado,lerAtestado,descartarUploadNaoSalvo} from './documentosMedicos.js';
 import {recursoCarroConsultavel,localCarro} from '../../shared/js/operacaoCarro.js';
@@ -104,7 +103,6 @@ export function criarServicoContaRecepcao(){
    return gerarPropostaAutomatica(d,p,calcular);
   },
   salvarPreferenciasAutomaticas:p=>salvarPreferencia('preferenciasAutomaticas',normalizarPreferenciasAutomaticas(p)),
-  salvarAvisosAntecipacao:ativo=>salvarPreferencia('antecipacao',c=>preferenciaAntecipacao(ativo,c.aluno.antecipacao)),
   marcarMensagemLida:id=>operarPainelRecepcao(c=>({aluno:lerMensagemAluno(c.aluno,id),aulas:c.aulas}),true),
   cancelarReservaLocal:(id,motivo,{aceitarConsequencias=false}={})=>operarPainelRecepcao(c=>{
    const d=projetarContaRecepcao(c),a=d.aulas.find(x=>x.id===id);if(!a||a.status!==1||Date.parse(a.inicio)<=Date.now())throw new Error('Reserva não autorizada para cancelamento.');

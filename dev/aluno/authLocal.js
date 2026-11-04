@@ -1,9 +1,8 @@
-import {preferenciaAntecipacao} from '../../shared/js/antecipacaoAdministrativa.js';
 import {resolverInstrutorCarro} from '../../shared/js/operacaoCarro.js';
 import {recursoCarroCompativel,localCarro,motivoCarro,operacaoCarro} from '../../shared/js/operacaoCarro.js';
 import {motivoAlmoco,localCategoriaD,motivoCatalogoOnibus,recursosOperacionaisD} from '../../shared/js/categorias.js';
 import {sessaoDemo,sairDemo} from '../sessao.js';
-import {  MOTIVOS_CANCELAMENTO, identificarMotivo, criarCancelamento, normalizarPreferenciasAutomaticas, normalizarAntecipacao, gerarPropostaAutomatica, calcularPrazoCancelamento } from '../../aluno/js/domain/agendamentoAluno.js';
+import {  MOTIVOS_CANCELAMENTO, identificarMotivo, criarCancelamento, normalizarPreferenciasAutomaticas, gerarPropostaAutomatica, calcularPrazoCancelamento } from '../../aluno/js/domain/agendamentoAluno.js';
 import { UNIDADES_INSTITUCIONAIS, normalizarChaveUnidade, nomeUnidadeInstitucional } from '../../shared/js/catalogoUnidades.js';
 // Laboratório isolado: nunca emite JWT, importa serviços HTTP ou altera sipa.token.
 // Para desativar completamente o laboratório, altere esta constante para false.
@@ -463,30 +462,6 @@ export async function criarServicoLocal() {
                 if (!(dados.resumo.categorias[p.categoria].disponiveis >= p.quantidade)) throw new Error('Quantidade superior ao saldo disponível da categoria.');
                 const em = new Date().toISOString(), preferencias = { ...p, alunoId:dados.aluno.id, atualizadoEm:em };
                 return lista.map(r=>r.id===dados.aluno.id?{...r,preferenciasAutomaticas:preferencias,historicoPreferencias:[...(r.historicoPreferencias||[]),{tipo:'automatico',em,valor:preferencias}]}:r);
-            });
-        },
-        async salvarAvisosAntecipacao(notificacoes, disponibilidade) {
-            if (typeof notificacoes !== 'boolean') throw new Error('Informe uma preferência válida.');
-            const atual = await dadosAlunoLocal();
-            if (!atual.aluno) throw new Error('Cadastre o aluno antes de salvar a preferência.');
-            return alterar(async lista=>{
-                const dados = await dadosAlunoLocal();
-                if (dados.aluno?.id !== atual.aluno.id) throw new Error('A sessão mudou. Entre novamente.');
-                const em = new Date().toISOString(), anterior = dados.aluno.antecipacao || {};
-                
-                const antecipacao = preferenciaAntecipacao(notificacoes,anterior);
-                return lista.map(r=>r.id===dados.aluno.id?{...r,antecipacao,historicoPreferencias:[...(r.historicoPreferencias||[]),{tipo:'avisos_antecipacao',em,valor:antecipacao}]}:r);
-            });
-        },
-        async salvarAntecipacao(valor) {
-            const preferencia = normalizarAntecipacao(valor), atual = await dadosAlunoLocal();
-            if (!atual.aluno) throw new Error('Cadastre o aluno antes de salvar preferências.');
-            return alterar(async lista=>{
-                const dados = await dadosAlunoLocal();
-                if (dados.aluno?.id !== atual.aluno.id) throw new Error('A sessão mudou. Entre novamente.');
-                const em = new Date().toISOString(), anterior = dados.aluno.antecipacao;
-                const antecipacao = { ...preferencia, alunoId:dados.aluno.id, unidadeVinculo:dados.aluno.unidade, ativadoEm:preferencia.ativo?anterior?.ativo?anterior.ativadoEm:em:anterior?.ativadoEm||null, atualizadoEm:em };
-                return lista.map(r=>r.id===dados.aluno.id?{...r,antecipacao,historicoPreferencias:[...(r.historicoPreferencias||[]),{tipo:'antecipacao',em,valor:antecipacao}]}:r);
             });
         },
         async disponibilidadeLocal(consulta) {

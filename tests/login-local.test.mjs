@@ -267,13 +267,10 @@ test('cancelamento tardio exige aceite, retém crédito e não aprova atestado; 
  const expirada=criarCancelamento({...aula,status:3,inicio:'2026-10-18T08:00:00-03:00'},[],'Motivos pessoais',false,agora);assert.equal(expirada.credito,'nao_consumido');
 });
 
-test('preferências e antecipação validam campos sem depender de IDs enviados de outros alunos',async()=>{
- const {normalizarPreferenciasAutomaticas:n,normalizarAntecipacao:a}=await import('../aluno/js/domain/agendamentoAluno.js');
+test('preferências do agendamento automático validam campos sem depender de IDs enviados de outros alunos',async()=>{
+ const {normalizarPreferenciasAutomaticas:n}=await import('../aluno/js/domain/agendamentoAluno.js');
  const p={tipoCambio:'manual',categoria:'B',unidades:['Cobilândia'],dias:[1],horarios:['07:00'],quantidade:2};
  assert.equal(n(p).quantidade,2);assert.throws(()=>n({...p,dias:[0]}));assert.throws(()=>n({...p,horarios:['12:00']}));assert.throws(()=>n({...p,instrutores:['outro']}));assert.throws(()=>n({...p,quantidade:1.5}));
- assert.equal(a({ativo:true,notificacoes:false,alunoId:'outro'}).alunoId,undefined);
- assert.equal(a({ativo:false,notificacoes:true}).notificacoes,true);
- assert.throws(()=>a({ativo:true,notificacoes:false,observacoes:'a'.repeat(241)}));
 });
 
 test('proposta determinística usa recursos reais, respeita saldo, unidades, preferências e conflitos sem gravar',async()=>{
@@ -301,13 +298,4 @@ test('limpeza preserva consumos retidos sem alterar totais, reservas ou progress
     assert.deepEqual(resumirCreditos(preservado,outras,agora),resumirCreditos(credito,[...retidas,...outras],agora));
     assert.deepEqual(progressoPorCategoria(preservado,outras,agora),progressoPorCategoria(credito,[...retidas,...outras],agora));
     assert.deepEqual(preservado.categorias,{A:20,B:20});
-});
-
-test('disponibilidade de antecipação valida grade e preserva combinações por dia',async()=>{
- const {normalizarDisponibilidadeAntecipacao:n,horariosAntecipacao:h}=await import('../aluno/js/domain/agendamentoAluno.js');
- const valor={1:['09:00','08:00','08:00'],3:['14:00'],6:['10:00']},original=JSON.stringify(valor),normal=n(valor,true);
- assert.deepEqual(normal[1],['08:00','09:00']);assert.deepEqual(normal[3],['14:00']);assert.deepEqual(normal[6],['10:00']);assert.equal(JSON.stringify(valor),original);
- assert.equal(h(1).length,11);assert.equal(h(6).length,5);assert.ok(!h(1).includes('12:00'));assert.throws(()=>h(0));
- for(const invalido of [{},{7:['08:00']},{6:['14:00']},{1:['12:00']},{1:'08:00'},{alunoId:'outra-conta'}])assert.throws(()=>n(invalido,true));
- assert.deepEqual(n({},false),{1:[],2:[],3:[],4:[],5:[],6:[]});
 });

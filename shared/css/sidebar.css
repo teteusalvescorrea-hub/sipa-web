@@ -484,5 +484,7 @@
 /* Contagem exclusiva de mensagens, sem alterar a altura dos itens do menu. */
 .sipa-sidebar-menu a .sipa-message-count{margin-left:auto;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:26px;height:26px;padding:0 2px;border-radius:50%;background:#137c43;color:#fff;font-size:11px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .sipa-sidebar-menu a .sipa-message-count[hidden]{display:none}
+/* Na equipe (Recepção e Gerência) o contador usa o azul do SIPA. */
+.op-sidebar .sipa-sidebar-menu a .sipa-message-count{background:#1769aa}
 
 .sipa-sidebar-link[hidden] { display: none; }

@@ -2559,6 +2559,8 @@ a {
 .student-local-lesson .student-medical-state { grid-column:1/-1; color:inherit; font-size:12px; line-height:1.6; }
 
 .student-medical-requests > h2 { font-size:18px; margin:16px 0 12px; }
+.student-interests > h2 { font-size:18px; margin:16px 0 8px; }
+.student-interests > p { font-size:14px; line-height:1.6; margin:0 0 8px; }
 [data-sipa-aluno] .lessons-main .student-local-lesson.medical-request-card { display:grid; grid-template-columns:minmax(0,1fr); padding:12px; gap:9px; margin-top:8px; }
 [data-sipa-aluno] .medical-request-card > .local-lesson-heading { margin:0; align-items:flex-start; flex-wrap:wrap; }
 [data-sipa-aluno] .medical-request-card .local-lesson-heading h3 { font-size:14px; line-height:1.5; }

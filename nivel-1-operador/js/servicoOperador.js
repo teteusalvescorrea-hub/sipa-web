@@ -1,6 +1,5 @@
 import {contaAlunoAutorizada,validarRedefinicaoAluno,registrarRedefinicaoAluno} from '../../shared/js/redefinicaoAluno.js';
 import {cadastroSemHistoriaMedicaAlheia,podeConsultarAdministrativoAluno,aulaSemAdministracaoAlheia,exigirAdministrativoAluno,vinculoAdministrativoAluno} from '../../shared/js/escopoAlunoAdministrativo.js';
-import {criarServicoAntecipacao} from '../../shared/js/servicoAntecipacao.js';
 import {validarAtestado,solicitarMedico} from '../../shared/js/solicitacoesMedicas.js';
 import {periodoDesempenho,desempenhoInstrutor} from '../../shared/js/desempenhoInstrutor.js';
 import {consultarSolicitacoesMedicas,obterSolicitacaoMedica,encaminharSolicitacaoMedica} from './solicitacoesOperador.js';
@@ -16,7 +15,6 @@ export function servicoOperador(adaptador, identidade, {prepararRedefinicao,prep
     regras.autorizar(identidade, 'consultar');
     const executar = (transformar) => adaptador.alterar(estado => transformar(estado));
     return Object.freeze({
-        ...criarServicoAntecipacao(adaptador,identidade),
         identidade,
         async detalhesInstrutor(id,consulta={}){
             const e=await adaptador.ler(),instrutor=regras.recursoAdministrativo(e,identidade,id);

@@ -124,7 +124,6 @@ html[data-sipa-theme=aluno][data-theme=dark] .category-option-check { background
 /* Cancelamento: mensagem de devolução neutra, penalidade somente quando aplicável. */
 [data-sipa-local=aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] { background:var(--sipa-secondary,#edf5fc)!important; border-color:var(--sipa-border,#b8cfe3)!important; }
 [data-sipa-local=aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] :is(p,strong) { color:var(--sipa-texto-neutro)!important; }
-#student-anticipation p[hidden] { display:none; }
 
 /* Localização e comparecimento: informações da reserva, sem duplicação. */
 .lesson-attendance { margin:12px 0; padding:10px 12px; border:1px solid var(--sipa-border,#cbddec); border-radius:10px; background:var(--sipa-secondary,#f4f8fc); font-size:13px; line-height:1.5; }
@@ -135,16 +134,3 @@ html[data-sipa-theme=aluno][data-theme=dark] .category-option-check { background
 [data-sipa-local=aluno] .student-local-lesson[data-status='1'] .confirmed-lesson-location { grid-column:1/-1; grid-row:3; margin:0; padding:4px 0; }
 [data-sipa-local=aluno] .student-local-lesson[data-status='1'] .local-lesson-history { grid-row:4; }
 [data-sipa-local=aluno] .student-local-lesson[data-status='1'] .local-lesson-cancel { grid-row:4; }
-
-#anticipation-availability { margin:14px 0; padding:12px; min-width:0; border:1px solid var(--sipa-border,#cbddec); border-radius:10px; animation:anticipation-reveal .16s ease-out; }
-#anticipation-availability[hidden] { display:none; }
-#anticipation-availability legend { font-size:14px; font-weight:600; padding:0 4px; }
-#anticipation-availability p,#anticipation-summary { font-size:13px; line-height:1.5; }
-#anticipation-availability h3 { font-size:13px; margin:14px 0 8px; }
-.anticipation-days,.anticipation-hours { display:flex; flex-wrap:wrap; gap:7px; }
-#student-anticipation :is(.anticipation-days,.anticipation-hours) button { margin:0; padding:8px 11px; min-height:40px; border:1px solid var(--sipa-border,#b8cfe3); border-radius:8px; background:var(--sipa-card,#fff); color:var(--sipa-texto-neutro); font:inherit; font-size:13px; cursor:pointer; }
-#student-anticipation :is(.anticipation-days,.anticipation-hours) button[aria-pressed=true] { background:#1769aa; color:#fff; border-color:#1769aa; }
-#student-anticipation .anticipation-days button[data-open=true] { outline:2px solid var(--sipa-accent,#1769aa); outline-offset:2px; }
-#student-anticipation button:focus-visible { outline:3px solid var(--sipa-accent,#1769aa); outline-offset:3px; }
-@keyframes anticipation-reveal { from { opacity:0;transform:translateY(-3px); } to { opacity:1;transform:translateY(0); } }
-@media(prefers-reduced-motion:reduce){#anticipation-availability { animation:none; }}

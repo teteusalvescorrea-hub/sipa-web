@@ -196,6 +196,21 @@ function adaptarAuditoria(itens){
 // O "ate" da API é exclusivo (início < ate): a primeira janela vai até amanhã para trazer as aulas de hoje.
 const janelas=(hoje=hojeBrasil())=>[{de:somarDias(hoje,-91),ate:somarDias(hoje,1)},{de:somarDias(hoje,1),ate:somarDias(hoje,92)}];
 const dataHora=(data,inicio)=>data+'T'+inicio+':00';
+
+// Horário liberado (HorarioLiberadoReadDto): o horário que vagou, os pares livres e quem marcou interesse,
+// na ordem de quem marcou primeiro. Cada interessado traz as aulas que podem ser antecipadas e o prazo de cada uma.
+const SITUACAO_INTERESSE=Object.freeze({1:'Aguardando',2:'Contatado',3:'Remarcado',4:'Descartado'});
+const nomeOu=(v,...extras)=>v?.nome??(typeof v==='string'?v:null)??extras.find(Boolean)??'';
+export function adaptarLiberado(h,u){
+ const i=String(h.dataHoraInicio||''),inicio=i.slice(11,16);
+ return {unidade:u.chave(h.unidade??h.unidadeId),unidadeNome:nomeOu(h.unidade,h.unidadeNome),categoria:categoria(h.categoria),data:i.slice(0,10),inicio,fim:String(h.dataHoraFim||'').slice(11,16)||fimDaAula(inicio),prazo:h.prazoHorasUteis??48,
+  pares:(h.pares||[]).map(p=>({instrutorId:p.motoristaId,veiculoId:p.veiculoId,instrutor:nomeOu(p.motorista,p.motoristaNome,p.instrutor?.nome)||'Instrutor',
+   veiculo:[p.veiculo?.modelo??p.veiculoModelo??(typeof p.veiculo==='string'?p.veiculo:''),p.veiculo?.placa??p.veiculoPlaca].filter(Boolean).join(' · ')||'Veículo'})),
+  interessados:(h.interessados||[]).map(x=>({id:x.interesseId??x.id,alunoId:x.aluno?.id??x.alunoId,aluno:nomeOu(x.aluno,x.alunoNome)||'Aluno não informado',telefone:x.telefone??x.aluno?.telefone??'',
+   situacao:SITUACAO_INTERESSE[numero(x.situacao)]??descricao(x.situacao)??'Aguardando',marcadoEm:x.marcadoEm??x.criadoEm??null,contatadoEm:x.contatadoEm??null,observacao:x.observacao??'',
+   aulas:(x.aulas||[]).map(a=>{const ai=String(a.dataHoraInicio||'');return {id:a.id??a.agendamentoId,data:ai.slice(0,10),inicio:ai.slice(11,16),horasUteis:a.horasUteis??null,dentroPrazo:a.dentroPrazo!==false};})}))};
+}
+function observacaoInteresse(v){const t=String(v??'').trim();if(t.length>500)throw new Error('Use no máximo 500 caracteres na observação.');return t||null;}
 // Por quanto tempo uma listagem lida da API é reaproveitada (ver GetCache).
 const VALIDADE_CACHE=15000;
 
@@ -229,7 +244,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   for(const s of lista(solicitacoes)){const sol=s.solicitacao??s,aulaId=sol.aulaIds?.[0]??sol.aulaId??s.aula?.id,aula=unicas.get(aulaId);if(aula)aula.solicitacaoMedica=adaptarSolicitacao({...sol,aulaIds:sol.aulaIds||[aulaId]},aula.alunoId);}
   // Alunos fora do cadastro autorizado só aparecem pelo nome nas agendas compartilhadas.
   for(const a of unicas.values())if(a.alunoId&&!porId.has(a.alunoId))porId.set(a.alunoId,{id:a.alunoId,nome:a.alunoNome||'Aluno não informado',categoria:'',historico:[],somenteAgenda:true,excluidoEm:'somente-agenda'});
-  return {versao:2,alunos:[...porId.values()],recursos:adaptarRecursos(lista(vinculos),u,lista(veiculosDaAutoescola)),aulas:[...unicas.values()],excecoesAgenda:[],ofertasAntecipacao:[],configuracoesUnidades:{}};
+  return {versao:2,alunos:[...porId.values()],recursos:adaptarRecursos(lista(vinculos),u,lista(veiculosDaAutoescola)),aulas:[...unicas.values()],excecoesAgenda:[],configuracoesUnidades:{}};
  }
  const leitor=estado=>servicoOperador({ler:async()=>estado,...negado},op);
  const base=servicoOperador({ler,...negado},op);
@@ -293,7 +308,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   async estado(){
    const e=permitido(await ler());let auditoria=[];
    if(master&&op.permissoes.includes('auditoria')){const hoje=hojeBrasil();auditoria=adaptarAuditoria(await opcional(GetCache(ComParams('auditoria',{de:somarDias(hoje,-30),ate:hoje,pagina:1,tamanho:100})),[]));}
-   return {responsaveis:[],alunos:e.alunos,recursos:e.recursos,aulas:e.aulas,excecoesAgenda:[],ofertasAntecipacao:[],configuracoesUnidades:{},auditoria};
+   return {responsaveis:[],alunos:e.alunos,recursos:e.recursos,aulas:e.aulas,excecoesAgenda:[],configuracoesUnidades:{},auditoria};
   },
   async ficha(id){return leitor(await lerComAluno(id)).ficha(id);},
   async acessoAluno(id){
@@ -433,27 +448,19 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    return chamar(Post(`agendamentos/${aulaId}/atestado`,corpo,comChave(operacaoId)));
   },
   encaminharSolicitacaoMedica:async(id,parecer)=>{regras.autorizar(op,'verificar');const t=String(parecer||'').trim();if(t.length<5||t.length>2000)throw new Error('Informe o parecer da recepção (5 a 2000 caracteres).');return chamar(Post(`solicitacoes-medicas/${id}/encaminhar`,{parecer:t}));},
-  // ---- antecipação
-  async consultarVagas(f){
-   exigirCapacidade(op,'antecipar',1);if(!escopoPermitido(op,f.unidade))throw new Error('Informe unidade autorizada, categoria e data válidas.');
-   const r=await chamar(Get(ComParams('antecipacoes/vagas',{unidadeId:u.guid(f.unidade),categoria:NUMERO[f.categoria],data:f.data})));
-   return lista(r).map(v=>{const i=String(v.dataHoraInicio),inicio=i.slice(11,16);return {unidade:f.unidade,categoria:f.categoria,data:i.slice(0,10),inicio,fim:String(v.dataHoraFim||'').slice(11,16)||fimDaAula(inicio),instrutorId:v.motoristaId,veiculoId:v.veiculoId,instrutor:v.instrutor?.nome??v.instrutor??'Não informado',veiculo:v.veiculo?.modelo??v.veiculo??'Não informado',local:v.local?.nome??v.local??'',api:v};});
+  // ---- antecipação: horários ocupados que o aluno marcou e que vagaram (a API calcula na hora da consulta).
+  async consultarLiberados(f={}){
+   exigirCapacidade(op,'antecipar',1);if(f.unidade&&!escopoPermitido(op,f.unidade))throw new Error('Unidade não autorizada.');
+   const r=await chamar(Get(ComParams('antecipacoes/horarios-liberados',{unidadeId:f.unidade?u.guid(f.unidade):undefined,categoria:NUMERO[f.categoria],de:f.de||undefined,ate:f.ate||undefined})));
+   return lista(r).map(h=>adaptarLiberado(h,u));
   },
-  async consultarInteressados(vagas){
-   exigirCapacidade(op,'antecipar',1);const r=await chamar(Post('antecipacoes/interessados',{vagas:vagas.map(v=>v.api||{dataHoraInicio:dataHora(v.data,v.inicio),motoristaId:v.instrutorId,veiculoId:v.veiculoId})}));
-   const porChave=new Map(vagas.map(v=>[v.api?.dataHoraInicio+'|'+v.instrutorId+'|'+v.veiculoId,v]));
-   return lista(r).map(a=>({id:a.id,nome:a.nome,categoria:typeof a.categoria==='string'?a.categoria:categoria(a.categoria),unidade:u.chave(a.unidade),telefone:a.telefone||'',whatsappPermitido:a.whatsappPermitido!==false,elegivel:a.elegivel!==false,motivo:a.motivo||'Elegível e interessado',
-    vagas:(a.vagas||vagas).map(x=>x.inicio?x:porChave.get(x.dataHoraInicio+'|'+x.motoristaId+'|'+x.veiculoId)).filter(Boolean)}));
+  async totalLiberados(){exigirCapacidade(op,'antecipar',1);const r=await opcional(Get('antecipacoes/horarios-liberados/total'),0);return Number(r?.total??r)||0;},
+  async marcarContatado(id,observacao){exigirCapacidade(op,'antecipar',1);return chamar(Post(`antecipacoes/interesses/${id}/contato`,{observacao:observacaoInteresse(observacao)}));},
+  async remarcarInteresse(id,{aulaId,instrutorId,veiculoId},chave){
+   exigirCapacidade(op,'antecipar',1);if(!aulaId||!instrutorId||!veiculoId)throw new Error('Escolha a aula a antecipar, o instrutor e o veículo.');
+   return chamar(Post(`antecipacoes/interesses/${id}/remarcacao`,{agendamentoAnteriorId:aulaId,motoristaId:instrutorId,veiculoId},comChave(chave)));
   },
-  async enviarCampanha({campanhaId,alunoIds,vagas,canais,confirmado}){
-   exigirCapacidade(op,'antecipar',1);if(confirmado!==true||!alunoIds?.length||!canais||!canais.sipa&&!canais.whatsapp&&!canais.email)throw new Error('Confirme os destinatários e ao menos um canal.');
-   return chamar(Post('antecipacoes/campanhas',{campanhaId,vagas:vagas.map(v=>v.api||{dataHoraInicio:dataHora(v.data,v.inicio),motoristaId:v.instrutorId,veiculoId:v.veiculoId}),alunoIds,canais},comChave(campanhaId)));
-  },
-  async historicoOfertas(){
-   exigirCapacidade(op,'antecipar',1);const hoje=hojeBrasil(),r=await opcional(Get(ComParams('antecipacoes/ofertas',{de:somarDias(hoje,-30),ate:somarDias(hoje,30),pagina:1})),[]);
-   return lista(r).map(o=>({...o,vagas:(o.vagas||[]).map(v=>{const i=String(v.dataHoraInicio||''),inicio=i.slice(11,16);return {...v,data:i.slice(0,10),inicio,fim:String(v.dataHoraFim||'').slice(11,16)||fimDaAula(inicio),local:v.local?.nome??v.local??''};}),canais:{sipa:{situacao:descricao(o.canais?.sipa?.situacao)?.toLowerCase()||'não solicitado'},whatsapp:{situacao:descricao(o.canais?.whatsapp?.situacao)?.toLowerCase()==='preparada'?'preparado':descricao(o.canais?.whatsapp?.situacao)?.toLowerCase()||'não solicitado',motivo:o.canais?.whatsapp?.motivo||null}}})).sort((a,b)=>String(b.em).localeCompare(String(a.em)));
-  },
-  async linkWhatsAppOferta(id){exigirCapacidade(op,'antecipar',1);return (await chamar(Get(`antecipacoes/ofertas/${id}/whatsapp`)))?.url;},
+  async descartarInteresse(id,observacao){exigirCapacidade(op,'antecipar',1);return chamar(Post(`antecipacoes/interesses/${id}/descarte`,{observacao:observacaoInteresse(observacao)}));},
   // ---- Gerência e Master
   async decidirAtestado(id,d){
    exigirCapacidade(op,'decidir-atestado');if(!['aprovado','rejeitado'].includes(d.resultado)||d.confirmado!==true)throw new Error('Confirme a decisão com identificador válido.');

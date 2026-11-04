@@ -8,6 +8,7 @@ import {montarUnidade} from '../../nivel-1-operador/js/components/unidadeOperado
 import {UNIDADES,unidade} from '../../nivel-1-operador/js/dominioOperador.js';
 import {prepararRedefinicaoAlunoLocal,prepararAcessoAluno,resumirSegredo} from '../aluno/contaRecepcao.js';
 import {prepararCenarioAgenda} from './cenarioAgenda.js';
+import {antecipacaoLocal} from './antecipacaoLocal.js';
 import {criarPoliticaCpfLocal} from './politicaCpf.js';
 import {exigirPerfil,sair,transacaoAdministrativaEmCurso,exigirPersistenciaEstavel} from '../autenticacao.js';
 
@@ -42,5 +43,5 @@ export async function iniciarAtendimentoLocal(raiz,template,endereco) {
     if(regularizarCarrosDeTeste(inicial,identidade)!==inicial)await adaptador.alterar(e=>regularizarCarrosDeTeste(e,identidade));
     const servico=servicoOperador(adaptador,identidade,{prepararRedefinicao:prepararRedefinicaoAlunoLocal,prepararAcesso:prepararAcessoAluno,hashPedido:resumirSegredo,cadastrarInstrutor:async transformar=>(await import('../autenticacao.js')).cadastrarInstrutor(adaptador.alterar,transformar),politicaCpfLocal:criarPoliticaCpfLocal(endereco)});
     const ui=await montarUnidade(raiz,template,servico,{sair:async()=>{await sair();location.replace('/login.html');}});
-    if(identidade.permissoes.includes('antecipar')){const host=ui.registrarSecao('antecipacao','Antecipa\u00e7\u00e3o de aulas');raiz.querySelector('[data-op-nav=antecipacao]').addEventListener('click',async()=>{try{await (await import('../../shared/components/antecipacaoPainel.js')).montarAntecipacaoPainel(host,servico,raiz);}catch(e){host.textContent=e.message;}});}
+    if(identidade.permissoes.includes('antecipar')){const host=ui.registrarSecao('antecipacao','Antecipa\u00e7\u00e3o de aulas');raiz.querySelector('[data-op-nav=antecipacao]').addEventListener('click',async()=>{try{await (await import('../../shared/components/antecipacaoPainel.js')).montarAntecipacaoPainel(host,{...servico,...antecipacaoLocal(identidade)},raiz);}catch(e){host.textContent=e.message;}});}
 }

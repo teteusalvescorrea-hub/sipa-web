@@ -84,7 +84,6 @@ html body[data-sipa-escala] dialog :is(h2,header h2,.op-dialog-heading h2){font-
 html body[data-sipa-escala] dialog :is(p,dd,.resource-options span){font-size:var(--sipa-font-body);line-height:1.6}
 html body[data-sipa-escala] dialog :is(dt,label){font-size:var(--sipa-font-control)}
 html body[data-sipa-escala] :is(.in-dialog,.login-dialog,.profile-password-dialog,.mensagem-dialog){padding:var(--sipa-dialog-padding);overflow-y:auto}
-html body[data-sipa-escala] .op-unidade .oferta-modal{padding:0}
 
 /* Calendários: somente a escala dos textos. Células, bordas pretas, estados,
    colunas e faixas de 50 minutos permanecem nas regras específicas. */

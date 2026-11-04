@@ -86,13 +86,3 @@ export async function montarAgendamentoAutomatico(servico,aoConfirmar) {
     function modo(automatico){if(ocupado)return;manual.hidden=automatico;secao.hidden=!automatico;bManual.setAttribute('aria-pressed',String(!automatico));bAuto.setAttribute('aria-pressed',String(automatico));}
     bManual.onclick=()=>modo(false);bAuto.onclick=()=>modo(true);recursos(true);modo(false);
 }
-
-export async function montarAntecipacaoAluno(servico){
- if(document.getElementById('student-anticipation'))return;
- const dados=await servico.dadosAlunoLocal(),box=criar('section',null,'student-preferences');box.id='student-anticipation';
- box.append(criar('h2','Antecipação de aulas'),criar('p','Deseja receber avisos quando surgirem horários disponíveis para antecipar suas aulas?'));
- const label=criar('label'),input=criar('input'),msg=criar('p');input.type='checkbox';input.name='notificacoes';input.checked=dados.aluno?.antecipacao?.ativo===true;label.append(input,document.createTextNode('Tenho interesse em antecipar minhas aulas'));msg.id='anticipation-status';msg.setAttribute('role','status');box.append(label,msg);
- const indisponivel=servico.capacidades?.antecipacao===false||typeof servico.salvarAvisosAntecipacao!=='function';input.disabled=indisponivel;if(indisponivel)msg.textContent='Preferência indisponível neste ambiente. Consulte a recepção.';
- input.onchange=async()=>{const valor=input.checked;input.disabled=true;try{await servico.salvarAvisosAntecipacao(valor);msg.textContent=valor?'Interesse salvo. Você poderá receber ofertas compatíveis com suas aulas pendentes.':'Interesse desativado. Suas mensagens anteriores foram preservadas.';}catch(e){input.checked=!valor;msg.textContent=e.message;}finally{input.disabled=false;}};
- const ancora=document.querySelector('.profile-security')||document.querySelector('main header');ancora?.after(box);
-}

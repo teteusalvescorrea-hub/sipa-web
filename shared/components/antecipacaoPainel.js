@@ -1,52 +1,93 @@
-import {el,botao,campo,entrada,select,modal} from '../../nivel-1-operador/js/components/uiOperador.js';
+import {el,botao,campo,entrada,select,modal,card,mostrarToast} from '../../nivel-1-operador/js/components/uiOperador.js';
 import {UNIDADES_INSTITUCIONAIS,nomeUnidadeInstitucional} from '../js/catalogoUnidades.js';
 import {hojeBrasil,somarDias,formatarData} from '../js/calendario.js';
 import {escopoPermitido} from '../js/permissoesAdministrativas.js';
-import {chaveVaga,mensagemOferta} from '../js/ofertasAntecipacao.js';
 import {dataRelatorio} from '../js/apresentacaoRelatorios.js';
-import {tornarOrdenavel} from '../js/ordenacaoTabela.js';
-const categorias={A:'Moto',B:'Carro',D:'Ônibus'},principal='op-button op-button-primary';
+import {formatarTelefone} from '../js/formatacao.js';
+import {menuAcoes} from './menuAcoes.js';
+// Antecipação (Recepção e Gerência): horários ocupados que vagaram e os alunos que marcaram interesse neles.
+// A equipe liga para o aluno e remarca; a aula desmarcada precisa estar a pelo menos 48 horas úteis (prazo da autoescola).
+// Padrão da tela de alunos: filtros numa linha, contagem, tabela e Ações ⋯. Agrupada por horário, na ordem de quem marcou primeiro.
+const categorias={A:'Moto',B:'Carro',D:'Ônibus'},principal='op-button op-button-primary',DIAS=14;
+const plural=(n,um,varios)=>n+' '+(n===1?um:varios);
+const aulaTexto=a=>formatarData(a.data)+' às '+a.inicio;
+const dicaPrazo=prazo=>'O aluno não tem aula que possa ser remarcada: só dá para remarcar aulas com '+prazo+' horas úteis de antecedência.';
 export async function montarAntecipacaoPainel(host,servico,root){
- host.ofertaController?.abort();const controller=new AbortController();host.ofertaController=controller;
+ host.antecipacaoController?.abort();const controller=new AbortController();host.antecipacaoController=controller;
  if(!document.querySelector('[data-css-antecipacao]')){const l=el('link');l.rel='stylesheet';l.href=new URL('../css/antecipacao.css',import.meta.url);l.dataset.cssAntecipacao='';document.head.append(l);}
- host.classList.add('sipa-antecipacao');const op=servico.identidade,selecionadas=new Map();let revisao=0;
- const titulo=el('h2','Antecipação de aulas'),form=el('form',undefined,'adm-filtros'),unidade=select(UNIDADES_INSTITUCIONAIS.filter(u=>escopoPermitido(op,u.id)).map(u=>[u.id,u.nome]),op.unidadeConsulta||op.unidade),categoria=select([['B','Carro — Categoria B'],['A','Moto — Categoria A'],['D','Ônibus — Categoria D']],'B'),data=entrada('date',somarDias(hojeBrasil(),1)),consultar=botao('Consultar',()=>{},principal);
- unidade.name='unidade';categoria.name='categoria';data.name='data';data.required=true;consultar.type='submit';form.append(campo('Unidade',unidade),campo('Categoria',categoria),campo('Data',data),consultar);
- const aviso=el('p','As ofertas não reservam horários nem consomem créditos. A disponibilidade será conferida novamente ao agendar.','adm-nota'),erro=el('p',undefined,'oferta-retorno');erro.setAttribute('role','status');
- const lista=el('div',undefined,'oferta-vagas'),resumo=el('p','Nenhuma vaga selecionada.'),interessados=botao('Consultar alunos interessados',abrirInteressados,principal),historico=el('section',undefined,'oferta-historico');interessados.disabled=true;
- host.replaceChildren(titulo,form,aviso,erro,el('h3','Horários disponíveis'),lista,resumo,interessados,historico);
- function falha(e){erro.textContent=e.message;}
- function atualizarSelecao(){resumo.textContent=selecionadas.size+' vaga(s) selecionada(s).';interessados.disabled=!selecionadas.size;}
- function invalidar(){revisao++;selecionadas.clear();lista.replaceChildren(el('p','Clique em Consultar para atualizar os horários.'));atualizarSelecao();}
- for(const c of [unidade,categoria,data])c.addEventListener('change',invalidar);
- form.onsubmit=async ev=>{ev?.preventDefault();const pedido=++revisao;selecionadas.clear();atualizarSelecao();consultar.disabled=true;erro.textContent='';lista.replaceChildren(el('p','Consultando horários…'));
-  try{const vagas=await servico.consultarVagas({unidade:unidade.value,categoria:categoria.value,data:data.value});if(pedido!==revisao)return;lista.replaceChildren();
-   for(const v of vagas){const card=el('label',undefined,'oferta-vaga'),check=entrada('checkbox'),conteudo=el('span');check.dataset.ofertaVaga=chaveVaga(v);conteudo.append(el('strong',v.inicio+' – '+v.fim),el('span',categorias[v.categoria]+' — Categoria '+v.categoria),el('span','Veículo: '+v.veiculo),el('span','Instrutor: '+v.instrutor),el('span','Local: '+(v.local?.nome??v.local??'Não informado')));card.append(check,conteudo);check.onchange=()=>{if(check.checked)selecionadas.set(chaveVaga(v),v);else selecionadas.delete(chaveVaga(v));card.classList.toggle('selecionada',check.checked);atualizarSelecao();};lista.append(card);}
-   if(!vagas.length)lista.append(el('p','Nenhum horário disponível para esta consulta.'));
-  }catch(e){if(pedido===revisao){lista.replaceChildren();falha(e);}}finally{consultar.disabled=false;}
- };
- function novoModal(titulo,id){const d=modal(root,titulo,id);d.classList.add('oferta-modal');d.addEventListener('close',()=>d.remove(),{once:true});return d;}
- async function abrirInteressados(){interessados.disabled=true;try{const vagas=[...selecionadas.values()],alunos=await servico.consultarInteressados(vagas),d=novoModal('Alunos interessados em antecipação','ofertaInteressados'),corpo=el('div',undefined,'oferta-corpo');
-   corpo.append(el('p',nomeUnidadeInstitucional(vagas[0].unidade)+' · '+categorias[vagas[0].categoria]+' · '+formatarData(vagas[0].data)),el('p',[...new Set(vagas.map(v=>v.inicio+' – '+v.fim))].join(' | ')));
-   if(!alunos.length)corpo.append(el('p','Nenhum aluno interessado e elegível encontrado para esta oferta.'));
-   else{const tabela=el('table',undefined,'oferta-alunos'),h=el('thead'),hr=el('tr'),body=el('tbody'),colunas=['Aluno','Categoria','Unidade vinculada','Situação','Contato','Ações'];for(const c of colunas){const th=el('th',c);th.scope='col';hr.append(th);}h.append(hr);
-    for(const a of alunos){const r=el('tr'),acao=botao('Enviar oferta',()=>confirmar([a],vagas,d));[a.nome,a.categoria,nomeUnidadeInstitucional(a.unidade),'Elegível · '+a.vagas.length+' vaga(s)',a.telefone||'Não informado',acao].forEach((v,i)=>{const c=el('td');c.dataset.rotulo=colunas[i];c.append(v instanceof Node?v:document.createTextNode(v));r.append(c);});body.append(r);}tabela.append(h,body);tornarOrdenavel(tabela);corpo.append(tabela);}
-   const todos=botao('Enviar oferta para todos os interessados',()=>confirmar(alunos,vagas,d),principal);todos.disabled=!alunos.length;const rodape=el('footer');rodape.append(el('span',alunos.length+' destinatário(s) elegível(is).'),todos);d.append(corpo,rodape);d.showModal();
-  }catch(e){falha(e);}finally{interessados.disabled=!selecionadas.size;}}
- function confirmar(alunos,vagas,anterior){const d=novoModal('Confirmar oferta de antecipação','ofertaConfirmacao'),corpo=el('div',undefined,'oferta-corpo'),sipa=entrada('checkbox'),whatsapp=entrada('checkbox'),email=entrada('checkbox'),erroModal=el('p'),enviar=botao('Enviar para '+alunos.length+(alunos.length===1?' aluno':' alunos'),async()=>{
-   if(enviar.disabled)return;enviar.disabled=true;voltar.disabled=true;d.dataset.enviando='true';erroModal.textContent='';try{await servico.enviarCampanha({campanhaId,alunoIds:alunos.map(a=>a.id),vagas,canais:{sipa:sipa.checked,whatsapp:whatsapp.checked,email:email.checked},confirmado:true});d.close();anterior.close();erro.textContent='Oferta registrada. Consulte o resultado de cada canal no histórico.';await carregarHistorico();}catch(e){erroModal.textContent=e.message;}finally{enviar.disabled=false;voltar.disabled=false;delete d.dataset.enviando;}},principal),voltar=botao('Cancelar',()=>d.close()),campanhaId=crypto.randomUUID();sipa.checked=true;sipa.name='sipa';whatsapp.name='whatsapp';erroModal.setAttribute('role','alert');
-   const canais=el('div',undefined,'oferta-canais');canais.append(campo('Enviar notificação pelo SIPA',sipa),campo('Enviar por e-mail',email),campo('Preparar mensagem para WhatsApp',whatsapp));for(const c of [sipa,whatsapp,email])c.onchange=()=>enviar.disabled=!sipa.checked&&!whatsapp.checked&&!email.checked;
-   corpo.append(el('p',alunos.length+' destinatário(s). Cada aluno receberá apenas as vagas compatíveis com seu cadastro.'),canais,el('h3','Prévia da mensagem'),el('pre',mensagemOferta(alunos[0],alunos[0].vagas),'oferta-previa'),el('p','WhatsApp: preparação individual. Cada conversa exige revisão e confirmação no próprio WhatsApp.','adm-nota'),erroModal);const rodape=el('footer');rodape.append(voltar,enviar);d.append(corpo,rodape);d.addEventListener('cancel',e=>{if(d.dataset.enviando)e.preventDefault();});d.querySelector('.op-close').addEventListener('click',e=>{if(d.dataset.enviando){e.preventDefault();e.stopImmediatePropagation();}},true);d.showModal();
+ host.classList.add('sipa-antecipacao');const op=servico.identidade,hoje=hojeBrasil();let liberados=[],revisao=0;
+ const unidades=UNIDADES_INSTITUCIONAIS.filter(u=>escopoPermitido(op,u.id)).map(u=>[u.id,u.nome]);
+ const filtros={busca:entrada('search'),unidade:select(unidades.length>1?[['','Todas'],...unidades]:unidades,op.unidadeConsulta||op.unidade),categoria:select([['','Todas'],['A','Moto — A'],['B','Carro — B'],['D','Ônibus — D']]),de:entrada('date',hoje),ate:entrada('date',somarDias(hoje,DIAS))};
+ const iniciais=Object.fromEntries(Object.entries(filtros).map(([k,c])=>[k,c.value]));
+ filtros.busca.placeholder='Nome ou telefone';filtros.de.min=hoje;filtros.ate.min=hoje;filtros.ate.max=somarDias(hoje,DIAS);
+ const barra=el('form',undefined,'ant-filtros');barra.setAttribute('role','search');barra.setAttribute('aria-label','Filtros da antecipação');barra.onsubmit=e=>e.preventDefault();
+ for(const [k,t] of [['busca','Buscar aluno'],['unidade','Unidade'],['categoria','Categoria'],['de','De'],['ate','Até']]){
+  filtros[k].name=k;filtros[k].dataset.antFiltro=k;const grupo=campo(t,filtros[k]);grupo.className='ant-filtro';barra.append(grupo);
+  // A busca filtra a lista já carregada; unidade, categoria e período consultam de novo.
+  filtros[k].addEventListener(k==='busca'?'input':'change',k==='busca'?desenhar:consultar);
  }
- async function carregarHistorico(){const ofertas=await servico.historicoOfertas();historico.replaceChildren(el('h3','Histórico de ofertas'));if(!ofertas.length){historico.append(el('p','Nenhuma oferta registrada.'));return;}
-  const campanhas=new Map();for(const o of ofertas){const k=o.campanhaId||o.id;if(!campanhas.has(k))campanhas.set(k,[]);campanhas.get(k).push(o);}
-  for(const itens of campanhas.values()){const o=itens[0],card=el('article',undefined,'oferta-registro');card.append(el('strong',dataRelatorio(o.em)+' · '+itens.length+' destinatário(s)'),el('p',(o.responsavelNome||'Equipe da unidade')+' · '+nomeUnidadeInstitucional(o.unidadeAluno||o.par?.unidade||op.unidade)),el('p',o.vagas?[...new Set(o.vagas.map(v=>'Categoria '+v.categoria+' · '+formatarData(v.data)+' · '+v.inicio+' – '+v.fim))].join(' | '):'Registro anterior · '+formatarData(o.data)+' · '+o.hora));
-   for(const i of itens){const linha=el('div',undefined,'oferta-destinatario'),expirada=i.vagas?.every(v=>Date.parse(v.data+'T'+v.inicio+':00-03:00')<=Date.now()),s=i.canais?.sipa;linha.append(el('strong',i.alunoNome),el('span',!s?'Oferta preparada anteriormente':s.situacao==='enviada'?(i.lidaEm?'Mensagem interna lida':'Notificação interna enviada'):'SIPA: '+s.situacao),el('span','WhatsApp: '+(i.canais?.whatsapp.situacao||'pendente de integração')));if(expirada)linha.append(el('span','Oferta expirada'));
-    if(i.canais?.whatsapp.motivo)linha.append(el('span',i.canais.whatsapp.motivo));
-    if(!expirada&&i.canais?.whatsapp.situacao==='preparado'){const b=botao('Abrir WhatsApp',async()=>{try{const url=await servico.linkWhatsAppOferta(i.id);window.open(url,'_blank','noopener,noreferrer');}catch(e){falha(e);}});linha.append(b);}card.append(linha);
-   }historico.append(card);
+ const limpar=botao('Limpar filtros',()=>{for(const [k,c] of Object.entries(filtros))c.value=iniciais[k];consultar();},'op-button op-button-outline');limpar.dataset.antLimpar='';const acoes=el('div',undefined,'ant-filtro-acoes');acoes.append(limpar);barra.append(acoes);
+ const ajuda=el('p','Horários ocupados que vagaram, com os alunos que marcaram interesse (quem marcou primeiro aparece primeiro). Ligue para o aluno e remarque uma aula dele que esteja a pelo menos 48 horas úteis.','adm-nota');
+ const quantidade=el('p',undefined,'op-help');quantidade.dataset.antContagem='';const retorno=el('p',undefined,'ant-retorno');retorno.setAttribute('role','status');const lista=el('div');
+ host.replaceChildren(card('Antecipação de aulas',ajuda,barra,retorno,quantidade,lista));
+ const avisar=()=>root.dispatchEvent(new Event('sipa-antecipacao-atualizada'));
+ async function consultar(){
+  const pedido=++revisao;retorno.textContent='';
+  if(!filtros.de.value||!filtros.ate.value||filtros.de.value>filtros.ate.value||filtros.ate.value>somarDias(filtros.de.value,DIAS)){liberados=[];retorno.textContent='Informe um período de até '+DIAS+' dias.';desenhar();return;}
+  lista.replaceChildren(el('p','Consultando horários…','op-help'));
+  try{const r=await servico.consultarLiberados({unidade:filtros.unidade.value,categoria:filtros.categoria.value,de:filtros.de.value,ate:filtros.ate.value});if(pedido!==revisao)return;liberados=r;}
+  catch(e){if(pedido!==revisao)return;liberados=[];retorno.textContent=e.message;}
+  desenhar();
+ }
+ function visiveis(){
+  const termo=filtros.busca.value.trim().toLocaleLowerCase('pt-BR'),numeros=termo.replace(/\D/g,'');
+  const combina=i=>!termo||i.aluno.toLocaleLowerCase('pt-BR').includes(termo)||numeros&&String(i.telefone).replace(/\D/g,'').includes(numeros);
+  return liberados.map(h=>({...h,interessados:h.interessados.filter(combina)})).filter(h=>h.interessados.length);
+ }
+ function desenhar(){
+  const horarios=visiveis();quantidade.textContent=plural(horarios.length,'horário liberado','horários liberados');
+  const wrap=el('div',undefined,'op-table-scroll'),tabela=el('table',undefined,'op-table ant-tabela'),head=el('thead'),tr=el('tr'),colunas=['Aluno','Telefone','Interesse desde','Situação','Aula a antecipar','Ações'];
+  wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Horários liberados com alunos interessados');
+  for(const c of colunas){const th=el('th',c);th.scope='col';tr.append(th);}head.append(tr);tabela.append(head);
+  for(const h of horarios){
+   const grupo=el('tbody',undefined,'ant-grupo'),cab=el('tr',undefined,'ant-grupo-cabecalho'),th=el('th');th.colSpan=colunas.length;th.scope='colgroup';
+   th.append(el('strong',formatarData(h.data)+' · '+h.inicio+'–'+h.fim),el('span',' · '+(h.unidadeNome||nomeUnidadeInstitucional(h.unidade))+' · '+(categorias[h.categoria]||'Categoria')+' — '+h.categoria+' · '+plural(h.pares.length,'par livre','pares livres')));
+   cab.append(th);grupo.append(cab);
+   for(const i of h.interessados){
+    const linha=el('tr'),nome=el('strong',i.aluno),situacao=el('span',i.situacao,'ant-situacao'),noPrazo=i.aulas.filter(a=>a.dentroPrazo),podeRemarcar=noPrazo.length&&h.pares.length;
+    linha.dataset.antInteresse=i.id;situacao.dataset.situacao=i.situacao;if(i.contatadoEm||i.observacao)situacao.title=[i.contatadoEm&&'Contatado em '+dataRelatorio(i.contatadoEm),i.observacao].filter(Boolean).join(' · ');
+    const aula=noPrazo.length?aulaTexto(noPrazo[0])+(noPrazo.length>1?' (+'+(noPrazo.length-1)+')':''):i.aulas.length?'Fora do prazo ('+Math.min(...i.aulas.map(a=>a.horasUteis??0))+' h úteis)':'Nenhuma aula futura';
+    const menu=menuAcoes(i.aluno,[['Marcar contatado',()=>contatar(h,i)],['Remarcar…',podeRemarcar&&(()=>remarcar(h,i)),undefined,h.pares.length?dicaPrazo(h.prazo):'Sem instrutor e veículo livres neste horário.'],['Descartar',()=>descartar(h,i)]]);menu.gatilho.dataset.antAcoes=i.id;
+    for(const [k,v] of [['Aluno',nome],['Telefone',formatarTelefone(i.telefone)],['Interesse desde',i.marcadoEm?dataRelatorio(i.marcadoEm):'Não informado'],['Situação',situacao],['Aula a antecipar',aula],['Ações',menu.caixa]]){const td=el('td');td.dataset.rotulo=k;td.append(v instanceof Node?v:document.createTextNode(v));linha.append(td);}
+    if(!noPrazo.length)linha.querySelector('[data-rotulo="Aula a antecipar"]').title=dicaPrazo(h.prazo);
+    grupo.append(linha);
+   }
+   tabela.append(grupo);
   }
+  if(!horarios.length){const b=el('tbody'),r=el('tr'),td=el('td','Nenhum horário liberado com aluno interessado.','op-demo-no-results');td.colSpan=colunas.length;r.append(td);b.append(r);tabela.append(b);}
+  wrap.append(tabela);lista.replaceChildren(wrap);
  }
- const refrescar=()=>{if(!host.hidden)carregarHistorico().catch(falha);};window.addEventListener('focus',refrescar,{signal:controller.signal});window.addEventListener('storage',e=>{if(e.key==='sipa.operador.demo.v2')refrescar();},{signal:controller.signal});
- await form.onsubmit();await carregarHistorico();
+ // Diálogo curto das ações: título, resumo, campos e Confirmar. Fecha e recarrega a lista quando dá certo.
+ function dialogo(titulo,id,conteudo,rotulo,executar){
+  const d=modal(root,titulo,id),f=el('form',undefined,'adm-form'),erro=el('p',undefined,'op-acompanhamento-erro'),rodape=el('footer',undefined,'op-dialog-actions'),confirmar=el('button',rotulo,principal);let ocupado=false;
+  d.classList.add('adm-dialog','ant-dialogo');erro.setAttribute('role','alert');confirmar.type='submit';const voltar=botao('Voltar',()=>{if(!ocupado)d.close();});rodape.append(voltar,confirmar);f.append(...conteudo,erro,rodape);d.append(f);
+  f.onsubmit=async e=>{e.preventDefault();if(ocupado)return;ocupado=true;confirmar.disabled=true;voltar.disabled=true;erro.textContent='';
+   try{const texto=await executar();d.close();mostrarToast(texto);avisar();await consultar();}catch(x){erro.textContent=x.message||'Não foi possível concluir a operação.';}finally{ocupado=false;confirmar.disabled=false;voltar.disabled=false;}};
+  d.oncancel=e=>{if(ocupado)e.preventDefault();};d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();return d;
+ }
+ const resumo=(h,i)=>el('p',i.aluno+' · '+formatarData(h.data)+' · '+h.inicio+'–'+h.fim+' · '+(h.unidadeNome||nomeUnidadeInstitucional(h.unidade))+' · Categoria '+h.categoria,'op-help');
+ function observacao(valor=''){const t=el('textarea');t.name='observacao';t.rows=3;t.maxLength=500;t.value=valor;return t;}
+ function contatar(h,i){const obs=observacao(i.observacao);dialogo('Marcar contatado','antContato',[resumo(h,i),campo('Observação (opcional)',obs)],'Confirmar',async()=>{await servico.marcarContatado(i.id,obs.value);return 'Contato registrado.';});}
+ function descartar(h,i){const obs=observacao();dialogo('Descartar interesse','antDescarte',[resumo(h,i),el('p','O aluno sai da lista deste horário. As aulas dele não mudam.','op-help'),campo('Observação (opcional)',obs)],'Descartar',async()=>{await servico.descartarInteresse(i.id,obs.value);return 'Interesse descartado.';});}
+ function remarcar(h,i){
+  const chave=crypto.randomUUID(),aulas=el('fieldset',undefined,'ant-aulas'),par=select(h.pares.map((p,n)=>[String(n),p.instrutor+' · '+p.veiculo]),'0');par.name='par';
+  aulas.append(el('legend','Aula que será desmarcada'));
+  for(const a of i.aulas){const r=entrada('radio',a.id);r.name='aula';r.required=true;r.disabled=!a.dentroPrazo;const l=el('label');l.append(r,document.createTextNode(aulaTexto(a)+(a.dentroPrazo?(a.horasUteis!=null?' · '+a.horasUteis+' h úteis':''):' · Fora do prazo ('+(a.horasUteis??0)+' h úteis)')));aulas.append(l);}
+  const primeira=aulas.querySelector('input:not(:disabled)');if(primeira)primeira.checked=true;
+  dialogo('Remarcar aula','antRemarcacao',[resumo(h,i),aulas,campo('Instrutor e veículo',par),el('p','A aula escolhida é desmarcada sem contar como desmarcação do aluno, e a nova é criada neste horário. O aluno recebe um aviso no SIPA.','op-help')],'Remarcar',async()=>{
+   const aula=aulas.querySelector('input:checked')?.value,p=h.pares[Number(par.value)];if(!aula||!p)throw new Error('Escolha a aula a antecipar, o instrutor e o veículo.');
+   await servico.remarcarInteresse(i.id,{aulaId:aula,instrutorId:p.instrutorId,veiculoId:p.veiculoId},chave);return 'Aula remarcada. O aluno recebeu o aviso.';});
+ }
+ window.addEventListener('focus',()=>{if(!host.hidden&&!root.querySelector('dialog[open]'))consultar();},{signal:controller.signal});
+ await consultar();
 }

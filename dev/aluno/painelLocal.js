@@ -1,7 +1,7 @@
 import {apresentarAgendamento,apresentarAulas,apresentarProgresso,apresentarPerfil} from '../../aluno/js/components/painelAluno.js';
 import {localDaAula,linkLocalizacaoUnidade,orientacoesComparecimento} from '../../shared/components/localAula.js';
 import { calcularPrazoCancelamento, identificarMotivo } from '../../aluno/js/domain/agendamentoAluno.js';
-import { montarAgendamentoAutomatico, montarAntecipacaoAluno } from '../../aluno/js/components/preferenciasAluno.js';
+import { montarAgendamentoAutomatico } from '../../aluno/js/components/preferenciasAluno.js';
 import { obterUnidadeInstitucional } from '../../shared/js/catalogoUnidades.js';
 import { formatarCpf } from '../../shared/js/formatacao.js';
 import { dataBrasilia, horaBrasilia, dataHoraBrasilia } from '../../shared/js/calendario.js';
@@ -163,9 +163,9 @@ async function montarAlunoLocal(registros, sessao, servico) {
             if(servico.capacidades?.configuracaoRecursos!==false){const diagnostico=document.createElement('details');diagnostico.className='booking-diagnostics';const titulo=document.createElement('summary');titulo.textContent='Ferramentas de desenvolvimento';diagnostico.append(titulo);document.querySelector('.booking-footer').before(diagnostico);
             await montarConfiguracaoRecursosLocais(servico,diagnostico,()=>window.dispatchEvent(new Event('sipa-recursos-atualizados')));}
         }
-        else if (location.pathname.endsWith("/aluno/html/minhas-aulas.html")) {await apresentarAulas(servico, dados);await montarAntecipacaoAluno(servico);}
+        else if (location.pathname.endsWith("/aluno/html/minhas-aulas.html")) await apresentarAulas(servico, dados);
         else if(location.pathname.endsWith("/aluno/html/meu-progresso.html")) apresentarProgresso(dados);
-        else { apresentarPerfil(dados); if(location.pathname.endsWith("/aluno/html/meu-perfil.html")) { montarSenhaPerfilLocal(servico); await montarAntecipacaoAluno(servico); if((await servico.sessao())?.demonstracaoLivre){const b=document.getElementById('change-password-button');if(b){b.disabled=true;b.title='Senha indisponivel no login livre; nenhuma senha foi armazenada.';}} } }
+        else { apresentarPerfil(dados); if(location.pathname.endsWith("/aluno/html/meu-perfil.html")) { montarSenhaPerfilLocal(servico); if((await servico.sessao())?.demonstracaoLivre){const b=document.getElementById('change-password-button');if(b){b.disabled=true;b.title='Senha indisponivel no login livre; nenhuma senha foi armazenada.';}} } }
     }
 }
 

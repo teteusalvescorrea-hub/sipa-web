@@ -4,6 +4,7 @@ import {exigirLogin} from './sessao.js';
 import {sair} from './services/authService.js';
 import {carregarIdentidadeEquipe,criarServicoAdministrativoIntegrado} from './services/administracaoIntegrada.js';
 import {montarUnidade} from '../../nivel-1-operador/js/components/unidadeOperador.js';
+import {acompanharHorariosLiberados} from './avisoAntecipacao.js';
 
 // Unidade de consulta do Master (seletor do painel, por aba).
 function unidadeEscolhida(){try{return Object.entries(sessionStorage).find(([k])=>k.startsWith('sipa.admin.unidade.'))?.[1]||null;}catch{return null;}}
@@ -19,6 +20,7 @@ export async function montarPainelEquipe({perfil,raiz,template,administracao=fal
  else if(identidade.permissoes.includes('antecipar')){
   const host=ui.registrarSecao('antecipacao','Antecipação de aulas');
   raiz.querySelector('[data-op-nav=antecipacao]')?.addEventListener('click',async()=>{try{await (await import('../components/antecipacaoPainel.js')).montarAntecipacaoPainel(host,servico,raiz);}catch(e){host.textContent=e.message;}});
+  acompanharHorariosLiberados(raiz,servico,ui);
  }
  return {servico,ui};
 }

@@ -5,7 +5,7 @@ import {STATUS_MEDICO} from '../../../shared/js/solicitacoesMedicas.js';
 import {nomeCambio} from '../../../shared/js/operacaoCarro.js';
 import {NOMES_CATEGORIA,localDaReservaOperacional,recursoCategoriaD} from '../../../shared/js/categorias.js';
 import {localDaReserva,nomeLocalDaReserva,linkLocalizacaoReserva,orientacoesComparecimento} from '../../../shared/components/localAula.js';
-import {calcularPrazoCancelamento,identificarMotivo,parAutomaticoCategoriaD} from '../domain/agendamentoAluno.js';
+import {calcularPrazoCancelamento,identificarMotivo,parAutomaticoCategoriaD,POLITICA_CANCELAMENTO} from '../domain/agendamentoAluno.js';
 import {montarAgendamentoAutomatico} from './preferenciasAluno.js';
 import {obterUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {formatarCpf} from '../../../shared/js/formatacao.js';
@@ -139,6 +139,28 @@ function abrirCancelamentoAlunoLocal(aula,dados,origem,aoConfirmar,servico){
     document.body.append(d);d.showModal();d.querySelector('h2').focus({preventScroll:true});d.scrollTop=0;
 }
 
+// Aba Interesses (Minhas aulas): horários ocupados em que o aluno marcou interesse, com o Desmarcar.
+function montarInteressesAluno(servico){
+    const painel=document.createElement('section');painel.id='student-interests';painel.className='student-interests';painel.hidden=true;painel.setAttribute('aria-label','Interesses em antecipar');
+    const titulo=document.createElement('h2'),ajuda=document.createElement('p'),lista=document.createElement('div'),erro=document.createElement('p');
+    titulo.textContent='Interesses em antecipar';ajuda.textContent='Horários ocupados em que você marcou interesse. Se um deles vagar, a recepção entra em contato para remarcar uma aula sua.';erro.setAttribute('role','status');
+    painel.append(titulo,ajuda,erro,lista);
+    async function carregar(){
+        lista.replaceChildren();let itens;
+        try{itens=await servico.listarInteresses();}catch(e){erro.textContent=e.message||'Não foi possível consultar seus interesses.';return;}
+        if(!itens.length){const p=document.createElement('p');p.className='sipa-local-empty';p.textContent='Nenhum interesse marcado. Na agenda, escolha um horário ocupado e clique em "Tenho interesse".';lista.append(p);return;}
+        for(const i of itens){
+            const card=document.createElement('article'),cabecalho=document.createElement('div'),h=document.createElement('h3'),situacao=document.createElement('strong'),info=document.createElement('p');
+            card.className='student-local-lesson';card.dataset.interesse=i.id;cabecalho.className='local-lesson-heading';situacao.className='local-lesson-status';
+            h.textContent=formatarData(i.data)+' às '+i.hora;situacao.textContent=i.situacao;info.textContent=['Categoria '+(i.categoria||'—'),i.unidade].filter(Boolean).join(' · ');cabecalho.append(h,situacao);card.append(cabecalho,info);
+            if(i.aberto){const desmarcar=document.createElement('button');desmarcar.type='button';desmarcar.className='local-lesson-cancel';desmarcar.textContent='Desmarcar';desmarcar.setAttribute('aria-label','Desmarcar interesse de '+h.textContent);
+                desmarcar.onclick=async()=>{desmarcar.disabled=true;erro.textContent='';try{await servico.desmarcarInteresse(i.id);erro.textContent='Interesse desmarcado.';await carregar();}catch(e){erro.textContent=e.message;desmarcar.disabled=false;}};card.append(desmarcar);}
+            lista.append(card);
+        }
+    }
+    return {painel,carregar};
+}
+
 async function listarAulasAlunoLocal(servico,dados){
     const estado={1:'Confirmada',2:'Cancelada',3:'Reservada · aguardando aceite',4:'Recusada',5:'Realizada',6:'Falta'},agora=Date.now();
     const futuras=dados.aulas.filter(a=>a.status===1&&Date.parse(a.inicio)>agora).sort((a,b)=>Date.parse(a.inicio)-Date.parse(b.inicio));
@@ -151,12 +173,13 @@ async function listarAulasAlunoLocal(servico,dados){
     const anterior=document.getElementById('past-lessons-list').closest('section')||document.getElementById('past-lessons-list').parentElement;
     document.getElementById('student-medical-requests')?.remove();
     const atestados=montarAtestadosAluno(servico,dados);principal.after(atestados.painel);
+    document.getElementById('student-interests')?.remove();const interesses=servico.capacidades?.interesse?montarInteressesAluno(servico):null;if(interesses)principal.after(interesses.painel);
     principal.before(tabs);
     const grupos={realizadas,canceladas,historico};
-    for(const [valor,nome] of [['confirmadas','Aulas confirmadas'],['realizadas','Aulas realizadas'],['canceladas','Aulas canceladas'],['historico','Histórico e outros estados'],['atestados','Atestados médicos']]){
+    for(const [valor,nome] of [['confirmadas','Aulas confirmadas'],['realizadas','Aulas realizadas'],['canceladas','Aulas canceladas'],['historico','Histórico e outros estados'],...(interesses?[['interesses','Interesses']]:[]),['atestados','Atestados médicos']]){
         const b=document.createElement('button');b.type='button';b.textContent=nome+(valor==='realizadas'?' ('+realizadas.length+')':'');b.dataset.vista=valor;b.setAttribute('aria-pressed',String(valor==='confirmadas'));
         b.onclick=()=>{
-            tabs.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));principal.hidden=valor!=='confirmadas';anterior.hidden=valor==='confirmadas'||valor==='atestados';atestados.painel.hidden=valor!=='atestados';const limpeza=document.getElementById('cleanup-cancelamentos');if(limpeza)limpeza.hidden=valor!=='canceladas';
+            tabs.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));principal.hidden=valor!=='confirmadas';anterior.hidden=['confirmadas','atestados','interesses'].includes(valor);atestados.painel.hidden=valor!=='atestados';if(interesses){interesses.painel.hidden=valor!=='interesses';if(valor==='interesses')interesses.carregar();}const limpeza=document.getElementById('cleanup-cancelamentos');if(limpeza)limpeza.hidden=valor!=='canceladas';
             if(!grupos[valor])return;
             const grupo=grupos[valor],ids=new Set(grupo.map(a=>a.id));document.querySelectorAll('#past-lessons-list [data-aula-local]').forEach(n=>n.hidden=!ids.has(n.dataset.aulaLocal));
             const h=anterior.querySelector('h2');if(h)h.textContent=nome;const legenda=anterior.querySelector('.lessons-card-header > div > span');if(legenda)legenda.textContent=valor==='canceladas'?'HISTÓRICO DE CANCELAMENTOS':valor==='realizadas'?'AULAS CONCLUÍDAS':'REGISTROS PRESERVADOS';document.getElementById('past-lessons-count').textContent=String(grupo.length);anterior.querySelector('.local-view-empty')?.remove();
@@ -232,7 +255,28 @@ async function iniciarReservaAlunoLocal(servico, inicial) {
     confirmar.textContent='Confirmar agendamentos';
     $('.confirmation-card .booking-card-header h2').textContent='Revisão e confirmação';
     $('.booking-warning p').textContent='Após confirmar, as aulas válidas serão confirmadas e os créditos correspondentes serão utilizados.';
-    function pintar(){document.querySelectorAll('#time-slots button').forEach(b=>{const selecionada=selecoes.has(chave(data,b.dataset.hora));b.classList.toggle('selected',selecionada);b.setAttribute('aria-pressed',String(selecionada));b.disabled=ocupada||!!impedimentoConsulta||(!selecionada&&selecoes.size>=(dados.resumo.categorias[categoria].disponiveis||0));});}
+    function pintar(){document.querySelectorAll('#time-slots button:not([data-ocupado])').forEach(b=>{const selecionada=selecoes.has(chave(data,b.dataset.hora));b.classList.toggle('selected',selecionada);b.setAttribute('aria-pressed',String(selecionada));b.disabled=ocupada||!!impedimentoConsulta||(!selecionada&&selecoes.size>=(dados.resumo.categorias[categoria].disponiveis||0));});}
+    // Horário ocupado por outro aluno: "Tenho interesse" avisa a Recepção quando ele vagar; nunca entra na reserva.
+    // Só dá para remarcar aula com 48 horas úteis de antecedência: sem nenhuma aula posterior nesse prazo, o botão fica
+    // desabilitado (a API confere de novo ao marcar).
+    const prazoRemarcacao=POLITICA_CANCELAMENTO.minutosMinimos/60;
+    const semAulaNoPrazo='Você não tem aula que possa ser remarcada: só dá para remarcar aulas com '+prazoRemarcacao+' horas úteis de antecedência.';
+    const temAulaParaAntecipar=hora=>dados.aulas.some(a=>a.categoria===categoria&&[1,3].includes(a.status)&&Date.parse(a.inicio)>Date.parse(data+'T'+hora+':00-03:00')&&!(a.horasUteisAteAula<prazoRemarcacao));
+    function botaoInteresse(h){
+        const b=document.createElement('button'),hora=document.createElement('span'),rotulo=document.createElement('small'),marcado=!!h.interesseId;
+        b.type='button';b.className='time-slot unavailable time-slot-interesse';b.dataset.hora=h.hora;b.dataset.ocupado='';b.setAttribute('aria-pressed',String(marcado));
+        hora.textContent=h.hora;rotulo.textContent=marcado?'Interesse marcado ✓':'Ocupado · Tenho interesse';b.append(hora,rotulo);b.setAttribute('aria-label',h.hora+' · '+rotulo.textContent);
+        b.disabled=!marcado&&!temAulaParaAntecipar(h.hora);b.title=b.disabled?semAulaNoPrazo:marcado?'Clique para desmarcar o interesse.':'A recepção avisa você se este horário vagar.';
+        b.onclick=async()=>{
+            if(ocupada||b.disabled)return;b.disabled=true;
+            try{
+                if(marcado){await servico.desmarcarInteresse(h.interesseId);mensagem('Interesse desmarcado.');}
+                else{await servico.marcarInteresse({categoria,data,hora:h.hora});mensagem('Interesse marcado. Se o horário vagar, a recepção entra em contato para remarcar.');}
+                await horarios();
+            }catch(e){mensagem(e.message||'Não foi possível registrar o interesse.');feedback.setAttribute('role','alert');b.disabled=false;}
+        };
+        return b;
+    }
     // A seleção local usa apenas pares devolvidos pelo serviço, sem liberar recursos por conta própria.
     motorista.closest('.instructor-preview').hidden=true;
     function recursos(){}
@@ -297,10 +341,11 @@ async function iniciarReservaAlunoLocal(servico, inicial) {
         impedimentoConsulta=consulta.permiteAgendar===false?(consulta.motivoElegibilidade||consulta.mensagem):'';
         const lista=$('#time-slots');
         if(impedimentoConsulta){const aviso=document.createElement('p');aviso.className='sipa-local-empty';aviso.dataset.bookingElegibilidade='';aviso.setAttribute('role','status');aviso.textContent=impedimentoConsulta;lista.append(aviso);}
-        $('.availability-status').hidden=!data;$('.availability-status').textContent=data?(consulta.horarios.length+' horários disponíveis'+(impedimentoConsulta?' · somente consulta':'')):'';
+        $('.availability-status').hidden=!data;const livres=consulta.horarios.filter(h=>!h.ocupado),ocupados=servico.capacidades?.interesse?consulta.horarios.length-livres.length:0;$('.availability-status').textContent=data?(livres.length+(ocupados?' livres · '+ocupados+' ocupados':' horários disponíveis')+(impedimentoConsulta?' · somente consulta':'')):'';
         if(!consulta.horarios.length&&(data||!consulta.contagem.instrutores||!consulta.contagem.veiculos)){const p=document.createElement('p');p.className='sipa-local-empty';p.textContent=consulta.mensagem;lista.append(p);}
         else if(!data){const vazio=document.createElement('div');vazio.className='empty-time-state';vazio.innerHTML='<svg class="booking-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><p>Escolha uma data no calendário para consultar os horários.</p>';lista.append(vazio);}
         for(const h of consulta.horarios){
+            if(h.ocupado){if(servico.capacidades?.interesse)lista.append(botaoInteresse(h));continue;}
             const b=document.createElement('button');b.type='button';b.className='time-slot';b.textContent=h.hora;b.dataset.hora=h.hora;
             b.title=impedimentoConsulta;
             b.onclick=()=>{

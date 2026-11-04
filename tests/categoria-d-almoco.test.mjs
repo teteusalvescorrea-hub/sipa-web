@@ -8,7 +8,7 @@ import {movimentarProva,linhaTempoAluno} from '../nivel-1-operador/js/fichaOpera
 import {agendaDeHoje} from '../instrutor/js/agenda.js';
 import {registrarSituacao} from '../instrutor/js/dominio.js';
 import {resumirCreditos} from '../aluno/js/domain/dominioAluno.js';
-import {calcularPrazoCancelamento,horariosAntecipacao,normalizarDisponibilidadeAntecipacao,parAutomaticoCategoriaD} from '../aluno/js/domain/agendamentoAluno.js';
+import {calcularPrazoCancelamento,parAutomaticoCategoriaD} from '../aluno/js/domain/agendamentoAluno.js';
 import {criarDadosDemo} from '../dev/operador/dadosDemo.js';
 import {repositorioDemo} from '../dev/operador/repositorioDemo.js';
 const op={id:'op',nivel:1,unidade:'Cobilândia',permissoes:['consultar','cadastrar','anotar','verificar','cadastrar-recurso','agendar','cancelar-prova']},agora=new Date('2026-10-19T06:00:00-03:00');
@@ -51,8 +51,6 @@ test('sábado D integral: reservas 14 a 18, almoço, agenda única e A/B somente
  const recurso={tipo:'Instrutores',nome:'Instrutor Teste',identificacao:'manual',categoria:'D',horarioAlmoco:'11-12',inicio:'07:00',fim:'19:00'};
  assert.equal(cadastrarRecurso({...fixture(),recursos:[]},op,recurso,'novo').recursos.at(-1).disponibilidade[6][0].fim,'19:00');
  assert.equal(cadastrarRecurso(fixture(),op,{...recurso,tipoCambio:'manual',categoria:'B'},'novo').recursos.at(-1).disponibilidade[6][0].fim,'12:00');
- assert.ok(horariosAntecipacao(6,'D').includes('18:00'));assert.ok(!horariosAntecipacao(6,'B').includes('18:00'));
- assert.deepEqual(normalizarDisponibilidadeAntecipacao({6:['18:00']},true,'D')[6],['18:00']);assert.throws(()=>normalizarDisponibilidadeAntecipacao({6:['18:00']},true,'B'));
  for(const horarioAlmoco of ['11-12','12-13']){
   let e=fixture();e.recursos[0].horarioAlmoco=horarioAlmoco;
   for(const hora of ['14:00','15:00','16:00','17:00','18:00']){

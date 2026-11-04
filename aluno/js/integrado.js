@@ -4,7 +4,6 @@ import {sair} from '../../shared/js/services/authService.js';
 import {criarServicoAluno} from './services/alunoIntegrado.js';
 import {apresentarDashboard} from './dashboard.js';
 import {apresentarProgresso,apresentarPerfil,apresentarAulas,apresentarAgendamento,montarAlteracaoSenha} from './components/painelAluno.js';
-import {montarAntecipacaoAluno} from './components/preferenciasAluno.js';
 const pagina=location.pathname.split('/').pop();
 function aviso(texto){let n=document.getElementById('student-service-status');if(!n){n=document.createElement('p');n.id='student-service-status';n.className='dashboard-notice';n.setAttribute('role','status');document.querySelector('main').prepend(n);}n.textContent=texto;n.hidden=!texto;}
 function preparar(){
@@ -28,7 +27,7 @@ async function iniciar(){
   // Agendamento automático fica para a F13 (D19): só o manual está ligado.
   const auto=document.getElementById('booking-mode-auto');if(auto&&!servico.capacidades.automatico){auto.disabled=true;auto.title='Agendamento automático ainda indisponível. Use o agendamento manual.';}}
  else if(pagina==='meu-progresso.html')apresentarProgresso(dados);
- else if(pagina==='meu-perfil.html'){apresentarPerfil(dados);montarAlteracaoSenha(servico);await montarAntecipacaoAluno(servico);}
+ else if(pagina==='meu-perfil.html'){apresentarPerfil(dados);montarAlteracaoSenha(servico);}
  if(['dashboard.html','meu-progresso.html'].includes(pagina))aviso(Object.values(dados.resumo.categorias).some(c=>c.total===null)?'O saldo conjunto está disponível. A separação por categoria ainda não foi informada pelo serviço.':'');
  }catch(e){aviso(e.status===0?'Não foi possível falar com o servidor. Tente novamente ou contate a recepção.':e.message||'Não foi possível carregar seus dados. Tente novamente.');}
 }

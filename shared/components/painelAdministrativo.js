@@ -1,6 +1,7 @@
 import {montarHistoricoAcessos} from './historicoAcessos.js';
 import {confirmarExclusao} from './excluirCadastro.js';
 import {montarAntecipacaoPainel} from './antecipacaoPainel.js';
+import {acompanharHorariosLiberados} from '../js/avisoAntecipacao.js';
 import {apresentarRelatorio,dataRelatorio,metadadosRelatorio} from '../js/apresentacaoRelatorios.js';
 import {exportarPdfRelatorio} from '../js/pdfRelatorios.js';
 import {montarHistoricoMedico} from './historicoMedico.js';
@@ -43,19 +44,20 @@ export async function montarAdministracao(root,servico,ui){
  function filtrar(campos,consultar){const f=el('form',undefined,'adm-filtros'),controles={},chave=root.dataset.opSecao;for(const [id,titulo,tipo,valor,opcoes] of campos){const inicial=memoriaConsultas[chave]?.[id]??(id==='unidade'&&master&&op.unidadeConsulta?op.unidadeConsulta:valor);const c=tipo==='select'?select(opcoes||[],inicial||''):entrada(tipo,inicial??'');c.name=id;controles[id]=c;f.append(campo(titulo,c));}const b=el('button','Consultar',primario);b.type='submit';f.append(b);const erro=el('p',undefined,'op-acompanhamento-erro');erro.setAttribute('role','alert');f.append(erro);const executarConsulta=async()=>{b.disabled=true;erro.textContent='';try{const valores=Object.fromEntries(Object.entries(controles).map(([k,c])=>[k,c.value]));memoriaConsultas[chave]=valores;await consultar(valores);}catch(e){erro.textContent=e.message;}finally{b.disabled=false;}};f.onsubmit=e=>{e.preventDefault();executarConsulta();};return {f,controles,consultar:executarConsulta};}
  async function home(){
   const ocupacao=op.permissoes.includes('relatorios')?await servico.relatorio({tipo:'aulas',inicio:hojeBrasil(),fim:hojeBrasil()}):null;
+  const liberados=!master&&op.permissoes.includes('antecipar')&&servico.totalLiberados?await servico.totalLiberados().catch(()=>null):null;
   const s=estado.aulas.filter(a=>a.solicitacaoMedica).map(a=>a.solicitacaoMedica),destino=pain('visao-geral'),atalhos=el('div',undefined,'op-quick-grid');
   const acoes=[
    ['verificacoes','Verifica\u00e7\u00f5es','Analisar solicita\u00e7\u00f5es e atestados.','check','decidir-atestado'],
    ['agenda-global','Agendas',master?'Consultar e gerenciar agendamentos.':'Consultar agendas e disponibilidade.','grid','consultar'],
    ...(master?[['acessos','Gest\u00e3o de acessos','Administrar usu\u00e1rios e acessos.','key','gestao-acessos']]:[]),
    ['relatorios','Relat\u00f3rios','Consultar indicadores operacionais.','file','relatorios'],
-   ...(!master?[['antecipacao','Antecipa\u00e7\u00e3o de aulas','Consultar interessados e preparar ofertas.','users','antecipar']]:[])
+   ...(!master?[['antecipacao','Antecipa\u00e7\u00e3o de aulas','Horários liberados com alunos interessados.','users','antecipar']]:[])
   ];
   const icone=id=>iconeSvg(id,'0 0 24 24');
   for(const [id,titulo,descricao,simbolo]of acoes.filter(a=>op.permissoes.includes(a[4]))){
    const b=botao('',()=>{ui.navegar(id);render(id);},'op-quick-action'),texto=el('span',undefined,'op-quick-copy');b.dataset.opAtalho=id;texto.append(el('strong',titulo),el('span',descricao));b.append(icone(simbolo),texto,icone('arrow'));atalhos.append(b);
   }
-  destino.replaceChildren(indicadores([['Atestados \u00e0 Ger\u00eancia',s.filter(s=>s.status==='gerencia').length],['Alunos',estado.alunos.length],['Pend\u00eancias administrativas',estado.excecoesAgenda.filter(x=>x.status==='pendente').length],...(ocupacao?[['Ocupa\u00e7\u00e3o hoje',ocupacao.totais.ocupacao===null?'Sem base eleg\u00edvel':ocupacao.totais.ocupacao+'%']]:[])]),card('Fun\u00e7\u00f5es r\u00e1pidas',atalhos));
+  destino.replaceChildren(indicadores([['Atestados \u00e0 Ger\u00eancia',s.filter(s=>s.status==='gerencia').length],['Alunos',estado.alunos.length],['Pend\u00eancias administrativas',estado.excecoesAgenda.filter(x=>x.status==='pendente').length],...(liberados!==null?[['Horários liberados com interessados',liberados]]:[]),...(ocupacao?[['Ocupa\u00e7\u00e3o hoje',ocupacao.totais.ocupacao===null?'Sem base eleg\u00edvel':ocupacao.totais.ocupacao+'%']]:[])]),card('Fun\u00e7\u00f5es r\u00e1pidas',atalhos));
  }
  function perfil(){pain('perfil').replaceChildren(card('Meu perfil',gradeTabela(['Nome','Perfil','Unidade operacional','Escopo'],[[op.nome,NOMES_PERFIL[op.perfil],op.unidade,unidades.map(u=>u.nome).join(', ')]])));}
  async function verificacoes(){const host=pain('verificacoes'),lista=el('div'),campos=[['busca','Aluno ou CPF','search',''],['unidade','Unidade-base','select','',[['','Todas'],...opcoesUnidades]],['categoria','Categoria','select','',[['','Todas'],['A','Moto'],['B','Carro'],['D','Ônibus']]],['status','Situação','select','',[['','Todas'],...Object.entries(STATUS_MEDICO)]],['credito','Crédito','select','',[['','Todos'],['devolvido','Devolvido'],['retido','Não devolvido']]],['inicio','Solicitado desde','date',''],['fim','Solicitado até','date','']];
@@ -98,6 +100,7 @@ export async function montarAdministracao(root,servico,ui){
  let ultimaVersao=localStorage.getItem('sipa.operador.demo.v2'),sincronizando=false;
  async function sincronizar(){const atual=localStorage.getItem('sipa.operador.demo.v2');if(sincronizando||atual===ultimaVersao||root.querySelector('dialog[open]'))return;sincronizando=true;try{await ui.recarregar();await render(root.dataset.opSecao);ultimaVersao=atual;}catch(e){notificar(e.message);}finally{sincronizando=false;}}
  window.addEventListener('storage',e=>{if(e.key==='sipa.operador.demo.v2')sincronizar();});window.addEventListener('focus',sincronizar);root.addEventListener('close',sincronizar,true);setInterval(sincronizar,15000);
+ if(!master&&op.permissoes.includes('antecipar'))acompanharHorariosLiberados(root,servico,ui);
  root.addEventListener('click',e=>{const n=e.target.closest('[data-op-nav]');if(n)render(n.dataset.opNav);});await render('visao-geral');
 }
 export function imprimirRelatorio(r,meta){return exportarPdfRelatorio(r,typeof meta==='string'?{titulo:meta}:meta);}

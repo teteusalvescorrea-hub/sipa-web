@@ -19,6 +19,16 @@ const statusMedico=v=>STATUS_MEDICO_API[numero(v)]??v;
 const comoErro=e=>{const n=new Error(textoErro(e));n.status=e?.status;return n;};
 const chaveOperacao=()=>crypto.randomUUID();
 
+// Motivo do horário indisponível (null, "ocupado", "passado" ou "alunoOcupado"); a API antiga não manda.
+const motivoIndisponivel=h=>String(h.motivo?.descricao??h.motivo??'').toLowerCase();
+const SITUACAO_INTERESSE=Object.freeze({1:'Aguardando',2:'Em contato',3:'Remarcado',4:'Encerrado'});
+// Interesse em antecipar (aluno): horário ocupado em que ele quer aula.
+export function adaptarInteresse(i){
+ const inicio=comFusoBrasil(i?.dataHoraInicio),s=numero(i?.situacao);
+ return {id:i?.id??i?.interesseId,categoria:categoria(i?.categoria),inicio,data:inicio?.slice(0,10),hora:inicio?.slice(11,16),unidade:nomeDe(i?.unidade),
+  situacao:SITUACAO_INTERESSE[s]??i?.situacao?.descricao??(typeof s==='string'?s:'Aguardando'),aberto:![3,4].includes(s),marcadoEm:i?.marcadoEm??i?.criadoEm??null};
+}
+
 // Solicitação médica (SolicitacaoMedicaReadDto) no formato de solicitacoesMedicas.js.
 export function adaptarSolicitacao(s,alunoId){
  if(!s)return null;
@@ -91,7 +101,6 @@ export function adaptarDadosAluno(aluno,contratacoes,aulas,extras={}){
   unidade:nomeDe(matricula?.unidadeBase)||aluno.unidades?.[0]?.nome||'Não informada',unidadeBaseId:matricula?.unidadeBase?.id??null,
   unidadeCarro:nomeDe(matricula?.unidadeCarro)||null,tipoCambio:CAMBIO[numero(matricula?.tipoCambio)]??null,nascimento:aluno.dataNascimento||null,
   categoria:letras.join(''),categoriasFormacao:aluno.categoriasFormacao,
-  antecipacao:aluno.antecipacao?{...aluno.antecipacao,notificacoes:aluno.antecipacao.ativo}:null,
   avisosInternos:mensagens,leiturasMensagens:{}};
  registros.push(cadastro,...vistas);
  return {integrado:true,aluno:cadastro,aulas:vistas,registros,credito:null,categorias:letras,
@@ -108,7 +117,7 @@ function janelas(hoje=hojeBrasil()){
 export function criarServicoAluno(){
  let dados=null,carregando=null;
  const dias=new Map(),recursosVistos=new Map();
- const capacidades=Object.freeze({cancelamento:true,reservas:true,senha:true,antecipacao:true,automatico:false,configuracaoRecursos:false});
+ const capacidades=Object.freeze({cancelamento:true,reservas:true,senha:true,interesse:true,automatico:false,configuracaoRecursos:false});
  const pendente=async()=>{throw new Error('O agendamento automático ainda não está disponível. Use o agendamento manual.');};
  const invalidar=()=>{dados=null;dias.clear();};
  const opcional=p=>p.then(v=>v,()=>null);
@@ -142,7 +151,8 @@ export function criarServicoAluno(){
   return dia&&!dia.fechado&&dia.temHorario?[{data}]:[];
  }
 
- // Horários do dia com os pares instrutor × veículo livres (incluirMotoristas).
+ // Horários do dia com os pares instrutor × veículo livres (incluirMotoristas). O horário ocupado por outro aluno
+ // (motivo "ocupado") vem sem pares, para o "Tenho interesse"; passado e aula própria no horário ficam de fora.
  async function consultarRecursosLocal({categoria:cat,data}){
   const vazio={horarios:[],contagem:{instrutores:0,veiculos:0},permiteAgendar:true};
   if(!data)return {...vazio,mensagem:'Escolha uma data no calendário para consultar os horários.'};
@@ -150,15 +160,17 @@ export function criarServicoAluno(){
   try{r=await api.Get(api.ComParams('agendamentos/horarios-disponiveis',{categoria:NUMERO[cat],data,incluirMotoristas:true}));}
   catch(e){if(e?.status===400||e?.status===404){const motivo=textoErro(e);return {...vazio,mensagem:motivo,permiteAgendar:false,motivoElegibilidade:motivo};}throw comoErro(e);}
   const instrutores=new Set(),veiculos=new Set();
-  const horarios=(r.horarios||[]).filter(h=>h.disponivel!==false).map(h=>{
+  const horarios=(r.horarios||[]).map(h=>{
+   const hora=String(h.horario).slice(0,5),fim=String(h.dataHoraFim).slice(11,16);
+   if(h.disponivel===false)return motivoIndisponivel(h)==='ocupado'?{hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null}:null;
    const pares=[];
    for(const m of h.motoristas||[]){
     lembrar({id:m.motoristaId,tipo:'instrutor',nome:m.nome});instrutores.add(m.motoristaId);
     for(const v of m.veiculos||[]){lembrar({id:v.veiculoId,tipo:'veiculo',nome:[v.modelo,v.placa].filter(Boolean).join(' · ')||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio:CAMBIO[numero(v.tipoCambio)]??null});veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId});}
    }
-   return {hora:String(h.horario).slice(0,5),fim:String(h.dataHoraFim).slice(11,16),inicio:h.dataHoraInicio,pares};
-  }).filter(h=>h.pares.length);
-  const mensagem=r.fechado?'Não há expediente nesta data.':horarios.length?'':'Nenhum horário com instrutor e veículo livres nesta data.';
+   return {hora,fim,inicio:h.dataHoraInicio,pares};
+  }).filter(h=>h&&(h.ocupado||h.pares.length));
+  const mensagem=r.fechado?'Não há expediente nesta data.':horarios.some(h=>!h.ocupado)?'':'Nenhum horário com instrutor e veículo livres nesta data.';
   return {horarios,contagem:{instrutores:instrutores.size,veiculos:veiculos.size},mensagem,permiteAgendar:true,unidade:r.unidade,local:r.local};
  }
 
@@ -186,6 +198,18 @@ export function criarServicoAluno(){
   catch(e){throw comoErro(e);}finally{invalidar();}
  }
 
+ // Interesse num horário ocupado: a Recepção vê quando o horário vaga e liga para remarcar.
+ async function marcarInteresse({categoria:cat,data,hora}){
+  if(!NUMERO[cat]||!data||!hora)throw new Error('Escolha a categoria, a data e o horário.');
+  try{return adaptarInteresse(await api.Post('alunos/me/interesses-antecipacao',{categoria:NUMERO[cat],dataHoraInicio:data+'T'+hora+':00'},{cabecalhos:{'Idempotency-Key':chaveOperacao()}}));}
+  catch(e){throw comoErro(e);}
+ }
+ async function desmarcarInteresse(id){try{await api.Delete('alunos/me/interesses-antecipacao/'+id);}catch(e){throw comoErro(e);}}
+ async function listarInteresses(){
+  try{const r=await api.Get('alunos/me/interesses-antecipacao');return (Array.isArray(r)?r:r?.itens||[]).map(adaptarInteresse).sort((a,b)=>String(a.inicio).localeCompare(String(b.inicio)));}
+  catch(e){throw comoErro(e);}
+ }
+
  return {capacidades,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
   registros:async()=>(await dadosAlunoLocal()).registros,sair,
   consultarHistorico:async id=>(await api.Get('agendamentos/'+id)).historico||[],
@@ -195,7 +219,7 @@ export function criarServicoAluno(){
   metadadosDocumentoMedico:id=>api.Get('solicitacoes-medicas/'+id+'/documento/metadados'),
   alterarSenhaLocal:async({atual,nova})=>{try{await api.Put('usuarios/me/senha',{senhaAtual:atual,novaSenha:nova});}catch(e){throw comoErro(e);}},
   politicaSenhaLocal:{minimo:8,maximo:128},
-  salvarAvisosAntecipacao:async ativo=>{if(typeof ativo!=='boolean')throw new Error('Informe uma preferência válida.');try{await api.Put('alunos/me/antecipacao',{ativo});}catch(e){throw comoErro(e);}finally{invalidar();}},
+  marcarInteresse,desmarcarInteresse,listarInteresses,
   marcarMensagemLida:async id=>{try{await api.Post('alunos/me/mensagens/'+id+'/leitura');}catch(e){throw comoErro(e);}finally{invalidar();}},
   // Agendamento automático: F13 (D19).
   buscarAgendamentoAutomatico:pendente,salvarPreferenciasAutomaticas:pendente};
