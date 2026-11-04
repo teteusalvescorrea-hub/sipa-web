@@ -119,7 +119,7 @@ form.addEventListener("submit", async event => {
         const identificacao = porEmail ? cpf.value.trim() : normalizarCPF(cpf.value);
         const { login, trocarSenhaProvisoria } = await import("../shared/js/services/authService.js");
         const { limparSessao } = await import('../shared/js/sessao.js');
-        let resposta = await login(identificacao, senha.value), perfilEscolhido = null;
+        let resposta = await login(identificacao, senha.value), perfilEscolhido = null, novaSenhaCriada = null;
         if (!resposta?.token && resposta?.perfis?.length > 1) {
             perfilEscolhido = await escolherPerfil(resposta.perfis);
             if (!perfilEscolhido) { limparSessao(); informar('Escolha com qual acesso deseja entrar.', 'info'); return; }
@@ -127,7 +127,12 @@ form.addEventListener("submit", async event => {
         }
         if (resposta?.deveTrocarSenha && !resposta.token) {
             informar('Sua senha é provisória. Crie uma nova senha para continuar.', 'info');
-            resposta = await pedirNovaSenha(nova => trocarSenhaProvisoria(identificacao, senha.value, nova, perfilEscolhido));
+            resposta = await pedirNovaSenha(nova => (novaSenhaCriada = nova, trocarSenhaProvisoria(identificacao, senha.value, nova, perfilEscolhido)));
+            // Conta com dois perfis: a senha já foi trocada; falta escolher com qual perfil entrar.
+            if (!resposta?.token && resposta?.perfis?.length > 1 && novaSenhaCriada) {
+                perfilEscolhido = await escolherPerfil(resposta.perfis);
+                if (perfilEscolhido) resposta = await login(identificacao, novaSenhaCriada, perfilEscolhido);
+            }
             if (!resposta?.token) { limparSessao(); informar('A nova senha não foi salva. Entre novamente para tentar de novo.', 'info'); return; }
         }
         senha.value = '';
