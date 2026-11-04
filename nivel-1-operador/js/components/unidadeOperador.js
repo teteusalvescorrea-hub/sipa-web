@@ -85,7 +85,8 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     const feedback=el('p',avisoInicial,'op-demo-feedback');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');feedback.hidden=!avisoInicial;$('.op-header').after(feedback);
     const informar=(texto,erro=false)=>{
         if(!texto){feedback.hidden=true;return;}
-        feedback.textContent=texto;feedback.hidden=false;feedback.dataset.erro=String(erro);
+        // A faixa da página fica oculta (decisão do João em 03/11): o aviso rápido no canto e o do diálogo bastam.
+        feedback.textContent=texto;feedback.hidden=true;feedback.dataset.erro=String(erro);
         const aberto=[...raiz.querySelectorAll('dialog[open]')].at(-1);
         if(aberto){let aviso=aberto.querySelector(':scope>.op-modal-feedback');if(!aviso){aviso=el('p',undefined,'op-modal-feedback op-help');aberto.querySelector('.op-dialog-heading').after(aviso);}aviso.textContent=texto;aviso.setAttribute('role',erro?'alert':'status');}
         mostrarToast(texto,erro);
