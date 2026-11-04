@@ -221,7 +221,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    chamar(GetCache(ComParams('alunos',filtroUnidade()))),
    chamar(GetCache(ComParams('vinculos',{status:2,...filtroUnidade()}))),
    opcional(GetCache(ComParams('solicitacoes-medicas',{pagina:1,tamanho:100,...filtroUnidade()})),[]),
-   opcional(GetCache(ComParams('veiculos/da-autoescola',filtroUnidade())),[]),
+   // Complemento (veículos sem instrutor): qualquer falha aqui não derruba a tela, os veículos dos vínculos continuam.
+   GetCache(ComParams('veiculos/da-autoescola',filtroUnidade())).catch(()=>[]),
    ...janelas().map(j=>chamar(GetCache(ComParams('agendamentos',{...j,status:[1,2,3,4,5,6,7],...filtroUnidade()}))))]);
   const porId=new Map(lista(alunos).map(a=>[a.id,adaptarAlunoEquipe(a,u)]));
   const unicas=new Map(aulas.flatMap(lista).map(a=>[a.id,adaptarAulaEquipe(a,u)]));
