@@ -398,6 +398,9 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    if(dados.tipo==='Instrutores'){
     const r=await chamar(Post('motoristas/pela-autoescola',{nome:String(dados.nome||'').trim(),cpf:digitos(dados.cpf||dados.identificacao),email:dados.email||null,telefone:digitos(dados.telefone)||null,categorias:categoriasId(dados.categoria),unidadeIds:[u.guid(unidade)],
      horarioAlmoco:ALMOCO_LEGADO[dados.horarioAlmoco]||dados.horarioAlmoco||null,jornadaInicio:dados.inicio||null,jornadaFim:dados.fim||null,observacoes:String(dados.observacoes||'').trim()},comChave()));
+    // Os veículos escolhidos passam para o instrutor novo (PUT responsavel move as aulas futuras de cada um).
+    const falhas=[];for(const veiculoId of dados.veiculoIds||[]){try{await chamar(Put(`veiculos/${veiculoId}/responsavel`,{motoristaId:r?.id},comChave()));}catch(e){falhas.push(e.message);}}
+    if(falhas.length)throw new Error('Instrutor cadastrado, mas nem todos os veículos foram vinculados: '+falhas.join(' '));
     return {id:r?.id,...respostaSenha(r)};
    }
    if(dados.tipo!=='Veículos')throw new Error('Informe nome, identificação e tipo do recurso.');

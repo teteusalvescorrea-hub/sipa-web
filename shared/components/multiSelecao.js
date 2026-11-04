@@ -16,5 +16,5 @@ export function criarMultiSelecao({opcoes=[],selecionados=[],placeholder='Seleci
  caixa.addEventListener('focusout',e=>{if(!caixa.contains(e.relatedTarget))abrir(false);});
  document.addEventListener('pointerdown',e=>{if(!caixa.contains(e.target))abrir(false);});
  atualizar();
- return {elemento:caixa,input,botao,abrir,desabilitar(sim){botao.disabled=!!sim;if(sim)abrir(false);}};
+ return {elemento:caixa,input,botao,abrir,valores:()=>marcas.filter(c=>c.checked).map(c=>c.value),desabilitar(sim){botao.disabled=!!sim;if(sim)abrir(false);}};
 }
