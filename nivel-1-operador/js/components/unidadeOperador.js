@@ -11,7 +11,7 @@ import {botaoCadastroRecurso,abrirFormularioInstrutor,abrirFormularioVeiculo} fr
 import {AVISO_ONIBUS,NOMES_CATEGORIA,LOCAIS_ONIBUS} from '../../../shared/js/categorias.js';
 import {marcarErrosDoServidor} from '../../../shared/js/errosDeCampo.js';
 import {montarEdicaoCadastro,montarJornada,etapaAtual,montarExamesProvas,montarProvas,montarHistoricoProvas,montarLinhaTempo} from './fichaEvolucao.js';
-import {el,botao,campo,select,entrada,modal,card,iconeSvg} from './uiOperador.js';
+import {el,botao,campo,select,entrada,modal,card,iconeSvg,mostrarToast} from './uiOperador.js';
 import {montarEstruturaOperador} from './painelOperador.js';
 import {tornarOrdenavel,ordenarLinhas,estadoOrdenacao} from '../../../shared/js/ordenacaoTabela.js';
 import {montarAgenda} from './agendaOperador.js';
@@ -85,6 +85,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         feedback.textContent=texto;feedback.hidden=false;feedback.dataset.erro=String(erro);
         const aberto=[...raiz.querySelectorAll('dialog[open]')].at(-1);
         if(aberto){let aviso=aberto.querySelector(':scope>.op-modal-feedback');if(!aviso){aviso=el('p',undefined,'op-modal-feedback op-help');aberto.querySelector('.op-dialog-heading').after(aviso);}aviso.textContent=texto;aviso.setAttribute('role',erro?'alert':'status');}
+        mostrarToast(texto,erro);
     };
     const tema=globalThis.SipaTema.montarBotao({texto:true});tema.dataset.opTema='';const contexto=el('div',undefined,'op-header-context');contexto.append($('.op-topbar .op-unit-chip'),tema);$('.op-topbar').append(contexto);
     const menu=botao('Menu',()=>{const aberto=$('.op-sidebar').classList.toggle('op-open');menu.setAttribute('aria-expanded',String(aberto));if(aberto)$('.op-sidebar a').focus();});menu.classList.add('op-menu-mobile');menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-controls','op-menu-lateral');$('.op-sidebar').id='op-menu-lateral';$('.op-topbar').prepend(menu);

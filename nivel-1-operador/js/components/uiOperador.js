@@ -32,3 +32,12 @@ export function iconeSvg(nome, viewBox) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg"), use = document.createElementNS(svg.namespaceURI, "use");
     svg.setAttribute("aria-hidden", "true"); if (viewBox) svg.setAttribute("viewBox", viewBox); use.setAttribute("href", `#op-${nome}`); svg.append(use); return svg;
 }
+
+// Aviso rápido no canto da tela (some sozinho): confirma que salvou ou mostra o erro onde a pessoa está olhando, mesmo
+// com a ficha rolada. Com um <dialog> aberto, vai dentro dele (camada de cima).
+export function mostrarToast(texto, erro = false) {
+    const alvo = [...document.querySelectorAll("dialog[open]")].at(-1) || document.body;
+    alvo.querySelector(":scope > .op-toast")?.remove();
+    const toast = el("div", texto, "op-toast" + (erro ? " op-toast-erro" : "")); toast.setAttribute("role", erro ? "alert" : "status"); alvo.append(toast);
+    setTimeout(() => toast.remove(), erro ? 6000 : 3500);
+}
