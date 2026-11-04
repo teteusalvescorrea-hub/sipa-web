@@ -211,22 +211,9 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         if(abaFicha==='cadastro'){
             const cadastroArea=el('section');fichaConteudo.append(cadastroArea);
             let aulasDeCarro=carro(a)?nomeUnidade(carro(a)):'Não se aplica';
-            // Contratação com o link para contratar um pacote no balcão (a Recepção abre; a Gerência aprova o pagamento).
-            function contratacaoComAcao(a){
-                const valor=el('span',undefined,'op-ficha-valor-acao');valor.append(textoContratacoes(a.contratacoes)+' ');
-                if(!servico.contratarPacote||!permissoes.includes('cadastrar'))return valor;
-                const contratar=botao('Contratar pacote',async()=>{
-                    let pacotes;try{pacotes=await servico.pacotes();}catch(e){informar(e.message,true);return;}
-                    if(!pacotes.length){informar('Nenhum pacote cadastrado nesta autoescola.',true);return;}
-                    const real=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),aprova=identidade.nivel>=2;
-                    formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,`${p.nome} · ${p.quantidade} aulas · ${p.categorias.join('/')||'—'} · ${real(p.preco)}`])],...(aprova?[['aprovar','Pagamento recebido: aprovar agora','checkbox',true]]:[])],
-                        d=>executar(()=>servico.contratarPacote(a.id,d.pacote,d.aprovar===true),aprova&&d.aprovar?'Pacote contratado e aprovado.':'Pacote contratado. Aguarda a aprovação da Gerência.',()=>renderizarFicha()),
-                        {confirmacao:false,descricao:`${a.nome}. `+(aprova?'Sem marcar o pagamento, a contratação fica pendente.':'A contratação fica pendente até a Gerência aprovar o pagamento.')});
-                },'op-link');contratar.dataset.opContratarPacote='';valor.append(contratar);return valor;
-            }
             if(a.categoria.includes('B')){const valor=el('span',undefined,'op-ficha-valor-acao'),alterar=botao('Alterar',()=>abrirTransferencia(a),'op-link');alterar.dataset.opTransferir='';alterar.disabled=!permissoes.includes('transferir');alterar.setAttribute('aria-label','Alterar unidade de aulas de carro');valor.append(aulasDeCarro+' ',alterar);aulasDeCarro=valor;}
             cadastroArea.append(blocoFicha('Dados pessoais',camposFicha([['Nome completo',a.nome],['CPF',formatarCpf(a.cpf)],['Nascimento',textoData(a.nascimento)],['Telefone',formatarTelefone(a.telefone)],['E-mail',a.email]])),
-                blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],...(a.contratacoes?[['Contratação',contratacaoComAcao(a)]]:[]),['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Etapa',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
+                blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],...(a.contratacoes?[['Contratação',textoContratacoes(a.contratacoes)]]:[]),['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Etapa',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
             if(a.categoria==='D')cadastroArea.append(el('p',AVISO_ONIBUS+' '+Object.values(LOCAIS_ONIBUS).map(l=>l.endereco).join(' '),'op-inline-note'));if(a.categoria.includes('A'))cadastroArea.append(el('p',pista.textContent,'op-inline-note'));
             const notas=el('textarea');notas.value=a.observacoes||'';notas.maxLength=2000;notas.rows=3;notas.disabled=!permissoes.includes('anotar');const salvar=botao('Salvar observações',()=>executar(()=>servico.anotar(a.id,notas.value),'Observações salvas.',renderizarFicha),'op-button op-button-primary');salvar.disabled=true;notas.addEventListener('input',()=>{salvar.disabled=notas.disabled||notas.value===(a.observacoes||'');});
             const acoesNotas=el('div',undefined,'op-ficha-acoes-notas');acoesNotas.append(salvar);cadastroArea.append(blocoFicha('Observações administrativas',notas,acoesNotas));notas.setAttribute('aria-label','Observações administrativas');
@@ -243,7 +230,7 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             // realizadas sobre as adquiridas e os números que importam para agendar.
             const bloqueio=resumoLiberacao.motivoBloqueio,semSaldo=!bloqueio&&Object.values(resumoLiberacao.categorias||{}).every(s=>!(s?.disponiveis>0));
             const faixa=el('div',undefined,'op-aulas-liberacao'+(bloqueio?' op-aulas-bloqueada':semSaldo?' op-aulas-sem-saldo':''));faixa.setAttribute('role',bloqueio?'alert':'status');
-            faixa.append(el('strong',bloqueio?'Agendamento bloqueado':semSaldo?'Sem aulas disponíveis':'Liberado para agendar'),el('span',bloqueio?bloqueio:semSaldo?'Todas as aulas já estão reservadas ou realizadas. Contrate um pacote na aba Cadastro.':'Há aulas disponíveis para agendar.'));fichaConteudo.append(faixa);
+            faixa.append(el('strong',bloqueio?'Agendamento bloqueado':semSaldo?'Sem aulas disponíveis':'Liberado para agendar'),el('span',bloqueio?bloqueio:semSaldo?'Todas as aulas já estão reservadas ou realizadas. Contrate um pacote ou adicione aulas avulsas abaixo.':'Há aulas disponíveis para agendar.'));fichaConteudo.append(faixa);
             const grade=el('div',undefined,'op-resumo-aulas'),numero=(chave,v)=>{const n=el('strong',v===null||v===undefined?'—':String(v));n.dataset.opTotal=chave;return n;};
             for(const [c,resumo] of Object.entries(resumoAulas)){
                 const saldos=resumoLiberacao.categorias[c],item=el('section',undefined,'op-resumo-aulas-card');item.dataset.opResumoCategoria=c;
@@ -255,6 +242,21 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
                 item.append(topo,barra,numeros);grade.append(item);
             }
             fichaConteudo.append(grade);
+            // Aulas extras (decisão do João em 03/11): pacote da autoescola ou aulas avulsas por categoria, aqui na aba Aulas.
+            if(permissoes.includes('cadastrar')&&servico.contratarPacote){
+                const acoes=el('div',undefined,'op-ficha-acoes op-aulas-extras'),aprova=identidade.nivel>=2,cats=['A','B','D'].filter(c=>String(a.categoria).includes(c));
+                const real=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+                const pacote=botao('Contratar pacote',async()=>{
+                    let pacotes;try{pacotes=await servico.pacotes();}catch(e){informar(e.message,true);return;}
+                    if(!pacotes.length){informar('Nenhum pacote cadastrado nesta autoescola.',true);return;}
+                    formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,`${p.nome} · ${p.quantidade} aulas · ${p.categorias.join('/')||'—'} · ${real(p.preco)}`])],...(aprova?[['aprovar','Pagamento recebido: aprovar agora','checkbox',true]]:[])],
+                        d=>executar(()=>servico.contratarPacote(a.id,d.pacote,d.aprovar===true),aprova&&d.aprovar?'Pacote contratado e aprovado.':'Pacote contratado. Aguarda a aprovação da Gerência.',()=>renderizarFicha()),
+                        {confirmacao:false,descricao:`${a.nome}. `+(aprova?'Sem marcar o pagamento, a contratação fica pendente.':'A contratação fica pendente até a Gerência aprovar o pagamento.')});
+                });pacote.dataset.opContratarPacote='';
+                const avulsas=botao('Adicionar aulas avulsas',()=>formularioAdministrativo(raiz,'Adicionar aulas avulsas',[['categoria','Categoria','select',cats[0]||'B',(cats.length?cats:['A','B','D']).map(c=>[c,`${NOMES_CATEGORIA[c]} · Categoria ${c}`])],['quantidade','Quantidade de aulas','number','1']],
+                    d=>executar(()=>servico.adicionarAulasAvulsas(a.id,d.categoria,d.quantidade),'Aulas adicionadas.',()=>renderizarFicha()),{confirmacao:false,descricao:`${a.nome}. As aulas entram já liberadas para agendar.`}));avulsas.dataset.opAulasAvulsas='';
+                acoes.append(pacote,avulsas);fichaConteudo.append(acoes);
+            }
         }
         if(abaFicha==='historico')montarLinhaTempo(fichaConteudo,linhaTempo,{abrirAula:id=>{const aula=aulas.find(a=>a.id===id);if(aula)detalhes.abrir(aula);}});
         if(abaFicha==='acesso'){fichaConteudo.append(campos([['Login (CPF)',formatarCpf(a.cpf)],['E-mail',a.email||'Não cadastrado'],['Último acesso',a.ultimoAcessoEm?dataHoraCurta(a.ultimoAcessoEm):'Ainda não entrou']]));

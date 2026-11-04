@@ -353,3 +353,4 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 [data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-liberacao.op-aulas-bloqueada{background:#3b1512;color:#ffb4ab}
 .op-unidade [data-op-ficha] .op-aulas-liberacao.op-aulas-sem-saldo{background:#fff4e0;color:#8a5300}
 [data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-liberacao.op-aulas-sem-saldo{background:#3a2a0e;color:#ffd38a}
+.op-unidade [data-op-ficha] .op-aulas-extras{justify-content:flex-end;margin-top:14px}

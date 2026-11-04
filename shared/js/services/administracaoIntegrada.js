@@ -321,6 +321,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    if(aprovar&&op.nivel>=2&&r?.id)await chamar(Post(`contratacoes/${r.id}/aprovar`,{}));
    return r;
   },
+  // Aulas extras avulsas no balcão: já aprovadas, como as do cadastro.
+  async adicionarAulasAvulsas(alunoId,categoria,quantidade){return chamar(Post('contratacoes',{alunoId,categoria:NUMERO[categoria],quantidadeAulas:Number(quantidade)}));},
   async alunosAgendaveis(data,inicio,par){
    const r=await opcional(Get(ComParams('disponibilidade/alunos',{data,inicio,motoristaId:par.instrutorId,veiculoId:par.veiculoId,categoria:NUMERO[par.categoria]})));
    if(!r)return base.alunosAgendaveis(data,inicio,par);
