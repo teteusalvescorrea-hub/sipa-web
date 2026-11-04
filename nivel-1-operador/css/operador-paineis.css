@@ -371,38 +371,3 @@ th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-
 [data-theme=dark] .op-reserva-inelegivel { border-color:#3c536a; }
 [data-theme=dark] .op-reserva-inelegivel strong { color:#a9bccd; }
 [data-theme=dark] .op-reserva-inelegivel span { color:#ffb4ab; }
-
-/* Agenda (03/11): menos texto, livres discretos, situação na borda do card, hoje e agora em destaque. */
-.op-agenda .op-week-grid, .op-agenda .op-week-grid * { border-color:#d6e2ec; }
-.op-agenda .op-agenda-day { border-color:#d6e2ec; }
-.op-agenda .op-slot-vazio { min-height:28px; }
-.op-agenda .op-agenda-slot.op-slot-indisponivel { background:#f2f5f8; }
-.op-agenda .op-agenda-fechada .op-agenda-slot { background:repeating-linear-gradient(135deg,#eef2f6 0 8px,#e7edf2 8px 16px); }
-.op-agenda .op-dia-fechado { font-weight:600; color:#4c6278; }
-.op-agenda .op-slot-almoco { margin:0; padding:5px 8px; border-radius:6px; background:repeating-linear-gradient(135deg,#f1f4f7 0 6px,#e9eef3 6px 12px); color:#6a7f99; font-size:11px; }
-.op-agenda .op-slot-disponivel { border:1px dashed transparent; background:transparent; color:#9db8d0; }
-.op-agenda .op-slot-disponivel span { display:none; }
-.op-agenda .op-slot-disponivel:hover, .op-agenda .op-slot-disponivel:focus-visible { border-color:#8bb5d8; background:#eef5fb; color:#1769aa; }
-.op-agenda .op-aula-evento { border-left:3px solid #1769aa; }
-.op-agenda .op-aula-st-3 { border-left-color:#b6975c; }
-.op-agenda .op-aula-st-2, .op-agenda .op-aula-st-4 { border-left-color:#9aaaba; opacity:.75; }
-.op-agenda .op-aula-st-5 { border-left-color:#2e6f4e; }
-.op-agenda .op-aula-st-6 { border-left-color:#b42318; }
-.op-agenda .op-aula-compact .op-badge { display:none; }
-.op-agenda .op-agenda-day:has(> .op-day-heading[aria-current=date]) { background:#f1f7fd; border-color:#9cc3e4; }
-.op-agenda .op-day-heading[aria-current=date] { background:#1769aa; color:#fff; }
-.op-agenda .op-day-heading[aria-current=date] span, .op-agenda .op-day-heading[aria-current=date] h3 { color:#fff; }
-.op-agenda .op-slot-agora { box-shadow:inset 0 2px 0 #1769aa; }
-.op-agenda .op-agenda-local-etiqueta { display:inline-block; margin-top:4px; padding:1px 8px; border-radius:999px; background:#e6f1fb; color:#1769aa; font-size:10px; font-weight:600; }
-.op-agenda .op-day-heading[aria-current=date] .op-agenda-local-etiqueta { background:rgba(255,255,255,.2); color:#fff; }
-.op-agenda .op-agenda-toolbar { align-items:center; }
-.op-agenda .op-agenda-seletor { flex:0 1 460px; max-width:460px; }
-.op-agenda-legenda .op-legenda-livre::before { background:transparent; border:1px dashed #8bb5d8; box-sizing:border-box; }
-.op-agenda-legenda .op-legenda-confirmada::before { background:#1769aa; }
-.op-agenda-legenda .op-legenda-realizada::before { background:#2e6f4e; }
-.op-agenda-legenda .op-legenda-fechado::before { background:repeating-linear-gradient(135deg,#dfe6ec 0 3px,#c9d4de 3px 6px); }
-.op-agenda-legenda [hidden] { display:none; }
-[data-theme=dark] .op-agenda .op-agenda-slot.op-slot-indisponivel { background:#13263a; }
-[data-theme=dark] .op-agenda .op-agenda-fechada .op-agenda-slot, [data-theme=dark] .op-agenda .op-slot-almoco { background:repeating-linear-gradient(135deg,#142a3f 0 8px,#18304a 8px 16px); color:#a9bccd; }
-[data-theme=dark] .op-agenda .op-slot-disponivel { color:#4f6f8c; }
-[data-theme=dark] .op-agenda .op-agenda-day:has(> .op-day-heading[aria-current=date]) { background:#10263b; }
