@@ -345,7 +345,7 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-unidade [data-op-ficha] .op-resumo-barra{display:flex;height:10px;margin:0 0 18px;overflow:hidden;border-radius:3px;background:var(--op-soft)}
 .op-resumo-barra-feitas{background:var(--progress-blue,#1769aa)}
 .op-resumo-barra-reservadas{background:#9cc3e4}
-.op-unidade [data-op-ficha] .op-resumo-aulas-card dl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card dl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0}
 .op-unidade [data-op-ficha] .op-resumo-aulas-card dl>div{display:flex;flex-direction:column-reverse;gap:2px;margin:0;padding:0;border:0}
 .op-unidade [data-op-ficha] .op-resumo-aulas-card dt{font-size:13px;color:var(--op-muted)}
 .op-unidade [data-op-ficha] .op-resumo-aulas-card dd{margin:0;font-size:24px;font-weight:700}

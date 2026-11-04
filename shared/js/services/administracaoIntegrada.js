@@ -312,6 +312,14 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    if(!r)return regras.paresNaUnidade(e,{...op,unidade:['A','D'].includes(f.categoria)?op.unidade:unidade},data,hora,f);
    return lista(r).filter(x=>x.data===data&&String(x.inicio).slice(0,5)===hora).flatMap(x=>(x.pares||[]).map(p=>({instrutorId:p.motoristaId,veiculoId:p.veiculoId,categoria:categoria(p.categoria)})));
   },
+  // Pacotes da autoescola para contratar no balcão.
+  async pacotes(){return lista(await chamar(GetCache('pacotes'))).map(p=>({id:p.id,nome:p.nomeExibicao||p.nome,quantidade:p.quantidadeAulas,preco:p.preco,categorias:(p.categorias||[]).map(categoria).filter(Boolean)}));},
+  // A contratação nasce pendente; com aprovar (pagamento recebido), a Gerência e o Master já aprovam.
+  async contratarPacote(alunoId,pacoteId,aprovar=false){
+   const r=await chamar(Post('contratacoes',{pacoteId,alunoId}));
+   if(aprovar&&op.nivel>=2&&r?.id)await chamar(Post(`contratacoes/${r.id}/aprovar`,{}));
+   return r;
+  },
   async alunosAgendaveis(data,inicio,par){
    const r=await opcional(Get(ComParams('disponibilidade/alunos',{data,inicio,motoristaId:par.instrutorId,veiculoId:par.veiculoId,categoria:NUMERO[par.categoria]})));
    if(!r)return base.alunosAgendaveis(data,inicio,par);

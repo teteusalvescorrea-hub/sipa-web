@@ -210,9 +210,22 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         if(abaFicha==='cadastro'){
             const cadastroArea=el('section');fichaConteudo.append(cadastroArea);
             let aulasDeCarro=carro(a)?nomeUnidade(carro(a)):'Não se aplica';
+            // Contratação com o link para contratar um pacote no balcão (a Recepção abre; a Gerência aprova o pagamento).
+            function contratacaoComAcao(a){
+                const valor=el('span',undefined,'op-ficha-valor-acao');valor.append(textoContratacoes(a.contratacoes)+' ');
+                if(!servico.contratarPacote||!permissoes.includes('cadastrar'))return valor;
+                const contratar=botao('Contratar pacote',async()=>{
+                    let pacotes;try{pacotes=await servico.pacotes();}catch(e){informar(e.message,true);return;}
+                    if(!pacotes.length){informar('Nenhum pacote cadastrado nesta autoescola.',true);return;}
+                    const real=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}),aprova=identidade.nivel>=2;
+                    formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,`${p.nome} · ${p.quantidade} aulas · ${p.categorias.join('/')||'—'} · ${real(p.preco)}`])],...(aprova?[['aprovar','Pagamento recebido: aprovar agora','checkbox',true]]:[])],
+                        d=>executar(()=>servico.contratarPacote(a.id,d.pacote,d.aprovar===true),aprova&&d.aprovar?'Pacote contratado e aprovado.':'Pacote contratado. Aguarda a aprovação da Gerência.',()=>renderizarFicha()),
+                        {confirmacao:false,descricao:`${a.nome}. `+(aprova?'Sem marcar o pagamento, a contratação fica pendente.':'A contratação fica pendente até a Gerência aprovar o pagamento.')});
+                },'op-link');contratar.dataset.opContratarPacote='';valor.append(contratar);return valor;
+            }
             if(a.categoria.includes('B')){const valor=el('span',undefined,'op-ficha-valor-acao'),alterar=botao('Alterar',()=>abrirTransferencia(a),'op-link');alterar.dataset.opTransferir='';alterar.disabled=!permissoes.includes('transferir');alterar.setAttribute('aria-label','Alterar unidade de aulas de carro');valor.append(aulasDeCarro+' ',alterar);aulasDeCarro=valor;}
             cadastroArea.append(blocoFicha('Dados pessoais',camposFicha([['Nome completo',a.nome],['CPF',formatarCpf(a.cpf)],['Nascimento',textoData(a.nascimento)],['Telefone',formatarTelefone(a.telefone)],['E-mail',a.email]])),
-                blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],...(a.contratacoes?[['Contratação',textoContratacoes(a.contratacoes)]]:[]),['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Etapa',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
+                blocoFicha('Matrícula',camposFicha([['Categoria',a.categoria],...(a.contratacoes?[['Contratação',contratacaoComAcao(a)]]:[]),['Unidade principal',nomeUnidade(principal(a))],...(a.categoria.includes('B')?[['Tipo de carro',nomeCambio(a.tipoCambio)]]:[]),['Aulas de carro',aulasDeCarro],['Etapa',badge(situacaoCadastro(a))],['Criado em',dataHoraCurta(a.criadoEm)]])));
             if(a.categoria==='D')cadastroArea.append(el('p',AVISO_ONIBUS+' '+Object.values(LOCAIS_ONIBUS).map(l=>l.endereco).join(' '),'op-inline-note'));if(a.categoria.includes('A'))cadastroArea.append(el('p',pista.textContent,'op-inline-note'));
             const notas=el('textarea');notas.value=a.observacoes||'';notas.maxLength=2000;notas.rows=3;notas.disabled=!permissoes.includes('anotar');const salvar=botao('Salvar observações',()=>executar(()=>servico.anotar(a.id,notas.value),'Observações salvas.',renderizarFicha),'op-button op-button-primary');salvar.disabled=true;notas.addEventListener('input',()=>{salvar.disabled=notas.disabled||notas.value===(a.observacoes||'');});
             const acoesNotas=el('div',undefined,'op-ficha-acoes-notas');acoesNotas.append(salvar);cadastroArea.append(blocoFicha('Observações administrativas',notas,acoesNotas));notas.setAttribute('aria-label','Observações administrativas');
@@ -232,11 +245,11 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             const grade=el('div',undefined,'op-resumo-aulas'),numero=(chave,v)=>{const n=el('strong',v===null||v===undefined?'—':String(v));n.dataset.opTotal=chave;return n;};
             for(const [c,resumo] of Object.entries(resumoAulas)){
                 const saldos=resumoLiberacao.categorias[c],item=el('section',undefined,'op-resumo-aulas-card');item.dataset.opResumoCategoria=c;
-                const topo=el('header'),progresso=el('p',undefined,'op-resumo-progresso');progresso.append(numero('realizadas',saldos.realizadas),' de ',numero('adquiridas',resumo.adquiridas),' aulas realizadas');
+                const topo=el('header'),progresso=el('p',undefined,'op-resumo-progresso');progresso.append(numero('adquiridas',resumo.adquiridas),' aulas adquiridas');
                 topo.append(el('h4',`${NOMES_CATEGORIA[c]} · Categoria ${c}`),progresso);
                 const total=Math.max(Number(resumo.adquiridas)||0,1),barra=el('div',undefined,'op-resumo-barra'),feitas=el('span',undefined,'op-resumo-barra-feitas'),reservadas=el('span',undefined,'op-resumo-barra-reservadas');
                 feitas.style.width=Math.min(100,(Number(saldos.realizadas)||0)/total*100)+'%';reservadas.style.width=Math.min(100,(Number(saldos.reservadas)||0)/total*100)+'%';barra.append(feitas,reservadas);barra.setAttribute('aria-hidden','true');
-                const numeros=el('dl');for(const [chave,titulo,v] of [['disponiveis','Disponíveis',saldos.disponiveis],['reservadas','Reservadas',saldos.reservadas],['faltas','Faltas',resumo.faltas]]){const linha=el('div'),dd=el('dd');dd.append(numero(chave,v));linha.append(el('dt',titulo),dd);numeros.append(linha);}
+                const numeros=el('dl');for(const [chave,titulo,v] of [['disponiveis','Disponíveis',saldos.disponiveis],['reservadas','Reservadas',saldos.reservadas],['realizadas','Realizadas',saldos.realizadas],['faltas','Faltas',resumo.faltas]]){const linha=el('div'),dd=el('dd');dd.append(numero(chave,v));linha.append(el('dt',titulo),dd);numeros.append(linha);}
                 item.append(topo,barra,numeros);grade.append(item);
             }
             fichaConteudo.append(grade);
