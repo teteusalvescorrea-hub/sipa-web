@@ -152,7 +152,7 @@ function jornadaLocal(j,categorias){
  semana[6]=categorias.includes('D')?[{inicio,fim}]:inicio<'12:00'?[{inicio,fim:fim<'12:00'?fim:'12:00'}]:[];return semana;
 }
 // GET vinculos (status 2) → instrutores e veículos do front.
-export function adaptarRecursos(vinculos,u){
+export function adaptarRecursos(vinculos,u,daAutoescola=[]){
  const recursos=new Map();
  for(const v of vinculos){
   const cats=(v.motoristaCategorias||[]).map(categoria).filter(Boolean),unidades=(v.unidades||[]).map(u.chave).filter(Boolean),veiculos=v.veiculos||[];
@@ -163,6 +163,9 @@ export function adaptarRecursos(vinculos,u){
   for(const x of veiculos){const id=x.id??x.veiculoId;if(recursos.has(id))continue;const c=categoria(x.categoria);
    recursos.set(id,{id,tipo:'Veículos',nome:x.modelo,modelo:x.modelo,placa:x.placa,identificacao:x.placa,categoria:c,...(c==='B'?{tipoCambio:CAMBIO[numero(x.tipoCambio)]??undefined}:{}),unidade:unidades[0]||'',instrutorId:v.motoristaId,ativo:x.ativo??true,disponivel:true,origem:'api'});}
  }
+ // Veículos da autoescola (GET veiculos/da-autoescola), inclusive os sem instrutor (decisão do João em 03/11).
+ for(const x of daAutoescola){const id=x.id;if(recursos.has(id))continue;const c=categoria(x.categoria);
+  recursos.set(id,{id,tipo:'Veículos',nome:x.modelo,modelo:x.modelo,placa:x.placa,identificacao:x.placa,categoria:c,...(c==='B'?{tipoCambio:CAMBIO[numero(x.tipoCambio)]??undefined}:{}),unidade:u.chave(x.unidade)||'',instrutorId:x.motoristaId||null,ativo:x.ativo??true,disponivel:true,origem:'api'});}
  return [...recursos.values()];
 }
 function adaptarExames(itens,a){
@@ -214,17 +217,18 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
  const Post=comando(PostApi),Put=comando(PutApi),Patch=comando(PatchApi),Delete=comando(DeleteApi);
  // Snapshot de leitura no formato do front, remontado a cada consulta (objetos novos: quem altera o retorno não suja o cache).
  async function ler(){
-  const [alunos,vinculos,solicitacoes,...aulas]=await Promise.all([
+  const [alunos,vinculos,solicitacoes,veiculosDaAutoescola,...aulas]=await Promise.all([
    chamar(GetCache(ComParams('alunos',filtroUnidade()))),
    chamar(GetCache(ComParams('vinculos',{status:2,...filtroUnidade()}))),
    opcional(GetCache(ComParams('solicitacoes-medicas',{pagina:1,tamanho:100,...filtroUnidade()})),[]),
+   opcional(GetCache(ComParams('veiculos/da-autoescola',filtroUnidade())),[]),
    ...janelas().map(j=>chamar(GetCache(ComParams('agendamentos',{...j,status:[1,2,3,4,5,6,7],...filtroUnidade()}))))]);
   const porId=new Map(lista(alunos).map(a=>[a.id,adaptarAlunoEquipe(a,u)]));
   const unicas=new Map(aulas.flatMap(lista).map(a=>[a.id,adaptarAulaEquipe(a,u)]));
   for(const s of lista(solicitacoes)){const sol=s.solicitacao??s,aulaId=sol.aulaIds?.[0]??sol.aulaId??s.aula?.id,aula=unicas.get(aulaId);if(aula)aula.solicitacaoMedica=adaptarSolicitacao({...sol,aulaIds:sol.aulaIds||[aulaId]},aula.alunoId);}
   // Alunos fora do cadastro autorizado só aparecem pelo nome nas agendas compartilhadas.
   for(const a of unicas.values())if(a.alunoId&&!porId.has(a.alunoId))porId.set(a.alunoId,{id:a.alunoId,nome:a.alunoNome||'Aluno não informado',categoria:'',historico:[],somenteAgenda:true,excluidoEm:'somente-agenda'});
-  return {versao:2,alunos:[...porId.values()],recursos:adaptarRecursos(lista(vinculos),u),aulas:[...unicas.values()],excecoesAgenda:[],ofertasAntecipacao:[],configuracoesUnidades:{}};
+  return {versao:2,alunos:[...porId.values()],recursos:adaptarRecursos(lista(vinculos),u,lista(veiculosDaAutoescola)),aulas:[...unicas.values()],excecoesAgenda:[],ofertasAntecipacao:[],configuracoesUnidades:{}};
  }
  const leitor=estado=>servicoOperador({ler:async()=>estado,...negado},op);
  const base=servicoOperador({ler,...negado},op);
