@@ -21,7 +21,7 @@ const mensagem = document.getElementById("login-message"), entrar = document.get
 let enviando = false;
 const {desenvolvimentoAtivo} = await import('../shared/js/ambiente.js');
 const servicoDemo = desenvolvimentoAtivo() ? (await import('../dev/login.js')).montarLoginDemo(form) : null;
-if(!document.getElementById('tipo-acesso')){
+if(servicoDemo&&!document.getElementById('tipo-acesso')){
 // A escolha informa o destino pretendido; a API continua sendo a autoridade.
 // Nenhum perfil administrativo é inferido de Autoescola ou de parâmetros da URL.
 const ferramentasPerfil=document.createElement('div');ferramentasPerfil.className='local-login-tools';
@@ -37,7 +37,8 @@ function informar(texto, tipo = "error", campo) {
 // A máscara só formata quando o texto é numérico, então o e-mail passa intacto.
 ativarMascaraCpf(cpf,{permitirNome:true});
 const tipoAcesso=document.getElementById('tipo-acesso'),rotuloLogin=document.querySelector('label[for="login-cpf"]');
-const equipeSelecionada=()=>['operador','gerencia','master'].includes(tipoAcesso?.value);
+// Integrado: sem "Tipo de acesso" (decisão do João em 03/11); o campo aceita CPF ou e-mail e o painel vem da conta.
+const equipeSelecionada=()=>!servicoDemo||['operador','gerencia','master'].includes(tipoAcesso?.value);
 function ajustarCampoLogin(){
     const equipe=!servicoDemo&&equipeSelecionada();
     if(rotuloLogin)rotuloLogin.textContent=equipe?'CPF ou e-mail':'CPF';
@@ -90,8 +91,8 @@ form.addEventListener("submit", async event => {
     let redirecionando = false;
     try {
         informar('');
-        const escolhido=document.getElementById('tipo-acesso').value,equipe=Object.hasOwn(paineisEquipe,escolhido);
-        const porEmail=!servicoDemo&&equipe&&cpf.value.includes('@');
+        const escolhido=document.getElementById('tipo-acesso')?.value,equipe=!servicoDemo||Object.hasOwn(paineisEquipe,escolhido);
+        const porEmail=!servicoDemo&&cpf.value.includes('@');
         if(porEmail){if(!emailValido(cpf.value.trim())){informar('Informe um e-mail válido.','error',cpf);return;}}
         else if(cpf.value.replace(/\D/g,'').length!==11||/[^\d.\-\s]/.test(cpf.value)){informar(equipe&&!servicoDemo?'Informe o CPF (11 dígitos) ou o e-mail.':'Informe os 11 dígitos do CPF.','error',cpf);return;}
         if (servicoDemo) { await servicoDemo.entrar(normalizarCPF(cpf.value), senha.value); senha.value = ''; redirecionando = true; return; }
@@ -108,20 +109,18 @@ form.addEventListener("submit", async event => {
         }
         senha.value = '';
         const perfil = resposta?.perfil?.descricao;
-        if (equipe) {
-            if (perfil !== 'Autoescola') { limparSessao(); informar('A conta autenticada não possui o perfil selecionado.', 'info'); return; }
-            // O painel vem do papel (equipe/me). A API autoriza cada rota; aqui só se escolhe a tela.
+        // O perfil da conta decide a tela: equipe pelo painel do papel (equipe/me), aluno e instrutor pelo perfil do token.
+        if (perfil === 'Autoescola') {
             const { Get } = await import('../shared/js/api.js');
             const membro = await Get('equipe/me'), painel = membro?.painel?.valor ?? membro?.painel ?? null;
-            const [nivel, url] = paineisEquipe[escolhido];
-            if (painel !== null && painel !== nivel) { limparSessao(); informar('Sua conta não possui acesso a este painel administrativo.', 'info'); return; }
+            const url = Object.values(paineisEquipe).find(([nivel]) => nivel === painel)?.[1];
+            if (!url) { limparSessao(); informar('Sua conta não tem um painel administrativo liberado. Fale com o Master.', 'info'); return; }
             redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");
             window.location.assign(url); return;
         }
-        const contrato={aluno:'Aluno',instrutor:'Motorista'};
-        if(contrato[escolhido]!==perfil||!Object.hasOwn(destinos, perfil)){
+        if(!Object.hasOwn(destinos, perfil)){
             limparSessao();
-            informar('A conta autenticada não possui o perfil selecionado.','info');return;
+            informar('Esta conta não tem um painel disponível no SIPA.','info');return;
         }
         redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");
         window.location.assign(destinos[perfil]);
