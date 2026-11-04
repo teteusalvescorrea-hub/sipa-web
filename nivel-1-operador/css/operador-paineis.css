@@ -371,3 +371,7 @@ th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-
 [data-theme=dark] .op-reserva-inelegivel { border-color:#3c536a; }
 [data-theme=dark] .op-reserva-inelegivel strong { color:#a9bccd; }
 [data-theme=dark] .op-reserva-inelegivel span { color:#ffb4ab; }
+
+/* Ação principal no topo da página por seção (Cadastrar instrutor / veículo), como o Cadastrar aluno. */
+[data-op-acao-topo] { display:none; }
+[data-op-secao=instrutores] [data-op-acao-topo=instrutores], [data-op-secao=recursos] [data-op-acao-topo=recursos] { display:inline-flex; }
