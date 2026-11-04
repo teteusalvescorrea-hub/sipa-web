@@ -20,7 +20,7 @@ export function acompanhamentoDaConta(aluno){
  });
  const tentativas=provasDoAluno(aluno);
  const provas=Object.entries(PROVAS_FICHA).filter(([,p])=>!p.categoria||aluno.categoria.includes(p.categoria)).map(([tipo,p])=>({tipo,nome:p.nome,tentativas:tentativas.filter(t=>t.tipo===tipo).map(t=>({id:t.id,ordem:t.ordem||1,data:t.data||'',situacao:SITUACOES_PROVA.includes(t.status)?t.status:'Registro anterior',resultado:SITUACOES_PROVA.includes(t.resultado)?t.resultado:null}))}));
- const processo=['ladv','pratica'].map(tipo=>{const e=etapaParaAgendamento(aluno,tipo);return {tipo,nome:ETAPAS[tipo],situacao:e?.status||'Não informado',data:e?.data||'',validade:e?.validade||''};});
+ const processo=['pratica'].map(tipo=>{const e=etapaParaAgendamento(aluno,tipo);return {tipo,nome:ETAPAS[tipo],situacao:e?.status||'Não informado',data:e?.data||'',validade:e?.validade||''};});
  return {exames,provas,processo};
 }
 

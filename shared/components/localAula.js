@@ -25,9 +25,9 @@ export function orientacoesComparecimento(compacto=false){
     const aviso=document.createElement('aside');aviso.className='lesson-attendance';
     const titulo=document.createElement('strong');titulo.textContent=compacto?'Antes da sua aula':'Orientações para sua aula';
     const texto=document.createElement('p');texto.append('Compareça à unidade com pelo menos ');
-    for(const [i,trecho] of ['10 minutos de antecedência','documento oficial de identificação com foto','LADV'].entries()){
+    for(const [i,trecho] of ['10 minutos de antecedência','documento oficial de identificação com foto'].entries()){
         const destaque=document.createElement('strong');destaque.textContent=trecho;texto.append(destaque);
-        texto.append(i===0?', portando um ':i===1?' e sua ':' (Licença para Aprendizagem de Direção Veicular).');
+        texto.append(i===0?', portando um ':'.');
     }
     aviso.append(titulo,texto);return aviso;
 }

@@ -53,7 +53,7 @@ function menuAcoes(nome,itens){
 function botaoMais(nome,aoClicar,b=botao('⋯',aoClicar)){b.textContent='⋯';b.className='op-acao-mais';b.setAttribute('aria-label','Ver detalhes de '+nome);b.title='Ver detalhes';return b;}
 // Status do aluno (decisão do João em 31/10): não existe mais o "Pendente". Inativo, Incompleto (faltam dados) ou a etapa
 // da jornada até a habilitação — calculada aqui quando a ficha já trouxe exames e provas, senão a que a API manda.
-const ETAPAS_ALUNO=['Incompleto','Exames','Prova teórica','LADV','Aulas práticas','Prova prática','Habilitado','Inativo'];
+const ETAPAS_ALUNO=['Incompleto','Exames','Prova teórica','Aulas práticas','Prova prática','Habilitado','Inativo'];
 const situacaoCadastro=a=>a.situacao==='Inativo'?'Inativo':a.situacao==='Incompleto'||!a.nascimento||!a.email||!a.telefone?'Incompleto':(a.examesAdministrativos||a.tentativasProvas?etapaAtual(a):a.etapa)||'Exames';
 const etapaDoFiltro=a=>situacaoCadastro(a).startsWith('Prova prática')?'Prova prática':situacaoCadastro(a);
 function campos(itens) {const dl=el('dl',undefined,'op-fields');for(const [k,v] of itens){const item=el('div');item.append(el('dt',k),el('dd',v==null||v===''?'Não informado':String(v)));dl.append(item);}return dl;}
@@ -245,16 +245,17 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
             }
             fichaConteudo.append(grade);
             // Aulas extras (decisão do João em 03/11): pacote da autoescola ou aulas avulsas por categoria, aqui na aba Aulas.
-            if(permissoes.includes('cadastrar')&&servico.contratarPacote){
+            if(permissoes.includes('cadastrar')&&servico.contratarPacote&&['A','B','D'].some(c=>String(a.categoria).includes(c))){
                 const acoes=el('div',undefined,'op-ficha-acoes op-aulas-extras'),cats=['A','B','D'].filter(c=>String(a.categoria).includes(c));
                 const pacote=botao('Contratar pacote',async()=>{
-                    let pacotes;try{pacotes=await servico.pacotes();}catch(e){informar(e.message,true);return;}
-                    if(!pacotes.length){informar('Nenhum pacote cadastrado nesta autoescola.',true);return;}
+                    // Só os pacotes das categorias do aluno.
+                    let pacotes;try{pacotes=(await servico.pacotes()).filter(p=>p.categorias.length&&p.categorias.every(c=>cats.includes(c)));}catch(e){informar(e.message,true);return;}
+                    if(!pacotes.length){informar(`Nenhum pacote da categoria ${cats.join('/')||'do aluno'} cadastrado nesta autoescola.`,true);return;}
                     formularioAdministrativo(raiz,'Contratar pacote',[['pacote','Pacote','select',pacotes[0].id,pacotes.map(p=>[p.id,[p.nome,/aulas/i.test(p.nome)?'':p.quantidade+' aulas',p.categorias.length&&!p.nome.includes(p.categorias.join('/'))?'Categoria '+p.categorias.join('/'):''].filter(Boolean).join(' · ')])]],
                         d=>executar(()=>servico.contratarPacote(a.id,d.pacote),'Pacote contratado.',()=>renderizarFicha()),
                         {confirmacao:false,descricao:`${a.nome}. As aulas do pacote entram já liberadas para agendar.`});
                 });pacote.dataset.opContratarPacote='';
-                const avulsas=botao('Adicionar aulas avulsas',()=>formularioAdministrativo(raiz,'Adicionar aulas avulsas',[['categoria','Categoria','select',cats[0]||'B',(cats.length?cats:['A','B','D']).map(c=>[c,`${NOMES_CATEGORIA[c]} · Categoria ${c}`])],['quantidade','Quantidade de aulas','number','1']],
+                const avulsas=botao('Adicionar aulas avulsas',()=>formularioAdministrativo(raiz,'Adicionar aulas avulsas',[['categoria','Categoria','select',cats[0]||'B',cats.map(c=>[c,`${NOMES_CATEGORIA[c]} · Categoria ${c}`])],['quantidade','Quantidade de aulas','number','1']],
                     d=>executar(()=>servico.adicionarAulasAvulsas(a.id,d.categoria,d.quantidade),'Aulas adicionadas.',()=>renderizarFicha()),{confirmacao:false,descricao:`${a.nome}. As aulas entram já liberadas para agendar.`}));avulsas.dataset.opAulasAvulsas='';
                 acoes.append(pacote,avulsas);fichaConteudo.append(acoes);
             }

@@ -1,6 +1,6 @@
 // Acompanhamento administrativo. Ausência, pendência ou resultado destes campos
 // não condicionam a consulta/reserva de horários. Não representa consulta ao DETRAN.
-export const ETAPAS = Object.freeze({medico:'Exame médico',psicologico:'Avaliação psicológica',teorica:'Prova teórica',ladv:'LADV',pratica:'Liberação para aulas práticas'});
+export const ETAPAS = Object.freeze({medico:'Exame médico',psicologico:'Avaliação psicológica',teorica:'Prova teórica',pratica:'Liberação para aulas práticas'});
 
 export function etapaParaAgendamento(aluno,tipo){
  if(['medico','psicologico'].includes(tipo)){

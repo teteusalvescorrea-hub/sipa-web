@@ -37,8 +37,8 @@ test('ficha atual e tentativas são reconhecidas pelo mesmo requisito de A, B, A
 
 test('validade, resultado pendente e nova tentativa não reutilizam aprovação antiga',()=>{
  const a=contexto('D').aluno;a.etapas=Object.fromEntries(Object.keys(ETAPAS).map(k=>[k,{status:'Aprovado'}]));
- a.etapas.ladv.validade='2026-12-15';assert.equal(pendenciasAgendamento(a,'2026-12-16').find(p=>p.tipo==='ladv').situacao,'Vencido');assert.equal(elegibilidadeContaRecepcao({aluno:a},'2026-12-16'),'');
- a.etapas.ladv.validade='2026-12-16';assert.equal(elegibilidadeContaRecepcao({aluno:a},'2026-12-16'),'');
+ a.etapas.pratica.validade='2026-12-15';assert.equal(pendenciasAgendamento(a,'2026-12-16').find(p=>p.tipo==='pratica').situacao,'Vencido');assert.equal(elegibilidadeContaRecepcao({aluno:a},'2026-12-16'),'');
+ a.etapas.pratica.validade='2026-12-16';assert.equal(elegibilidadeContaRecepcao({aluno:a},'2026-12-16'),'');
  a.tentativasProvas=[{tipo:'teorica',status:'Aprovado'},{tipo:'teorica',status:'Agendado'}];assert.equal(pendenciasAgendamento(a,'2026-12-16').find(p=>p.tipo==='teorica').situacao,'Agendado');assert.equal(elegibilidadeContaRecepcao({aluno:a},'2026-12-16'),'');
 });
 
@@ -64,10 +64,10 @@ test('operação D encontra recursos de outras unidades e recusa duplicidade glo
 test('acompanhamento usa o cadastro próprio, preserva tentativas e omite campos administrativos internos',()=>{
  const a=contexto('D').aluno;
  a.examesAdministrativos={medico:{status:'Aprovado',fonte:'Interna',responsavel:'operador'},psicologico:{status:'Reprovado'}};
- a.etapas={ladv:{status:'Pendente'},pratica:{status:'Não informado'}};
+ a.etapas={pratica:{status:'Não informado'}};
  a.tentativasProvas=[{id:'p1',tipo:'praticaOnibus',ordem:1,status:'Reprovado',resultado:'Reprovado',data:'2026-12-15',historico:[{autor:'interno'}]},{id:'p2',tipo:'praticaOnibus',ordem:2,status:'Agendado',data:'2027-01-10'},{id:'outra-modalidade',tipo:'praticaCarro',status:'Agendado'}];
  const antes=structuredClone(a),r=acompanhamentoDaConta(a);assert.deepEqual(a,antes);
- assert.equal(r.exames.find(e=>e.tipo==='medico').situacao,'Aprovado');assert.equal(r.provas.find(p=>p.tipo==='praticaOnibus').tentativas.length,2);assert.ok(!r.provas.some(p=>p.tipo==='praticaCarro'));assert.equal(r.processo.find(p=>p.tipo==='ladv').situacao,'Pendente');
+ assert.equal(r.exames.find(e=>e.tipo==='medico').situacao,'Aprovado');assert.equal(r.provas.find(p=>p.tipo==='praticaOnibus').tentativas.length,2);assert.ok(!r.provas.some(p=>p.tipo==='praticaCarro'));assert.ok(!r.processo.some(p=>p.tipo==='ladv'));assert.equal(r.processo.find(p=>p.tipo==='pratica').situacao,'Não informado');
  assert.ok(!JSON.stringify(r).includes('fonte'));assert.ok(!JSON.stringify(r).includes('responsavel'));assert.ok(!JSON.stringify(r).includes('interno'));
  assert.equal(elegibilidadeContaRecepcao({aluno:a},'2026-12-16'),'');
 });

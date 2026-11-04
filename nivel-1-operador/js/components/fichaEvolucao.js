@@ -32,11 +32,11 @@ function passoEtapa(titulo,item,feito){
  if(s==='Reprovado'||s==='Vencido')return {titulo,estado:'falhou',detalhe:s};
  return {titulo,estado:s==='Pendente'?'atual':'pendente',detalhe:s==='Não informado'?'Não informada':s};
 }
-// Jornada até a habilitação: exames, prova teórica, LADV, liberação das aulas práticas, provas práticas e habilitação.
+// Jornada até a habilitação: exames, prova teórica, liberação das aulas práticas, provas práticas e habilitação.
 function jornada(a,tentativas){
  const exames=Object.keys(EXAMES_FICHA).map(t=>lerExameFicha(a,t).status),ok=exames.filter(s=>s==='Aprovado'||s==='Não se aplica').length;
  const itens=[exames.includes('Reprovado')?{titulo:'Exames',estado:'falhou',detalhe:'Há exame reprovado'}:ok===exames.length?{titulo:'Exames',estado:'feito',detalhe:'Todos aprovados'}:{titulo:'Exames',estado:ok||exames.includes('Pendente')?'atual':'pendente',detalhe:`${ok} de ${exames.length} aprovados`}];
- itens.push(passoProva('Prova teórica',ultimaProva(tentativas,'teorica')),passoEtapa('LADV',etapaParaAgendamento(a,'ladv'),'Emitida'),passoEtapa('Aulas práticas',etapaParaAgendamento(a,'pratica'),'Liberadas'));
+ itens.push(passoProva('Prova teórica',ultimaProva(tentativas,'teorica')),passoEtapa('Aulas práticas',etapaParaAgendamento(a,'pratica'),'Liberadas'));
  const praticas=Object.entries(PROVAS_FICHA).filter(([t,c])=>t!=='teorica'&&c.categoria&&a.categoria.includes(c.categoria));
  for(const [t,c] of praticas)itens.push(passoProva('Prova prática '+c.categoria,ultimaProva(tentativas,t)));
  const habilitado=praticas.length>0&&praticas.every(([t])=>ultimaProva(tentativas,t)?.status==='Aprovado');
@@ -80,7 +80,7 @@ export function montarExamesProvas(destino,a,ctx){
  // Os requisitos já exigidos pelo motor precisam ter um fluxo administrativo
  // acessível. Usa o mesmo comando autorizado, com fonte, data e auditoria.
  destino.append(el('h4','Autorizações para aulas práticas'));
- for(const tipo of ['ladv','pratica']){
+ for(const tipo of ['pratica']){
   const atual=etapaParaAgendamento(a,tipo),f=el('form',undefined,'op-acompanhamento'),bloqueado=!permitido||atual?.origem==='oficial';f.dataset.opAutorizacao=tipo;
   const status=select(['Não informado','Pendente','Aprovado','Reprovado','Vencido'],atual?.status||'Não informado'),dia=entrada('date',atual?.data||hojeBrasil()),validade=entrada('date',atual?.validade||''),fonte=entrada('text',atual?.fonte||'');
   for(const [nome,c] of Object.entries({status,data:dia,validade,fonte})){c.name=nome;c.disabled=bloqueado;}

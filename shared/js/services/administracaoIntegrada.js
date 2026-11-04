@@ -29,7 +29,7 @@ const CAMBIO=Object.freeze({1:'manual',2:'automatico'}),CAMBIO_ID=Object.freeze(
 const ORIGEM=Object.freeze({1:'aluno',2:'recepcao',3:'gerencia',4:'master',5:'sistema'});
 const SITUACAO_ALUNO_ID=Object.freeze({Pendente:1,Regular:2,Inativo:3});
 const FINANCEIRO_ID=Object.freeze({Pendente:1,Regular:2,'Em atraso':3});
-const EXAME_ID=Object.freeze({toxicologico:1,oftalmologico:2,psicologico:3,medico:4,ladv:5,pratica:6});
+const EXAME_ID=Object.freeze({toxicologico:1,oftalmologico:2,psicologico:3,medico:4,pratica:6});
 const EXAME_CHAVE=Object.freeze(Object.fromEntries(Object.entries(EXAME_ID).map(([k,v])=>[v,k])));
 const SITUACAO_EXAME_ID=Object.freeze({Pendente:1,Aprovado:2,Reprovado:3,'Não se aplica':4});
 const SITUACAO_EXAME=Object.freeze({1:'Pendente',2:'Aprovado',3:'Reprovado',4:'Não se aplica',5:'Vencido'});
@@ -173,7 +173,7 @@ function adaptarExames(itens,a){
   const s=x.situacao??x.situacaoId,status=typeof s==='string'?s:SITUACAO_EXAME[numero(s)]||'Não informado';
   const item={status,data:x.data||'',validade:x.validade||'',fonte:x.fonte||'',origem:descricao(x.origem)==='Oficial'?'oficial':'manual',responsavel:x.responsavel?.id??x.responsavel,em:x.atualizadoEm||x.em};
   if(['toxicologico','oftalmologico','psicologico','medico'].includes(chave))exames[chave]=item;
-  if(['medico','psicologico','ladv','pratica'].includes(chave))etapas[chave]=item;
+  if(['medico','psicologico','pratica'].includes(chave))etapas[chave]=item;
  }
  return {...a,examesAdministrativos:exames,etapas};
 }
