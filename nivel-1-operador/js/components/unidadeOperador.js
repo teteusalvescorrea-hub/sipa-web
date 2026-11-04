@@ -256,9 +256,10 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
                         {confirmacao:false,descricao:`${a.nome}. As aulas do pacote entram já liberadas para agendar.`});
                 });pacote.dataset.opContratarPacote='';
                 // Uma quantidade por categoria do aluno (ex.: A e B de uma vez); categoria com 0 fica de fora.
-                const avulsas=botao('Adicionar aulas avulsas',()=>formularioAdministrativo(raiz,'Adicionar aulas avulsas',cats.map(c=>['qtd'+c,`Aulas de ${NOMES_CATEGORIA[c].toLocaleLowerCase('pt-BR')} · Categoria ${c}`,'number',cats.length===1?'1':'0']),
+                const avulsas=botao('Adicionar aulas avulsas',()=>{const dialogo=formularioAdministrativo(raiz,'Adicionar aulas avulsas',cats.map(c=>['qtd'+c,`Aulas de ${NOMES_CATEGORIA[c].toLocaleLowerCase('pt-BR')} · Categoria ${c}`,'number',cats.length===1?'1':'']),
                     d=>{const pedidos=cats.map(c=>[c,Number(d['qtd'+c])||0]).filter(([,q])=>q>0);if(!pedidos.length)throw new Error('Informe a quantidade de aulas em pelo menos uma categoria.');if(pedidos.some(([,q])=>q>100||!Number.isInteger(q)))throw new Error('Informe de 1 a 100 aulas por categoria.');
-                        return executar(async()=>{for(const [c,q] of pedidos)await servico.adicionarAulasAvulsas(a.id,c,q);},'Aulas adicionadas.',()=>renderizarFicha());},{confirmacao:false,descricao:`${a.nome}. As aulas entram já liberadas para agendar.`}));avulsas.dataset.opAulasAvulsas='';
+                        return executar(async()=>{for(const [c,q] of pedidos)await servico.adicionarAulasAvulsas(a.id,c,q);},'Aulas adicionadas.',()=>renderizarFicha());},{confirmacao:false,descricao:`${a.nome}. Preencha só as categorias que vai lançar agora; em branco fica de fora.`});
+                    for(const campo of dialogo.querySelectorAll('input[type=number]')){campo.required=false;campo.min='0';campo.max='100';campo.placeholder='0';}});avulsas.dataset.opAulasAvulsas='';
                 acoes.append(pacote,avulsas);fichaConteudo.append(acoes);
             }
         }
