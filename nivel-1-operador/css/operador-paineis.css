@@ -375,3 +375,5 @@ th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-
 /* Ação principal no topo da página por seção (Cadastrar instrutor / veículo), como o Cadastrar aluno. */
 [data-op-acao-topo] { display:none; }
 [data-op-secao=instrutores] [data-op-acao-topo=instrutores], [data-op-secao=recursos] [data-op-acao-topo=recursos] { display:inline-flex; }
+/* O aviso rápido sempre em branco sobre o fundo (regras de [role=alert] da tela pintavam o texto de vermelho). */
+.op-toast, .op-toast * { color:#fff !important; }
