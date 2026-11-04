@@ -125,6 +125,8 @@ export function adaptarAlunoEquipe(a,u){
   ...(saldos.length?{creditos,aulasAdquiridas:Object.fromEntries(Object.entries(creditos).map(([k,v])=>[k,v.contratadas]))}:{}),
   observacoes:a.observacoes||'',bloqueioAdministrativo:{ativo:(m.bloqueioAdministrativo??a.bloqueioAdministrativo)===true},
   acesso:acesso.possuiConta===false?'Sem conta de acesso':(acesso.deveTrocarSenha??a.deveTrocarSenha)?'Conta criada · primeiro acesso pendente':'Ativo',contaId:acesso.possuiConta===false?null:a.id,
+  // Contratações da ficha (GET alunos/{id}): pacote (ou avulsa), aulas, categorias e situação da aprovação.
+  ...(Array.isArray(a.contratacoes)?{contratacoes:a.contratacoes.map(c=>({id:c.id,pacote:c.pacoteNome||'',quantidade:c.quantidadeAulas,categorias:(c.categorias||[]).map(categoria).filter(Boolean),status:descricao(c.status)}))}:{}),
   historico:[],criadoEm:a.criadoEm,origem:'api',api:a};
 }
 function adaptarCancelamento(a,st){
