@@ -43,7 +43,10 @@ export async function montarAgendamentoAutomatico(servico,aoConfirmar) {
     const msg=criar('p');msg.id='auto-feedback';msg.setAttribute('role','status');const resultado=criar('div');resultado.id='auto-proposta';form.append(msg,resultado);
     let proposta=null,operacaoId=null,ocupado=false;
     const valores=()=>({categoria:categoria.value,unidades:marcados(form,'unidades'),dias:marcados(form,'dias').map(Number),horarios:marcados(form,'horarios'),instrutores:marcados(form,'instrutores'),veiculos:marcados(form,'veiculos'),quantidade:Number(qtd.value)});
+    // Marcas por categoria: trocar de categoria e voltar não perde o que o aluno marcou.
+    const marcasPorCategoria={};let categoriaAtual=null;
     function recursos(inicial=false){
+        if(categoriaAtual&&!inicial)marcasPorCategoria[categoriaAtual]={instrutores:marcados(form,'instrutores'),veiculos:marcados(form,'veiculos')};categoriaAtual=categoria.value;
         const fixa=categoria.value==='D'?'Cobilândia':categoria.value==='A'?'Vila Velha':dados.aluno?.unidadeCarro||dados.aluno?.unidade;
         const grupoUnidades=form.querySelector('[data-grupo=unidades]');
         grupoUnidades.hidden=Boolean(fixa);
@@ -51,11 +54,12 @@ export async function montarAgendamentoAutomatico(servico,aoConfirmar) {
         let aviso=form.querySelector('[data-local-fixo]');if(!aviso){aviso=criar('p');aviso.dataset.localFixo='';grupoUnidades.after(aviso);}aviso.hidden=!fixa;aviso.textContent=categoria.value==='D'?AVISO_ONIBUS:categoria.value==='B'?'Carro '+nomeCambio(dados.aluno.tipoCambio)+' · unidade cadastrada: '+(obterUnidadeInstitucional(fixa)?.nome||fixa)+'. O local pode variar conforme a data.':'Categoria A: aulas na pista Centro de Vila Velha.';
         const us=marcados(form,'unidades');
         for(const [tipo,box] of [['instrutor',instrutores],['veiculo',veiculos]]){
-            const nome=tipo==='instrutor'?'instrutores':'veiculos',antes=inicial?salvo?.[nome]||[]:marcados(form,nome),lista=box.querySelector('.preference-options');lista.replaceChildren();
+            const nome=tipo==='instrutor'?'instrutores':'veiculos',antes=marcasPorCategoria[categoria.value]?.[nome]??(salvo?.categoria===categoria.value?salvo[nome]||[]:[]),lista=box.querySelector('.preference-options');lista.replaceChildren();
             const rs=servico.recursosAutomaticos?servico.recursosAutomaticos(categoria.value).filter(r=>r.tipo===tipo):dados.registros.filter(r=>r.tipo===tipo&&r.ativo===true&&r.disponivel!==false&&(categoria.value==='D'?recursosOperacionaisD(dados.registros).some(x=>x.id===r.id):categoria.value==='B'?recursoCarroConsultavel(r,fixa)&&(tipo==='instrutor'||r.tipoCambio===dados.aluno.tipoCambio):us.includes(normalizarChaveUnidade(r.unidade)))&&(tipo==='instrutor'?r.categorias?.includes(categoria.value):r.categoria===categoria.value));
             for(const r of rs){const l=criar('label'),i=criar('input');i.type='checkbox';i.name=nome;i.value=r.id;i.checked=antes.includes(r.id);l.append(i,document.createTextNode(r.nome));lista.append(l);}
-            if(inicial)for(const id of antes.filter(id=>!rs.some(r=>r.id===id))){const l=criar('label'),i=criar('input');i.type='checkbox';i.name=nome;i.value=id;i.checked=true;l.append(i,document.createTextNode('Recurso salvo indisponível — desmarque ou revise suas preferências.'));lista.append(l);}
-            if(!rs.length)lista.append(criar('p',servico.recursosAutomaticos?'Nenhum '+(tipo==='instrutor'?'instrutor':'veículo')+' conhecido nesta categoria. A busca escolhe o primeiro livre.':'Nenhum recurso compatível cadastrado para esta seleção.'));
+            // Integrado: a API não lista a frota para o aluno, então o id salvo que não apareceu nas aulas ou consultas continua marcado (não está indisponível).
+            if(inicial||servico.recursosAutomaticos)for(const id of antes.filter(id=>!rs.some(r=>r.id===id))){const l=criar('label'),i=criar('input');i.type='checkbox';i.name=nome;i.value=id;i.checked=true;l.append(i,document.createTextNode(servico.recursosAutomaticos?dados.registros?.find(r=>r.id===id)?.nome||(tipo==='instrutor'?'Instrutor':'Veículo')+' salvo nas suas preferências':'Recurso salvo indisponível — desmarque ou revise suas preferências.'));lista.append(l);}
+            if(!lista.children.length)lista.append(criar('p',servico.recursosAutomaticos?'Nenhum '+(tipo==='instrutor'?'instrutor':'veículo')+' conhecido nesta categoria. A busca escolhe o primeiro livre.':'Nenhum recurso compatível cadastrado para esta seleção.'));
         }
         const disponiveis=dados.resumo.categorias[categoria.value].disponiveis;qtd.max=String(disponiveis??0);saldo.textContent=disponiveis==null?'Saldo precisa de conferência.':'Saldo disponível: '+disponiveis+' aula(s).';buscar.disabled=!(disponiveis>0);
     }
@@ -64,7 +68,7 @@ export async function montarAgendamentoAutomatico(servico,aoConfirmar) {
     form.oninput=e=>{if(ocupado)return;invalidar();if(e.target===categoria||e.target.name==='unidades')recursos();};
     form.onsubmit=e=>e.preventDefault();
     async function executar(tarefa){if(ocupado)return;ocupado=true;campos.disabled=true;try{await tarefa();}catch(e){feedback(e,msg);}finally{ocupado=false;campos.disabled=false;}}
-    salvar.onclick=()=>executar(async()=>{await servico.salvarPreferenciasAutomaticas(valores());msg.textContent='Preferências salvas. Nenhuma aula foi reservada.';msg.setAttribute('role','status');});
+    salvar.onclick=()=>executar(async()=>{await servico.salvarPreferenciasAutomaticas(valores());try{dados=await servico.dadosAlunoLocal();salvo=dados.aluno?.preferenciasAutomaticas??salvo;}catch{}recursos();msg.textContent='Preferências salvas. Nenhuma aula foi reservada.';msg.setAttribute('role','status');});
     buscar.onclick=()=>executar(async()=>{
         invalidar();proposta=await servico.buscarAgendamentoAutomatico(valores());operacaoId=crypto.randomUUID();dados=await servico.dadosAlunoLocal();
         msg.textContent='Encontramos '+proposta.aulas.length+' horários compatíveis com suas preferências, de '+proposta.solicitadas+' solicitado(s). Ainda não estão reservados.';

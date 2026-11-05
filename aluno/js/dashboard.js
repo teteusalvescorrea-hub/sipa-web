@@ -56,7 +56,7 @@ async function iniciarIntegrado() {
     apresentarDashboard({});
     try {
         const aluno=await obterAlunoLogado();
-        const categorias=(aluno.categoriasFormacao||[]).map(c=>({1:'A',2:'B'})[c.valor]).filter(Boolean);
+        const categorias=(aluno.categoriasFormacao||[]).map(c=>({1:'A',2:'B',3:'D'})[c.valor]).filter(Boolean);
         const dados={aluno,categorias,integrado:true,resumo:{categorias:{},total:aluno.aulasContratadas,realizadas:aluno.aulasRealizadas,percentual:aluno.aulasRealizadas>0&&Number.isFinite(aluno.percentualProgresso)?aluno.percentualProgresso:null}};
         // /me só informa saldo agregado. Não repartir artificialmente um pacote AB.
         apresentarDashboard(dados);

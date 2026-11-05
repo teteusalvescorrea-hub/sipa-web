@@ -27,6 +27,8 @@ html[data-sipa-theme=aluno][data-theme=dark]{--al-card:var(--sipa-card);--al-lin
  /* Os botões antigos de menu (☰ e "Menu") saem: o da barra é o único. */
  html body[data-sipa-escala=aluno] main :is(.mobile-menu-button,.student-menu-toggle,.lessons-mobile-menu,.booking-mobile-menu,#mobile-menu-button):not(.sipa-aluno-menu){display:none!important}
  html body[data-sipa-escala=aluno] :is(.dashboard-header,.booking-header,.lessons-header,.profile-header,.progress-header){margin-top:18px}
+ /* O agendamento.css zera a margem do cabeçalho com uma regra (0,3,0): aqui ela volta a ser 18px. */
+ html body[data-sipa-escala=aluno][data-sipa-aluno] .booking-main .booking-header{margin-top:18px}
 }
 /* Os botões antigos tinham regras por id (largura, raio, borda): a barra usa um só desenho. */
 html body[data-sipa-escala=aluno] main .sipa-aluno-topbar .sipa-aluno-menu{display:grid!important;place-items:center;width:var(--al-alvo)!important;height:var(--al-alvo)!important;min-height:var(--al-alvo);padding:0!important;border:1px solid var(--al-linha)!important;border-radius:10px!important;background:var(--al-card);color:var(--al-azul-texto)}
@@ -36,7 +38,11 @@ html body[data-sipa-escala=aluno] main .sipa-aluno-topbar .sipa-aluno-menu{displ
  html body[data-sipa-escala=aluno] :is(main,dialog) :is(button,.lessons-hire-button,.new-lesson-button,.progress-action-button,.quick-action,.reception-link):not(.calendar-day,.time-slot,.sipa-aluno-menu,.sipa-theme-toggle){min-height:var(--al-alvo)}
  html body[data-sipa-escala=aluno] :is(main,dialog) :is(summary:not(.lesson-attendance-recolhivel>summary),.back-dashboard,.medical-follow-link,.lesson-hire-whatsapp,.next-class-link,a[href$="minhas-aulas.html"],a[href$="agendamento.html"]):not(.sipa-sidebar-link){display:inline-flex;align-items:center;min-height:var(--al-alvo)}
  /* Link no meio do texto: a área de toque cresce sem mexer no alinhamento. */
- html body[data-sipa-escala=aluno] :is(main,dialog) .unit-map-link{display:inline-block;padding-block:12px!important;margin-block:-12px!important}
+ html body[data-sipa-escala=aluno] :is(main,dialog) .unit-map-link{display:inline-block;box-sizing:border-box;min-height:var(--al-alvo);padding-block:12px!important;margin-block:-12px!important}
+ html body[data-sipa-escala=aluno][data-sipa-aluno] .booking-main .booking-header .back-dashboard{box-sizing:border-box;min-height:var(--al-alvo)}
+ /* Lista com busca (motivo do cancelamento): campo e opções com 44px. */
+ html body[data-sipa-escala=aluno] .sipa-select-busca-painel>input{height:var(--al-alvo)!important}
+ html body[data-sipa-escala=aluno] .sipa-select-busca-opcao{box-sizing:border-box;min-height:var(--al-alvo)}
  html body[data-sipa-escala=aluno] .sipa-theme-toggle{width:var(--al-alvo);height:var(--al-alvo);min-height:var(--al-alvo)}
  html body[data-sipa-escala=aluno] :is(main,dialog) label:has(>input[type=checkbox],>input[type=radio]){display:flex;align-items:center;gap:10px;min-height:var(--al-alvo)}
  html body[data-sipa-escala=aluno] .booking-main .calendar-day{min-height:var(--al-alvo);height:var(--al-alvo)}
@@ -99,6 +105,7 @@ html body[data-sipa-escala=aluno] main .sipa-aluno-topbar .sipa-aluno-menu{displ
 .lesson-attendance-recolhivel>summary::after{content:'';display:inline-block;width:7px;height:7px;margin-left:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-3px) rotate(45deg);transition:transform .15s}
 .lesson-attendance-recolhivel[open]>summary::after{transform:translateY(0) rotate(-135deg)}
 @media(min-width:768px) and (pointer:fine){.lesson-attendance-recolhivel>summary{pointer-events:none}.lesson-attendance-recolhivel>summary::after{display:none}}
+@media(min-width:768px) and (pointer:coarse){.lesson-attendance-recolhivel>summary{display:flex;align-items:center;justify-content:space-between;min-height:var(--al-alvo)}}
 @media(max-width:767px){.lesson-attendance-recolhivel>summary{display:flex;align-items:center;justify-content:space-between;min-height:var(--al-alvo);margin:-10px -12px;padding:0 12px}.lesson-attendance-recolhivel[open]>summary{margin-bottom:0}}
 
 /* ---------- Início ---------- */
@@ -126,7 +133,10 @@ html body[data-sipa-escala=aluno] main .sipa-aluno-topbar .sipa-aluno-menu{displ
  html body[data-sipa-escala=aluno] .booking-main .student-preferences :is(.preference-actions,.preference-periods) button,html body[data-sipa-escala=aluno] .booking-main #auto-confirmar{width:100%}
  html body[data-sipa-escala=aluno] .booking-main #auto-proposta ol{padding-left:18px}
  html body[data-sipa-escala=aluno] .booking-main .confirm-booking-button{width:100%}
- html body[data-sipa-escala=aluno] .booking-main .summary-item{flex-wrap:nowrap;align-items:flex-start}
+ html body[data-sipa-escala=aluno] .booking-main :is(.summary-item,.summary-item:has(#summary-unit-address)){flex-wrap:nowrap;align-items:flex-start}
+ /* "Ocupado · Tenho interesse" menor, para não dobrar a altura da linha de horários. */
+ html body[data-sipa-escala=aluno] .booking-main .time-slot-interesse{padding:6px 4px;gap:0;line-height:1.2}
+ html body[data-sipa-escala=aluno] .booking-main .time-slot-interesse small{font-size:11px;line-height:1.2}
  html body[data-sipa-escala=aluno] .booking-main .summary-item>div{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 }
 @media(max-width:380px){html body[data-sipa-escala=aluno] .booking-main .student-preferences [data-grupo=horarios] .preference-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -136,6 +146,11 @@ html body[data-sipa-escala=aluno] main .sipa-aluno-topbar .sipa-aluno-menu{displ
  html body[data-sipa-escala=aluno] .progress-main :is(.progress-card,.progress-detail-card,.progress-habilitacao){padding:14px}
  html body[data-sipa-escala=aluno] .profile-main :is(.profile-section,.profile-overview,.profile-info-card,.profile-security-card){padding:14px}
  html body[data-sipa-escala=aluno] .profile-main .profile-info-card :is(dd,strong){overflow-wrap:anywhere}
+ /* Pacote de cada categoria: um cartão com linhas rótulo/valor, como o resumo de Minhas aulas. */
+ html body[data-sipa-escala=aluno] .progress-main .category-progress-card dl{grid-template-columns:minmax(0,1fr);gap:0;margin-top:8px}
+ html[data-sipa-theme=aluno] body[data-sipa-escala=aluno] .progress-main .category-progress-card dl>div{flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px;padding:9px 0;border:0;border-radius:0;background:none!important}
+ html[data-sipa-theme=aluno] body[data-sipa-escala=aluno] .progress-main .category-progress-card dl>div+div{border-top:1px solid var(--al-linha)}
+ html body[data-sipa-escala=aluno] .progress-main .category-progress-card dd{margin:0;font-size:15px;font-weight:600}
 }
 @media(max-width:480px){html body[data-sipa-escala=aluno] .progress-main .progress-etapas{grid-template-columns:minmax(0,1fr)}}
 
@@ -150,7 +165,8 @@ html body[data-sipa-escala=aluno] main .sipa-aluno-topbar .sipa-aluno-menu{displ
 html body[data-sipa-escala=aluno] dialog[open]{box-sizing:border-box;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
 @media(max-width:767px){
  html body[data-sipa-escala=aluno] dialog[open]{width:calc(100vw - 24px)}
- html body[data-sipa-escala=aluno] dialog :is(h2,header h2){font-size:clamp(19px,5vw,22px);overflow-wrap:anywhere}
+ /* [open] para passar o escala.css (dialog :is(h2,…,.op-dialog-heading h2), que leva 25,3px). */
+ html body[data-sipa-escala=aluno] dialog[open] :is(h2,header h2){font-size:clamp(19px,5vw,22px);overflow-wrap:anywhere}
  html body[data-sipa-escala=aluno] :is(.lesson-cancel-dialog,.booking-local-dialog,.lesson-hire-dialog,.mensagem-dialog,.profile-password-dialog,.medical-request-dialog){padding:16px}
 }
 @media(max-width:480px){

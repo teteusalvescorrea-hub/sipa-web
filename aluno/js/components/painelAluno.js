@@ -13,6 +13,8 @@ import {formatarData,dataBrasilia,horaBrasilia,dataHoraBrasilia,hojeBrasil} from
 import {situacaoExame,resumoExames,etapasHabilitacao} from '../domain/habilitacaoAluno.js';
 import {MOTIVOS_CANCELAMENTO_LOCAL,UNIDADES_LOCAIS,normalizarUnidadeLocal,nomeUnidadeLocal} from '../domain/dominioAluno.js';
 export {preencherProgressoAlunoLocal as apresentarProgresso,preencherDadosAlunoLocal as apresentarPerfil,listarAulasAlunoLocal as apresentarAulas,iniciarReservaAlunoLocal as apresentarAgendamento,montarSenhaPerfilLocal as montarAlteracaoSenha};
+// "Antes da sua aula": a partir de 768px o resumo não recebe clique (mouse), então ao alargar a janela o bloco abre.
+if(typeof matchMedia==='function')matchMedia('(max-width:767px)').addEventListener?.('change',e=>{const b=document.getElementById('lesson-attendance');if(b&&!e.matches)b.open=true;});
 const categoriasDoPainel=(dados,ordem=['A','B','D'])=>ordem.filter(c=>dados.categorias?.length?dados.categorias.includes(c):c!=='D'||dados.resumo.categorias.D?.total>0);
 function preencherProgressoAlunoLocal(dados){
     const resumo=dados.resumo,overview=document.querySelector('.progress-overview');overview.replaceChildren();
@@ -74,7 +76,7 @@ function preencherDadosAlunoLocal(dados) {
     for(const n of document.querySelectorAll('[data-perfil-total],[data-perfil-disponivel]'))if(dados.categorias?.length)n.parentElement.hidden=!dados.categorias.includes(n.dataset.perfilTotal||n.dataset.perfilDisponivel);
     if(aluno?.categoria?.includes('B')){let n=document.getElementById('profile-car-transmission');if(!n){const c=document.createElement('div'),l=document.createElement('span');n=document.createElement('strong');n.id='profile-car-transmission';l.textContent='TIPO DE CARRO';c.className='profile-info-card';c.append(l,n);document.querySelector('.profile-info-grid').append(c);}n.textContent=nomeCambio(aluno.tipoCambio);}
     if(aluno?.nascimento){for(const [id,titulo,valor] of [['profile-birthdate','DATA DE NASCIMENTO',aluno.nascimento.split('-').reverse().join('/')],['profile-car-unit','UNIDADE DAS AULAS DE CARRO',aluno.categoria?.includes('B')?nomeUnidadeLocal(aluno.unidadeCarro||aluno.unidade):'Nao se aplica']]){let n=document.getElementById(id);if(!n){const c=document.createElement('div'),l=document.createElement('span');n=document.createElement('strong');n.id=id;l.textContent=titulo;c.className='profile-info-card';c.append(l,n);document.querySelector('.profile-info-grid').append(c);}n.textContent=valor;}}
-    const categorias = (aluno?.categoriasFormacao||[]).map(c=>({1:'A',2:'B'})[c.valor]).filter(Boolean).join(' e ') || (['A','B','D','AB'].includes(aluno?.categoria)?aluno.categoria.replace('AB','A e B'):'');
+    const categorias = (aluno?.categoriasFormacao||[]).map(c=>({1:'A',2:'B',3:'D'})[c.valor]).filter(Boolean).join(', ').replace(/, (?=[^,]+$)/,' e ') || (['A','B','D','AB'].includes(aluno?.categoria)?aluno.categoria.replace('AB','A e B'):'');
     for (const id of ["profile-name", "profile-full-name"]) texto(id, aluno?.nome || "Cadastro ainda não vinculado");
     texto("profile-avatar", aluno?.nome?.charAt(0) || "—"); texto("profile-cpf", formatarCpf(aluno?.documento));
     texto("profile-email", aluno?.email || "Não cadastrado"); texto("profile-phone", aluno?.telefone || "Não cadastrado");
@@ -249,7 +251,7 @@ async function listarAulasAlunoLocal(servico,dados){
     }
     const texto=(id,v)=>{const n=document.getElementById(id);if(n)n.textContent=v;};texto('total-lessons',String(futuras.length));texto('lessons-count',String(futuras.length));texto('past-lessons-count',String(passadas.length));texto('next-lesson-summary',futuras.length?dataHoraBrasilia(futuras[0].inicio):'Nenhuma aula agendada');
     if(vistaAnterior!=='confirmadas')tabs.querySelector('[data-vista='+vistaAnterior+']')?.click();
-    const campo=document.querySelector('.lessons-summary .summary-card:last-child > div');if(campo){campo.querySelector('span').textContent='Local da próxima aula';campo.querySelector('strong').textContent=futuras.length?nomeLocalDaReserva(futuras[0]):'Nenhuma aula agendada';}
+    const campo=document.querySelector('.lessons-summary .summary-card:last-child > div');if(campo){campo.querySelector('span').textContent='LOCAL DA PRÓXIMA AULA';campo.querySelector('strong').textContent=futuras.length?nomeLocalDaReserva(futuras[0]):'Nenhuma aula agendada';}
 
 }
 
