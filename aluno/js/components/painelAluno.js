@@ -36,7 +36,7 @@ function apresentarAcompanhamento(dados,apos){
  raiz.replaceChildren();
  const el=(tag,texto,classe)=>{const n=document.createElement(tag);if(texto!==undefined)n.textContent=texto;if(classe)n.className=classe;return n;};
  const secao=titulo=>{const s=el('section',undefined,'progress-detail-card progress-admin-section');s.append(el('h2',titulo));raiz.append(s);return s;};
- const linhas=(host,itens,atributo)=>{const dl=el('dl');for(const item of itens){const linha=el('div');linha.dataset[atributo]=item.tipo;const valor=el('dd');valor.append(el('span',item.situacao,'progress-admin-status'));if(item.validade)valor.append(el('small',(item.situacao==='Vencido'?'Venceu em ':'Válido até ')+formatarData(item.validade)));if(item.data)valor.append(el('small','Registrado em '+formatarData(item.data)));linha.append(el('dt',item.nome),valor);dl.append(linha);}host.append(dl);};
+ const linhas=(host,itens,atributo)=>{const dl=el('dl');for(const item of itens){const linha=el('div');linha.dataset[atributo]=item.tipo;const valor=el('dd');valor.append(el('span',item.situacao,'progress-admin-status'));if(item.validade&&['Aprovado','Vencido'].includes(item.situacao))valor.append(el('small',(item.situacao==='Vencido'?'Venceu em ':'Válido até ')+formatarData(item.validade)));if(item.data)valor.append(el('small','Registrado em '+formatarData(item.data)));linha.append(el('dt',item.nome),valor);dl.append(linha);}host.append(dl);};
  linhas(secao('Seus exames'),dados.exames||[],'exameAluno');
  const provas=secao('Suas provas');provas.classList.add('progress-admin-provas');
  provas.append(el('p','Agendamentos, resultados e histórico de tentativas registrados pela recepção.','progress-admin-note'));
