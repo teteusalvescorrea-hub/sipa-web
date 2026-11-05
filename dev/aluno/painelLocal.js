@@ -144,7 +144,7 @@ async function montarAlunoLocal(registros, sessao, servico) {
         controle.disabled = true; controle.title = "Recurso ainda sem integração local.";
     });
     document.querySelectorAll('#mobile-menu-button,[id$="-mobile-menu"],.student-menu-toggle').forEach(b => { b.disabled = false; b.removeAttribute("title"); });
-    const destinos = { schedule: "agendamento.html", lessons: "minhas-aulas.html", progress: "meu-progresso.html", profile: "meu-perfil.html", packages: "pacotes.html" };
+    const destinos = { schedule: "agendamento.html", lessons: "minhas-aulas.html", progress: "meu-progresso.html", profile: "meu-perfil.html", packages: "minhas-aulas.html#contratar" };
     document.querySelectorAll("[data-action]").forEach(b => {
         if (!Object.hasOwn(destinos, b.dataset.action)) return;
         b.disabled = false; b.removeAttribute("title"); b.onclick = () => location.assign(destinos[b.dataset.action]);

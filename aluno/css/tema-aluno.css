@@ -136,3 +136,18 @@ html[data-sipa-theme=aluno][data-theme=dark] .category-option-check { background
 html[data-sipa-theme=aluno][data-theme=dark] :is(.lessons-main .local-lesson-fields,.category-progress-card dl>div) { background:var(--sipa-secondary)!important; border-color:var(--sipa-border)!important; }
 html[data-sipa-theme=aluno][data-theme=dark] .confirmed-lesson-actions { border-color:var(--sipa-border)!important; }
 html[data-sipa-theme=aluno][data-theme=dark] .category-progress-card dd { color:var(--sipa-accent)!important; }
+
+/* Sua habilitação e Contratar mais aulas no tema escuro: cards nos tokens; selo e etapas com cores claras (contraste AA). */
+html[data-sipa-theme=aluno][data-theme=dark] :is(.progress-exame,.progress-etapa) { background:var(--sipa-secondary)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-habilitacao-resumo { color:var(--sipa-accent)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-selo { --selo:#aab8c8; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-selo[data-tom=ok] { --selo:#6fd28f; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-selo[data-tom=alerta] { --selo:#f5a65b; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-etapa-marca { border-color:var(--sipa-border); color:var(--sipa-texto-neutro); }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-etapa[data-estado=feito] .progress-etapa-marca { border-color:#82c4fa; background:#1769aa; color:#fff; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-etapa[data-estado=atual] { border-color:#82c4fa!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-etapa[data-estado=atual] .progress-etapa-marca { border-color:#82c4fa; color:#82c4fa; }
+html[data-sipa-theme=aluno][data-theme=dark] .progress-etapa[data-estado=falhou] .progress-etapa-marca { border-color:#f5a65b; color:#f5a65b; }
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-hire-button { background:var(--sipa-secondary)!important; color:var(--sipa-accent)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .lesson-hire-step-number { border-color:#82c4fa; color:#82c4fa; }
+html[data-sipa-theme=aluno][data-theme=dark] .lesson-hire-dialog .lesson-hire-whatsapp { background:#1769aa!important; color:#fff!important; border-color:#82c4fa!important; }

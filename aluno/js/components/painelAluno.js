@@ -9,7 +9,8 @@ import {calcularPrazoCancelamento,identificarMotivo,parAutomaticoCategoriaD,POLI
 import {montarAgendamentoAutomatico} from './preferenciasAluno.js';
 import {obterUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {formatarCpf} from '../../../shared/js/formatacao.js';
-import {formatarData,dataBrasilia,horaBrasilia,dataHoraBrasilia} from '../../../shared/js/calendario.js';
+import {formatarData,dataBrasilia,horaBrasilia,dataHoraBrasilia,hojeBrasil} from '../../../shared/js/calendario.js';
+import {situacaoExame,resumoExames,etapasHabilitacao} from '../domain/habilitacaoAluno.js';
 import {MOTIVOS_CANCELAMENTO_LOCAL,UNIDADES_LOCAIS,normalizarUnidadeLocal,nomeUnidadeLocal} from '../domain/dominioAluno.js';
 export {preencherProgressoAlunoLocal as apresentarProgresso,preencherDadosAlunoLocal as apresentarPerfil,listarAulasAlunoLocal as apresentarAulas,iniciarReservaAlunoLocal as apresentarAgendamento,montarSenhaPerfilLocal as montarAlteracaoSenha};
 const categoriasDoPainel=(dados,ordem=['A','B','D'])=>ordem.filter(c=>dados.categorias?.length?dados.categorias.includes(c):c!=='D'||dados.resumo.categorias.D?.total>0);
@@ -29,22 +30,40 @@ function preencherProgressoAlunoLocal(dados){
     apresentarAcompanhamento(dados.acompanhamento,overview);
 }
 
+// Sua habilitação: resumo dos exames, exames em cards com selo (ícone e borda coloridos) e provas como etapas.
+const ICONES_SELO={ok:'<path d="m5 12 4 4 10-10"/>',neutro:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',alerta:'<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4m0 3h.01"/>'};
 function apresentarAcompanhamento(dados,apos){
  let raiz=document.querySelector('[data-acompanhamento-aluno]');
  if(!dados){raiz?.remove();return;}
  if(!raiz){raiz=document.createElement('div');raiz.dataset.acompanhamentoAluno='';raiz.className='progress-admin-grid';apos.after(raiz);}
  raiz.replaceChildren();
  const el=(tag,texto,classe)=>{const n=document.createElement(tag);if(texto!==undefined)n.textContent=texto;if(classe)n.className=classe;return n;};
- const secao=titulo=>{const s=el('section',undefined,'progress-detail-card progress-admin-section');s.append(el('h2',titulo));raiz.append(s);return s;};
- const linhas=(host,itens,atributo)=>{const dl=el('dl');for(const item of itens){const linha=el('div');linha.dataset[atributo]=item.tipo;const valor=el('dd');valor.append(el('span',item.situacao,'progress-admin-status'));if(item.validade&&['Aprovado','Vencido'].includes(item.situacao))valor.append(el('small',(item.situacao==='Vencido'?'Venceu em ':'Válido até ')+formatarData(item.validade)));if(item.data)valor.append(el('small','Registrado em '+formatarData(item.data)));linha.append(el('dt',item.nome),valor);dl.append(linha);}host.append(dl);};
- linhas(secao('Seus exames'),dados.exames||[],'exameAluno');
- const provas=secao('Suas provas');provas.classList.add('progress-admin-provas');
- provas.append(el('p','Agendamentos, resultados e histórico de tentativas registrados pela recepção.','progress-admin-note'));
- if(!dados.provas?.length)provas.append(el('p','Nenhuma prova agendada.','progress-admin-note'));
- for(const prova of dados.provas||[]){const grupo=el('section');grupo.dataset.provaAluno=prova.tipo;grupo.append(el('h3',prova.nome));
-  if(!prova.tentativas.length)grupo.append(el('p','Não solicitado','progress-admin-note'));
-  else{const lista=el('ol');for(const t of [...prova.tentativas].sort((a,b)=>b.ordem-a.ordem)){const item=el('li');item.dataset.tentativaAluno=t.id;item.append(el('span','Tentativa '+t.ordem+' · '+(t.data?formatarData(t.data):'Data não informada')),el('strong',t.resultado||t.situacao));lista.append(item);}grupo.append(lista);}provas.append(grupo);
+ const hoje=hojeBrasil(),exames=dados.exames||[];
+ const secao=el('section',undefined,'progress-detail-card progress-admin-section progress-habilitacao');secao.dataset.habilitacaoAluno='';secao.setAttribute('aria-labelledby','progress-habilitacao-titulo');
+ const topo=el('header'),titulo=el('h2','Sua habilitação');titulo.id='progress-habilitacao-titulo';
+ const resumo=el('p',resumoExames(exames,hoje).texto,'progress-habilitacao-resumo');resumo.dataset.examesEmDia='';topo.append(titulo,resumo);secao.append(topo);
+ secao.append(el('h3','Exames'));
+ const lista=el('ul',undefined,'progress-exames');
+ for(const exame of exames){
+  const s=situacaoExame(exame,hoje),card=el('li',undefined,'progress-exame');card.dataset.exameAluno=exame.tipo;card.dataset.situacao=s.chave;
+  const selo=el('span',undefined,'progress-selo');selo.dataset.tom=s.tom;selo.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+ICONES_SELO[s.tom]+'</svg>';selo.append(s.rotulo);
+  card.append(el('strong',exame.nome),selo);
+  if(exame.validade&&['aprovado','vencendo','vencido'].includes(s.chave))card.append(el('small',(s.chave==='vencido'?'Venceu em ':'Válido até ')+formatarData(exame.validade.slice(0,10)),'progress-exame-validade'));
+  if(exame.data)card.append(el('small','Registrado em '+formatarData(exame.data.slice(0,10)),'progress-exame-registro'));
+  lista.append(card);
  }
+ if(!exames.length)lista.append(el('li','Nenhum exame registrado.','progress-admin-note'));
+ secao.append(lista,el('h3','Provas'));
+ const etapas=el('ol',undefined,'progress-etapas');etapas.setAttribute('aria-label','Etapas até a habilitação');
+ etapasHabilitacao(dados,hoje).forEach((e,i)=>{
+  const li=el('li',undefined,'progress-etapa');li.dataset.estado=e.estado;if(e.tipo==='exames')li.dataset.etapaExames='';else li.dataset.provaAluno=e.tipo;
+  const marca=el('span',e.estado==='feito'?'✓':e.estado==='falhou'?'!':String(i+1),'progress-etapa-marca');marca.setAttribute('aria-hidden','true');
+  const texto=el('div',undefined,'progress-etapa-texto');texto.append(el('strong',e.titulo),el('span',e.situacao,'progress-etapa-situacao'));if(e.detalhe)texto.append(el('small',e.detalhe));
+  if(e.estado==='atual')li.setAttribute('aria-current','step');
+  li.append(marca,texto);etapas.append(li);
+ });
+ secao.append(etapas,el('p','A Recepção agenda suas provas quando os exames estiverem em dia.','progress-admin-note'));
+ raiz.append(secao);
 }
 
 function preencherDadosAlunoLocal(dados) {

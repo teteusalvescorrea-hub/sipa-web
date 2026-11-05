@@ -25,7 +25,7 @@ export async function validarLegibilidade(ctx){
    }}
  }
  await login('instrutor','44444444444','instrutorNova4','/instrutor/html/instrutor.html');for(const secao of ['inicio','agenda','historico','perfil']){await evaluate(`document.querySelector('[data-nav=${secao}]').click()`);await auditar('instrutor-'+secao);}
- await login('aluno','52998224725','alunoNova4','/aluno/html/dashboard.html');for(const pagina of ['dashboard','agendamento','minhas-aulas','meu-progresso','pacotes','meu-perfil']){await navigate('/aluno/html/'+pagina+'.html',"document.body.dataset.sipaOrigem==='recepcao'");await auditar('aluno-'+pagina);}
+ await login('aluno','52998224725','alunoNova4','/aluno/html/dashboard.html');for(const pagina of ['dashboard','agendamento','minhas-aulas','meu-progresso','meu-perfil']){await navigate('/aluno/html/'+pagina+'.html',"document.body.dataset.sipaOrigem==='recepcao'");await auditar('aluno-'+pagina);}
  if(problemas.length)throw new Error('Textos neutros restantes: '+JSON.stringify(problemas));
  await check('true',paginas+' paginas/temas auditados e capturados sem textos neutros cinza em superficie clara');
 }

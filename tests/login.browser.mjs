@@ -293,7 +293,7 @@ try {
             await check("document.querySelectorAll('.credit-heading').length===2&&!document.querySelector('.credit-heading svg,.credit-heading .summary-icon')&&document.querySelector('.credit-heading').textContent.includes('Moto')&&document.querySelectorAll('.credit-heading')[1].textContent.includes('Carro')&&document.querySelector('#credito-A')&&document.querySelector('#credito-B')&&document.documentElement.scrollWidth<=innerWidth",'Cards de saldo sem ícones preservam títulos, valores e alinhamento '+tema);
             await screenshot('dashboard-saldo-sem-icones-'+tema+'.png');
         }
-        const ordem=['dashboard.html','agendamento.html','minhas-aulas.html','meu-progresso.html','pacotes.html','meu-perfil.html'];
+        const ordem=['dashboard.html','agendamento.html','minhas-aulas.html','meu-progresso.html','meu-perfil.html'];
         const medidasMenu={};
         for (const pagina of ordem) {
             await navigate('/aluno/html/'+pagina,"document.body?.dataset.sipaLocal==='aluno'");
@@ -347,7 +347,7 @@ try {
             await check("document.documentElement.dataset.theme==='light'&&document.querySelector('.sipa-theme-toggle').getAttribute('aria-label')==='Ativar modo escuro'&&document.querySelector('.sipa-theme-toggle svg').dataset.icon==='moon'",'Tema inicial claro e botão com lua acessível');
             await evaluate("document.querySelector('.sipa-theme-toggle').focus()");await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});await send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
             await check("document.documentElement.dataset.theme==='dark'&&localStorage['sipa.ui.tema']==='dark'&&document.querySelector('.sipa-theme-toggle svg').dataset.icon==='sun'",'Teclado alterna imediatamente, salva preferência e troca ícone');
-            for(const pagina of ['dashboard','minhas-aulas','agendamento','meu-progresso','pacotes','meu-perfil']){
+            for(const pagina of ['dashboard','minhas-aulas','agendamento','meu-progresso','meu-perfil']){
                 await navigate('/aluno/html/'+pagina+'.html',"document.body?.dataset.sipaLocal==='aluno'&&document.querySelector('.sipa-theme-toggle')");
                 await check("document.documentElement.dataset.theme==='dark'&&getComputedStyle(document.body).backgroundColor==='rgb(16, 27, 43)'",'Tema persiste e fundo escuro correto em '+pagina);
                 await check("temaNaCarga==='dark'&&auditarContraste('main h1,main h2,.credit-heading span,.credit-value span,.category-progress-card dt,.category-progress-card dd,.profile-info-card strong,.sipa-theme-toggle').length===0",'Tema aplicado antes do DOM e contraste AA dos textos principais em '+pagina);

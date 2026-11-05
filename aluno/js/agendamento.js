@@ -16,6 +16,7 @@ import {
     listarMotoristasDisponiveis,
     agendarAulas
 } from "../../shared/js/services/agendamentos.service.js";
+import { ROTA_CONTRATAR_AULAS } from "./domain/contatoRecepcao.js";
 
 
 /* =========================================
@@ -697,12 +698,12 @@ async function carregarContratacoes() {
     escolherContratacao(contratacoes[0]);
 }
 
-/* Link para a vitrine (pacotes.html). */
+/* Link para contratar mais aulas (pop-up em Minhas aulas). */
 function linkDaVitrine(texto) {
     const vitrine = document.createElement("a");
 
     vitrine.className = "booking-whatsapp-link";
-    vitrine.href = "pacotes.html";
+    vitrine.href = ROTA_CONTRATAR_AULAS;
     vitrine.textContent = texto;
 
     return vitrine;

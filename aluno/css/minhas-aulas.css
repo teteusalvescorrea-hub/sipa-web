@@ -2552,3 +2552,27 @@ a {
 .medical-document-viewer img { display:block; max-width:100%; max-height:60dvh; object-fit:contain; margin:12px auto; }
 .medical-document-viewer a { display:block; margin:12px 0; color:var(--sipa-accent,#1769aa); }
 @media(max-width:650px){.medical-request-progress { grid-template-columns:repeat(2,minmax(0,1fr)); }}
+
+/* Contratar mais aulas: botão secundário ao lado de "Agendar nova aula" e pop-up com os 3 passos e o WhatsApp da Recepção. */
+.lessons-header-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.lessons-hire-button { min-height:43px; display:inline-flex; align-items:center; justify-content:center; padding:0 16px; border:1px solid #b8cfe3; border-radius:9px; background:var(--white); color:#12578f; font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap; }
+.lessons-hire-button:hover { background:#edf5fc; border-color:#1769aa; }
+.lessons-hire-button:focus-visible { outline:3px solid rgba(35,136,217,.30); outline-offset:3px; }
+/* Celular: os dois botões vão para uma linha própria embaixo do título (o botão do tema fica só na primeira linha). */
+@media (max-width:640px) {
+ [data-sipa-aluno] .lessons-header { flex-wrap:wrap; row-gap:12px; padding-bottom:14px; }
+ [data-sipa-aluno] .lessons-header-left { flex:1 1 100%; }
+ [data-sipa-aluno] .lessons-header-actions { flex:1 1 100%; gap:8px; margin-right:-54px; }
+ html body[data-sipa-aluno] .lessons-header-actions>a { flex:1 1 0; min-width:0; width:auto!important; height:auto!important; min-height:42px!important; padding:0 10px!important; font-size:13px!important; white-space:nowrap; }
+}
+@media (max-width:360px) { .lessons-hire-extra { display:none; } }
+.lesson-hire-dialog { width:min(480px,calc(100vw - 32px)); }
+.lesson-hire-dialog h2:focus { outline:none; }
+.lesson-hire-steps { display:grid; gap:10px; margin:14px 0 0; padding:0; list-style:none; }
+.lesson-hire-steps li { display:flex; align-items:flex-start; gap:10px; font-size:14px; line-height:1.5; }
+.lesson-hire-step-number { flex:none; display:grid; place-items:center; width:24px; height:24px; border:2px solid #1769aa; border-radius:50%; color:#12578f; font-size:12px; font-weight:700; line-height:1; }
+.lesson-hire-dialog .lesson-hire-whatsapp { display:inline-flex; align-items:center; border:1px solid #1769aa; border-radius:8px; padding:10px 14px; background:#1769aa; color:#fff; font-weight:600; text-decoration:none; }
+.lesson-hire-dialog .lesson-hire-whatsapp:hover { background:#12578f; }
+.lesson-hire-dialog .lesson-hire-whatsapp:focus-visible { outline:3px solid #2388d9; outline-offset:2px; }
+.lesson-hire-note { display:block; margin-top:10px; font-size:12px; text-align:right; color:var(--sipa-texto-neutro); }
+@media (max-width:380px) { .lesson-hire-dialog footer>* { flex:1; justify-content:center; } .lesson-hire-note { text-align:left; } }

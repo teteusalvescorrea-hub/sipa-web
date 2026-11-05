@@ -2,6 +2,7 @@
 import {exigirLogin} from '../../shared/js/sessao.js';
 import {sair} from '../../shared/js/services/authService.js';
 import {criarServicoAluno} from './services/alunoIntegrado.js';
+import {ROTA_CONTRATAR_AULAS} from './domain/contatoRecepcao.js';
 import {apresentarDashboard} from './dashboard.js';
 import {apresentarProgresso,apresentarPerfil,apresentarAulas,apresentarAgendamento,montarAlteracaoSenha} from './components/painelAluno.js';
 const pagina=location.pathname.split('/').pop();
@@ -12,7 +13,7 @@ function preparar(){
  document.querySelectorAll('main button:not(.sipa-theme-toggle),main input,main select').forEach(n=>n.disabled=true);
  document.querySelectorAll('#logout-button,[id$="-logout"]').forEach(b=>b.onclick=sair);
  let menu=document.querySelector('#mobile-menu-button,[id$="-mobile-menu"]');if(!menu){menu=document.createElement('button');menu.type='button';menu.className='student-menu-toggle';menu.textContent='Menu';document.querySelector('main header')?.prepend(menu);}menu.disabled=false;menu.onclick=()=>{const side=document.querySelector('.sipa-sidebar');side.classList.toggle('mobile-open');menu.setAttribute('aria-expanded',String(side.classList.contains('mobile-open')));};
- const rotas={schedule:'agendamento.html',lessons:'minhas-aulas.html',progress:'meu-progresso.html',profile:'meu-perfil.html',packages:'pacotes.html'};document.querySelectorAll('[data-action]').forEach(b=>{if(rotas[b.dataset.action]){b.disabled=false;b.onclick=()=>location.assign(rotas[b.dataset.action]);}});
+ const rotas={schedule:'agendamento.html',lessons:'minhas-aulas.html',progress:'meu-progresso.html',profile:'meu-perfil.html',packages:ROTA_CONTRATAR_AULAS};document.querySelectorAll('[data-action]').forEach(b=>{if(rotas[b.dataset.action]){b.disabled=false;b.onclick=()=>location.assign(rotas[b.dataset.action]);}});
  document.querySelectorAll('.sipa-theme-toggle').forEach(b=>b.disabled=false);
 }
 async function iniciar(){

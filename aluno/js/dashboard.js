@@ -1,6 +1,7 @@
 import {localDaReserva,localDaAula,orientacoesComparecimento} from '../../shared/components/localAula.js';
 import {localDaReservaOperacional} from '../../shared/js/categorias.js';
 import {nomeUnidadeInstitucional} from '../../shared/js/catalogoUnidades.js';
+import {ROTA_CONTRATAR_AULAS} from './domain/contatoRecepcao.js';
 ﻿// Apresentação compartilhada. Saldo vem dos serviços; nunca é debitado pela tela.
 const texto = (id, valor) => { const node = document.getElementById(id); if (node) node.textContent = valor; };
 const statusAula = {1:'Confirmada',2:'Cancelada',3:'Aguardando aceite',4:'Recusada',5:'Realizada',6:'Falta'};
@@ -68,7 +69,7 @@ async function iniciarIntegrado() {
             aviso.hidden=false;
             const pendentes=respostas[1].value.filter(c=>c.status?.valor===1);
             aviso.textContent=pendentes.length?'Seu pacote está aguardando a confirmação da autoescola.':'Você não possui saldo disponível para novos agendamentos.';
-            if(!pendentes.length){const link=document.createElement('a');link.href='pacotes.html';link.textContent=' Consultar pacotes adicionais →';aviso.append(link);}
+            if(!pendentes.length){const link=document.createElement('a');link.href=ROTA_CONTRATAR_AULAS;link.textContent=' Contratar mais aulas →';aviso.append(link);}
         }
     }catch(erro){const aviso=document.getElementById('dashboard-notice');aviso.hidden=false;aviso.textContent=erro.message||'Não foi possível carregar o painel.';}
 }

@@ -1243,17 +1243,37 @@ body {
 
 [data-sipa-aluno] .progress-action-button { font-size:14px; padding:10px 14px; }
 
-[data-sipa-aluno] .progress-admin-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:16px; align-items:stretch; }
+/* Sua habilitação: um card só, na altura do conteúdo. Exames em 4 cards (2 em telas estreitas) e provas como etapas.
+   Só o ícone e a borda do selo mudam de cor (verde aprovado, cinza pendente, laranja vencendo/vencido); o resto segue o azul do SIPA. */
+[data-sipa-aluno] .progress-admin-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; margin-top:16px; align-items:start; }
 [data-sipa-aluno] .progress-admin-section { background:var(--progress-card); color:var(--sipa-texto-neutro); border:1px solid var(--progress-border); min-width:0; }
-[data-sipa-aluno] .progress-admin-section dl { margin:12px 0 0; }
-[data-sipa-aluno] .progress-admin-section dl>div,[data-sipa-aluno] .progress-admin-section li { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--progress-border-light); font-size:14px; overflow-wrap:anywhere; }
-[data-sipa-aluno] .progress-admin-section dt { color:var(--sipa-texto-neutro); }
-[data-sipa-aluno] .progress-admin-section dd { margin:0; text-align:right; font-size:14px; }
-[data-sipa-aluno] .progress-admin-status { font-weight:600; }
-[data-sipa-aluno] .progress-admin-section small { display:block; color:var(--sipa-texto-neutro); font-size:12px; margin-top:4px; }
-[data-sipa-aluno] .progress-admin-provas li { flex-wrap:wrap; }
-[data-sipa-aluno] .progress-admin-provas li strong { font-size:14px; font-weight:600; }
-[data-sipa-aluno] .progress-admin-provas h3 { font-size:15px; margin:16px 0 4px; }
-[data-sipa-aluno] .progress-admin-provas ol { list-style:none; margin:0; padding:0; }
+[data-sipa-aluno] .progress-habilitacao { padding:18px; border-radius:14px; container-type:inline-size; }
+[data-sipa-aluno] .progress-habilitacao>header { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; }
+[data-sipa-aluno] .progress-habilitacao h2 { margin:0; }
+[data-sipa-aluno] .progress-habilitacao-resumo { margin:0; font-size:14px; font-weight:600; color:#12578f; }
+[data-sipa-aluno] .progress-habilitacao h3 { font-size:15px; margin:16px 0 8px; }
+[data-sipa-aluno] .progress-exames,[data-sipa-aluno] .progress-etapas { display:grid; gap:10px; margin:0; padding:0; list-style:none; }
+[data-sipa-aluno] .progress-exames { grid-template-columns:repeat(4,minmax(0,1fr)); }
+[data-sipa-aluno] .progress-exame { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; padding:12px; border:1px solid #d8e5f0; border-radius:10px; background:#fff; }
+[data-sipa-aluno] .progress-habilitacao .progress-exame strong { display:block; margin:0; font-size:14px; font-weight:600; line-height:1.3; color:var(--sipa-texto-neutro); overflow-wrap:anywhere; }
+[data-sipa-aluno] .progress-habilitacao .progress-exame small { display:block; margin:0; font-size:12px; line-height:1.35; color:var(--sipa-texto-neutro); }
+[data-sipa-aluno] .progress-habilitacao .progress-exame .progress-exame-registro { font-size:11px; }
+[data-sipa-aluno] .progress-selo { --selo:#5f6b7a; display:inline-flex; align-items:center; gap:5px; padding:3px 9px 3px 6px; border:1.5px solid var(--selo); border-radius:999px; background:transparent; color:var(--sipa-texto-neutro); font-size:12px; font-weight:600; line-height:1.3; white-space:nowrap; }
+[data-sipa-aluno] .progress-selo svg { flex:none; width:14px; height:14px; fill:none; stroke:var(--selo); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+[data-sipa-aluno] .progress-selo[data-tom=ok] { --selo:#1a7f37; }
+[data-sipa-aluno] .progress-selo[data-tom=alerta] { --selo:#b54708; }
+[data-sipa-aluno] .progress-etapas { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
+[data-sipa-aluno] .progress-etapa { display:flex; align-items:flex-start; gap:10px; min-width:0; padding:12px; border:1px solid #d8e5f0; border-radius:10px; background:#fff; }
+[data-sipa-aluno] .progress-etapa-marca { flex:none; display:grid; place-items:center; width:24px; height:24px; box-sizing:border-box; border:2px solid #b8cfe3; border-radius:50%; color:#47637b; font-size:11px; font-weight:700; }
+[data-sipa-aluno] .progress-etapa-texto { display:flex; flex-direction:column; gap:2px; min-width:0; }
+[data-sipa-aluno] .progress-habilitacao .progress-etapa-texto strong { display:block; margin:0; font-size:13px; font-weight:600; line-height:1.3; color:var(--sipa-texto-neutro); }
+[data-sipa-aluno] .progress-etapa-situacao { font-size:13px; line-height:1.35; color:var(--sipa-texto-neutro); overflow-wrap:anywhere; }
+[data-sipa-aluno] .progress-habilitacao .progress-etapa-texto small { display:block; margin:0; font-size:12px; line-height:1.35; color:var(--sipa-texto-neutro); }
+[data-sipa-aluno] .progress-etapa[data-estado=feito] .progress-etapa-marca { border-color:#1769aa; background:#1769aa; color:#fff; }
+[data-sipa-aluno] .progress-etapa[data-estado=atual] { border-color:#1769aa; }
+[data-sipa-aluno] .progress-etapa[data-estado=atual] .progress-etapa-marca { border-color:#1769aa; color:#12578f; }
+[data-sipa-aluno] .progress-etapa[data-estado=falhou] .progress-etapa-marca { border-color:#b54708; color:#b54708; }
 [data-sipa-aluno] .progress-admin-note { color:var(--sipa-texto-neutro); font-size:13px; line-height:1.5; margin:8px 0; }
-@media(max-width:650px){[data-sipa-aluno] .progress-admin-grid { grid-template-columns:minmax(0,1fr); } [data-sipa-aluno] .progress-admin-section dl>div,[data-sipa-aluno] .progress-admin-section li { flex-wrap:wrap; } [data-sipa-aluno] .progress-admin-section dd { text-align:left; }}
+[data-sipa-aluno] .progress-habilitacao>.progress-admin-note { margin:12px 0 0; }
+@container (max-width:640px) { [data-sipa-aluno] .progress-exames { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:500px) { [data-sipa-aluno] .progress-habilitacao { padding:14px; } [data-sipa-aluno] .progress-exame,[data-sipa-aluno] .progress-etapa { padding:10px; } [data-sipa-aluno] .progress-selo { white-space:normal; } }

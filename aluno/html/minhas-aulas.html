@@ -164,19 +164,6 @@
         </a>
 
 
-        <!-- PACOTES -->
-        <a
-            href="pacotes.html"
-            class="sipa-sidebar-link"
-        >
-            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
-
-            <span>
-                Pacotes adicionais
-            </span>
-        </a>
-
-
         <!-- CONTA -->
         <span class="sipa-sidebar-title account">
             CONTA
@@ -280,18 +267,34 @@
                 </div>
 
 
-                <a
-                    href="agendamento.html"
-                    class="new-lesson-button"
-                >
+                <div class="lessons-header-actions">
 
-                    <span>
-                        +
-                    </span>
+                    <a
+                        href="#contratar"
+                        class="lessons-hire-button"
+                        aria-haspopup="dialog"
+                        aria-label="Contratar mais aulas"
+                        data-contratar-aulas
+                    >
 
-                    Agendar nova aula
+                        <span>Contratar <span class="lessons-hire-extra">mais aulas</span></span>
 
-                </a>
+                    </a>
+
+                    <a
+                        href="agendamento.html"
+                        class="new-lesson-button"
+                    >
+
+                        <span>
+                            +
+                        </span>
+
+                        Agendar nova aula
+
+                    </a>
+
+                </div>
 
             </header>
 
@@ -459,6 +462,7 @@
 </div>
 
 <script type="module" src="../js/entrada.js"></script>
+<script type="module" src="../js/contratar-aulas.js"></script>
 
 </body>
 
