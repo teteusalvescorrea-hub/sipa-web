@@ -19,7 +19,7 @@ export function apresentarDashboard({aluno,resumo,aulas=[],registros=[],categori
         const saldo=resumo?.categorias?.[categoria]; texto('credito-'+categoria,saldo?.disponiveis??'—');
         texto('credito-'+categoria+'-detalhe',saldo?`${saldo.total??'Total não informado'} créditos${Number.isFinite(saldo.liberadas)?' · '+saldo.liberadas+' liberadas':''} · ${saldo.reservadas} reservadas · ${saldo.realizadas} concluídas`:'Saldo por categoria ainda não informado.');
     }
-    texto('creditos-resumo',resumo?`${resumo.total??'Total não informado'} créditos no total · créditos não são aulas realizadas`:'Seus saldos serão apresentados por categoria.');
+    texto('creditos-resumo',resumo?'':'Seus saldos serão apresentados por categoria.');
     const percentual=resumo?.percentual;
     texto('progress-number',percentual!=null?percentual+'%':'Ainda não iniciado');
     texto('progress-description',resumo?.realizadas>0?(resumo.total?`${resumo.realizadas} de ${resumo.total} aulas concluídas.`:`${resumo.realizadas} aulas concluídas. Total de créditos ainda não informado.`):'Sua evolução aparecerá conforme as aulas forem concluídas.');
