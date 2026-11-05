@@ -33,3 +33,23 @@ export function agendaDeHoje(estado,instrutorId,instante=new Date()){
  }
  return {dia,agora,fechamento,faixas,periodoExibicao,aulas,inconsistencias};
 }
+
+// Agenda compacta: faixas vagas seguidas viram uma linha "Livre" e bloqueios seguidos com o mesmo motivo viram uma pausa.
+const horaDaAula=a=>agoraBrasil(new Date(a.inicio)).slice(11,16);
+export function agruparFaixas(faixas,aulas){
+ const itens=[];
+ for(const faixa of faixas){
+  const doHorario=faixa.bloqueado?[]:aulas.filter(a=>horaDaAula(a)===faixa.inicio),tipo=faixa.bloqueado?'pausa':doHorario.length?'aula':'livre',anterior=itens.at(-1);
+  if(tipo!=='aula'&&anterior?.tipo===tipo&&(tipo==='livre'||anterior.motivo===(faixa.motivo||''))){anterior.faixas.push(faixa);anterior.fim=faixa.fim;anterior.ate=fimDaAula(faixa.inicio);continue;}
+  itens.push({tipo,inicio:faixa.inicio,fim:faixa.fim,ate:fimDaAula(faixa.inicio),motivo:faixa.motivo||'',faixas:[faixa],aulas:doHorario});
+ }
+ return itens;
+}
+// Canceladas e recusadas não contam como aula do dia nem ocupam o horário (mesma regra de "Esta semana").
+export const aulaAtiva=a=>![2,4].includes(a.status);
+export function resumoDoDia({faixas=[],aulas=[]}={}){
+ const ativas=aulas.filter(aulaAtiva);
+ return {aulas:ativas.length,realizadas:ativas.filter(a=>a.status===5).length,horasLivres:faixas.filter(f=>!f.bloqueado&&!ativas.some(a=>horaDaAula(a)===f.inicio)).length};
+}
+// Primeira aula confirmada do dia ainda sem registro: a que espera registro vem antes da próxima.
+export function proximaDoDia(aulas){return aulas.filter(a=>a.status===1&&Number.isFinite(Date.parse(a.inicio))).sort((a,b)=>Date.parse(a.inicio)-Date.parse(b.inicio))[0]||null;}
