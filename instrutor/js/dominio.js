@@ -22,5 +22,5 @@ export function resumoInstrutor(estado,id,agora=Date.now()){
  const dia=agoraBrasil(new Date(agora)).slice(0,10),mes=periodoMensal(dia.slice(0,7)),aulas=aulasDoInstrutor(estado,id);
  const datas=new Map(aulas.filter(a=>Number.isFinite(Date.parse(a.inicio))).map(a=>[a,agoraBrasil(new Date(a.inicio)).slice(0,10)])),hoje=aulas.filter(a=>datas.get(a)===dia);
  const desempenho=Object.fromEntries(['hoje','semana','mes'].map(m=>[m,desempenhoInstrutor(aulas,id,periodoDesempenho(m,{},agora),agora)])),realizadasMes=desempenho.mes.presencas;
- return {hoje,agendadas:hoje.filter(a=>a.status===1).length,realizadas:desempenho.hoje.presencas,faltas:desempenho.hoje.faltas,realizadasMes,realizadasSemana:desempenho.semana.presencas,presencasMes:desempenho.mes.presencas,faltasMes:desempenho.mes.faltas,proxima:aulas.find(a=>a.status===1&&Date.parse(a.inicio)>agora)||null};
+ return {hoje,agendadas:hoje.filter(a=>a.status===1).length,realizadas:desempenho.hoje.presencas,faltas:desempenho.hoje.faltas,realizadasMes,realizadasSemana:desempenho.semana.presencas,presencasMes:desempenho.mes.presencas,faltasMes:desempenho.mes.faltas,proxima:hoje.find(a=>a.status===1&&Date.parse(a.inicio)>agora)||null};
 }

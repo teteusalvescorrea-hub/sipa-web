@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {periodoDesempenho,desempenhoInstrutor,painelDesempenho,aulasDaSemana,nivelCalor,escalaEixo} from '../shared/js/desempenhoInstrutor.js';
+import {periodoDesempenho,desempenhoInstrutor,painelDesempenho,aulasDaSemana,escalaEixo} from '../shared/js/desempenhoInstrutor.js';
 import {agruparFaixas,resumoDoDia,proximaDoDia} from '../instrutor/js/agenda.js';
 import {servicoOperador} from '../nivel-1-operador/js/servicoOperador.js';
 import {resumoInstrutor} from '../instrutor/js/dominio.js';
@@ -37,28 +37,24 @@ test('painel proprio atualiza semana e mes sem incluir falta em presencas',()=>{
 const iso=(id,quando,status,extra={})=>({id,inicio:quando+':00-03:00',fim:quando.slice(0,14)+'50:00-03:00',status,instrutorId:'i',categoria:'B',...extra});
 const carteira=[iso('r1','2026-10-13T08:00',5),iso('r2','2026-10-14T08:00',5,{categoria:'D'}),iso('r3','2026-10-14T09:00',5),iso('r4','2026-10-12T22:00',5),iso('f1','2026-10-16T14:00',6),iso('antiga','2026-09-01T08:00',5),
  iso('pendente','2026-10-17T10:00',1),iso('andamento','2026-10-19T10:00',1),iso('fut1','2026-10-20T08:00',1),iso('fut2','2026-10-20T09:00',3),iso('domingo','2026-10-25T08:00',1),iso('cancelada','2026-10-15T08:00',2),iso('outro','2026-10-15T08:00',5,{instrutorId:'j'})];
-test('meu desempenho: presenca, media, pendentes, semanas, calor, proximos 7 dias e categorias no dia de Brasilia',()=>{
+test('meu desempenho: presenca, media, pendentes, semanas e categorias no dia de Brasilia',()=>{
  const antes=JSON.stringify(carteira),p=painelDesempenho(carteira,'i',30,agora);
  assert.deepEqual(p.periodo,{inicio:'2026-09-20',fim:'2026-10-19'});
  assert.deepEqual([p.realizadas,p.faltas,p.presenca,p.mediaSemana,p.aguardandoRegistro],[4,1,80,0.9,1]);
  assert.deepEqual(p.semanas.map(s=>[s.rotulo,s.realizadas,s.faltas]),[['14/09',0,0],['21/09',0,0],['28/09',0,0],['05/10',0,0],['12/10',4,1],['19/10',0,0]]);assert.deepEqual(p.semanas.map(s=>s.desde),['20/09',null,null,null,null,null]);
- assert.equal(p.calor.horas[0],8);assert.equal(p.calor.horas.at(-1),22);assert.equal(p.calor.maximo,1);assert.deepEqual(p.calor.linhas.map(l=>l.rotulo),['Seg','Ter','Qua','Qui','Sex','Sáb']);
- const celula=(dia,h)=>p.calor.linhas.find(l=>l.rotulo===dia).valores[p.calor.horas.indexOf(h)];assert.deepEqual([celula('Seg',22),celula('Ter',8),celula('Qua',8),celula('Qua',9),celula('Sex',14)],[1,1,1,1,0]);
- assert.deepEqual(p.proximos.map(d=>[d.rotulo,d.confirmadas,d.aguardando]),[['Ter 20/10',1,1],['Qua 21/10',0,0],['Qui 22/10',0,0],['Sex 23/10',0,0],['Sáb 24/10',0,0],['Dom 25/10',1,0],['Seg 26/10',0,0]]);
  assert.deepEqual(p.categorias,[{categoria:'B',total:3},{categoria:'D',total:1}]);
  const noventa=painelDesempenho(carteira,'i',90,agora);assert.equal(noventa.realizadas,5);assert.equal(noventa.semanas.length,14);assert.equal(JSON.stringify(carteira),antes);
- const vazio=painelDesempenho([],'i',30,agora);assert.deepEqual([vazio.presenca,vazio.realizadas,vazio.calor.linhas.length,vazio.calor.maximo,vazio.proximos.length],[null,0,0,0,6]);
+ const vazio=painelDesempenho([],'i',30,agora);assert.deepEqual([vazio.presenca,vazio.realizadas],[null,0]);
 });
-test('esta semana conta aulas ativas de segunda a sabado; escalas do grafico e do mapa de calor',()=>{
- assert.deepEqual(aulasDaSemana(carteira,'i',agora).map(d=>[d.rotulo,d.dia,d.total]),[['Seg','2026-10-19',1],['Ter','2026-10-20',2],['Qua','2026-10-21',0],['Qui','2026-10-22',0],['Sex','2026-10-23',0],['Sáb','2026-10-24',0],['Dom','2026-10-25',1]]);
- assert.deepEqual([nivelCalor(0,5),nivelCalor(1,4),nivelCalor(2,4),nivelCalor(4,4),nivelCalor(5,0)],[0,1,2,4,0]);
+test('esta semana conta aulas ativas so ate hoje; escala do grafico',()=>{
+ assert.deepEqual(aulasDaSemana(carteira,'i',agora).map(d=>[d.rotulo,d.dia,d.total]),[['Seg','2026-10-19',1]]);
  assert.deepEqual([escalaEixo(0),escalaEixo(7),escalaEixo(18)],[[0,1,2,3],[0,3,6,9],[0,6,12,18]]);
 });
-test('agenda compacta agrupa vagos e bloqueios seguidos e resume o dia',()=>{
+test('agenda mostra todos os horarios, um por linha, e resume o dia',()=>{
  const faixas=['07','08','09','10','11','12','13','14'].map(h=>({inicio:h+':00',fim:String(+h+1).padStart(2,'0')+':00',bloqueado:['12','13'].includes(h),motivo:h==='12'?'Almoço':h==='13'?'Folga':''}));
  const aulas=[iso('a','2026-10-19T10:00',1),iso('b','2026-10-19T14:00',5)];
- assert.deepEqual(agruparFaixas(faixas,aulas).map(i=>[i.tipo,i.inicio,i.ate,i.faixas.length,i.aulas.length]),[['livre','07:00','09:50',3,0],['aula','10:00','10:50',1,1],['livre','11:00','11:50',1,0],['pausa','12:00','12:50',1,0],['pausa','13:00','13:50',1,0],['aula','14:00','14:50',1,1]]);
- assert.deepEqual(agruparFaixas(faixas.map(f=>({...f,motivo:f.bloqueado?'Almoço':''})),[]).filter(i=>i.tipo==='pausa').map(i=>[i.inicio,i.ate]),[['12:00','13:50']]);
+ assert.deepEqual(agruparFaixas(faixas,aulas).map(i=>[i.tipo,i.inicio,i.ate,i.faixas.length,i.aulas.length]),[['livre','07:00','07:50',1,0],['livre','08:00','08:50',1,0],['livre','09:00','09:50',1,0],['aula','10:00','10:50',1,1],['livre','11:00','11:50',1,0],['pausa','12:00','12:50',1,0],['pausa','13:00','13:50',1,0],['aula','14:00','14:50',1,1]]);
+ assert.deepEqual(agruparFaixas(faixas.map(f=>({...f,motivo:f.bloqueado?'Almoço':''})),[]).filter(i=>i.tipo==='pausa').map(i=>[i.inicio,i.ate]),[['12:00','12:50'],['13:00','13:50']]);
  assert.deepEqual(resumoDoDia({faixas,aulas}),{aulas:2,realizadas:1,horasLivres:4});assert.deepEqual(resumoDoDia({faixas,aulas:[...aulas,iso('c','2026-10-19T11:00',2),iso('r','2026-10-19T08:00',4)]}),{aulas:2,realizadas:1,horasLivres:4});
  assert.equal(proximaDoDia([iso('x','2026-10-19T11:00',1),iso('y','2026-10-19T09:00',1),iso('z','2026-10-19T08:00',5)]).id,'y');assert.equal(proximaDoDia([]),null);
 });

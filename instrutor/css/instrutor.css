@@ -164,7 +164,7 @@ html[data-theme=dark] .in-blocked>.in-slot-time{background:#303740}
 .in-performance-summary{display:flex;flex-wrap:wrap;gap:12px 24px;padding:12px 16px;margin:12px 0;border:1px solid var(--in-line);border-radius:10px;background:var(--in-card);color:var(--sipa-texto-neutro);font-size:13px}
 .in-performance-summary strong{color:var(--sipa-texto-neutro);margin-left:4px}
 @media(max-width:480px){.in-performance-summary{gap:10px;flex-direction:column}}
-/* Cores dos gráficos (validadas para daltonismo e contraste) e rampa azul de 5 passos do mapa de calor. */
+/* Cores dos gráficos (validadas para daltonismo e contraste). */
 :root{--in-s-real:#1769aa;--in-s-falta:#c9701e;--in-seq-0:#f2f7fc;--in-seq-1:#cfe2f3;--in-seq-2:#9cc4e6;--in-seq-3:#5f9cd3;--in-seq-4:#1769aa;--in-grid:#e3edf6}
 html[data-theme=dark]{--in-s-real:#3f8fd2;--in-s-falta:#cf7526;--in-seq-0:#1f2c3b;--in-seq-1:#21456a;--in-seq-2:#2b5f92;--in-seq-3:#3a7cbc;--in-seq-4:#5aa2e6;--in-grid:#2a3a4c}
 /* Minha agenda em duas colunas: grade compacta à esquerda; resumo, aula a registrar e semana à direita. */
@@ -191,16 +191,11 @@ html[data-theme=dark]{--in-s-real:#3f8fd2;--in-s-falta:#cf7526;--in-seq-0:#1f2c3
 .in-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px}
 .in-kpi{padding:14px 17px}.in-kpi>span{display:block;font-size:12px;color:var(--sipa-texto-neutro)}.in-kpi>strong{display:block;font-size:27px;line-height:1.3;margin-top:4px}.in-kpi>small{display:flex;align-items:center;gap:6px;font-size:12px}.in-kpi small .in-icon{width:15px;height:15px;color:var(--in-s-falta)}
 .in-meter{height:8px;border-radius:4px;background:var(--in-seq-0);border:1px solid var(--in-line);margin-top:8px;overflow:hidden}.in-meter i{display:block;height:100%;background:var(--in-s-real)}
-.in-charts{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px}
+.in-charts{display:grid;gap:12px}
 .in-chart{padding:14px 16px}.in-chart-hint{font-size:12px;color:var(--sipa-texto-neutro);margin-top:2px}.in-chart-empty{font-size:12px;color:var(--sipa-texto-neutro);padding:12px 0 2px}
 .in-legend{display:flex;gap:14px;font-size:12px;color:var(--sipa-texto-neutro);margin:8px 0 2px}.in-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .in-legend .in-serie-real{background:var(--in-s-real)}.in-legend .in-serie-falta{background:var(--in-s-falta)}
 .in-chart-svg{display:block;width:100%;height:170px;overflow:visible;margin-top:4px}.in-chart-svg text{fill:var(--sipa-texto-neutro);font-size:11px;font-variant-numeric:tabular-nums}.in-chart-svg .in-grid-line{stroke:var(--in-grid)}.in-chart-svg .in-serie-real{fill:var(--in-s-real)}.in-chart-svg .in-serie-falta{fill:var(--in-s-falta)}
-.in-heat{display:grid;gap:3px;margin-top:10px;font-size:10px;color:var(--sipa-texto-neutro)}.in-heat-hour{text-align:center}.in-heat-day{align-self:center}.in-heat-cell{height:22px;border-radius:4px}
-.in-heat-scale{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--sipa-texto-neutro);margin-top:8px}.in-heat-scale i{width:16px;height:10px;border-radius:3px}
-.in-heat [data-nivel="0"],.in-heat-scale [data-nivel="0"]{background:var(--in-seq-0);box-shadow:inset 0 0 0 1px var(--in-line)}.in-heat [data-nivel="1"],.in-heat-scale [data-nivel="1"]{background:var(--in-seq-1)}.in-heat [data-nivel="2"],.in-heat-scale [data-nivel="2"]{background:var(--in-seq-2)}.in-heat [data-nivel="3"],.in-heat-scale [data-nivel="3"]{background:var(--in-seq-3)}.in-heat [data-nivel="4"],.in-heat-scale [data-nivel="4"]{background:var(--in-seq-4)}
-.in-bars{display:grid;gap:7px;margin-top:10px}.in-bar-row{display:grid;grid-template-columns:78px minmax(0,1fr) 28px;gap:10px;align-items:center;font-size:12px}.in-bar-row strong{text-align:right;font-variant-numeric:tabular-nums}.in-bar-track{height:10px}.in-bar-track i{display:block;height:100%;background:var(--in-s-real);border-radius:0 4px 4px 0}
 .in-tooltip{position:fixed;z-index:40;pointer-events:none;display:grid;gap:1px;max-width:240px;background:var(--in-card);color:var(--sipa-texto-neutro);border:1px solid var(--in-line);border-radius:8px;padding:7px 10px;font-size:12px;box-shadow:0 6px 20px #0b223a26}
 html[data-theme=dark] .in-tooltip{box-shadow:none}
-@media(max-width:1000px){.in-charts{grid-template-columns:1fr}}
 @media(max-width:700px){.in-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.in-kpi{padding:12px 10px}.in-kpi>strong{font-size:24px}.in-kpi:last-child{grid-column:1/-1}.in-chart{padding:12px}.in-heat-cell{height:18px}}

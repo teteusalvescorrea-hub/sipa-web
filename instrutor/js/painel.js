@@ -6,7 +6,7 @@ import {hojeBrasil,formatarData} from '../../shared/js/calendario.js';
 import {obterUnidadeInstitucional,pesquisaMapsUnidade} from '../../shared/js/catalogoUnidades.js';
 import {STATUS,podeRegistrar,resumoInstrutor} from './dominio.js';
 import {agruparFaixas,resumoDoDia,proximaDoDia,aulaAtiva} from './agenda.js';
-import {painelDesempenho,aulasDaSemana,nivelCalor,escalaEixo} from '../../shared/js/desempenhoInstrutor.js';
+import {painelDesempenho,aulasDaSemana,escalaEixo} from '../../shared/js/desempenhoInstrutor.js';
 const el=(tag,texto,classe)=>{const n=document.createElement(tag);if(texto!=null)n.textContent=texto;if(classe)n.className=classe;return n;};
 const paths={home:'<path d="m3 10 9-7 9 7v11h-6v-7H9v7H3V10Z"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6m10-6v6M3 11h18m-12 4h1m4 0h1"/>',history:'<path d="M4 3h16v18H4zM8 7h8M8 11h8m-8 4h5"/>',user:'<circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>',exit:'<path d="M10 4H4v16h6m4-12 4 4-4 4m-6-4h12"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',moon:'<path d="M20.5 14A9 9 0 0 1 10 3.5 9 9 0 1 0 20.5 14Z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/>',check:'<path d="m5 12 4 4L19 6"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3h.01"/>',left:'<path d="m14 5-7 7 7 7"/>',right:'<path d="m10 5 7 7-7 7"/>'};
 function icone(nome){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 24 24');s.setAttribute('aria-hidden','true');s.classList.add('in-icon');s.innerHTML=paths[nome]||paths.info;return s;}
@@ -69,7 +69,7 @@ export async function montarPainel(root,servico,{aoSair}={}){
  for(const [texto,n,atributo] of [['Agendadas hoje',resumo.agendadas,'agendadas'],['Realizadas hoje',resumo.realizadas,'realizadas'],['Faltas hoje',resumo.faltas,'faltas'],['Realizadas no mês',resumo.realizadasMes,'realizadas-mes']]){const c=el('article',null,'in-card in-metric'),valor=el('strong',String(n));valor.dataset.metrica=atributo;c.append(el('span',texto),valor);metricas.append(c);}conteudo.append(metricas);const resumoSemana=el('div',null,'in-performance-summary');for(const [texto,n,chave] of [['Realizadas na semana',resumo.realizadasSemana,'realizadas-semana'],['Presenças no mês',resumo.presencasMes,'presencas-mes'],['Faltas no mês',resumo.faltasMes,'faltas-mes']]){const v=el('strong',String(n));v.dataset.metrica=chave;const item=el('span');item.append(el('span',texto+' '),v);resumoSemana.append(item);}conteudo.append(resumoSemana);
  const proxima=el('section',null,'in-card in-next-lesson');proxima.id='in-proxima';proxima.append(el('h2','Próxima aula'));
  if(resumo.proxima){const a=resumo.proxima,h=el('div',null,'in-lesson-head');h.append(el('strong',a.aluno.nome),badge(a));proxima.append(h,campos(dadosAula(a).filter(([campo])=>!['Aluno','Situação','Endereço','Instrutor'].includes(campo))));}
- else{proxima.classList.add('is-empty');proxima.append(el('p','Nenhuma aula futura confirmada.','in-empty'));}
+ else{proxima.classList.add('is-empty');proxima.append(el('p','Nenhuma outra aula confirmada hoje.','in-empty'));}
  conteudo.append(proxima,desempenho());
  }
  // Meu desempenho: indicadores e gráficos dos últimos 30 ou 90 dias com as aulas já carregadas.
@@ -85,9 +85,6 @@ export async function montarPainel(root,servico,{aoSair}={}){
   const graficos=el('div',null,'in-charts');
   function cartao(titulo,texto,corpo){const c=el('section',null,'in-card in-chart');c.append(el('h3',titulo),el('p',texto,'in-chart-hint'),corpo);graficos.append(c);}
   cartao('Aulas por semana','Realizadas e faltas dos alunos',graficoSemanas(p.semanas));
-  cartao('Quando você mais dá aula','Aulas realizadas por dia e horário',mapaCalor(p.calor));
-  cartao('Próximos 7 dias','Aulas confirmadas e aguardando aceite',barras(p.proximos.map(d=>({rotulo:d.rotulo,valor:d.confirmadas+d.aguardando,texto:contar(d.confirmadas,'confirmada')+(d.aguardando?' · '+d.aguardando+' aguardando aceite':'')})),'Nenhuma aula nos próximos 7 dias.'));
-  cartao('Por categoria','Aulas realizadas no período',barras(p.categorias.map(c=>({rotulo:c.categoria+' · '+(NOMES_CATEGORIA[c.categoria]||'Não informada'),valor:c.total,texto:contar(c.total,'aula')+(c.total===1?' realizada':' realizadas')})),'Nenhuma aula realizada no período.'));
   bloco.append(topo,kpis,graficos);return bloco;
  }
  // Barras empilhadas (realizadas embaixo, faltas em cima) redesenhadas na largura real, sem texto escalado.
@@ -105,20 +102,6 @@ export async function montarPainel(root,servico,{aoSair}={}){
     if((semanas.length-1-i)%salto===0)svg.append(svgEl('text',{x:x+w/2,y:B+16,'text-anchor':'middle'},s.rotulo));});}
   desenhar(520);let largura=0;if(globalThis.ResizeObserver)new ResizeObserver(([e])=>{const w=Math.round(e.contentRect.width);if(w&&w!==largura){largura=w;desenhar(w);}}).observe(svg);
   caixa.append(legenda,svg);return caixa;
- }
- function mapaCalor({horas,linhas,maximo}){
-  if(!maximo)return el('p','Sem aulas realizadas no período.','in-chart-empty');
-  const caixa=el('div'),grade=el('div',null,'in-heat'),escala=el('div',null,'in-heat-scale');grade.style.gridTemplateColumns='30px repeat('+horas.length+',minmax(0,1fr))';grade.setAttribute('role','img');grade.setAttribute('aria-label','Aulas realizadas por dia da semana. '+linhas.map(l=>l.rotulo+': '+l.valores.reduce((a,b)=>a+b,0)).join('; '));
-  grade.append(el('span'));for(const h of horas)grade.append(el('span',h+'h','in-heat-hour'));
-  for(const l of linhas){grade.append(el('span',l.rotulo,'in-heat-day'));l.valores.forEach((v,i)=>{const c=el('span',null,'in-heat-cell');c.dataset.nivel=nivelCalor(v,maximo);comDica(c,l.rotulo+', '+horas[i]+'h',contar(v,'aula')+(v===1?' realizada':' realizadas'));grade.append(c);});}
-  escala.setAttribute('aria-hidden','true');escala.append('Menos');for(let n=0;n<5;n++){const i=el('i');i.dataset.nivel=n;escala.append(i);}escala.append('Mais');
-  caixa.append(grade,escala);return caixa;
- }
- function barras(itens,vazio){
-  const maximo=Math.max(0,...itens.map(i=>i.valor));if(!maximo)return el('p',vazio,'in-chart-empty');
-  const l=el('div',null,'in-bars');l.setAttribute('role','list');
-  for(const i of itens){const r=el('div',null,'in-bar-row'),trilho=el('span',null,'in-bar-track'),barra=el('i');r.setAttribute('role','listitem');r.setAttribute('aria-label',i.rotulo+': '+i.texto);if(i.valor)barra.style.width=Math.max(4,i.valor/maximo*100)+'%';trilho.append(barra);r.append(el('span',i.rotulo),trilho,el('strong',String(i.valor)));comDica(r,i.rotulo,i.texto);l.append(r);}
-  return l;
  }
  function agenda(){
  if(agendaAtual.erro){conteudo.append(el('p',agendaAtual.erro,'in-empty'));return;}

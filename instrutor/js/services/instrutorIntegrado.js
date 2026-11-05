@@ -42,7 +42,8 @@ export function adaptarInstrutor(me,veiculos=[]){
 }
 
 // Até 92 dias por consulta (DA17): uma janela para trás e outra para frente.
-function janelas(hoje=hojeBrasil()){return [{de:somarDias(hoje,-91),ate:somarDias(hoje,1)},{de:somarDias(hoje,1),ate:somarDias(hoje,93)}];}
+// Só o histórico e o dia de hoje: o instrutor não vê os próximos dias (decisão do João em 04/11).
+function janelas(hoje=hojeBrasil()){return [{de:somarDias(hoje,-91),ate:somarDias(hoje,1)}];}
 
 export function criarServicoInstrutor(){
  let rotaAulas=true,rotaAgenda=true,ultimo=null;

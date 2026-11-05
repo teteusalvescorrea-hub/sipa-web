@@ -23,14 +23,12 @@ export function desempenhoInstrutor(aulas,id,periodo,instante=new Date()){
 }
 export const DIAS_SEMANA=Object.freeze(['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']);
 const rotuloDia=dia=>dia.slice(8)+'/'+dia.slice(5,7);
-// Cinco tons da rampa do mapa de calor: 0 só para célula vazia.
-export function nivelCalor(valor,maximo){return !valor||!maximo?0:Math.min(4,Math.max(1,Math.ceil(valor/maximo*4)));}
 export function escalaEixo(maximo){const passo=Math.max(1,Math.ceil(Math.max(1,maximo)/3));return [0,passo,passo*2,passo*3];}
-// Aulas ativas (sem canceladas e recusadas) de segunda a sábado da semana de Brasília; domingo entra se tiver aula ou for hoje.
+// Aulas ativas (sem canceladas e recusadas) da semana de Brasília até hoje (o instrutor não vê os próximos dias); domingo entra se tiver aula ou for hoje.
 export function aulasDaSemana(aulas,id,instante=new Date()){
  const {inicio}=periodoDesempenho('semana',{},instante),hoje=agoraBrasil(new Date(instante)).slice(0,10),contagem=new Map();
  for(const x of aulasUnicas(aulas,id))if(![2,4].includes(x.a.status))contagem.set(x.dia,(contagem.get(x.dia)||0)+1);
- return Array.from({length:7},(_,i)=>{const dia=somarDias(inicio,i);return {dia,rotulo:DIAS_SEMANA[diaSemana(dia)],total:contagem.get(dia)||0};}).filter(d=>diaSemana(d.dia)!==0||d.total||d.dia===hoje);
+ return Array.from({length:7},(_,i)=>{const dia=somarDias(inicio,i);return {dia,rotulo:DIAS_SEMANA[diaSemana(dia)],total:contagem.get(dia)||0};}).filter(d=>d.dia<=hoje&&(diaSemana(d.dia)!==0||d.total||d.dia===hoje));
 }
 // Bloco "Meu desempenho" do Início: tudo calculado com as aulas já carregadas, em dias de Brasília.
 export function painelDesempenho(aulas,id,dias=30,instante=new Date()){
@@ -40,13 +38,8 @@ export function painelDesempenho(aulas,id,dias=30,instante=new Date()){
  // A primeira semana pode começar antes do período: "desde" diz a partir de quando ela foi contada.
  for(let s=primeira;s<=hoje;s=somarDias(s,7))semanas.push({inicio:s,rotulo:rotuloDia(s),desde:s<periodo.inicio?rotuloDia(periodo.inicio):null,realizadas:0,faltas:0});
  for(const x of feitas)semanas[Math.floor((Date.parse(x.dia+'T12:00:00Z')-Date.parse(primeira+'T12:00:00Z'))/6048e5)][x.a.status===5?'realizadas':'faltas']++;
- const porCelula=new Map(),horasUsadas=realizadas.map(x=>Number(agoraBrasil(new Date(x.tempo)).slice(11,13)));
- realizadas.forEach((x,i)=>{const chave=diaSemana(x.dia)+'|'+horasUsadas[i];porCelula.set(chave,(porCelula.get(chave)||0)+1);});
- const primeiraHora=Math.min(...horasUsadas),horas=horasUsadas.length?Array.from({length:Math.max(...horasUsadas)-primeiraHora+1},(_,i)=>primeiraHora+i):[];
- const diasCalor=[1,2,3,4,5,6,...(realizadas.some(x=>diaSemana(x.dia)===0)?[0]:[])],linhas=horas.length?diasCalor.map(d=>({dia:d,rotulo:DIAS_SEMANA[d],valores:horas.map(h=>porCelula.get(d+'|'+h)||0)})):[];
- const proximos=Array.from({length:7},(_,i)=>somarDias(hoje,i+1)).map(dia=>{const doDia=lista.filter(x=>x.dia===dia);return {dia,rotulo:DIAS_SEMANA[diaSemana(dia)]+' '+rotuloDia(dia),confirmadas:doDia.filter(x=>x.a.status===1).length,aguardando:doDia.filter(x=>x.a.status===3).length};}).filter(d=>diaSemana(d.dia)!==0||d.confirmadas+d.aguardando);
  const categorias=new Map();for(const x of realizadas){const c=x.a.categoria||'—';categorias.set(c,(categorias.get(c)||0)+1);}
  return {periodo,dias,realizadas:realizadas.length,faltas,presenca:feitas.length?Math.round(realizadas.length/feitas.length*100):null,mediaSemana:Math.round(realizadas.length/(dias/7)*10)/10,
-  aguardandoRegistro:lista.filter(x=>x.a.status===1&&x.termino<=agora).length,semanas,calor:{horas,linhas,maximo:Math.max(0,...linhas.flatMap(l=>l.valores))},proximos,
+  aguardandoRegistro:lista.filter(x=>x.a.status===1&&x.termino<=agora).length,semanas,
   categorias:[...categorias].map(([categoria,total])=>({categoria,total})).sort((a,b)=>b.total-a.total||a.categoria.localeCompare(b.categoria))};
 }
