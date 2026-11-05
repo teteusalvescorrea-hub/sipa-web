@@ -7,6 +7,7 @@ import { obterToken, limparSessao, urlLogin } from "./sessao.js";
 
 // opcoes.cabecalhos: cabeçalhos extras (ex.: Idempotency-Key).
 // opcoes.binario: devolve o Blob da resposta (documento do atestado).
+// opcoes.comTotal: devolve { itens, total }, com o total do X-Total-Count.
 // Corpo FormData vai como multipart, sem Content-Type (o navegador põe o boundary).
 async function requisicao(metodo, rota, corpo, opcoes = {}) {
 
@@ -55,6 +56,12 @@ async function requisicao(metodo, rota, corpo, opcoes = {}) {
 
     if (!resposta.ok) {
         throw new ApiErro(resposta.status, dados);
+    }
+
+    // opcoes.comTotal: lista paginada com o total no cabeçalho X-Total-Count (ex.: caixa de conversas).
+    if (opcoes.comTotal) {
+        const itens = Array.isArray(dados) ? dados : [], cabecalho = resposta.headers?.get?.("X-Total-Count"), total = Number(cabecalho);
+        return { itens, total: cabecalho && Number.isFinite(total) && total >= 0 ? total : itens.length };
     }
 
     return dados;

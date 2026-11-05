@@ -1,5 +1,6 @@
 import {podeConsultarAdministrativoAluno,vinculoAdministrativoAluno,exigirAdministrativoAluno,aulaSemAdministracaoAlheia} from '../shared/js/escopoAlunoAdministrativo.js';
 import {antecipacaoLocal} from './operador/antecipacaoLocal.js';
+import {mensagensLocal} from './operador/mensagensLocal.js';
 import {servicoOperador} from '../nivel-1-operador/js/servicoOperador.js';
 import * as regras from '../nivel-1-operador/js/dominioOperador.js';
 import {editarCadastro,provasDoAluno,SITUACOES_PROVA} from '../nivel-1-operador/js/fichaOperador.js';
@@ -44,5 +45,6 @@ export function criarServicoAdministrativo(adaptador,op,opcoes={}){
   cancelarAula:(id,d)=>mudar(e=>{const a=e.aulas.find(a=>a.id===id);if(!operavel(e,a))throw new Error('Aula fora do escopo.');return regras.cancelarAulaRecepcao(e,contextoAula(a),id,d);}),
   async relatorio(f){return gerarRelatorio(permitido(await adaptador.ler()),op,f);},
   ...antecipacaoLocal(op),
+  ...mensagensLocal(op),
  };
 }

@@ -9,6 +9,7 @@ import {UNIDADES,unidade} from '../../nivel-1-operador/js/dominioOperador.js';
 import {prepararRedefinicaoAlunoLocal,prepararAcessoAluno,resumirSegredo} from '../aluno/contaRecepcao.js';
 import {prepararCenarioAgenda} from './cenarioAgenda.js';
 import {antecipacaoLocal} from './antecipacaoLocal.js';
+import {mensagensLocal} from './mensagensLocal.js';
 import {criarPoliticaCpfLocal} from './politicaCpf.js';
 import {exigirPerfil,sair,transacaoAdministrativaEmCurso,exigirPersistenciaEstavel} from '../autenticacao.js';
 
@@ -44,4 +45,6 @@ export async function iniciarAtendimentoLocal(raiz,template,endereco) {
     const servico=servicoOperador(adaptador,identidade,{prepararRedefinicao:prepararRedefinicaoAlunoLocal,prepararAcesso:prepararAcessoAluno,hashPedido:resumirSegredo,cadastrarInstrutor:async transformar=>(await import('../autenticacao.js')).cadastrarInstrutor(adaptador.alterar,transformar),politicaCpfLocal:criarPoliticaCpfLocal(endereco)});
     const ui=await montarUnidade(raiz,template,servico,{sair:async()=>{await sair();location.replace('/login.html');}});
     if(identidade.permissoes.includes('antecipar')){const host=ui.registrarSecao('antecipacao','Antecipa\u00e7\u00e3o de aulas');raiz.querySelector('[data-op-nav=antecipacao]').addEventListener('click',async()=>{try{await (await import('../../shared/components/antecipacaoPainel.js')).montarAntecipacaoPainel(host,{...servico,...antecipacaoLocal(identidade)},raiz);}catch(e){host.textContent=e.message;}});}
+    // Mensagens: a conversa com o aluno só existe com a API; aqui a seção abre com a lista vazia.
+    if(identidade.permissoes.includes('mensagens')){const host=ui.registrarSecao('mensagens','Mensagens','Conversas dos alunos com a Recepção.');raiz.querySelector('[data-op-nav=mensagens]').addEventListener('click',async()=>{try{await (await import('../../shared/components/mensagensPainel.js')).montarMensagensPainel(host,{...servico,...mensagensLocal(identidade)},raiz,ui);}catch(e){host.textContent=e.message;}});}
 }

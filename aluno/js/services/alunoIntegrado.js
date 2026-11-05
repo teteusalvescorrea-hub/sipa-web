@@ -29,6 +29,11 @@ export function adaptarInteresse(i){
   situacao:SITUACAO_INTERESSE[s]??i?.situacao?.descricao??(typeof s==='string'?s:'Aguardando'),aberto:![3,4].includes(s),marcadoEm:i?.marcadoEm??i?.criadoEm??null};
 }
 
+// Conversa com a Recepção (ConversasDtos.cs): datas em Brasília sem fuso. O aluno vê o painel de quem escreveu
+// ("Recepção", "Gerência"), não o nome do membro.
+export const adaptarConversaAluno=c=>({autoescolaId:c?.autoescolaId,autoescola:c?.autoescola||'Autoescola',conversaId:c?.conversaId??null,ultimaMensagemEm:comFusoBrasil(c?.ultimaMensagemEm)??null,naoLidas:Number(c?.naoLidas)||0,podeEnviar:c?.podeEnviar===true});
+export const adaptarMensagemConversa=m=>({id:m?.id,texto:m?.texto??'',em:comFusoBrasil(m?.em)??null,daEquipe:m?.daEquipe===true,remetente:m?.remetente||(m?.daEquipe?'Recepção':'Você')});
+
 // Solicitação médica (SolicitacaoMedicaReadDto) no formato de solicitacoesMedicas.js.
 export function adaptarSolicitacao(s,alunoId){
  if(!s)return null;
@@ -132,7 +137,7 @@ function janelas(hoje=hojeBrasil()){
 export function criarServicoAluno(){
  let dados=null,carregando=null;
  const dias=new Map(),recursosVistos=new Map();
- const capacidades=Object.freeze({cancelamento:true,reservas:true,senha:true,interesse:true,automatico:false,configuracaoRecursos:false});
+ const capacidades=Object.freeze({cancelamento:true,reservas:true,senha:true,interesse:true,conversa:true,automatico:false,configuracaoRecursos:false});
  const pendente=async()=>{throw new Error('O agendamento automático ainda não está disponível. Use o agendamento manual.');};
  const invalidar=()=>{dados=null;dias.clear();};
  const opcional=p=>p.then(v=>v,()=>null);
@@ -236,6 +241,16 @@ export function criarServicoAluno(){
   politicaSenhaLocal:{minimo:8,maximo:128},
   marcarInteresse,desmarcarInteresse,listarInteresses,
   marcarMensagemLida:async id=>{try{await api.Post('alunos/me/mensagens/'+id+'/leitura');}catch(e){throw comoErro(e);}finally{invalidar();}},
+  // Conversa com a Recepção (uma por autoescola em que o aluno tem matrícula), separada dos avisos.
+  conversas:async()=>{try{return (await api.Get('alunos/me/conversas')||[]).map(adaptarConversaAluno);}catch(e){throw comoErro(e);}},
+  mensagensConversa:async autoescolaId=>{try{return (await api.Get(api.ComParams('alunos/me/conversas/'+autoescolaId+'/mensagens',{tamanho:100}))||[]).map(adaptarMensagemConversa);}catch(e){throw comoErro(e);}},
+  enviarMensagemRecepcao:async(autoescolaId,texto,chave)=>{
+   const t=String(texto??'').trim();if(!t||t.length>2000)throw new Error('Mensagem deve ter entre 1 e 2000 caracteres.');
+   try{return adaptarMensagemConversa(await api.Post('alunos/me/conversas/'+autoescolaId+'/mensagens',{texto:t},{cabecalhos:{'Idempotency-Key':chave||chaveOperacao()}}));}catch(e){throw comoErro(e);}
+  },
+  marcarConversaLida:async autoescolaId=>{try{await api.Post('alunos/me/conversas/'+autoescolaId+'/leitura');}catch(e){throw comoErro(e);}},
+  // Sino e item Mensagens: avisos não lidos + mensagens da Recepção não lidas. Uma falha conta como zero naquela parte.
+  totalNaoLidas:async()=>{const [avisos,conversa]=await Promise.all([opcional(api.Get('alunos/me/mensagens/nao-lidas')),opcional(api.Get('alunos/me/conversas/nao-lidas'))]);return (Number(avisos?.total??avisos)||0)+(Number(conversa?.total??conversa)||0);},
   // Agendamento automático: F13 (D19).
   buscarAgendamentoAutomatico:pendente,salvarPreferenciasAutomaticas:pendente};
 }

@@ -88,7 +88,9 @@ const TELAS_DA_CAPACIDADE=Object.freeze({
  'decidir-atestado':[['decisao-atestados','atualiza']],'corrigir-decisao':[['decisao-atestados','remove']],relatorios:[['relatorios','le']],
  'editar-cadastro':[['alunos','atualiza']],'editar-categoria':[['correcoes','atualiza']],'gerenciar-situacao':[['correcoes','atualiza']],'corrigir-registro':[['correcoes','atualiza']],
  'excluir-cadastro':[['exclusoes','remove']],'gestao-acessos':[['equipe','cria']],'gerir-permissoes':[['papeis','cria']],auditoria:[['auditoria','le']],
- configurar:[['unidades','atualiza']],'gestao-global':[],'excecao-agenda':[['excecao-agenda','atualiza']]
+ configurar:[['unidades','atualiza']],'gestao-global':[],'excecao-agenda':[['excecao-agenda','atualiza']],
+ // Conversa com o aluno: sem tela própria, usa a de Alunos (Ler para ver, Atualizar para escrever).
+ mensagens:[['alunos','le']],'responder-mensagem':[['alunos','atualiza']]
 });
 export function capacidadesDoMembro(me,perfil){
  const doPerfil=permissoesDoPerfil(perfil);
@@ -213,6 +215,14 @@ export function adaptarLiberado(h,u){
    aulas:(x.aulas||[]).map(a=>{const ai=String(a.dataHoraInicio||'');return {id:a.id??a.agendamentoId,data:ai.slice(0,10),inicio:ai.slice(11,16),horasUteis:a.horasUteis??null,dentroPrazo:a.dentroPrazo!==false};})}))};
 }
 function observacaoInteresse(v){const t=String(v??'').trim();if(t.length>500)throw new Error('Use no máximo 500 caracteres na observação.');return t||null;}
+// Conversa com o aluno (ConversasDtos.cs). Datas em Brasília sem fuso; o front põe o -03:00.
+export const TEXTO_MENSAGEM_MAXIMO=2000;
+export function textoMensagem(v){const t=String(v??'').trim();if(!t||t.length>TEXTO_MENSAGEM_MAXIMO)throw new Error('Mensagem deve ter entre 1 e '+TEXTO_MENSAGEM_MAXIMO+' caracteres.');return t;}
+export const adaptarMensagemConversa=m=>({id:m.id,texto:m.texto??'',em:comFusoBrasil(m.em)??null,daEquipe:m.daEquipe===true,remetente:m.remetente||(m.daEquipe?'Recepção':'Aluno'),autor:m.autor??null});
+export function adaptarConversaEquipe(c,u){
+ return {id:c.id,alunoId:c.alunoId,aluno:c.aluno||'Aluno não informado',unidadeId:c.unidadeId,unidade:u.chave(c.unidadeId?{id:c.unidadeId,nome:c.unidade}:c.unidade),unidadeNome:c.unidade||'',
+  ultimaMensagemEm:comFusoBrasil(c.ultimaMensagemEm)??null,ultimaMensagem:c.ultimaMensagem||'',ultimaDoAluno:c.ultimaDoAluno===true,naoLida:c.naoLida===true,podeResponder:c.podeResponder===true};
+}
 // Por quanto tempo uma listagem lida da API é reaproveitada (ver GetCache).
 const VALIDADE_CACHE=15000;
 
@@ -463,6 +473,25 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    return chamar(Post(`antecipacoes/interesses/${id}/remarcacao`,{agendamentoAnteriorId:aulaId,motoristaId:instrutorId,veiculoId},comChave(chave)));
   },
   async descartarInteresse(id,observacao){exigirCapacidade(op,'antecipar',1);return chamar(Post(`antecipacoes/interesses/${id}/descarte`,{observacao:observacaoInteresse(observacao)}));},
+  // ---- conversa com o aluno: caixa da equipe (escopo pelas unidades na API). Leituras sem cache: o contador e a
+  // conversa aberta consultam a cada 15 s.
+  async conversas(f={}){
+   exigirCapacidade(op,'mensagens',1);if(f.unidade&&!op.unidades.includes(f.unidade))throw new Error('Unidade não autorizada.');
+   const r=await chamar(Get(ComParams('conversas',{unidadeId:f.unidade?u.guid(f.unidade):undefined,busca:String(f.busca||'').trim()||undefined,somenteNaoLidas:f.somenteNaoLidas?true:undefined,pagina:f.pagina||1,tamanho:f.tamanho||20}),{comTotal:true}));
+   return {itens:r.itens.map(c=>adaptarConversaEquipe(c,u)),total:r.total};
+  },
+  async conversa(id){
+   exigirCapacidade(op,'mensagens',1);const r=await chamar(Get(ComParams('conversas/'+id,{tamanho:100})));
+   return {conversa:adaptarConversaEquipe(r.conversa||{},u),mensagens:(r.mensagens||[]).map(adaptarMensagemConversa)};
+  },
+  async totalMensagensNaoLidas(){exigirCapacidade(op,'mensagens',1);const r=await opcional(Get('conversas/nao-lidas'),0);return Number(r?.total??r)||0;},
+  async marcarConversaLida(id){exigirCapacidade(op,'mensagens',1);await chamar(Post(`conversas/${id}/leitura`));},
+  async enviarMensagemConversa(id,texto,chave){exigirCapacidade(op,'responder-mensagem',1);return adaptarMensagemConversa(await chamar(Post(`conversas/${id}/mensagens`,{texto:textoMensagem(texto)},comChave(chave))));},
+  // Iniciar pela ficha: a API acha ou cria a conversa do aluno (sem conversa vazia).
+  async enviarMensagemAluno(alunoId,texto,chave){
+   exigirCapacidade(op,'responder-mensagem',1);const r=await chamar(Post(`alunos/${alunoId}/conversa/mensagens`,{texto:textoMensagem(texto)},comChave(chave)));
+   return {conversaId:r?.conversaId,mensagem:r?.mensagem?adaptarMensagemConversa(r.mensagem):null};
+  },
   // ---- Gerência e Master
   async decidirAtestado(id,d){
    exigirCapacidade(op,'decidir-atestado');if(!['aprovado','rejeitado'].includes(d.resultado)||d.confirmado!==true)throw new Error('Confirme a decisão com identificador válido.');

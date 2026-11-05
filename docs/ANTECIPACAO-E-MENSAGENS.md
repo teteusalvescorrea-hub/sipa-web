@@ -18,11 +18,21 @@
 
 ## Mensagens do aluno
 
-A caixa de mensagens continua lendo `aluno.avisosInternos` (`shared/js/mensagensAluno.js`), com leituras separadas em `aluno.leiturasMensagens`. Não há mais ofertas de antecipação nem fila de WhatsApp.
+A tela Mensagens do aluno tem duas abas:
+
+- **Avisos**: os avisos automáticos do sistema (aula remarcada, interesse, solicitação médica), só de leitura. Continua lendo `aluno.avisosInternos` (`shared/js/mensagensAluno.js`); no modo integrado vêm de `GET alunos/me/mensagens`. Não há mais ofertas de antecipação nem fila de WhatsApp.
+- **Conversa com a Recepção**: nos dois sentidos, uma conversa por autoescola em que o aluno tem matrícula (com mais de uma, aparece o seletor). O aluno escreve e lê as respostas; a leitura é registrada ao abrir a aba. Sem matrícula ativa, o histórico continua legível, sem envio. Só existe no modo integrado: no modo local as abas ficam escondidas.
+
+O sino e o item Mensagens somam os avisos e a conversa não lidos (`GET alunos/me/mensagens/nao-lidas` + `GET alunos/me/conversas/nao-lidas`), consultados a cada 15 s e ao voltar para a janela, em todas as páginas do aluno.
+
+Recepção e Gerência têm a seção **Mensagens** (o Master não): contador de conversas com mensagem do aluno não lida no item do menu (15 s e foco), lista com busca por nome ou CPF, unidade e "Somente não lidas", e a conversa aberta com resposta. A leitura é uma marca só para a equipe: quem abre marca como lida para todos. A conversa usa a tela Alunos do papel (Ler para ver, Atualizar para responder) e o escopo das unidades; sem gravação na unidade, a conversa fica "Somente leitura nesta unidade.". "Enviar mensagem" (Ações ⋯ da lista de alunos e barra da ficha) abre um diálogo com a primeira mensagem e, depois de enviar, a conversa. Sem e-mail, anexos ou financeiro. Na demonstração local a seção abre com a lista vazia (`dev/operador/mensagensLocal.js`).
+
+Rotas: aluno `GET alunos/me/conversas`, `GET alunos/me/conversas/nao-lidas`, `GET|POST alunos/me/conversas/{autoescolaId}/mensagens` e `POST alunos/me/conversas/{autoescolaId}/leitura`; equipe `GET conversas` (total no `X-Total-Count`), `GET conversas/nao-lidas`, `GET conversas/{id}`, `POST conversas/{id}/mensagens|leitura` e `POST alunos/{id}/conversa/mensagens`.
 
 ## Arquivos
 
 - Aluno: `aluno/js/components/painelAluno.js` (botão de interesse e aba Interesses), `aluno/js/services/alunoIntegrado.js` (rotas do aluno), `aluno/css/agendamento.css` e `aluno/css/minhas-aulas.css`.
 - Equipe: `shared/components/antecipacaoPainel.js`, `shared/components/menuAcoes.js`, `shared/css/antecipacao.css`, `shared/js/avisoAntecipacao.js` (contador do menu) e `shared/js/services/administracaoIntegrada.js` (rotas da equipe).
-- Demonstração: `dev/operador/antecipacaoLocal.js`.
-- Testes: `tests/antecipacao-interesses.test.mjs`.
+- Conversa: `aluno/js/components/conversaAluno.js`, `aluno/js/components/mensagensAluno.js` (sino), `shared/components/mensagensPainel.js`, `shared/css/mensagens-equipe.css` e `shared/js/avisoMensagens.js` (contador do menu e "Enviar mensagem").
+- Demonstração: `dev/operador/antecipacaoLocal.js` e `dev/operador/mensagensLocal.js`.
+- Testes: `tests/antecipacao-interesses.test.mjs`, `tests/mensagens-recepcao.test.mjs` e `tests/conversa-aluno.test.mjs`.

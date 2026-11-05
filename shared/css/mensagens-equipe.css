@@ -1,0 +1,26 @@
+.sipa-mensagens-equipe{min-width:0;color:var(--sipa-texto-neutro)}
+.sipa-mensagens-equipe .adm-nota{font-size:13px;line-height:1.6;margin:8px 0 12px}
+/* Filtros numa linha, como na tela de alunos: busca, unidade, "Somente não lidas" e "Limpar filtros" no fim. */
+.msg-filtros{display:grid;grid-template-columns:minmax(180px,1.6fr) minmax(140px,1fr) auto auto;gap:10px;align-items:end;margin-bottom:12px}
+.msg-filtro{display:grid;gap:6px;min-width:0;font-size:13px}.msg-filtro :is(input[type=search],select){min-width:0;width:100%;font-size:14px}
+.msg-filtro-marca{display:flex;gap:8px;align-items:center;min-height:32px;white-space:nowrap}.msg-filtro-marca input{width:18px;min-height:18px;margin:0;accent-color:#1769aa}
+.msg-filtro-acoes{display:flex;align-items:flex-end}.msg-filtro-acoes button{min-height:32px;padding:6px 10px;font-size:11px}
+.msg-retorno{line-height:1.6;margin:0}.msg-retorno:empty{display:none}
+.msg-tabela{width:100%}.msg-trecho{display:block;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg-tabela tr[data-nao-lida=true] .op-link{font-weight:700}
+.msg-situacao{display:inline-block;padding:3px 8px;border-radius:6px;font-size:12px;background:#edf5fc;color:#12578f;white-space:nowrap}
+/* Conversa aberta: cabeçalho com Voltar, mensagens em balões discretos (equipe à direita) e a resposta embaixo. */
+.msg-cabecalho{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.msg-titulo{display:grid;gap:2px;margin-right:auto;min-width:0}.msg-titulo span{font-size:13px;color:var(--op-muted,#5b6570)}
+.msg-lista{list-style:none;margin:0 0 12px;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:min(56vh,520px);overflow:auto;border:1px solid var(--op-line,#c6ccd2);border-radius:8px;background:var(--op-soft,#f7f9fb)}
+.msg-item{max-width:min(72%,620px);padding:8px 12px;border:1px solid var(--op-line,#c6ccd2);border-radius:8px;background:#fff;align-self:flex-start;overflow-wrap:anywhere}
+.msg-item[data-autor=equipe]{align-self:flex-end;border-color:#b9cfe3;background:#f3f8fc}
+.msg-topo{display:flex;gap:10px;justify-content:space-between;margin:0 0 4px;font-size:12px;color:var(--op-muted,#5b6570)}.msg-topo strong{font-weight:600;color:var(--sipa-texto-neutro,#1d2329)}
+.msg-texto{margin:0;white-space:pre-wrap;line-height:1.5;font-size:14px}.msg-vazio{color:var(--op-muted,#5b6570);font-size:14px}
+.msg-form{display:grid;gap:6px}.msg-form label{display:grid;gap:6px;font-size:13px}.msg-form textarea{width:100%;box-sizing:border-box;resize:vertical;font:inherit;font-size:14px}
+.msg-form-rodape{display:flex;gap:10px;align-items:center;justify-content:flex-end}.msg-contador{margin-right:auto;font-size:12px;color:var(--op-muted,#5b6570)}
+.msg-somente-leitura{margin:0;font-size:13px;color:var(--op-muted,#5b6570)}
+.msg-dialogo{width:min(560px,calc(100vw - 32px))}
+html[data-theme=dark] .msg-lista{background:#14273a}html[data-theme=dark] .msg-item{background:#172b40;border-color:#3b5268;color:#f4f7fb}html[data-theme=dark] .msg-item[data-autor=equipe]{background:#1d3044;border-color:#4d6a86}
+html[data-theme=dark] .msg-topo strong{color:#f4f7fb}html[data-theme=dark] :is(.msg-topo,.msg-contador,.msg-somente-leitura,.msg-titulo span,.msg-vazio){color:#b9c6d3}html[data-theme=dark] .msg-situacao{background:#1d3044;color:#cfe3f5}
+@media(max-width:900px){.msg-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.msg-filtros>.msg-filtro:first-child{grid-column:1/-1}}
+@media(max-width:700px){.msg-tabela thead{display:none}.msg-tabela,.msg-tabela tbody,.msg-tabela tr,.msg-tabela td{display:block;width:auto}.msg-tabela tr{border:1px solid var(--op-line,#c6ccd2);border-radius:8px;padding:10px;margin:8px 0}.msg-tabela td{display:flex;gap:10px;padding:5px 0;border:0;min-width:0}.msg-tabela td::before{content:attr(data-rotulo) ':';font-weight:600;flex:0 0 110px}.msg-tabela td.op-demo-no-results::before{content:none}.msg-trecho{white-space:normal}.msg-item{max-width:88%}}

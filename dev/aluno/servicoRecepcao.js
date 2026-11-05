@@ -74,7 +74,8 @@ export function criarServicoContaRecepcao(){
  }
  return {
   documentoMedico:id=>documentoMedico(id),metadadosDocumentoMedico:id=>documentoMedico(id,true),
-  capacidades:{cancelamento:true,configuracaoRecursos:false},dadosAlunoLocal,carregar:dadosAlunoLocal,
+  // conversa:false: a conversa com a Recepção só existe com a API; no modo local a página Mensagens mostra só os avisos.
+  capacidades:{cancelamento:true,configuracaoRecursos:false,conversa:false},dadosAlunoLocal,carregar:dadosAlunoLocal,
   alterarSenhaLocal:alterarSenhaContaRecepcao,politicaSenhaLocal:{minimo:4,maximo:128},
   sessao:async()=>{const {aluno}=await consultarMinhaContaRecepcao();return {interface:'aluno',identificador:aluno.cpf,alunoId:aluno.id};},registros:async()=>(await dadosAlunoLocal()).registros,sair:sairContaRecepcao,
   disponibilidadeLocal:async q=>calcular(await dadosAlunoLocal(),q),

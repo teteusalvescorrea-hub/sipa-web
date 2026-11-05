@@ -3,3 +3,34 @@
 .mensagem-item[data-nao-lida=true] .mensagem-situacao{font-weight:700;color:#1769ab}
 html[data-theme=dark] .mensagem-item[data-nao-lida=true]{background:#1d344b;border-left-color:#7dbbf0}
 html[data-theme=dark] .mensagem-item[data-nao-lida=true] .mensagem-situacao{color:#a3d1fa}
+/* Abas "Avisos" e "Conversa com a Recepção": sublinhadas, sem cor de destaque além do azul do SIPA. */
+.mensagens-abas{display:flex;gap:4px;margin:0 0 16px;border-bottom:1px solid var(--profile-border,#b9c8d7);overflow-x:auto}
+.mensagens-abas[hidden]{display:none}
+.mensagens-abas [role=tab]{display:inline-flex;gap:8px;align-items:center;padding:10px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--sipa-texto-neutro,#000);font:inherit;font-size:14px;cursor:pointer;white-space:nowrap}
+.mensagens-abas [role=tab][aria-selected=true]{border-bottom-color:#1769ab;font-weight:600}
+.mensagens-abas [role=tab]:focus-visible{outline:2px solid #1769ab;outline-offset:-2px}
+.mensagens-aba-contador{min-width:20px;padding:1px 6px;border-radius:10px;background:#1769ab;color:#fff;font-size:12px;line-height:18px;text-align:center}
+.mensagens-aba-contador[hidden]{display:none}
+/* Conversa: balões discretos, o aluno à direita e a Recepção à esquerda; borda e fundo neutros. */
+.conversa-recepcao{display:grid;gap:12px;max-width:820px;min-width:0}
+.conversa-recepcao[hidden]{display:none}
+.conversa-autoescola{display:grid;gap:6px;max-width:360px;font-size:14px}.conversa-autoescola[hidden]{display:none}
+.conversa-autoescola select{padding:8px 10px;border:1px solid var(--profile-border,#b9c8d7);border-radius:8px;background:var(--profile-card,#fff);color:var(--sipa-texto-neutro,#000);font:inherit}
+.conversa-aviso{margin:0;font-size:14px;line-height:1.5}.conversa-aviso:empty{display:none}
+.conversa-lista{list-style:none;margin:0;padding:12px;display:flex;flex-direction:column;gap:10px;max-height:min(58vh,560px);overflow:auto;border:1px solid var(--profile-border,#b9c8d7);border-radius:10px;background:var(--profile-card,#fff)}
+.conversa-lista[hidden]{display:none}
+.conversa-item{max-width:min(78%,560px);padding:8px 12px;border:1px solid var(--profile-border,#b9c8d7);border-radius:10px;background:#f6f8fa;align-self:flex-start;overflow-wrap:anywhere}
+.conversa-item[data-autor=aluno]{align-self:flex-end;background:#f0f6fc;border-color:#b9cfe3}
+.conversa-topo{display:flex;gap:10px;justify-content:space-between;margin:0 0 4px;font-size:12px;opacity:.85}.conversa-topo strong{font-weight:600}
+.conversa-texto{margin:0;white-space:pre-wrap;line-height:1.5;font-size:14px}.conversa-vazio{font-size:14px;opacity:.85}
+.conversa-form{display:grid;gap:6px}.conversa-form[hidden]{display:none}.conversa-form label{font-size:14px;font-weight:600}
+.conversa-form textarea{width:100%;box-sizing:border-box;padding:10px;border:1px solid var(--profile-border,#b9c8d7);border-radius:8px;background:var(--profile-card,#fff);color:var(--sipa-texto-neutro,#000);font:inherit;font-size:14px;resize:vertical}
+.conversa-form textarea:focus-visible{outline:2px solid #1769ab;outline-offset:1px}
+.conversa-form-rodape{display:flex;gap:10px;align-items:center;justify-content:flex-end}.conversa-contador{margin-right:auto;font-size:12px;opacity:.85}
+.conversa-form button{padding:10px 18px;border:1px solid #1769ab;border-radius:8px;background:#1769ab;color:#fff;font:inherit;cursor:pointer}.conversa-form button:disabled{opacity:.6;cursor:default}
+.conversa-erro{margin:0;font-size:14px;color:#a12a2a}.conversa-erro:empty{display:none}
+html[data-theme=dark] .mensagens-abas [role=tab]{color:#f4f7fb}html[data-theme=dark] .mensagens-abas [role=tab][aria-selected=true]{border-bottom-color:#7dbbf0}
+html[data-theme=dark] :is(.conversa-lista,.conversa-form textarea,.conversa-autoescola select){background:#172b40;color:#f4f7fb;border-color:#667c93}
+html[data-theme=dark] .conversa-item{background:#1d3044;border-color:#4d6a86;color:#f4f7fb}html[data-theme=dark] .conversa-item[data-autor=aluno]{background:#1d344b;border-color:#5d7f9f}
+html[data-theme=dark] .conversa-erro{color:#f3a6a6}
+@media(max-width:600px){.conversa-item{max-width:90%}.mensagens-abas [role=tab]{padding:10px}}
