@@ -20,6 +20,8 @@ export function dataExcel(valor){
 }
 const numero=v=>typeof v==='number'?(Number.isFinite(v)?v:null):/^-?\d+([.,]\d+)?$/.test(String(v??'').trim())?Number(String(v).trim().replace(',','.')):null;
 const texto=(v,estilo=0)=>({t:String(v??''),estilo});
+// Texto longo de uma célula só (aviso de vazio, observação): transborda para a direita e não alarga a coluna.
+const livre=(v,estilo=0)=>({...texto(v,estilo),livre:true});
 function celula(coluna,bruto,apresentado,tipo){
  if(COLUNAS_DATA.includes(coluna)||coluna==='Agrupamento'&&tipo==='dias'){const d=dataExcel(bruto);if(d)return d;}
  if(COLUNAS_NUMERO.includes(coluna)){const n=numero(bruto);if(n!=null)return {n,estilo:coluna==='Ocupação %'?ESTILO.percentual:ESTILO.numero};}
@@ -32,14 +34,14 @@ export function linhasPlanilha(relatorio,meta={},agora=new Date()){
  if(meta.filtros?.length)linhas.push([texto('Filtros da consulta',ESTILO.cabecalho),texto('Seleção',ESTILO.cabecalho)],...meta.filtros.map(([a,b])=>[texto(a,ESTILO.texto),texto(b,ESTILO.texto)]),[]);
  const inicioTabela=linhas.length;
  linhas.push(r.colunas.map(c=>texto(c,ESTILO.cabecalho)));
- if(!relatorio.linhas.length)linhas.push([texto('Nenhum registro encontrado para os filtros selecionados.',ESTILO.texto)]);
+ if(!relatorio.linhas.length)linhas.push([livre('Nenhum registro encontrado para os filtros selecionados.',ESTILO.texto)]);
  relatorio.linhas.forEach((l,i)=>linhas.push(r.colunas.map((c,j)=>celula(c,l[j],r.linhas[i][j],tipo))));
  linhas.push([],[texto('Resumo do período',ESTILO.negrito)]);
  for(const [k,v] of Object.entries(r.totais||{}))linhas.push([texto(ROTULOS_RESUMO[k]||k,ESTILO.texto),v==null?texto('Sem base elegível',ESTILO.texto):typeof v==='number'?{n:v,estilo:k==='ocupacao'?ESTILO.percentual:ESTILO.numero}:texto(v,ESTILO.texto)]);
- linhas.push([],[texto(OBSERVACAO)]);
+ linhas.push([],[livre(OBSERVACAO)]);
  return {linhas,inicioTabela,colunas:r.colunas};
 }
-function larguraCelula(c){if(!c)return 0;if(c.n!=null)return c.estilo===ESTILO.dataHora?17:c.estilo===ESTILO.data?12:8;return c.t.length+2;}
+function larguraCelula(c){if(!c||c.livre)return 0;if(c.n!=null)return c.estilo===ESTILO.dataHora?17:c.estilo===ESTILO.data?12:8;return c.t.length+2;}
 export function planilhaXml({linhas,inicioTabela,colunas}){
  const tabela=linhas.slice(inicioTabela),larguras=colunas.map((c,j)=>Math.min(60,Math.max(10,...tabela.map(l=>larguraCelula(l[j])))));
  const cols=larguras.length?'<cols>'+larguras.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols>':'';

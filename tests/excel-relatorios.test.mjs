@@ -52,6 +52,8 @@ test('xlsx de agrupamentos grava quantidades como número; relatório vazio mant
  const e={alunos:[],recursos:[],aulas:[aula(0,5),aula(1,6),aula(5,5)]},r=gerarRelatorio(e,op,{tipo:'dias',inicio:'2026-10-19',fim:'2026-10-28'}),s=abrirZip(criarExcelRelatorio(r,{titulo:'Distribuição por dia'}).bytes)['xl/worksheets/sheet1.xml'];
  const l=celulas(s,8);assert.equal(l[0].s,ESTILO.data);assert.equal(l[0].v,'46314');assert.deepEqual(l.slice(1).map(c=>[c.s,c.v]),[[7,'2'],[7,'0'],[7,'2'],[7,'2'],[7,'0'],[7,'0']]);
  const vazio=abrirZip(criarExcelRelatorio({...r,linhas:[]},{}).bytes)['xl/worksheets/sheet1.xml'];assert.ok(vazio.includes('Nenhum registro encontrado para os filtros selecionados.'));
+ // Observação e aviso de vazio transbordam: não deixam a coluna A na largura máxima.
+ const larguraA=x=>Number(x.match(/<col min="1" max="1" width="([0-9]+)"/)[1]);assert.ok(larguraA(s)<30,'coluna A '+larguraA(s));assert.ok(larguraA(vazio)<30,'coluna A vazia '+larguraA(vazio));
 });
 test('paginação do relatório: 25 por página, faixa exibida e limites',()=>{
  const linhas=Array.from({length:60},(_,i)=>[i]);
