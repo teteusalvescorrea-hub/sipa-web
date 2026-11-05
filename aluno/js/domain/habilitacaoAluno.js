@@ -21,14 +21,14 @@ export function resumoExames(exames,hoje){
  return {emDia,total:lista.length,texto:emDia+' de '+lista.length+' exames em dia'};
 }
 
-// Situação da prova pela última tentativa válida (cancelada não conta). estado: feito, atual, falhou ou pendente.
+// Situação da prova pela última tentativa válida (cancelada ou arquivada não conta). estado: feito, atual, falhou ou pendente.
 const resultado=t=>t.resultado||t.situacao;
 function agendada(t){
  const hora=t.hora||(/T\d{2}:\d{2}/.test(String(t.data||''))?String(t.data).slice(11,16):'');
  return [diaMes(t.data)+(hora?' às '+hora:''),t.local].filter(Boolean).join(' · ');
 }
 export function situacaoProva(prova){
- const tentativas=[...(prova?.tentativas||[])].filter(t=>resultado(t)!=='Cancelado').sort((a,b)=>(a.ordem||1)-(b.ordem||1));
+ const tentativas=[...(prova?.tentativas||[])].filter(t=>!t.arquivada&&resultado(t)!=='Cancelado').sort((a,b)=>(a.ordem||1)-(b.ordem||1));
  const aprovada=tentativas.find(t=>resultado(t)==='Aprovado');
  if(aprovada)return {estado:'feito',situacao:'Aprovado'+(diaMes(aprovada.data)?' em '+diaMes(aprovada.data):''),detalhe:''};
  const ultima=tentativas.at(-1),reprovada=tentativas.filter(t=>resultado(t)==='Reprovado').at(-1);

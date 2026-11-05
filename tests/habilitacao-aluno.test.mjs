@@ -40,6 +40,8 @@ test('provas: aguardando agendamento, agendada com data/hora/local, aprovada e r
  assert.equal(situacaoProva({tentativas:[t(1,'Reprovado'),t(2,'Reprovado'),t(3,'Aprovado',{data:'2027-02-01'})]}).situacao,'Aprovado em 01/02');
  assert.equal(situacaoProva({tentativas:[t(1,'Agendado'),t(2,'Cancelado')]}).situacao,'Agendada · 20/11','cancelada não conta');
  assert.equal(situacaoProva({tentativas:[t(1,'Cancelado')]}).situacao,'Aguardando agendamento');
+ assert.equal(situacaoProva({tentativas:[t(1,'Agendado',{arquivada:true})]}).situacao,'Aguardando agendamento','arquivada (agendamento excluído) não conta');
+ assert.equal(situacaoProva({tentativas:[t(1,'Reprovado'),t(2,'Agendado',{arquivada:true})]}).detalhe,'');
  assert.equal(diaMes('2026-01-05'),'05/01');assert.equal(diaMes(''),'');
 });
 
