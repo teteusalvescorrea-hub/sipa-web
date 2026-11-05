@@ -10,4 +10,6 @@ if(desenvolvimentoAtivo()){
  const conversa=servico.capacidades.conversa?await import('./components/conversaAluno.js'):null,abas=conversa?.prepararAbasMensagens();abas?.ativar();
  const montarConversa=conversa?conversa.montarConversaAluno(document.getElementById('conversa-recepcao'),servico,abas).catch(e=>{document.querySelector('[data-conversa-aviso]').textContent=e.message||'Não foi possível carregar a conversa.';}):null;
  try{await (await import('./components/mensagensAluno.js')).montarMensagensAluno(host,servico,{aoContar:n=>abas?.contar('avisos',n)});}catch(e){host.textContent=e.status===0?'Não foi possível falar com o servidor. Tente novamente.':e.message||'Não foi possível carregar suas mensagens.';}
- await montarConversa;}}
+ await montarConversa;
+ // Sino e item Mensagens a cada 15 s, como nas outras páginas (integrado.js não carrega aqui); no foco os avisos já atualizam.
+ const {atualizarIndicadorMensagens}=await import('./components/mensagensAluno.js');setInterval(()=>{if(!document.hidden)atualizarIndicadorMensagens(servico);},15000);}}

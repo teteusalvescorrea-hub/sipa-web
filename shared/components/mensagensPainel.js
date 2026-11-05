@@ -63,8 +63,14 @@ export async function montarMensagensPainel(host,servico,raiz,ui,{conversaId}={}
   catch(e){if(pedido!==revisao)return;itens=[];total=0;retorno.textContent=e.message;}
   desenhar();
  }
+ // Sem mudança desde o último desenho, a tabela fica como está: o menu ⋯ aberto e o foco do teclado não se perdem.
+ let ultimaLista='';
  function desenhar(){
   quantidade.textContent=plural(total,'conversa','conversas');
+  const assinatura=JSON.stringify([itens,total,pagina,!!(filtros.busca.value||filtros.somenteNaoLidas.checked||filtros.unidade.value)]);
+  if(assinatura===ultimaLista&&lista.querySelector('.msg-tabela'))return;ultimaLista=assinatura;
+  // Mudou: redesenha e devolve o foco ao mesmo nome ou ⋯ da conversa, se ele estava na tabela.
+  const focado=lista.contains(document.activeElement)?document.activeElement:null,foco=focado&&(focado.dataset.msgAbrir!==undefined?['msgAbrir',focado.dataset.msgAbrir]:focado.dataset.msgAcoes!==undefined?['msgAcoes',focado.dataset.msgAcoes]:['regiao']);
   const wrap=el('div',undefined,'op-table-scroll'),tabela=el('table',undefined,'op-table msg-tabela'),head=el('thead'),tr=el('tr'),corpo=el('tbody'),colunas=['Aluno','Unidade','Última mensagem','Em','Situação','Ações'];
   wrap.tabIndex=0;wrap.setAttribute('role','region');wrap.setAttribute('aria-label','Conversas com os alunos');
   for(const c of colunas){const th=el('th',c);th.scope='col';tr.append(th);}head.append(tr);
@@ -77,6 +83,7 @@ export async function montarMensagensPainel(host,servico,raiz,ui,{conversaId}={}
   }
   if(!itens.length){const r=el('tr'),td=el('td',filtros.busca.value||filtros.somenteNaoLidas.checked||filtros.unidade.value?'Nenhuma conversa encontrada para os filtros informados.':'Nenhuma conversa ainda.','op-demo-no-results');td.colSpan=colunas.length;r.append(td);corpo.append(r);}
   tabela.append(head,corpo);wrap.append(tabela);lista.replaceChildren(wrap);
+  if(foco){const alvo=foco[0]==='regiao'?wrap:[...wrap.querySelectorAll('[data-msg-abrir],[data-msg-acoes]')].find(b=>b.dataset[foco[0]]===foco[1]);(alvo||wrap).focus({preventScroll:true});}
   const paginas=Math.ceil(total/TAMANHO);paginacao.replaceChildren();
   if(paginas>1){const ant=botao('Anterior',()=>{pagina--;consultar();}),prox=botao('Próxima',()=>{pagina++;consultar();});ant.disabled=pagina<=1;prox.disabled=pagina>=paginas;paginacao.append(ant,el('span',pagina+' / '+paginas),prox);}
  }
@@ -109,7 +116,8 @@ export async function montarMensagensPainel(host,servico,raiz,ui,{conversaId}={}
  function fechar(){aberta=null;partes=null;revisaoConversa++;ultimaAssinatura='';delete conversaHost.dataset.msgConversaAberta;conversaHost.hidden=true;conversaHost.replaceChildren();caixa.hidden=false;consultar();}
  host.mensagens={abrir:id=>abrir(id),consultar};
  const visivel=()=>!host.hidden&&!document.hidden&&host.isConnected&&!raiz.querySelector('dialog[open]');
- const refrescar=()=>{if(!visivel())return;if(aberta)abrir(aberta,{inicio:false});else consultar();};
+ // Com o menu ⋯ de uma linha aberto, a lista espera a próxima consulta.
+ const refrescar=()=>{if(!visivel())return;if(aberta)abrir(aberta,{inicio:false});else if(!lista.querySelector('.op-menu-acoes-lista:not([hidden])'))consultar();};
  const relogio=setInterval(()=>{if(controller.signal.aborted)clearInterval(relogio);else refrescar();},15000);
  controller.signal.addEventListener('abort',()=>clearInterval(relogio));
  window.addEventListener('focus',refrescar,{signal:controller.signal});
