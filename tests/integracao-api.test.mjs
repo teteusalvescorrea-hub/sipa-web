@@ -14,7 +14,7 @@ globalThis.fetch=async(url,init={})=>{
  return new Response(r.corpo===undefined?null:JSON.stringify(r.corpo),{status:r.status??200});
 };
 const rota=(metodo,trecho,corpo,status)=>({quando:(u,m)=>m===metodo&&u.includes(trecho),corpo,status});
-const {adaptarDadosAluno,criarServicoAluno}=await import('../aluno/js/services/alunoIntegrado.js');
+const {adaptarDadosAluno,adaptarAcompanhamento,textoSituacao,criarServicoAluno}=await import('../aluno/js/services/alunoIntegrado.js');
 const {adaptarAulaInstrutor,criarServicoInstrutor}=await import('../instrutor/js/services/instrutorIntegrado.js');
 const {urlLogin}=await import('../shared/js/sessao.js');
 
@@ -32,6 +32,18 @@ test('aluno: saldo por categoria (D = 3), hora de Brasília e status 7 como canc
  assert.equal(a1.inicio,'2026-11-03T09:00:00-03:00');assert.equal(a1.fim,'2026-11-03T09:50:00-03:00');assert.equal(a1.categoria,'B');
  assert.equal(a2.status,2);assert.equal(a2.statusApi,7);assert.equal(a2.cancelamento.credito,'retido');
  assert.equal(d.registros.find(r=>r.id==='v1').documento,'ABC1D23');
+});
+
+test('aluno: acompanhamento mostra o texto da situação e lista as provas das categorias, mesmo sem tentativa',()=>{
+ assert.equal(textoSituacao({descricao:'Aprovado',valor:2}),'Aprovado');assert.equal(textoSituacao(null),'Não informado');assert.equal(textoSituacao('Vencido'),'Vencido');
+ const api={exames:[{tipo:'toxicologico',nome:'Toxicológico',situacao:{descricao:'Aprovado',valor:2},data:'2026-10-01',validade:'2027-10-01'},{tipo:'medico',nome:'Exame médico',situacao:null,data:null,validade:null}],
+  provas:[{tipo:'teorica',nome:'Prova teórica',tentativas:[{id:'t1',ordem:1,data:'2026-11-10',situacao:{descricao:'Agendado',valor:2},resultado:null}]}],processo:[]};
+ const a=adaptarAcompanhamento(api,['B']);
+ assert.deepEqual(a.exames.map(e=>e.situacao),['Aprovado','Não informado']);assert.equal(a.exames[1].validade,'');
+ assert.deepEqual(a.provas.map(p=>p.tipo),['teorica','praticaCarro']);
+ assert.equal(a.provas[0].tentativas[0].situacao,'Agendado');assert.equal(a.provas[0].tentativas[0].resultado,null);assert.deepEqual(a.provas[1].tentativas,[]);
+ assert.equal(adaptarAcompanhamento(null),null);
+ assert.equal(adaptarDadosAluno(alunoApi,[],[],{acompanhamento:api}).acompanhamento.provas.length,3,'B e D: teórica e as duas práticas');
 });
 
 test('aluno: horários viram pares instrutor × veículo; reserva manda Idempotency-Key; cancelamento manda o motivo 1-7',async()=>{

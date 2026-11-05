@@ -36,11 +36,12 @@ function apresentarAcompanhamento(dados,apos){
  raiz.replaceChildren();
  const el=(tag,texto,classe)=>{const n=document.createElement(tag);if(texto!==undefined)n.textContent=texto;if(classe)n.className=classe;return n;};
  const secao=titulo=>{const s=el('section',undefined,'progress-detail-card progress-admin-section');s.append(el('h2',titulo));raiz.append(s);return s;};
- const linhas=(host,itens,atributo)=>{const dl=el('dl');for(const item of itens){const linha=el('div');linha.dataset[atributo]=item.tipo;const valor=el('dd',item.situacao);if(item.data)valor.append(el('small','Registrado em '+formatarData(item.data)));if(item.validade)valor.append(el('small','Validade: '+formatarData(item.validade)));linha.append(el('dt',item.nome),valor);dl.append(linha);}host.append(dl);};
- linhas(secao('Seus exames'),dados.exames,'exameAluno');
+ const linhas=(host,itens,atributo)=>{const dl=el('dl');for(const item of itens){const linha=el('div');linha.dataset[atributo]=item.tipo;const valor=el('dd');valor.append(el('span',item.situacao,'progress-admin-status'));if(item.validade)valor.append(el('small',(item.situacao==='Vencido'?'Venceu em ':'Válido até ')+formatarData(item.validade)));if(item.data)valor.append(el('small','Registrado em '+formatarData(item.data)));linha.append(el('dt',item.nome),valor);dl.append(linha);}host.append(dl);};
+ linhas(secao('Seus exames'),dados.exames||[],'exameAluno');
  const provas=secao('Suas provas');provas.classList.add('progress-admin-provas');
  provas.append(el('p','Agendamentos, resultados e histórico de tentativas registrados pela recepção.','progress-admin-note'));
- for(const prova of dados.provas){const grupo=el('section');grupo.dataset.provaAluno=prova.tipo;grupo.append(el('h3',prova.nome));
+ if(!dados.provas?.length)provas.append(el('p','Nenhuma prova agendada.','progress-admin-note'));
+ for(const prova of dados.provas||[]){const grupo=el('section');grupo.dataset.provaAluno=prova.tipo;grupo.append(el('h3',prova.nome));
   if(!prova.tentativas.length)grupo.append(el('p','Não solicitado','progress-admin-note'));
   else{const lista=el('ol');for(const t of [...prova.tentativas].sort((a,b)=>b.ordem-a.ordem)){const item=el('li');item.dataset.tentativaAluno=t.id;item.append(el('span','Tentativa '+t.ordem+' · '+(t.data?formatarData(t.data):'Data não informada')),el('strong',t.resultado||t.situacao));lista.append(item);}grupo.append(lista);}provas.append(grupo);
  }
@@ -192,14 +193,13 @@ async function listarAulasAlunoLocal(servico,dados){
         const lista=document.getElementById(id);lista.replaceChildren();
         if(!aulas.length){const p=document.createElement('p');p.className='sipa-local-empty';p.textContent=id==='lessons-list'?'Você ainda não possui aulas futuras confirmadas.':'';lista.append(p);}
         for(const aula of aulas){
-            const compacta=futuras.includes(aula)||aula.status===5;const card=document.createElement('article');card.className='student-local-lesson';card.dataset.aulaLocal=aula.id;card.dataset.status=aula.status;
+            const card=document.createElement('article');card.className='student-local-lesson confirmed-lesson';card.dataset.aulaLocal=aula.id;card.dataset.status=aula.status;
             const cabecalho=document.createElement('div');cabecalho.className='local-lesson-heading';const h=document.createElement('h3');h.textContent=dataHoraBrasilia(aula.inicio)+(aula.fim?' às '+horaBrasilia(aula.fim):'');const situacao=document.createElement('strong');situacao.className='local-lesson-status';situacao.textContent=estado[aula.status]||'Situação não informada';cabecalho.append(h,situacao);
             const infos=document.createElement('dl');infos.className='local-lesson-fields';
             for(const [rotulo,valor] of [['Categoria',aula.status===5?aula.categoria+' — '+(NOMES_CATEGORIA[aula.categoria]||'Categoria não informada'):aula.categoria||'Não informada'],[aula.categoria==='D'?'Local da aula':'Unidade',nomeLocalDaReserva(aula)],['Instrutor',dados.registros.find(r=>r.id===aula.instrutor)?.nome||'Não informado'],['Veículo',dados.registros.find(r=>r.id===aula.veiculo)?.nome||'Não informado']]){
                 const campo=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=rotulo;dd.textContent=valor;campo.append(dt,dd);infos.append(campo);
             }
             const detalhes=document.createElement('details');detalhes.className='local-lesson-history';const resumo=document.createElement('summary');resumo.textContent='Detalhes e histórico';detalhes.append(resumo);
-            const local=document.createElement('div'),tituloLocal=document.createElement('h4');tituloLocal.textContent='Local da aula';local.append(tituloLocal,localDaReserva(aula));if(!compacta)detalhes.append(local);
             const textoDetalhe=valor=>{const p=document.createElement('p');p.textContent=valor;detalhes.append(p);};
             const consome=(aula.status===2&&aula.cancelamento?.credito==='retido')||[1,5,6].includes(aula.status)||([3,4].includes(aula.status)&&Date.parse(aula.inicio)>agora);
             textoDetalhe('Crédito: '+(consome?'contabilizado no saldo atual conforme a situação da aula.':'não contabiliza consumo no saldo atual.'));
@@ -217,8 +217,8 @@ async function listarAulasAlunoLocal(servico,dados){
                 const acompanhar=document.createElement('button');acompanhar.type='button';acompanhar.className='medical-follow-link';acompanhar.textContent='Acompanhar atestado';acompanhar.dataset.medicalFollow=aula.solicitacaoMedica.id;
                 acompanhar.onclick=()=>{tabs.querySelector('[data-vista=atestados]').click();atestados.destacar(aula.solicitacaoMedica.id);};aviso.append(document.createTextNode(' '),acompanhar);card.append(aviso);
             }
-            const acoes=compacta?document.createElement('div'):card;
-            if(compacta){card.classList.add('confirmed-lesson');const local=localDaReserva(aula,false);local.classList.add('confirmed-lesson-location');acoes.className='confirmed-lesson-actions';card.append(local,acoes);}acoes.append(detalhes);
+            // Todas as abas usam o mesmo cartão: local com "Ver localização" e, no rodapé, detalhes à esquerda e ação à direita.
+            const acoes=document.createElement('div'),local=localDaReserva(aula,false);local.classList.add('confirmed-lesson-location');acoes.className='confirmed-lesson-actions';card.append(local,acoes);acoes.append(detalhes);
             if([1,3,4].includes(aula.status)){
                 const cancelar=document.createElement('button');cancelar.type='button';cancelar.className='local-lesson-cancel';cancelar.textContent='Cancelar aula';cancelar.disabled=servico.capacidades?.cancelamento!==true||(aula.status===1&&!(Date.parse(aula.inicio)>Date.now()));
                 if(cancelar.disabled)cancelar.title=servico.capacidades?.cancelamento!==true?'Cancelamento indisponível até a validação da política de créditos pelo serviço.':'A aula já foi iniciada.';

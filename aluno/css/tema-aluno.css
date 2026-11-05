@@ -83,11 +83,11 @@ html[data-sipa-theme=aluno][data-theme=dark] .category-option-check { background
 .summary-item:has(#summary-unit-address) { flex-wrap:wrap; }
 .local-lesson-history .unit-location { margin:4px 0; padding:4px 0; }
 
-[data-sipa-local=aluno] .booking-summary { align-items:start; }
+[data-sipa-aluno] .booking-summary { align-items:start; }
 .booking-success-list .booking-success-address { grid-column:1/-1; }
 
 /* Preferências do Aluno: extensões dos mesmos tokens e componentes. */
-[data-sipa-local=aluno] :is(.booking-content,.booking-steps,#automatic-booking,[data-health-guidance],.cancel-consent)[hidden] { display:none!important; }
+[data-sipa-aluno] :is(.booking-content,.booking-steps,#automatic-booking,[data-health-guidance],.cancel-consent)[hidden] { display:none!important; }
 .booking-mode-choice { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 22px; }
 .booking-mode-choice button,.student-preferences button { border:1px solid var(--sipa-border,#b8cfe3); border-radius:8px; background:var(--sipa-secondary,#edf5fc); color:var(--sipa-texto-neutro); padding:11px 15px; font:600 13px/1.4 Inter,Arial,sans-serif; cursor:pointer; }
 .booking-mode-choice button[aria-pressed=true] { background:#1769aa; color:#fff; border-color:#1769aa; }
@@ -117,13 +117,13 @@ html[data-sipa-theme=aluno][data-theme=dark] .category-option-check { background
 .cancel-consent { margin:14px 0; padding:12px; border:1px solid var(--sipa-border,#a8bfd5); border-radius:8px; }
 @media(max-width:500px) { .student-preferences { padding:16px; } .booking-mode-choice button { flex:1; } .preference-actions button { width:100%; } }
 
-[data-sipa-local=aluno] .student-preferences p { color:var(--sipa-texto-neutro); }
+[data-sipa-aluno] .student-preferences p { color:var(--sipa-texto-neutro); }
 
-[data-sipa-local=aluno] #lesson-cancel-hint { color:var(--sipa-texto-neutro); }
+[data-sipa-aluno] #lesson-cancel-hint { color:var(--sipa-texto-neutro); }
 
 /* Cancelamento: mensagem de devolução neutra, penalidade somente quando aplicável. */
-[data-sipa-local=aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] { background:var(--sipa-secondary,#edf5fc)!important; border-color:var(--sipa-border,#b8cfe3)!important; }
-[data-sipa-local=aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] :is(p,strong) { color:var(--sipa-texto-neutro)!important; }
+[data-sipa-aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] { background:var(--sipa-secondary,#edf5fc)!important; border-color:var(--sipa-border,#b8cfe3)!important; }
+[data-sipa-aluno] .lesson-cancel-dialog .lesson-cancel-policy[data-penalidade=false] :is(p,strong) { color:var(--sipa-texto-neutro)!important; }
 
 /* Localização e comparecimento: informações da reserva, sem duplicação. */
 .lesson-attendance { margin:12px 0; padding:10px 12px; border:1px solid var(--sipa-border,#cbddec); border-radius:10px; background:var(--sipa-secondary,#f4f8fc); font-size:13px; line-height:1.5; }
@@ -131,6 +131,8 @@ html[data-sipa-theme=aluno][data-theme=dark] .category-option-check { background
 .lesson-attendance p { margin:4px 0 0; font-size:13px; line-height:1.5; }
 .lesson-attendance p strong { font-weight:600; }
 #proxima-aula-conteudo .unit-location { margin:8px 0; padding:0; }
-[data-sipa-local=aluno] .student-local-lesson[data-status='1'] .confirmed-lesson-location { grid-column:1/-1; grid-row:3; margin:0; padding:4px 0; }
-[data-sipa-local=aluno] .student-local-lesson[data-status='1'] .local-lesson-history { grid-row:4; }
-[data-sipa-local=aluno] .student-local-lesson[data-status='1'] .local-lesson-cancel { grid-row:4; }
+
+/* Cartões de aula e de progresso no tema escuro: blocos internos seguem os tokens. */
+html[data-sipa-theme=aluno][data-theme=dark] :is(.lessons-main .local-lesson-fields,.category-progress-card dl>div) { background:var(--sipa-secondary)!important; border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .confirmed-lesson-actions { border-color:var(--sipa-border)!important; }
+html[data-sipa-theme=aluno][data-theme=dark] .category-progress-card dd { color:var(--sipa-accent)!important; }

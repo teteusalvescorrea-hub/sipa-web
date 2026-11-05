@@ -37,6 +37,21 @@ export function adaptarSolicitacao(s,alunoId){
   devolucao:s.devolucao?{...s.devolucao,aulas:(s.devolucao.aulas||[]).map(a=>({...a,categoria:categoria(a.categoria)}))}:s.devolucao};
 }
 
+// Acompanhamento (MeuAcompanhamentoReadDto): situação vem como {descricao,valor} ou nula. A API só manda as provas
+// com tentativa; a lista fica completa (teórica + prática de cada categoria do aluno), como no modo local.
+const PROVAS_ALUNO=Object.freeze({teorica:{nome:'Prova teórica'},praticaCarro:{nome:'Prova prática de carro — Categoria B',categoria:'B'},praticaMoto:{nome:'Prova prática de moto — Categoria A',categoria:'A'},praticaOnibus:{nome:'Prova prática de ônibus — Categoria D',categoria:'D'}});
+export const textoSituacao=s=>String((typeof s==='object'&&s!==null?s.descricao:s)??'').trim()||'Não informado';
+export function adaptarAcompanhamento(a,categorias=[]){
+ if(!a)return null;
+ const item=i=>({tipo:i.tipo,nome:i.nome||i.tipo,situacao:textoSituacao(i.situacao),data:i.data||'',validade:i.validade||''});
+ const vindas=new Map((a.provas||[]).map(p=>[p.tipo,p]));
+ const tipos=Object.entries(PROVAS_ALUNO).filter(([t,p])=>!p.categoria||categorias.includes(p.categoria)||vindas.has(t)).map(([t])=>t);
+ for(const t of vindas.keys())if(!tipos.includes(t))tipos.push(t);
+ const provas=tipos.map(tipo=>{const p=vindas.get(tipo);return {tipo,nome:PROVAS_ALUNO[tipo]?.nome||p?.nome||'Prova',
+  tentativas:(p?.tentativas||[]).map(t=>({id:t.id,ordem:t.ordem||1,data:t.data||'',situacao:textoSituacao(t.situacao),resultado:t.resultado?textoSituacao(t.resultado):null}))};});
+ return {exames:(a.exames||[]).map(item),provas,processo:(a.processo||[]).map(item)};
+}
+
 // Cancelamento (CancelamentoReadDto). Status 7 sem o objeto: crédito retido.
 function adaptarCancelamento(a,status,solicitacao){
  const c=a.cancelamento;
@@ -105,7 +120,7 @@ export function adaptarDadosAluno(aluno,contratacoes,aulas,extras={}){
  registros.push(cadastro,...vistas);
  return {integrado:true,aluno:cadastro,aulas:vistas,registros,credito:null,categorias:letras,
   resumo:{categorias,total:aluno.aulasContratadas??null,realizadas:aluno.aulasRealizadas??null,percentual:aluno.aulasContratadas>0?aluno.percentualProgresso:null},
-  acompanhamento:extras.acompanhamento||null,contratacoes};
+  acompanhamento:adaptarAcompanhamento(extras.acompanhamento,letras),contratacoes};
 }
 
 // Até 92 dias por consulta (DA17): uma janela para trás e outra para frente.

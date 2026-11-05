@@ -1879,9 +1879,9 @@ body {
 .resource-options button[aria-pressed=true],.booking-dialog-actions > :first-child { background:#1769aa; color:#fff; }
 .resource-options button[aria-pressed=true] span { color:#fff; }
 .booking-local-dialog button:disabled { opacity:.5; cursor:default; }
-[data-sipa-local=aluno] .instructor-preview[hidden] { display:none; }
+[data-sipa-aluno] .instructor-preview[hidden] { display:none; }
 @media(max-width:420px) { .booking-success-list dl { grid-template-columns:minmax(0,1fr); } .booking-local-dialog { padding:16px; } }
-[data-sipa-local=aluno] .booking-package-info { padding:12px 14px; margin-top:14px; border-radius:10px; background:#edf5fc; box-shadow:none; }
+[data-sipa-aluno] .booking-package-info { padding:12px 14px; margin-top:14px; border-radius:10px; background:#edf5fc; box-shadow:none; }
 #agendamentos-confirmados { padding:20px; }
 #agendamentos-confirmados h2 { font-size:20px; margin:8px 0; }
 #agendamentos-confirmados .booking-success-icon { width:32px; height:32px; }
