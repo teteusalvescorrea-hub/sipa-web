@@ -9,9 +9,10 @@ export function moverMes(mes,delta){
  const {inicio}=periodoMensal(mes),d=new Date(inicio+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+delta);
  const novo=d.toISOString().slice(0,7);periodoMensal(novo);return novo;
 }
-export function validarPeriodo(inicio,fim){
+export function validarPeriodo(inicio,fim,hoje){
  if(!dataValida(inicio)||!dataValida(fim))throw new Error('Informe uma data inicial e uma data final válidas.');
  if(fim<inicio)throw new Error('A data final não pode ser anterior à data inicial.');
+ if(hoje&&fim>hoje)throw new Error('A data final não pode ser depois de hoje.');
  return {inicio,fim};
 }
 // Mesmas aulas da agenda, em uma projeção de leitura; sem segunda base ou migração.
@@ -27,8 +28,10 @@ export function consultarHistorico(aulas,instrutorId,{inicio,fim,status='todas'}
 export function consultarAbaHistorico(aulas,instrutorId,aba,{periodo,instante=new Date(),status='todas'}={}){
  if(!['dia','5','6','completo'].includes(aba))throw new Error('Aba de histórico inválida.');
  const hoje=agoraBrasil(instante).slice(0,10);
- const limites=aba==='completo'?(periodo||periodoMensal(hoje.slice(0,7))):aba==='dia'?{inicio:hoje,fim:hoje}:{inicio:'1900-01-01',fim:'9999-12-31'};
- const origem=aba==='dia'?aulas.filter(a=>[1,5,6].includes(a.status)):aulas;
+ const pedido=aba==='completo'?(periodo||periodoMensal(hoje.slice(0,7))):aba==='dia'?{inicio:hoje,fim:hoje}:{inicio:'1900-01-01',fim:hoje};
+ // O instrutor só vê o dia de hoje e o passado: o fim do período nunca passa de hoje (nada dos próximos dias).
+ const fim=pedido.fim>hoje?hoje:pedido.fim,futuro=pedido.inicio>fim,limites=futuro?{inicio:pedido.inicio,fim:pedido.inicio}:{inicio:pedido.inicio,fim};
+ const origem=futuro?[]:aba==='dia'?aulas.filter(a=>[1,5,6].includes(a.status)):aulas;
  const resultado=consultarHistorico(origem,instrutorId,{...limites,status:['5','6'].includes(aba)?aba:'todas'});
  if(aba==='completo'){
   if(!['todas','5','6','2'].includes(String(status)))throw new Error('Filtro de situação inválido.');

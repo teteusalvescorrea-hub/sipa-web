@@ -58,3 +58,12 @@ test('situações do completo usam status reais, contagens do período e pagina�
  const vazio=consultarAbaHistorico(aulas,'i','completo',{periodo:periodoMensal('2026-09'),status:'5'});assert.equal(vazio.total,0);assert.deepEqual(vazio.contagens,{todas:1,5:0,6:1,2:0});assert.equal(paginarHistorico(vazio).totalPaginas,0);
  assert.equal(JSON.stringify(aulas),antes);assert.throws(()=>consultarAbaHistorico(aulas,'i','completo',{periodo,status:'1'}));
 });
+test('completo e abas não mostram aulas depois de hoje, e o período não aceita data futura',()=>{
+ const aula=(id,inicio,status)=>({id,inicio,status,instrutorId:'i'}),opts={instante:new Date('2026-11-04T13:00:00Z')};
+ const aulas=[aula('hoje','2026-11-04T18:00:00-03:00',1),aula('amanha','2026-11-05T09:00:00-03:00',1),aula('ontem','2026-11-03T09:00:00-03:00',5),aula('futura-realizada','2026-11-20T09:00:00-03:00',5)];
+ const r=consultarAbaHistorico(aulas,'i','completo',opts);assert.deepEqual(r.grupos.flatMap(g=>g.aulas.map(a=>a.id)),['hoje','ontem']);assert.equal(r.fim,'2026-11-04');
+ assert.equal(consultarAbaHistorico(aulas,'i','completo',{...opts,periodo:{inicio:'2026-11-01',fim:'2026-12-31'}}).total,2);
+ assert.equal(consultarAbaHistorico(aulas,'i','completo',{...opts,periodo:periodoMensal('2026-12')}).total,0);
+ assert.deepEqual(consultarAbaHistorico(aulas,'i','5',opts).grupos.flatMap(g=>g.aulas.map(a=>a.id)),['ontem']);
+ assert.throws(()=>validarPeriodo('2026-11-01','2026-11-05','2026-11-04'),/depois de hoje/);assert.deepEqual(validarPeriodo('2026-11-01','2026-11-04','2026-11-04'),{inicio:'2026-11-01',fim:'2026-11-04'});
+});

@@ -70,7 +70,9 @@ html[data-theme=dark] .in-blocked,html[data-theme=dark] .in-blocked>.in-slot-tim
 .in-dialog>.in-agenda-lesson{margin-top:8px;min-height:44px}
 /* Aula em duas linhas sempre que a própria agenda fica estreita (celular, tablet ou coluna de ~500px), não pela largura da janela. */
 .in-agenda{container-type:inline-size;display:flex;flex-direction:column;min-width:0}
-@container (max-width:560px){.in-agenda-toolbar{display:contents}.in-agenda-date{padding:10px 12px}.in-cadastro-label{order:1;width:100%;max-width:none;padding:10px 12px;border-top:1px solid var(--in-line)}.in-agenda .in-slot-time{padding:6px 8px}.in-agenda .in-time-slot{grid-template-columns:52px minmax(0,1fr)}.in-agenda .in-agenda-lesson{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:3px;align-items:center;padding:6px 8px}.in-agenda .in-agenda-body{display:grid;gap:1px;grid-row:1;grid-column:1}.in-agenda .in-agenda-body>strong{max-width:100%}.in-agenda .in-agenda-meta{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.in-agenda .in-agenda-lesson>.in-badge{grid-row:2;grid-column:1;justify-self:start}.in-agenda .in-agenda-lesson>.in-icon{grid-column:2;grid-row:1/span 2}}
+@container (max-width:560px){.in-agenda-toolbar{display:contents}.in-agenda-date{padding:10px 12px}.in-cadastro-label{order:1;width:100%;max-width:none;padding:10px 12px;border-top:1px solid var(--in-line)}.in-agenda .in-slot-time{padding:6px 8px}.in-agenda .in-time-slot{grid-template-columns:52px minmax(0,1fr)}.in-agenda .in-agenda-lesson{padding:6px 8px}}
+/* Nome e categoria/unidade empilhados até 760px de agenda (coluna de 576px no desktop e agenda inteira no tablet), sem cortar o nome. */
+@container (max-width:760px){.in-agenda .in-agenda-lesson{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:3px;align-items:center}.in-agenda .in-agenda-body{display:grid;gap:1px;grid-row:1;grid-column:1}.in-agenda .in-agenda-body>strong{max-width:100%;white-space:normal;overflow-wrap:anywhere}.in-agenda .in-agenda-meta{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.in-agenda .in-agenda-lesson>.in-badge{grid-row:2;grid-column:1;justify-self:start}.in-agenda .in-agenda-lesson>.in-icon{grid-column:2;grid-row:1/span 2}}
 
 /* Superfícies opacas do tema escuro, sem efeito de vidro. */
 html[data-theme=dark] .in-agenda,
@@ -176,7 +178,7 @@ html[data-theme=dark]{--in-s-real:#3f8fd2;--in-s-falta:#cf7526;--in-seq-0:#1f2c3
 .in-side-card h3{font-size:14px;margin-bottom:8px}
 .in-day-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.in-day-stats div{background:var(--in-soft);border:1px solid var(--in-line);border-radius:8px;padding:6px 10px}.in-day-stats span{display:block;font-size:11px;color:var(--sipa-texto-neutro)}.in-day-stats strong{display:block;font-size:20px;line-height:1.3}
 .in-side-card .in-dl{margin:0;gap:8px 12px}.in-side-card .in-dl dd{font-size:13px}
-.in-side-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}.in-side-actions .in-button{flex:1 1 110px}.in-side-hint{flex:1 1 100%}
+.in-side-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}.in-side-actions .in-button{flex:1 1 110px}.in-side-hint{flex:1 1 100%}#in-agenda-proxima .in-side-actions .in-button{flex:1 1 0;white-space:nowrap}#in-agenda-proxima .in-link-button{flex:1 1 100%;justify-content:center}
 .in-link-button{display:inline-flex;align-items:center;min-height:var(--in-alvo);border:0;background:none;color:var(--in-blue);font-size:12px;padding:0 4px;text-decoration:underline;text-underline-offset:3px}
 .in-side-empty{font-size:12px;color:var(--sipa-texto-neutro)}
 .in-week{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}.in-week li{border:1px solid var(--in-line);border-radius:8px;padding:5px 0;text-align:center;font-size:11px;color:var(--sipa-texto-neutro)}.in-week strong{display:block;font-size:15px;line-height:1.3}.in-week li[aria-current=date]{background:#1769aa;border-color:#1769aa;color:#fff}
@@ -188,7 +190,8 @@ html[data-theme=dark]{--in-s-real:#3f8fd2;--in-s-falta:#cf7526;--in-seq-0:#1f2c3
 /* Até 1024px: uma coluna na ordem Resumo, Próxima aula (ação principal), agenda e Esta semana; no tablet, Resumo e Próxima lado a lado. */
 @media(max-width:1024px){.in-agenda-layout{grid-template-columns:minmax(0,1fr)}.in-agenda-side{display:contents}.in-agenda-side>section:first-child{order:-2}#in-agenda-proxima{order:-1}}
 @media(min-width:768px) and (max-width:1024px){.in-agenda-layout{grid-template-columns:repeat(2,minmax(0,1fr))}.in-agenda-layout>.in-agenda,.in-agenda-side>section:last-child{grid-column:1/-1}}
-@media(max-width:767px){.in-week{gap:4px}#in-agenda-proxima .in-link-button{flex:1 1 100%;justify-content:center}}
+@media(min-width:1025px){#in-agenda-proxima .in-dl{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:767px){.in-week{gap:4px}.in-agenda .in-free small,.in-agenda .in-blocked small{white-space:normal;overflow:visible}.in-agenda .in-time-slot.in-free>.in-slot-content,.in-agenda .in-time-slot.in-blocked>.in-slot-content{padding-block:4px}}
 /* Início: bloco "Meu desempenho" calculado com as aulas já carregadas. */
 .in-performance{margin-top:18px}
 .in-performance-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
