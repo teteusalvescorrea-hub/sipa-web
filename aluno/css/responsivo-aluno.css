@@ -1,0 +1,159 @@
+/* Telas do aluno 100% responsivas (regra de 04/11), no padrão do painel do Instrutor: gaveta até 1024px,
+   celular até 767px e celular pequeno até 480px. Carregada por último em cada página do aluno, depois do
+   escala.css, para valer sobre as medidas compartilhadas sem mexer nos outros painéis. */
+:root{--al-alvo:44px;--al-card:#fff;--al-linha:#cbddec;--al-fundo:#f4f8fc;--al-azul:#1769aa;--al-azul-texto:#12578f;--al-veu:#0b233c88}
+html[data-sipa-theme=aluno][data-theme=dark]{--al-card:var(--sipa-card);--al-linha:var(--sipa-border);--al-fundo:var(--sipa-bg);--al-azul-texto:var(--sipa-accent);--al-veu:#080f1bcc}
+
+/* ---------- Gaveta e barra do topo (até 1024px) ---------- */
+.sipa-aluno-topbar,.sipa-aluno-fechar{display:none}
+.sipa-aluno-veu{position:fixed;inset:0;z-index:999;background:var(--al-veu)}
+.sipa-aluno-menu,.sipa-aluno-fechar{box-sizing:border-box;display:none;place-items:center;width:var(--al-alvo);height:var(--al-alvo);min-height:var(--al-alvo);padding:0;border:1px solid var(--al-linha);border-radius:10px;background:var(--al-card);color:var(--al-azul-texto);cursor:pointer}
+.sipa-aluno-menu svg,.sipa-aluno-fechar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sipa-aluno-menu:focus-visible,.sipa-aluno-fechar:focus-visible{outline:3px solid #2388d9;outline-offset:2px}
+@media(min-width:1025px){.sipa-aluno-veu{display:none}}
+@media(max-width:1024px){
+ html body[data-sipa-escala=aluno] .sipa-sidebar{position:fixed;inset:0 auto 0 0;width:min(280px,calc(100vw - 56px))!important;height:100dvh;z-index:1000;overflow-y:auto;visibility:hidden;transform:translateX(-100%);transition:transform .2s ease,visibility 0s linear .2s}
+ html body[data-sipa-escala=aluno] .sipa-sidebar.mobile-open{visibility:visible;transform:none;transition:transform .2s ease,visibility 0s;box-shadow:12px 0 50px #071b4260}
+ html body[data-sipa-escala=aluno] .sipa-sidebar .sipa-sidebar-menu{overflow:visible}
+ html body[data-sipa-escala=aluno] .sipa-sidebar .sipa-aluno-fechar{display:grid;position:absolute;top:14px;right:12px;border-color:#ffffff35;background:none;color:#fff}
+ html body[data-sipa-escala=aluno] .sipa-sidebar :is(.sipa-sidebar-link,.sipa-sidebar-logout){min-height:var(--al-alvo);font-size:14px}
+ html body[data-sipa-escala=aluno] .sipa-sidebar .sipa-sidebar-title{font-size:11px}
+ html body[data-sipa-escala=aluno] .sipa-sidebar .sipa-sidebar-logo{padding-right:52px}
+ html body[data-sipa-escala=aluno] :is(.dashboard-main,.booking-main,.lessons-main,.profile-main,.progress-main){margin-left:0;width:auto;max-width:none;padding-left:var(--sipa-page-padding);padding-right:var(--sipa-page-padding);padding-top:0}
+ html body[data-sipa-escala=aluno] main>.sipa-aluno-topbar{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 calc(-1*var(--sipa-page-padding));padding:8px var(--sipa-page-padding);background:var(--al-fundo);border-bottom:1px solid var(--al-linha)}
+ html body[data-sipa-escala=aluno] .sipa-aluno-topbar .sipa-aluno-menu{display:grid}
+ html body[data-sipa-escala=aluno] .sipa-aluno-topbar .sipa-theme-toggle{position:static;width:var(--al-alvo);height:var(--al-alvo);min-height:var(--al-alvo)}
+ html body[data-sipa-escala=aluno] main>header.sipa-theme-header{padding-right:0;min-height:0}
+ /* Os botões antigos de menu (☰ e "Menu") saem: o da barra é o único. */
+ html body[data-sipa-escala=aluno] main :is(.mobile-menu-button,.student-menu-toggle,.lessons-mobile-menu,.booking-mobile-menu,#mobile-menu-button):not(.sipa-aluno-menu){display:none!important}
+ html body[data-sipa-escala=aluno] :is(.dashboard-header,.booking-header,.lessons-header,.profile-header,.progress-header){margin-top:18px}
+}
+/* Os botões antigos tinham regras por id (largura, raio, borda): a barra usa um só desenho. */
+html body[data-sipa-escala=aluno] main .sipa-aluno-topbar .sipa-aluno-menu{display:grid!important;place-items:center;width:var(--al-alvo)!important;height:var(--al-alvo)!important;min-height:var(--al-alvo);padding:0!important;border:1px solid var(--al-linha)!important;border-radius:10px!important;background:var(--al-card);color:var(--al-azul-texto)}
+
+/* ---------- Alvos de toque (tela estreita ou toque) ---------- */
+@media(max-width:1024px),(pointer:coarse){
+ html body[data-sipa-escala=aluno] :is(main,dialog) :is(button,.lessons-hire-button,.new-lesson-button,.progress-action-button,.quick-action,.reception-link):not(.calendar-day,.time-slot,.sipa-aluno-menu,.sipa-theme-toggle){min-height:var(--al-alvo)}
+ html body[data-sipa-escala=aluno] :is(main,dialog) :is(summary:not(.lesson-attendance-recolhivel>summary),.back-dashboard,.medical-follow-link,.lesson-hire-whatsapp,.next-class-link,a[href$="minhas-aulas.html"],a[href$="agendamento.html"]):not(.sipa-sidebar-link){display:inline-flex;align-items:center;min-height:var(--al-alvo)}
+ /* Link no meio do texto: a área de toque cresce sem mexer no alinhamento. */
+ html body[data-sipa-escala=aluno] :is(main,dialog) .unit-map-link{display:inline-block;padding-block:12px!important;margin-block:-12px!important}
+ html body[data-sipa-escala=aluno] .sipa-theme-toggle{width:var(--al-alvo);height:var(--al-alvo);min-height:var(--al-alvo)}
+ html body[data-sipa-escala=aluno] :is(main,dialog) label:has(>input[type=checkbox],>input[type=radio]){display:flex;align-items:center;gap:10px;min-height:var(--al-alvo)}
+ html body[data-sipa-escala=aluno] .booking-main .calendar-day{min-height:var(--al-alvo);height:var(--al-alvo)}
+ html body[data-sipa-escala=aluno] .booking-main .time-slot{min-height:var(--al-alvo)}
+ html body[data-sipa-escala=aluno] .booking-main .calendar-navigation{width:var(--al-alvo);height:var(--al-alvo)}
+}
+
+/* ---------- Campos com 16px no celular (o iOS não aplica zoom ao focar) ---------- */
+@media(max-width:767px),(pointer:coarse){
+ html body[data-sipa-escala=aluno] :is(main,dialog) :is(input:not([type=checkbox],[type=radio],[type=hidden]),select,textarea),
+ html body[data-sipa-escala=aluno][data-sipa-aluno] :is(.booking-main,.profile-main,.lessons-main,.dashboard-main,.progress-main) :is(input:not([type=checkbox],[type=radio],[type=hidden]),select,textarea),
+ html body[data-sipa-escala=aluno] .sipa-select-busca :is(input,button){font-size:16px!important}
+}
+
+/* ---------- Faixas que deslizam (abas e filtros numa linha) ---------- */
+@media(max-width:1024px){
+ html body[data-sipa-escala=aluno] :is(.local-lesson-tabs,.mensagens-abas,.profile-tabs,.booking-mode-choice){display:flex;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ html body[data-sipa-escala=aluno] :is(.local-lesson-tabs,.mensagens-abas,.profile-tabs)::-webkit-scrollbar{display:none}
+ html body[data-sipa-escala=aluno] :is(.local-lesson-tabs,.mensagens-abas,.profile-tabs)>*{flex:0 0 auto;white-space:nowrap;scroll-snap-align:start}
+ html body[data-sipa-escala=aluno] .local-lesson-tabs{margin-left:calc(-1*var(--sipa-page-padding));margin-right:calc(-1*var(--sipa-page-padding));padding:2px var(--sipa-page-padding);scroll-padding:0 var(--sipa-page-padding)}
+}
+
+/* ---------- Cabeçalhos: ações embaixo do título, ocupando a largura ---------- */
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] main>header{flex-wrap:wrap;row-gap:12px}
+ html body[data-sipa-escala=aluno] main>header h1{font-size:clamp(22px,6vw,26.4px);overflow-wrap:anywhere}
+ html body[data-sipa-escala=aluno] main>header :is(.lessons-header-left,.progress-header-text){flex:1 1 100%;min-width:0}
+ html body[data-sipa-escala=aluno] .lessons-header .lessons-header-actions{flex:1 1 100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-right:0}
+ html body[data-sipa-escala=aluno] .lessons-header .lessons-header-actions>a{width:100%!important;height:auto!important;min-height:var(--al-alvo)!important;padding:0 10px!important;font-size:14px!important;justify-content:center;white-space:nowrap}
+ /* O "Agendar nova aula" volta a ter texto: o escala.css anulava o modo só-ícone e deixava o "+" sozinho. */
+ html body[data-sipa-escala=aluno] .lessons-header .new-lesson-button{display:inline-flex!important;align-items:center;gap:6px;font-size:14px!important}
+ html body[data-sipa-escala=aluno] .lessons-header .new-lesson-button>span{position:static;width:auto;height:auto;font-size:18px;line-height:1}
+ html body[data-sipa-escala=aluno] .progress-header .progress-action-button{flex:1 1 100%;width:100%;justify-content:center}
+}
+@media(max-width:340px){
+ html body[data-sipa-escala=aluno] .lessons-header .lessons-header-actions{grid-template-columns:minmax(0,1fr)}
+ html body[data-sipa-escala=aluno] .lessons-hire-extra{display:inline}
+}
+
+/* ---------- Minhas aulas ---------- */
+/* Resumo: no celular os 3 cartões viram um cartão só, com linhas rótulo/valor. */
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] .lessons-main .lessons-summary{display:grid;grid-template-columns:minmax(0,1fr);gap:0;padding:4px 14px;margin:0 0 4px;border:1px solid var(--al-linha);border-radius:12px;background:var(--al-card)}
+ html body[data-sipa-escala=aluno] .lessons-main .lessons-summary .summary-card{display:block;min-height:0;padding:10px 0;border:0;border-radius:0;background:none;box-shadow:none}
+ html body[data-sipa-escala=aluno] .lessons-main .lessons-summary .summary-card+.summary-card{border-top:1px solid var(--al-linha)}
+ html body[data-sipa-escala=aluno] .lessons-main .lessons-summary .summary-card>div{display:flex;flex-direction:row;justify-content:space-between;align-items:baseline;gap:12px;min-width:0}
+ html body[data-sipa-escala=aluno] .lessons-main .lessons-summary .summary-card span{font-size:12px;text-transform:none;letter-spacing:0;flex:0 1 auto}
+ html body[data-sipa-escala=aluno] .lessons-main .lessons-summary .summary-card strong{font-size:15px;font-weight:600;text-align:right;overflow-wrap:anywhere;min-width:0}
+ html body[data-sipa-escala=aluno] .lessons-main .lessons-summary .summary-card::before,html body[data-sipa-escala=aluno] .lessons-main .lessons-summary .summary-card::after{display:none}
+ html body[data-sipa-escala=aluno] .lessons-main :is(.lessons-card,.student-interests,#student-medical-requests){padding:14px}
+ html body[data-sipa-escala=aluno] .lessons-main .student-local-lesson{padding:14px}
+ html body[data-sipa-escala=aluno] .lessons-main .local-lesson-heading{flex-wrap:wrap;gap:6px 10px}
+ html body[data-sipa-escala=aluno] .lessons-main .local-lesson-heading h3{font-size:16px;min-width:0;overflow-wrap:anywhere}
+ html body[data-sipa-escala=aluno] .lessons-main .confirmed-lesson-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+ html body[data-sipa-escala=aluno] .lessons-main .confirmed-lesson-actions>.local-lesson-cancel{flex:1 1 100%;width:100%;margin-top:0}
+}
+/* "Antes da sua aula": recolhível (fechado no celular, aberto no desktop). */
+.lesson-attendance-recolhivel>summary{list-style:none;cursor:pointer;font-weight:700;font-size:13px;color:var(--sipa-texto-neutro)}
+.lesson-attendance-recolhivel>summary::-webkit-details-marker{display:none}
+.lesson-attendance-recolhivel>summary::after{content:'';display:inline-block;width:7px;height:7px;margin-left:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-3px) rotate(45deg);transition:transform .15s}
+.lesson-attendance-recolhivel[open]>summary::after{transform:translateY(0) rotate(-135deg)}
+@media(min-width:768px) and (pointer:fine){.lesson-attendance-recolhivel>summary{pointer-events:none}.lesson-attendance-recolhivel>summary::after{display:none}}
+@media(max-width:767px){.lesson-attendance-recolhivel>summary{display:flex;align-items:center;justify-content:space-between;min-height:var(--al-alvo);margin:-10px -12px;padding:0 12px}.lesson-attendance-recolhivel[open]>summary{margin-bottom:0}}
+
+/* ---------- Início ---------- */
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] .dashboard-main :is(.credit-card,.next-lesson-card,.quick-actions-card,.progress-card,.license-card){padding:14px}
+ html body[data-sipa-escala=aluno] .dashboard-main .credit-value{margin-top:8px}
+ html body[data-sipa-escala=aluno] .dashboard-main .credit-value strong{font-size:26px}
+ html body[data-sipa-escala=aluno] .dashboard-main .summary-grid{gap:10px}
+ html body[data-sipa-escala=aluno] .dashboard-main .next-class-details{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+}
+@media(max-width:340px){html body[data-sipa-escala=aluno] .dashboard-main .next-class-details{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- Agendar aula ---------- */
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] .booking-main .booking-card{padding:14px}
+ html body[data-sipa-escala=aluno] .booking-main :is(.calendar-days,.calendar-weekdays){gap:3px}
+ html body[data-sipa-escala=aluno] .booking-main .time-slots{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}
+ html body[data-sipa-escala=aluno] .booking-main .booking-mode-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}
+ html body[data-sipa-escala=aluno] .booking-main .booking-mode-choice button{white-space:normal;line-height:1.3}
+ html body[data-sipa-escala=aluno] .booking-main .student-preferences{padding:14px}
+ html body[data-sipa-escala=aluno] .booking-main .student-preferences .preference-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px}
+ html body[data-sipa-escala=aluno] .booking-main .student-preferences [data-grupo=horarios] .preference-options{grid-template-columns:repeat(3,minmax(0,1fr))}
+ html body[data-sipa-escala=aluno] .booking-main .student-preferences :is([data-grupo=instrutores],[data-grupo=veiculos]) .preference-options{grid-template-columns:minmax(0,1fr)}
+ html body[data-sipa-escala=aluno] .booking-main .student-preferences :is(.preference-actions,.preference-periods){display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+ html body[data-sipa-escala=aluno] .booking-main .student-preferences :is(.preference-actions,.preference-periods) button,html body[data-sipa-escala=aluno] .booking-main #auto-confirmar{width:100%}
+ html body[data-sipa-escala=aluno] .booking-main #auto-proposta ol{padding-left:18px}
+ html body[data-sipa-escala=aluno] .booking-main .confirm-booking-button{width:100%}
+ html body[data-sipa-escala=aluno] .booking-main .summary-item{flex-wrap:nowrap;align-items:flex-start}
+ html body[data-sipa-escala=aluno] .booking-main .summary-item>div{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+}
+@media(max-width:380px){html body[data-sipa-escala=aluno] .booking-main .student-preferences [data-grupo=horarios] .preference-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---------- Meu progresso e Meu perfil ---------- */
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] .progress-main :is(.progress-card,.progress-detail-card,.progress-habilitacao){padding:14px}
+ html body[data-sipa-escala=aluno] .profile-main :is(.profile-section,.profile-overview,.profile-info-card,.profile-security-card){padding:14px}
+ html body[data-sipa-escala=aluno] .profile-main .profile-info-card :is(dd,strong){overflow-wrap:anywhere}
+}
+@media(max-width:480px){html body[data-sipa-escala=aluno] .progress-main .progress-etapas{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- Mensagens ---------- */
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] .mensagens-abas [role=tab]{min-height:var(--al-alvo);padding:0 12px}
+ html body[data-sipa-escala=aluno] .conversa-form-rodape{flex-wrap:wrap;gap:8px}
+ html body[data-sipa-escala=aluno] .conversa-form-rodape button{flex:1 1 100%;min-height:var(--al-alvo)}
+}
+
+/* ---------- Diálogos cabem na tela ---------- */
+html body[data-sipa-escala=aluno] dialog[open]{box-sizing:border-box;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] dialog[open]{width:calc(100vw - 24px)}
+ html body[data-sipa-escala=aluno] dialog :is(h2,header h2){font-size:clamp(19px,5vw,22px);overflow-wrap:anywhere}
+ html body[data-sipa-escala=aluno] :is(.lesson-cancel-dialog,.booking-local-dialog,.lesson-hire-dialog,.mensagem-dialog,.profile-password-dialog,.medical-request-dialog){padding:16px}
+}
+@media(max-width:480px){
+ html body[data-sipa-escala=aluno] dialog :is(footer,.booking-dialog-actions){display:flex;flex-direction:column-reverse;align-items:stretch;gap:8px}
+ html body[data-sipa-escala=aluno] dialog :is(footer,.booking-dialog-actions)>:is(button,a){width:100%;justify-content:center;text-align:center}
+}

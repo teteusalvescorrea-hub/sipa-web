@@ -29,6 +29,26 @@ export function adaptarInteresse(i){
   situacao:SITUACAO_INTERESSE[s]??i?.situacao?.descricao??(typeof s==='string'?s:'Aguardando'),aberto:![3,4].includes(s),marcadoEm:i?.marcadoEm??i?.criadoEm??null};
 }
 
+// Agendamento automático (F13Dtos.cs). Ida: categoria 1/2/3 e só ids da API (as unidades da tela são nomes do
+// catálogo; vazias = a unidade da categoria). Volta: a proposta no formato de gerarPropostaAutomatica (sem reserva).
+const GUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const idsApi=l=>[...new Set((l||[]).map(String).filter(x=>GUID.test(x)))];
+export const unidadeDaCategoria=(cat,aluno)=>cat==='D'?'Cobilândia':cat==='A'?'Vila Velha':aluno?.unidadeCarro||aluno?.unidade||'';
+export const corpoPreferenciasAutomaticas=p=>({categoria:NUMERO[p?.categoria]??null,unidades:idsApi(p?.unidades),dias:[...new Set((p?.dias||[]).map(Number))],
+ horarios:[...new Set((p?.horarios||[]).map(h=>String(h).slice(0,5)))],instrutores:idsApi(p?.instrutores),veiculos:idsApi(p?.veiculos),quantidade:Number(p?.quantidade)||null});
+export function adaptarPreferenciasAutomaticas(p){
+ if(!p)return null;
+ return {categoria:categoria(p.categoria),unidades:p.unidades||[],dias:(p.dias||[]).map(Number),horarios:(p.horarios||[]).map(h=>String(h).slice(0,5)),
+  instrutores:p.instrutores||[],veiculos:p.veiculos||[],quantidade:p.quantidade||1,atualizadoEm:p.atualizadoEm??null};
+}
+export function adaptarPropostaAutomatica(p,aluno){
+ const cat=categoria(p?.categoria);
+ return {categoria:cat,solicitadas:p?.solicitadas??0,horizonteDias:p?.horizonteDias??90,aulas:(p?.aulas||[]).map(a=>({
+  data:String(a.data).slice(0,10),hora:String(a.hora).slice(0,5),inicio:comFusoBrasil(a.dataHoraInicio),fim:a.dataHoraFim?comFusoBrasil(a.dataHoraFim):null,
+  unidadeId:a.unidadeId??null,unidade:unidadeDaCategoria(cat,aluno),instrutorId:a.motoristaId,veiculoId:a.veiculoId,
+  instrutor:a.motorista||'Instrutor',veiculo:[a.veiculo,a.placa].filter(Boolean).join(' · ')||'Veículo',placa:a.placa||''}))};
+}
+
 // Conversa com a Recepção (ConversasDtos.cs): datas em Brasília sem fuso. O aluno vê o painel de quem escreveu
 // ("Recepção", "Gerência"), não o nome do membro.
 export const adaptarConversaAluno=c=>({autoescolaId:c?.autoescolaId,autoescola:c?.autoescola||'Autoescola',conversaId:c?.conversaId??null,ultimaMensagemEm:comFusoBrasil(c?.ultimaMensagemEm)??null,naoLidas:Number(c?.naoLidas)||0,podeEnviar:c?.podeEnviar===true});
@@ -121,6 +141,7 @@ export function adaptarDadosAluno(aluno,contratacoes,aulas,extras={}){
   unidade:nomeDe(matricula?.unidadeBase)||aluno.unidades?.[0]?.nome||'Não informada',unidadeBaseId:matricula?.unidadeBase?.id??null,
   unidadeCarro:nomeDe(matricula?.unidadeCarro)||null,tipoCambio:CAMBIO[numero(matricula?.tipoCambio)]??null,nascimento:aluno.dataNascimento||null,
   categoria:letras.join(''),categoriasFormacao:aluno.categoriasFormacao,
+  preferenciasAutomaticas:adaptarPreferenciasAutomaticas(aluno.preferenciasAutomaticas),
   avisosInternos:mensagens,leiturasMensagens:{}};
  registros.push(cadastro,...vistas);
  return {integrado:true,aluno:cadastro,aulas:vistas,registros,credito:null,categorias:letras,
@@ -137,8 +158,10 @@ function janelas(hoje=hojeBrasil()){
 export function criarServicoAluno(){
  let dados=null,carregando=null;
  const dias=new Map(),recursosVistos=new Map();
- const capacidades=Object.freeze({cancelamento:true,reservas:true,senha:true,interesse:true,conversa:true,automatico:false,configuracaoRecursos:false});
- const pendente=async()=>{throw new Error('O agendamento automático ainda não está disponível. Use o agendamento manual.');};
+ const capacidades=Object.freeze({cancelamento:true,reservas:true,senha:true,interesse:true,conversa:true,automatico:true,configuracaoRecursos:false});
+ // Categorias em que cada instrutor e veículo já apareceu para o aluno (aulas, consultas e propostas).
+ const porCategoria=new Map();
+ const anotar=(id,cat)=>{if(!id||!cat)return;const s=porCategoria.get(id)||new Set();s.add(cat);porCategoria.set(id,s);};
  const invalidar=()=>{dados=null;dias.clear();};
  const opcional=p=>p.then(v=>v,()=>null);
 
@@ -185,8 +208,8 @@ export function criarServicoAluno(){
    if(h.disponivel===false)return motivoIndisponivel(h)==='ocupado'?{hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null}:null;
    const pares=[];
    for(const m of h.motoristas||[]){
-    lembrar({id:m.motoristaId,tipo:'instrutor',nome:m.nome});instrutores.add(m.motoristaId);
-    for(const v of m.veiculos||[]){lembrar({id:v.veiculoId,tipo:'veiculo',nome:[v.modelo,v.placa].filter(Boolean).join(' · ')||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio:CAMBIO[numero(v.tipoCambio)]??null});veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId});}
+    lembrar({id:m.motoristaId,tipo:'instrutor',nome:m.nome});anotar(m.motoristaId,cat);instrutores.add(m.motoristaId);
+    for(const v of m.veiculos||[]){lembrar({id:v.veiculoId,tipo:'veiculo',nome:[v.modelo,v.placa].filter(Boolean).join(' · ')||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio:CAMBIO[numero(v.tipoCambio)]??null});anotar(v.veiculoId,cat);veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId});}
    }
    return {hora,fim,inicio:h.dataHoraInicio,pares};
   }).filter(h=>h&&(h.ocupado||h.pares.length));
@@ -230,6 +253,29 @@ export function criarServicoAluno(){
   catch(e){throw comoErro(e);}
  }
 
+ // Agendamento automático (F13): a proposta dos próximos 90 dias só lê; a reserva é o reservarAulasLocais.
+ async function buscarAgendamentoAutomatico(p){
+  let r;try{r=await api.Post('agendamentos/automatico',corpoPreferenciasAutomaticas(p));}catch(e){throw comoErro(e);}
+  const proposta=adaptarPropostaAutomatica(r,(await dadosAlunoLocal()).aluno);
+  for(const a of proposta.aulas){
+   lembrar({id:a.instrutorId,tipo:'instrutor',nome:a.instrutor});lembrar({id:a.veiculoId,tipo:'veiculo',nome:a.veiculo,placa:a.placa,documento:a.placa});
+   anotar(a.instrutorId,proposta.categoria);anotar(a.veiculoId,proposta.categoria);
+  }
+  return proposta;
+ }
+ async function salvarPreferenciasAutomaticas(p){
+  try{await api.Put('alunos/me/preferencias-automaticas',corpoPreferenciasAutomaticas(p));}catch(e){throw comoErro(e);}finally{invalidar();}
+ }
+ // Instrutores e veículos para marcar como preferidos: os que o aluno já teve ou viu livres na categoria (a API não
+ // lista a frota para o aluno). Carro com câmbio diferente do da matrícula fica de fora.
+ function recursosAutomaticos(cat){
+  if(!dados)return [];
+  for(const a of dados.aulas){anotar(a.instrutorId,a.categoria);anotar(a.veiculoId,a.categoria);}
+  const cambio=dados.aluno?.tipoCambio;
+  return dados.registros.filter(r=>['instrutor','veiculo'].includes(r.tipo)&&porCategoria.get(r.id)?.has(cat)&&!(cat==='B'&&r.tipo==='veiculo'&&r.tipoCambio&&cambio&&r.tipoCambio!==cambio))
+   .sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+ }
+
  return {capacidades,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
   registros:async()=>(await dadosAlunoLocal()).registros,sair,
   consultarHistorico:async id=>(await api.Get('agendamentos/'+id)).historico||[],
@@ -252,5 +298,5 @@ export function criarServicoAluno(){
   // Sino e item Mensagens: avisos não lidos + mensagens da Recepção não lidas. Uma falha conta como zero naquela parte.
   totalNaoLidas:async()=>{const [avisos,conversa]=await Promise.all([opcional(api.Get('alunos/me/mensagens/nao-lidas')),opcional(api.Get('alunos/me/conversas/nao-lidas'))]);return (Number(avisos?.total??avisos)||0)+(Number(conversa?.total??conversa)||0);},
   // Agendamento automático: F13 (D19).
-  buscarAgendamentoAutomatico:pendente,salvarPreferenciasAutomaticas:pendente};
+  buscarAgendamentoAutomatico,salvarPreferenciasAutomaticas,recursosAutomaticos};
 }

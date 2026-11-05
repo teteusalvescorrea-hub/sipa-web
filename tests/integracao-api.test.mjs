@@ -14,7 +14,7 @@ globalThis.fetch=async(url,init={})=>{
  return new Response(r.corpo===undefined?null:JSON.stringify(r.corpo),{status:r.status??200});
 };
 const rota=(metodo,trecho,corpo,status)=>({quando:(u,m)=>m===metodo&&u.includes(trecho),corpo,status});
-const {adaptarDadosAluno,adaptarAcompanhamento,textoSituacao,criarServicoAluno}=await import('../aluno/js/services/alunoIntegrado.js');
+const {adaptarDadosAluno,adaptarAcompanhamento,textoSituacao,criarServicoAluno,adaptarPropostaAutomatica,adaptarPreferenciasAutomaticas,corpoPreferenciasAutomaticas}=await import('../aluno/js/services/alunoIntegrado.js');
 const {adaptarAulaInstrutor,criarServicoInstrutor}=await import('../instrutor/js/services/instrutorIntegrado.js');
 const {urlLogin}=await import('../shared/js/sessao.js');
 
@@ -92,6 +92,36 @@ test('aluno: horário ocupado vira slot com interesse; passado e aula própria s
  const [i]=await s.listarInteresses();assert.deepEqual([i.id,i.data,i.hora,i.categoria,i.unidade,i.situacao,i.aberto],['i1','2026-11-03','09:00','B','Cobilândia','Em contato',true]);
  respostas=[rota('POST','alunos/me/interesses-antecipacao',{title:'Conflito',listErrors:[{mensagem:'Esse horário está livre: reserve direto.'}]},409)];
  await assert.rejects(s.marcarInteresse({categoria:'B',data:'2026-11-03',hora:'12:00'}),/reserve direto/);
+});
+
+test('aluno: agendamento automático (F13) com preferências salvas, proposta sem reserva e confirmação pelo POST agendamentos',async()=>{
+ const m1='11111111-1111-4111-8111-111111111111',v1='22222222-2222-4222-8222-222222222222',u1='33333333-3333-4333-8333-333333333333';
+ const salvas={categoria:{valor:2,descricao:'B'},unidades:[u1],dias:[1,3],horarios:['09:00'],instrutores:[m1],veiculos:[],quantidade:2,atualizadoEm:'2026-11-01T12:00:00Z'};
+ assert.deepEqual(adaptarPreferenciasAutomaticas(salvas),{categoria:'B',unidades:[u1],dias:[1,3],horarios:['09:00'],instrutores:[m1],veiculos:[],quantidade:2,atualizadoEm:'2026-11-01T12:00:00Z'});
+ assert.equal(adaptarPreferenciasAutomaticas(null),null);
+ assert.equal(adaptarDadosAluno({...alunoApi,preferenciasAutomaticas:salvas},[],[]).aluno.preferenciasAutomaticas.categoria,'B');
+ assert.deepEqual(corpoPreferenciasAutomaticas({categoria:'B',unidades:['Cobilândia'],dias:[1,'3',3],horarios:['09:00','10:00'],instrutores:[m1,'instrutor-local'],veiculos:[],quantidade:'2'}),
+  {categoria:2,unidades:[],dias:[1,3],horarios:['09:00','10:00'],instrutores:[m1],veiculos:[],quantidade:2},'unidade por nome vira vazia (a da categoria) e id local sai');
+ const propostaApi={categoria:{valor:2,descricao:'B'},solicitadas:2,horizonteDias:90,aulas:[{data:'2026-11-09',hora:'09:00',dataHoraInicio:'2026-11-09T09:00:00',dataHoraFim:'2026-11-09T09:50:00',unidadeId:null,motoristaId:m1,motorista:'Instrutor Um',veiculoId:v1,veiculo:'Onix',placa:'ABC1D23'}]};
+ const p=adaptarPropostaAutomatica(propostaApi,{unidade:'Cobilândia',unidadeCarro:null});
+ assert.deepEqual([p.categoria,p.solicitadas,p.horizonteDias,p.aulas.length],['B',2,90,1]);
+ assert.deepEqual(p.aulas[0],{data:'2026-11-09',hora:'09:00',inicio:'2026-11-09T09:00:00-03:00',fim:'2026-11-09T09:50:00-03:00',unidadeId:null,unidade:'Cobilândia',instrutorId:m1,veiculoId:v1,instrutor:'Instrutor Um',veiculo:'Onix · ABC1D23',placa:'ABC1D23'});
+ assert.equal(adaptarPropostaAutomatica({categoria:{valor:3},aulas:[]},{}).categoria,'D');
+ respostas=[rota('PUT','alunos/me/preferencias-automaticas',undefined,204),rota('POST','agendamentos/automatico',propostaApi),
+  rota('GET','alunos/me/mensagens',[]),rota('GET','alunos/me/acompanhamento',null),
+  rota('GET','alunos/me',{...alunoApi,preferenciasAutomaticas:salvas}),rota('GET','contratacoes',[]),rota('GET','/api/agendamentos?',[aulaApi({motoristaId:m1,veiculoId:v1})])];
+ const s=criarServicoAluno();assert.equal(s.capacidades.automatico,true);
+ chamadas.length=0;
+ await s.salvarPreferenciasAutomaticas({categoria:'B',unidades:['Cobilândia'],dias:[1],horarios:['09:00'],instrutores:[m1],veiculos:[],quantidade:2});
+ const put=chamadas.find(x=>x.metodo==='PUT');assert.ok(put.url.endsWith('/alunos/me/preferencias-automaticas'));
+ assert.deepEqual(JSON.parse(put.corpo),{categoria:2,unidades:[],dias:[1],horarios:['09:00'],instrutores:[m1],veiculos:[],quantidade:2});
+ chamadas.length=0;
+ const proposta=await s.buscarAgendamentoAutomatico({categoria:'B',unidades:[],dias:[1],horarios:['09:00'],instrutores:[],veiculos:[],quantidade:2});
+ assert.ok(chamadas.some(x=>x.metodo==='POST'&&x.url.endsWith('/agendamentos/automatico')));
+ assert.ok(!chamadas.some(x=>x.metodo==='POST'&&x.url.endsWith('/api/agendamentos')),'proposta não reserva');
+ assert.equal(proposta.aulas[0].instrutorId,m1);
+ assert.deepEqual(s.recursosAutomaticos('B').map(r=>r.tipo+':'+r.id).sort(),['instrutor:'+m1,'veiculo:'+v1]);
+ assert.deepEqual(s.recursosAutomaticos('A'),[]);
 });
 
 test('aluno: 400 na consulta de horários vira motivo de elegibilidade, sem quebrar a tela',async()=>{

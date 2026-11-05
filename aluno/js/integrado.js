@@ -13,7 +13,8 @@ function preparar(){
  for(const id of ['lessons-list','past-lessons-list','calendar-days','time-slots','progress-packages']){const n=document.getElementById(id);if(n)n.replaceChildren();}
  document.querySelectorAll('main button:not(.sipa-theme-toggle),main input,main select').forEach(n=>n.disabled=true);
  document.querySelectorAll('#logout-button,[id$="-logout"]').forEach(b=>b.onclick=sair);
- let menu=document.querySelector('#mobile-menu-button,[id$="-mobile-menu"]');if(!menu){menu=document.createElement('button');menu.type='button';menu.className='student-menu-toggle';menu.textContent='Menu';document.querySelector('main header')?.prepend(menu);}menu.disabled=false;menu.onclick=()=>{const side=document.querySelector('.sipa-sidebar');side.classList.toggle('mobile-open');menu.setAttribute('aria-expanded',String(side.classList.contains('mobile-open')));};
+ // Menu (gaveta até 1024px): montado pelo sidebar-aluno.js; aqui só volta a ficar ativo.
+ const menu=document.querySelector('.sipa-aluno-menu');if(menu)menu.disabled=false;
  const rotas={schedule:'agendamento.html',lessons:'minhas-aulas.html',progress:'meu-progresso.html',profile:'meu-perfil.html',packages:ROTA_CONTRATAR_AULAS};document.querySelectorAll('[data-action]').forEach(b=>{if(rotas[b.dataset.action]){b.disabled=false;b.onclick=()=>location.assign(rotas[b.dataset.action]);}});
  document.querySelectorAll('.sipa-theme-toggle').forEach(b=>b.disabled=false);
 }
@@ -26,7 +27,7 @@ async function iniciar(){
  if(pagina==='dashboard.html')apresentarDashboard(dados);
  else if(pagina==='minhas-aulas.html')await apresentarAulas(servico,dados);
  else if(pagina==='agendamento.html'){await apresentarAgendamento(servico,dados);
-  // Agendamento automático fica para a F13 (D19): só o manual está ligado.
+  // Agendamento automático (F13): ligado pela capacidade do serviço; sem ela, só o manual.
   const auto=document.getElementById('booking-mode-auto');if(auto&&!servico.capacidades.automatico){auto.disabled=true;auto.title='Agendamento automático ainda indisponível. Use o agendamento manual.';}}
  else if(pagina==='meu-progresso.html')apresentarProgresso(dados);
  else if(pagina==='meu-perfil.html'){apresentarPerfil(dados);montarAlteracaoSenha(servico);}
