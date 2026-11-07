@@ -19,14 +19,23 @@ const statusMedico=v=>STATUS_MEDICO_API[numero(v)]??v;
 const comoErro=e=>{const n=new Error(textoErro(e));n.status=e?.status;return n;};
 const chaveOperacao=()=>crypto.randomUUID();
 
-// Motivo do horário indisponível (null, "ocupado", "passado" ou "alunoOcupado"); a API antiga não manda.
+// Motivo do horário indisponível (null, "ocupado", "indisponivel", "passado" ou "alunoOcupado"); a API antiga não manda.
+// "ocupado" = existe instrutor e veículo aptos, mas todos com aula de outro aluno (só esse aceita interesse).
+// "indisponivel" = nenhum par apto (almoço, jornada, bloqueio, validade, sem recurso): não vira interesse.
 const motivoIndisponivel=h=>String(h.motivo?.descricao??h.motivo??'').toLowerCase();
-const SITUACAO_INTERESSE=Object.freeze({1:'Aguardando',2:'Em contato',3:'Remarcado',4:'Encerrado'});
-// Interesse em antecipar (aluno): horário ocupado em que ele quer aula.
+// Textos do aluno para a situação do interesse (a Recepção usa Contatado/Remarcado/Descartado).
+export const SITUACAO_INTERESSE_ALUNO=Object.freeze({1:'Aguardando',2:'Recepção entrou em contato',3:'Atendido',4:'Não atendido'});
+export const SEM_AULA_PARA_ANTECIPAR='Sem aula para antecipar · desmarque';
+// Interesse em antecipar (aluno): horário ocupado em que ele quer aula. O interesse aberto num horário em que ele já tem
+// aula volta da API como atendido (situação lida, C3). O que não pode ser atendido (podeSerAtendido false, C4) continua
+// aberto, mas pede para desmarcar.
 export function adaptarInteresse(i){
- const inicio=comFusoBrasil(i?.dataHoraInicio),s=numero(i?.situacao);
- return {id:i?.id??i?.interesseId,categoria:categoria(i?.categoria),inicio,data:inicio?.slice(0,10),hora:inicio?.slice(11,16),unidade:nomeDe(i?.unidade),
-  situacao:SITUACAO_INTERESSE[s]??i?.situacao?.descricao??(typeof s==='string'?s:'Aguardando'),aberto:![3,4].includes(s),marcadoEm:i?.marcadoEm??i?.criadoEm??null};
+ const inicio=comFusoBrasil(i?.dataHoraInicio),s=numero(i?.situacao),texto=String(i?.situacao?.descricao??(typeof s==='string'?s:'')).trim();
+ const atendido=i?.atendido===true||s===3||/^(atendido|remarcado)$/i.test(texto),naoAtendido=!atendido&&(s===4||/^(descartado|n[aã]o atendido)$/i.test(texto));
+ const aberto=!atendido&&!naoAtendido,podeSerAtendido=aberto&&i?.podeSerAtendido!==false;
+ const situacao=atendido?SITUACAO_INTERESSE_ALUNO[3]:naoAtendido?SITUACAO_INTERESSE_ALUNO[4]:!podeSerAtendido?SEM_AULA_PARA_ANTECIPAR:SITUACAO_INTERESSE_ALUNO[s]??SITUACAO_INTERESSE_ALUNO[1];
+ return {id:i?.id??i?.interesseId,categoria:categoria(i?.categoria),inicio,data:inicio?.slice(0,10),hora:inicio?.slice(11,16),unidade:nomeDe(i?.unidade)||'Qualquer unidade',
+  situacao,aberto,podeSerAtendido,marcadoEm:i?.marcadoEm??i?.criadoEm??null};
 }
 
 // Agendamento automático (F13Dtos.cs). Ida: categoria 1/2/3 e só ids da API (as unidades da tela são nomes do
@@ -191,11 +200,22 @@ export function criarServicoAluno(){
   const chave=cat+'|'+data.slice(0,7);
   if(!dias.has(chave))dias.set(chave,api.Get(api.ComParams('agendamentos/dias-disponiveis',{categoria:NUMERO[cat],mes:data.slice(0,7)})).catch(()=>({dias:[]})));
   const dia=(await dias.get(chave)).dias?.find(d=>String(d.data).slice(0,10)===data);
-  return dia&&!dia.fechado&&dia.temHorario?[{data}]:[];
+  if(dia&&!dia.fechado&&dia.temHorario)return [{data}];
+  // Dia sem horário livre, mas com horário ocupado por aula de outro aluno (temLotado, C5): dá para marcar interesse.
+  const vazio=[];if(dia&&!dia.fechado&&dia.temLotado===true)vazio.lotado=true;return vazio;
  }
 
- // Horários do dia com os pares instrutor × veículo livres (incluirMotoristas). O horário ocupado por outro aluno
- // (motivo "ocupado") vem sem pares, para o "Tenho interesse"; passado e aula própria no horário ficam de fora.
+ // Interesses que a Recepção descartou (situação 4), por "AAAA-MM-DDTHH:MM" na categoria. Lidos uma vez e relidos depois
+ // de marcar ou desmarcar; falha na leitura não esconde nada.
+ let descartados=null;
+ async function interessesDescartados(cat){
+  descartados??=api.Get('alunos/me/interesses-antecipacao').then(r=>(Array.isArray(r)?r:r?.itens||[]).filter(i=>numero(i?.situacao)===4),()=>[]);
+  return new Set((await descartados).filter(i=>categoria(i.categoria)===cat).map(i=>String(i.dataHoraInicio).slice(0,16)));
+ }
+
+ // Horários do dia com os pares instrutor × veículo livres (incluirMotoristas). O horário ocupado por aula de outro aluno
+ // (motivo "ocupado") vem sem pares, para o "Tenho interesse"; a aula do próprio aluno vem como "Sua aula" (propria);
+ // passado e "indisponivel" (almoço, jornada, bloqueio, sem recurso) ficam de fora.
  async function consultarRecursosLocal({categoria:cat,data}){
   const vazio={horarios:[],contagem:{instrutores:0,veiculos:0},permiteAgendar:true};
   if(!data)return {...vazio,mensagem:'Escolha uma data no calendário para consultar os horários.'};
@@ -203,18 +223,27 @@ export function criarServicoAluno(){
   try{r=await api.Get(api.ComParams('agendamentos/horarios-disponiveis',{categoria:NUMERO[cat],data,incluirMotoristas:true}));}
   catch(e){if(e?.status===400||e?.status===404){const motivo=textoErro(e);return {...vazio,mensagem:motivo,permiteAgendar:false,motivoElegibilidade:motivo};}throw comoErro(e);}
   const instrutores=new Set(),veiculos=new Set();
+  // A unidade em que a grade foi montada vai no POST do interesse (C2), quando a API informa.
+  const unidadeId=r.unidadeId??r.unidade?.id??null;
+  const semInteresse=(r.horarios||[]).some(h=>h.disponivel===false&&motivoIndisponivel(h)==='ocupado'&&!h.interesseId);
+  const recusados=semInteresse?await interessesDescartados(cat):new Set();
   const horarios=(r.horarios||[]).map(h=>{
-   const hora=String(h.horario).slice(0,5),fim=String(h.dataHoraFim).slice(11,16);
-   if(h.disponivel===false)return motivoIndisponivel(h)==='ocupado'?{hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null}:null;
+   const hora=String(h.horario).slice(0,5),fim=String(h.dataHoraFim).slice(11,16),motivo=motivoIndisponivel(h);
+   if(h.disponivel===false){
+    if(motivo==='alunoocupado')return {hora,fim,inicio:h.dataHoraInicio,pares:[],propria:true};
+    if(motivo!=='ocupado')return null;
+    const descartado=!h.interesseId&&(h.descartado===true||recusados.has(String(h.dataHoraInicio).slice(0,16)));
+    return {hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null,unidadeId,...(descartado?{descartado:true}:{})};
+   }
    const pares=[];
    for(const m of h.motoristas||[]){
     lembrar({id:m.motoristaId,tipo:'instrutor',nome:m.nome});anotar(m.motoristaId,cat);instrutores.add(m.motoristaId);
     for(const v of m.veiculos||[]){lembrar({id:v.veiculoId,tipo:'veiculo',nome:[v.modelo,v.placa].filter(Boolean).join(' · ')||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio:CAMBIO[numero(v.tipoCambio)]??null});anotar(v.veiculoId,cat);veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId});}
    }
    return {hora,fim,inicio:h.dataHoraInicio,pares};
-  }).filter(h=>h&&(h.ocupado||h.pares.length));
-  const mensagem=r.fechado?'Não há expediente nesta data.':horarios.some(h=>!h.ocupado)?'':'Nenhum horário com instrutor e veículo livres nesta data.';
-  return {horarios,contagem:{instrutores:instrutores.size,veiculos:veiculos.size},mensagem,permiteAgendar:true,unidade:r.unidade,local:r.local};
+  }).filter(h=>h&&(h.ocupado||h.propria||h.pares.length));
+  const mensagem=r.fechado?'Não há expediente nesta data.':horarios.some(h=>!h.ocupado&&!h.propria)?'':'Nenhum horário com instrutor e veículo livres nesta data.';
+  return {horarios,contagem:{instrutores:instrutores.size,veiculos:veiculos.size},mensagem,permiteAgendar:true,unidade:r.unidade,unidadeId,local:r.local};
  }
 
  // POST /api/agendamentos em lote (tudo ou nada), com o operacaoId como Idempotency-Key.
@@ -242,12 +271,14 @@ export function criarServicoAluno(){
  }
 
  // Interesse num horário ocupado: a Recepção vê quando o horário vaga e liga para remarcar.
- async function marcarInteresse({categoria:cat,data,hora}){
+ // Só o horário "ocupado" aceita interesse (C2): a API recusa os outros com 400 e a mensagem dela aparece na tela.
+ async function marcarInteresse({categoria:cat,data,hora,unidadeId}){
   if(!NUMERO[cat]||!data||!hora)throw new Error('Escolha a categoria, a data e o horário.');
-  try{return adaptarInteresse(await api.Post('alunos/me/interesses-antecipacao',{categoria:NUMERO[cat],dataHoraInicio:data+'T'+hora+':00'},{cabecalhos:{'Idempotency-Key':chaveOperacao()}}));}
-  catch(e){throw comoErro(e);}
+  const corpo={categoria:NUMERO[cat],dataHoraInicio:data+'T'+hora+':00',...(GUID.test(String(unidadeId||''))?{unidadeId}:{})};
+  try{return adaptarInteresse(await api.Post('alunos/me/interesses-antecipacao',corpo,{cabecalhos:{'Idempotency-Key':chaveOperacao()}}));}
+  catch(e){throw comoErro(e);}finally{descartados=null;}
  }
- async function desmarcarInteresse(id){try{await api.Delete('alunos/me/interesses-antecipacao/'+id);}catch(e){throw comoErro(e);}}
+ async function desmarcarInteresse(id){try{await api.Delete('alunos/me/interesses-antecipacao/'+id);}catch(e){throw comoErro(e);}finally{descartados=null;}}
  async function listarInteresses(){
   try{const r=await api.Get('alunos/me/interesses-antecipacao');return (Array.isArray(r)?r:r?.itens||[]).map(adaptarInteresse).sort((a,b)=>String(a.inicio).localeCompare(String(b.inicio)));}
   catch(e){throw comoErro(e);}

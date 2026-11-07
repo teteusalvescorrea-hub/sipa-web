@@ -59,13 +59,13 @@ export async function montarAdministracao(root,servico,ui){
    ['agenda-global','Agendas',master?'Consultar e gerenciar agendamentos.':'Consultar agendas e disponibilidade.','grid','consultar'],
    ...(master?[['acessos','Gest\u00e3o de acessos','Administrar usu\u00e1rios e acessos.','key','gestao-acessos']]:[]),
    ['relatorios','Relat\u00f3rios','Consultar indicadores operacionais.','file','relatorios'],
-   ...(!master?[['antecipacao','Antecipa\u00e7\u00e3o de aulas','Horários liberados com alunos interessados.','users','antecipar']]:[])
+   ...(!master?[['antecipacao','Antecipa\u00e7\u00e3o de aulas','Horários que vagaram com aluno aguardando contato.','users','antecipar']]:[])
   ];
   const icone=id=>iconeSvg(id,'0 0 24 24');
   for(const [id,titulo,descricao,simbolo]of acoes.filter(a=>op.permissoes.includes(a[4]))){
    const b=botao('',()=>{ui.navegar(id);render(id);},'op-quick-action'),texto=el('span',undefined,'op-quick-copy');b.dataset.opAtalho=id;texto.append(el('strong',titulo),el('span',descricao));b.append(icone(simbolo),texto,icone('arrow'));atalhos.append(b);
   }
-  destino.replaceChildren(indicadores([['Atestados \u00e0 Ger\u00eancia',s.filter(s=>s.status==='gerencia').length],['Alunos',estado.alunos.length],['Pend\u00eancias administrativas',estado.excecoesAgenda.filter(x=>x.status==='pendente').length],...(liberados!==null?[['Horários liberados com interessados',liberados]]:[]),...(ocupacao?[['Ocupa\u00e7\u00e3o hoje',ocupacao.totais.ocupacao===null?'Sem base eleg\u00edvel':ocupacao.totais.ocupacao+'%']]:[])]),card('Fun\u00e7\u00f5es r\u00e1pidas',atalhos));
+  destino.replaceChildren(indicadores([['Atestados \u00e0 Ger\u00eancia',s.filter(s=>s.status==='gerencia').length],['Alunos',estado.alunos.length],['Pend\u00eancias administrativas',estado.excecoesAgenda.filter(x=>x.status==='pendente').length],...(liberados!==null?[['Horários liberados com aluno aguardando contato',liberados]]:[]),...(ocupacao?[['Ocupa\u00e7\u00e3o hoje',ocupacao.totais.ocupacao===null?'Sem base eleg\u00edvel':ocupacao.totais.ocupacao+'%']]:[])]),card('Fun\u00e7\u00f5es r\u00e1pidas',atalhos));
  }
  function perfil(){pain('perfil').replaceChildren(card('Meu perfil',gradeTabela(['Nome','Perfil','Unidade operacional','Escopo'],[[op.nome,NOMES_PERFIL[op.perfil],op.unidade,unidades.map(u=>u.nome).join(', ')]])));}
  async function verificacoes(){const host=pain('verificacoes'),lista=el('div'),campos=[['busca','Aluno ou CPF','search',''],['unidade','Unidade-base','select','',[['','Todas'],...opcoesUnidades]],['categoria','Categoria','select','',[['','Todas'],['A','Moto'],['B','Carro'],['D','Ônibus']]],['status','Situação','select','',[['','Todas'],...Object.entries(STATUS_MEDICO)]],['credito','Crédito','select','',[['','Todos'],['devolvido','Devolvido'],['retido','Não devolvido']]],['inicio','Solicitado desde','date',''],['fim','Solicitado até','date','']];

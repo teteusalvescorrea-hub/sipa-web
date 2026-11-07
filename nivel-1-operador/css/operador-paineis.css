@@ -377,3 +377,27 @@ th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-
 [data-op-secao=instrutores] [data-op-acao-topo=instrutores], [data-op-secao=recursos] [data-op-acao-topo=recursos] { display:inline-flex; }
 /* O aviso rápido sempre em branco sobre o fundo (regras de [role=alert] da tela pintavam o texto de vermelho). */
 .op-toast, .op-toast * { color:#fff !important; }
+/* Antecipação na agenda da unidade: faixa no topo, selo "★ N" na célula livre e a lista de interessados. */
+.op-agenda .op-agenda-antecipacao { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:0 0 10px; padding:9px 12px; border:1px solid #e3cf9f; border-left:4px solid #c58a20; border-radius:8px; background:#fdf7ea; color:#5f4512; font-size:13px; line-height:1.5; }
+.op-agenda .op-agenda-antecipacao[hidden] { display:none; }
+.op-agenda .op-agenda-antecipacao p { margin:0; flex:1 1 220px; min-width:0; }
+.op-agenda .op-agenda-antecipacao .op-button { width:auto; flex:0 0 auto; min-height:32px; padding:5px 12px; font-size:12px; }
+.op-slot-interesse { justify-self:start; display:inline-flex; align-items:center; gap:5px; max-width:100%; min-height:26px; padding:2px 8px; border:1px solid #e3cf9f; border-radius:5px; background:#fdf7ea; color:#6b4b0e; font-size:11px; cursor:pointer; }
+.op-slot-interesse strong { font-size:12px; white-space:nowrap; }
+.op-slot-interesse:hover { border-color:#c58a20; }
+.op-agenda .op-week-grid .op-slot-interesse { align-self:stretch; justify-content:center; padding:2px 4px; }
+.op-agenda .op-week-grid .op-slot-interesse span { display:none; }
+.op-agenda-liberados { display:grid; gap:12px; margin:0 0 16px; }
+.op-liberado h3 { margin:0 0 6px; font-size:13px; }
+.op-liberado ul { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.op-liberado li { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; padding:8px 10px; border:1px solid #d8e5f0; border-radius:8px; background:#fff; }
+.op-liberado li[data-sem-aula] { background:#f3f5f8; }
+.op-liberado li > div:first-child { display:grid; gap:2px; min-width:0; flex:1 1 220px; font-size:12px; }
+.op-liberado li > div:first-child strong { font-size:13px; }
+.op-liberado-acoes { display:flex; align-items:center; gap:6px; }
+.op-liberado-acoes .op-button { width:auto; min-height:30px; padding:4px 10px; font-size:12px; }
+.op-agenda-liberados-dialogo .op-dialog-actions { flex-wrap:wrap; }
+.op-agenda-liberados-dialogo .op-dialog-actions .op-button { width:auto; }
+[data-theme=dark] .op-agenda .op-agenda-antecipacao, [data-theme=dark] .op-slot-interesse { background:#3a2e14; border-color:#6b5426; color:#f1d9a4; }
+[data-theme=dark] .op-liberado li { background:#20364d; border-color:#3a5068; color:#d6e7f6; }
+[data-theme=dark] .op-liberado li[data-sem-aula] { background:#293749; }

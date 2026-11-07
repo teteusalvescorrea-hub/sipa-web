@@ -153,15 +153,20 @@ function jornadaLocal(j,categorias){
  const semana=Object.fromEntries([1,2,3,4,5].map(d=>[d,[{inicio,fim}]]));
  semana[6]=categorias.includes('D')?[{inicio,fim}]:inicio<'12:00'?[{inicio,fim:fim<'12:00'?fim:'12:00'}]:[];return semana;
 }
-// GET vinculos (status 2) → instrutores e veículos do front.
+// Almoço do vínculo como a API formata (AlmocoHelper.Formatar): "12:00/13:00"; aceita segundos ("12:00:00/13:00:00").
+const almocoDaApi=v=>{const m=/^(\d{2}:\d{2})(?::\d{2})?\s*\/\s*(\d{2}:\d{2})(?::\d{2})?$/.exec(String(v??'').trim());return m?m[1]+'/'+m[2]:null;};
+const jornadaDaApi=j=>j?.inicio&&j?.fim?{inicio:String(j.inicio).slice(0,5),fim:String(j.fim).slice(0,5)}:null;
+// GET vinculos (status 2, VinculoReadDto com horarioAlmoco, jornada, disponivel e observacoes: C6) → instrutores e veículos do front.
 export function adaptarRecursos(vinculos,u,daAutoescola=[]){
  const recursos=new Map();
  for(const v of vinculos){
   const cats=(v.motoristaCategorias||[]).map(categoria).filter(Boolean),unidades=(v.unidades||[]).map(u.chave).filter(Boolean),veiculos=v.veiculos||[];
-  const ativo=v.ativo??!(v.cnhVencida||v.credenciamentoVencido);
+  const ativo=v.ativo??!(v.cnhVencida||v.credenciamentoVencido),jornada=jornadaDaApi(v.jornada);
   if(!recursos.has(v.motoristaId))recursos.set(v.motoristaId,{id:v.motoristaId,vinculoId:v.id,tipo:'Instrutores',nome:v.motoristaNome,cpf:digitos(v.motoristaCpf),identificacao:String(v.motoristaCodigo??'')||digitos(v.motoristaCpf),telefone:v.motoristaTelefone||'',email:v.motoristaEmail||'',
-   categorias:cats,unidade:unidades[0]||'',unidades,ativo:ativo===true,disponivel:v.disponivel??true,horarioAlmoco:v.horarioAlmoco??null,observacoes:v.observacoes||'',
-   veiculoIds:veiculos.map(x=>x.id??x.veiculoId),...(jornadaLocal(v.jornada,cats)?{disponibilidade:jornadaLocal(v.jornada,cats)}:{}),deveTrocarSenha:v.deveTrocarSenha,podeRedefinirAcesso:v.podeRedefinirAcesso,origem:'api'});
+   categorias:cats,unidade:unidades[0]||'',unidades,ativo:ativo===true,disponivel:v.disponivel??true,horarioAlmoco:almocoDaApi(v.horarioAlmoco)??v.horarioAlmoco??null,observacoes:v.observacoes||'',jornada,
+   // O GET antigo não trazia esses campos: a edição só reenvia o que veio (operacaoLida), nunca um null por falta de leitura.
+   operacaoLida:{almoco:Object.hasOwn(v,'horarioAlmoco'),jornada:Object.hasOwn(v,'jornada'),disponivel:Object.hasOwn(v,'disponivel'),observacoes:Object.hasOwn(v,'observacoes')},
+   veiculoIds:veiculos.map(x=>x.id??x.veiculoId),...(jornadaLocal(jornada,cats)?{disponibilidade:jornadaLocal(jornada,cats)}:{}),deveTrocarSenha:v.deveTrocarSenha,podeRedefinirAcesso:v.podeRedefinirAcesso,origem:'api'});
   for(const x of veiculos){const id=x.id??x.veiculoId;if(recursos.has(id))continue;const c=categoria(x.categoria);
    recursos.set(id,{id,tipo:'Veículos',nome:x.modelo,modelo:x.modelo,placa:x.placa,identificacao:x.placa,categoria:c,...(c==='B'?{tipoCambio:CAMBIO[numero(x.tipoCambio)]??undefined}:{}),unidade:unidades[0]||'',instrutorId:v.motoristaId,ativo:x.ativo??true,disponivel:true,origem:'api'});}
  }
@@ -210,9 +215,13 @@ export function adaptarLiberado(h,u){
  return {unidade:u.chave(h.unidadeId??h.unidade),unidadeNome:nomeOu(h.unidade),categoria:categoria(h.categoria),data:i.slice(0,10),inicio,fim:String(h.dataHoraFim||'').slice(11,16)||fimDaAula(inicio),prazo:h.prazoHorasUteis??48,
   pares:(h.pares||[]).map(p=>({instrutorId:p.motoristaId,veiculoId:p.veiculoId,instrutor:nomeOu(p.instrutor)||'Instrutor',
    veiculo:[p.modelo,p.placa].filter(Boolean).join(' · ')||'Veículo'})),
-  interessados:(h.interessados||[]).map(x=>({id:x.interesseId,alunoId:x.alunoId,aluno:nomeOu(x.nome)||'Aluno não informado',telefone:x.telefone??'',
-   situacao:SITUACAO_INTERESSE[numero(x.situacao)]??descricao(x.situacao)??'Aguardando',marcadoEm:x.marcadoEm??null,contatadoEm:x.contatadoEm??null,observacao:x.observacao??'',
-   aulas:(x.aulas||[]).map(a=>{const ai=String(a.dataHoraInicio||'');return {id:a.id??a.agendamentoId,data:ai.slice(0,10),inicio:ai.slice(11,16),horasUteis:a.horasUteis??null,dentroPrazo:a.dentroPrazo!==false};})}))};
+  interessados:(h.interessados||[]).map(x=>{
+   const aulas=(x.aulas||[]).map(a=>{const ai=String(a.dataHoraInicio||'');return {id:a.id??a.agendamentoId,data:ai.slice(0,10),inicio:ai.slice(11,16),horasUteis:a.horasUteis??null,dentroPrazo:a.dentroPrazo!==false};});
+   // podeSerAtendido (C4/C7): tem aula da mesma categoria, agendada ou confirmada, depois do horário e dentro do prazo.
+   // A API antiga não manda: a mesma conta pelas aulas que vieram.
+   return {id:x.interesseId,alunoId:x.alunoId,aluno:nomeOu(x.nome)||'Aluno não informado',telefone:x.telefone??'',
+    situacao:SITUACAO_INTERESSE[numero(x.situacao)]??descricao(x.situacao)??'Aguardando',marcadoEm:x.marcadoEm??null,contatadoEm:x.contatadoEm??null,observacao:x.observacao??'',
+    podeSerAtendido:typeof x.podeSerAtendido==='boolean'?x.podeSerAtendido:aulas.some(a=>a.dentroPrazo),aulas};})};
 }
 function observacaoInteresse(v){const t=String(v??'').trim();if(t.length>500)throw new Error('Use no máximo 500 caracteres na observação.');return t||null;}
 // Conversa com o aluno (ConversasDtos.cs). Datas em Brasília sem fuso; o front põe o -03:00.
@@ -222,6 +231,23 @@ export const adaptarMensagemConversa=m=>({id:m.id,texto:m.texto??'',em:comFusoBr
 export function adaptarConversaEquipe(c,u){
  return {id:c.id,alunoId:c.alunoId,aluno:c.aluno||'Aluno não informado',unidadeId:c.unidadeId,unidade:u.chave(c.unidadeId?{id:c.unidadeId,nome:c.unidade}:c.unidade),unidadeNome:c.unidade||'',
   ultimaMensagemEm:comFusoBrasil(c.ultimaMensagemEm)??null,ultimaMensagem:c.ultimaMensagem||'',ultimaDoAluno:c.ultimaDoAluno===true,naoLida:c.naoLida===true,podeResponder:c.podeResponder===true};
+}
+// PUT vinculos/{id}/operacao da edição do instrutor: null quando nada de operação mudou (o PUT não sai). Quando sai, os
+// campos não alterados levam o valor atual lido no GET; o que não foi lido (ou está vazio) fica fora do corpo, para a
+// API nunca receber null num almoço ou numa jornada que ninguém mexeu.
+export function corpoOperacaoInstrutor(r,d={}){
+ const lido=k=>r.operacaoLida?.[k]!==false,valor=v=>v===''||v==null?undefined:v;
+ const almocoAtual=lido('almoco')?valor(ALMOCO_LEGADO[r.horarioAlmoco]||r.horarioAlmoco):undefined;
+ const jornadaAtual=lido('jornada')?{inicio:valor(r.jornada?.inicio??r.disponibilidade?.[1]?.[0]?.inicio),fim:valor(r.jornada?.fim??r.disponibilidade?.[1]?.[0]?.fim)}:{};
+ const disponivelAtual=lido('disponivel')?r.disponivel:undefined,observacoesAtuais=String(r.observacoes??'').trim();
+ const almoco=d.alterarAlmoco?valor(ALMOCO_LEGADO[d.horarioAlmoco]||d.horarioAlmoco):undefined;
+ const observacoes=d.observacoes===undefined?undefined:String(d.observacoes).trim();
+ const mudou=(d.alterarAlmoco&&almoco!==almocoAtual)||(d.inicio!==undefined&&d.inicio!==jornadaAtual.inicio)||(d.fim!==undefined&&d.fim!==jornadaAtual.fim)
+  ||(d.disponivel!==undefined&&d.disponivel!==disponivelAtual)||(observacoes!==undefined&&observacoes!==observacoesAtuais);
+ if(!mudou)return null;
+ const corpo={horarioAlmoco:d.alterarAlmoco?almoco??null:almocoAtual,jornadaInicio:valor(d.inicio)??jornadaAtual.inicio,jornadaFim:valor(d.fim)??jornadaAtual.fim,
+  disponivel:d.disponivel??disponivelAtual,observacoes:observacoes??observacoesAtuais};
+ return Object.fromEntries(Object.entries(corpo).filter(([,v])=>v!==undefined));
 }
 // Por quanto tempo uma listagem lida da API é reaproveitada (ver GetCache).
 const VALIDADE_CACHE=15000;
@@ -441,7 +467,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   async editarInstrutor(id,d){
    regras.autorizar(op,'editar-instrutor');const e=await ler(),r=e.recursos.find(x=>x.id===id&&x.tipo==='Instrutores');if(!r)throw new Error('Instrutor fora do escopo de edição desta unidade.');
    await chamar(Put(`motoristas/${id}/pela-autoescola`,{nome:String(d.nome??r.nome).trim(),categorias:categoriasId(d.categoria??r.categorias.join('')),ativo:d.ativo??r.ativo,justificativa:d.justificativa||null}));
-   if(r.vinculoId)await chamar(Put(`vinculos/${r.vinculoId}/operacao`,{horarioAlmoco:d.alterarAlmoco?ALMOCO_LEGADO[d.horarioAlmoco]||d.horarioAlmoco:ALMOCO_LEGADO[r.horarioAlmoco]||r.horarioAlmoco,jornadaInicio:d.inicio??r.disponibilidade?.[1]?.[0]?.inicio??null,jornadaFim:d.fim??r.disponibilidade?.[1]?.[0]?.fim??null,disponivel:d.disponivel??r.disponivel,observacoes:String(d.observacoes??r.observacoes??'').trim()}));
+   const operacao=corpoOperacaoInstrutor(r,d);
+   if(r.vinculoId&&operacao)await chamar(Put(`vinculos/${r.vinculoId}/operacao`,operacao));
   },
   async editarVeiculo(id,d){
    regras.autorizar(op,'editar-veiculo');const e=await ler(),v=e.recursos.find(x=>x.id===id&&x.tipo==='Veículos');if(!v)throw new Error('Cadastro de recurso fora do escopo administrativo desta unidade.');

@@ -6,7 +6,9 @@ export const MATRICULAS=Object.freeze(['A','B','D','AB']);
 export const NOMES_CATEGORIA=Object.freeze({A:'Moto',B:'Carro',D:'Ônibus'});
 export const ALMOCOS=Object.freeze([['11-12','11:00 e 12:00'],['12-13','12:00 e 13:00']]);
 export const INTERVALOS_ALMOCO=Object.freeze([['11:00/12:00','11:00 às 12:00'],['12:00/13:00','12:00 às 13:00'],['13:00/14:00','13:00 às 14:00'],['11:00/13:00','11:00 às 13:00'],['12:00/14:00','12:00 às 14:00']]);
-export const almocoConfigurado=i=>INTERVALOS_ALMOCO.some(([id])=>id===i?.horarioAlmoco)||ALMOCOS.some(([id])=>id===i?.horarioAlmoco)||!!i?.intervaloAlmoco;
+// Almoço no formato da API ("12:00/13:00"), inclusive fora das 5 opções da tela (a API aceita minuto :30).
+const ALMOCO_LIVRE=/^\d{2}:\d{2}\/\d{2}:\d{2}$/;
+export const almocoConfigurado=i=>INTERVALOS_ALMOCO.some(([id])=>id===i?.horarioAlmoco)||ALMOCO_LIVRE.test(String(i?.horarioAlmoco??''))||ALMOCOS.some(([id])=>id===i?.horarioAlmoco)||!!i?.intervaloAlmoco;
 export const LOCAIS_ONIBUS=Object.freeze({semana:Object.freeze({id:'km-cobilandia',nome:'KM Cobilândia',unidadeAdministrativa:'Cobilândia',endereco:'Av. Jacinto Admiral, 125 – Cobilândia, Vila Velha – ES, CEP 29111-470.'}),sabado:Object.freeze({id:'tartarugao',nome:'Arena Tartarugão',unidadeAdministrativa:'Cobilândia',endereco:'Ginásio Poliesportivo Presidente João Goulart — Vila Velha/ES.',latitude:-20.3621362,longitude:-40.3048018,mapsUrl:'https://www.google.com/maps/place/Gin%C3%A1sio+Poliesportivo+Presidente+Jo%C3%A3o+Goulart+(Arena+Tartarug%C3%A3o)/@-20.3621362,-40.3048018,17z/data=!3m1!4b1!4m6!3m5!1s0xb815fe8d654517:0x83cfe2073491cb3b!8m2!3d-20.3621362!4d-40.3048018!16s%2Fg%2F1vbl8v4w?entry=ttu'})});
 // Resolve o local físico pela data da aula sem regravar snapshots históricos.
 export function localDaReservaOperacional(aula){return aula.categoria==='B'?localReservaCarro(aula):localDaReservaCategoriaD(aula);}
@@ -15,7 +17,7 @@ export function localDaReservaCategoriaD(aula){
  return aula.categoria==='D'?oficial:aula.localReal||null;
 }
 export function motivoAlmoco(instrutor,hora){
- const novo=INTERVALOS_ALMOCO.find(([id])=>id===instrutor?.horarioAlmoco)?.[0]?.split('/');
+ const novo=(INTERVALOS_ALMOCO.find(([id])=>id===instrutor?.horarioAlmoco)?.[0]??(ALMOCO_LIVRE.test(String(instrutor?.horarioAlmoco??''))?instrutor.horarioAlmoco:null))?.split('/');
  const intervalo=novo?{inicio:novo[0],fim:novo[1]}:instrutor?.intervaloAlmoco;
  if(intervalo&&/^\d{2}:\d{2}$/.test(intervalo.inicio)&&/^\d{2}:\d{2}$/.test(intervalo.fim)&&intervalo.inicio<intervalo.fim){
   const minutos=h=>Number(h.slice(0,2))*60+Number(h.slice(3));
@@ -24,6 +26,12 @@ export function motivoAlmoco(instrutor,hora){
  const h=Number(hora.slice(0,2));if(![11,12,13].includes(h))return '';
  if(!ALMOCOS.some(([id])=>id===instrutor?.horarioAlmoco))return 'Horário de almoço não configurado para este instrutor.';
  return (instrutor.horarioAlmoco==='11-12'?[11,12]:[12,13]).includes(h)?'Intervalo de almoço do instrutor':'';
+}
+// Mensagem de bloqueio da célula, encurtada. Almoço sem cadastro é erro de configuração, não intervalo.
+export function textoCurtoBloqueio(mensagem) {
+    if (mensagem.startsWith('Horário passado')) return 'Passado';
+    if (/não configurado/i.test(mensagem) && /almoço/i.test(mensagem)) return 'Almoço não configurado';
+    return mensagem.includes('almoço') || mensagem.includes('Intervalo') ? 'Intervalo' : mensagem;
 }
 export function localCategoriaD(data){
  if(typeof data==='string'&&data.includes('T')&&Number.isFinite(Date.parse(data)))data=agoraBrasil(new Date(data)).slice(0,10);

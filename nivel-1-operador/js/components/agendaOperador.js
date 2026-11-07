@@ -1,14 +1,18 @@
 import {recursoMotoCentral,motivoRecursoIndisponivel} from '../dominioOperador.js';
 import {resolverInstrutorCarro,recursoCarroConsultavel,operacaoCarro,localCarro} from '../../../shared/js/operacaoCarro.js';
-import {recursosOperacionaisD,almocoConfigurado} from '../../../shared/js/categorias.js';
+import {recursosOperacionaisD,almocoConfigurado,textoCurtoBloqueio} from '../../../shared/js/categorias.js';
 import { hojeBrasil, somarDias, diaSemana, formatarData, dataPorExtenso, datasDoMes, feriadosBrasileiros, dataValida } from "../../../shared/js/calendario.js";
 import { STATUS_AGENDAMENTO, motivoNovoAgendamento, motivoFechamento, paresDisponiveis } from "../../../shared/js/disponibilidade.js";
 import { ordenarAulas } from "../consultasOperador.js";
 import { cardAula, criarDetalhesAula } from "./aulaOperador.js";
 import { el, botao, campo, select, entrada } from "./uiOperador.js";
 import {aprimorarSelect} from '../../../shared/components/selectComBusca.js';
+import {contarAguardandoContato,interessadosAptos,interessadoApto,liberadoDaCelula,textoHorariosLiberados} from '../../../shared/js/regrasAntecipacao.js';
 
-export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAula, unidade = 'Centro', obterPares = paresDisponiveis } = {}) {
+// antecipacao (opcional): {servico, aoAlterar}. Com ela, a agenda mostra no topo os horários que vagaram com aluno
+// interessado (GET antecipacoes/horarios-liberados, C7), marca a célula livre com "★ N" e abre a remarcação da tela de
+// antecipação (antecipacaoPainel.js) já com o instrutor da agenda. aoAlterar recarrega os dados depois de uma ação.
+export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAula, unidade = 'Centro', obterPares = paresDisponiveis, antecipacao = null } = {}) {
     let data = hojeBrasil(), modo = "semana";
     const filtros = { instrutorId: "", veiculoId: "", categoria: "", status: "" };
     const detalhes = detalhesAula || criarDetalhesAula(raiz, obterEstado);
@@ -45,7 +49,64 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
     const conteudo = el("div", undefined, "op-agenda-content");
     const diagnostico=el('p',undefined,'op-help');diagnostico.setAttribute('role','status');
     const escolha=el('section',undefined,'op-agenda-escolha'), cabecalho=el('div',undefined,'op-agenda-veiculo-heading');
-    toolbar.prepend(campoInstrutor);painel.append(toolbar,escolha,cabecalho, painelFiltros, diagnostico, feedback, legenda, conteudo);
+    // Faixa da antecipação: horários que vagaram com aluno interessado aguardando contato (a mesma conta do aviso do menu).
+    const faixa = el('div', undefined, 'op-agenda-antecipacao'); faixa.dataset.agendaAntecipacao = ''; faixa.hidden = true; faixa.setAttribute('role', 'status');
+    toolbar.prepend(campoInstrutor);painel.append(faixa,toolbar,escolha,cabecalho, painelFiltros, diagnostico, feedback, legenda, conteudo);
+    let liberados = [], assinatura = '', revisaoLiberados = 0, ultimaConsulta = 0, acoes = null;
+    async function acoesInteresse() {
+        if (!acoes) { const { criarAcoesInteresse } = await import('../../../shared/components/antecipacaoPainel.js'); acoes = criarAcoesInteresse(raiz, antecipacao.servico, { aoConcluir: async () => { if (antecipacao.aoAlterar) await antecipacao.aoAlterar(); await carregarLiberados(true); } }); }
+        return acoes;
+    }
+    // Os mesmos 14 dias do aviso. Falha na consulta não mexe no que está na tela.
+    async function carregarLiberados(forcar = false) {
+        if (!antecipacao?.servico?.consultarLiberados || (!forcar && Date.now() - ultimaConsulta < 5000)) return;
+        const pedido = ++revisaoLiberados; ultimaConsulta = Date.now();
+        let r; try { const hoje = hojeBrasil(); r = await antecipacao.servico.consultarLiberados({ de: hoje, ate: somarDias(hoje, 14) }); } catch { return; }
+        if (pedido !== revisaoLiberados) return;
+        const nova = JSON.stringify(r || []); if (nova === assinatura) return;
+        assinatura = nova; liberados = r || []; desenharFaixa(); if (filtros.instrutorId) renderizar();
+    }
+    function desenharFaixa() {
+        const n = contarAguardandoContato(liberados); faixa.hidden = !n;
+        if (!n) { faixa.replaceChildren(); return; }
+        const texto = el('p'); texto.append(el('strong', textoHorariosLiberados(n)), document.createTextNode(' aguardando contato da Recepção.'));
+        const ver = botao('Ver interessados', () => abrirLiberados(liberados), 'op-button op-button-primary'); ver.dataset.agendaVerInteressados = '';
+        faixa.replaceChildren(texto, ver);
+    }
+    // Lista dos horários liberados (todos ou só o da célula) com os interessados e o Remarcar de cada um.
+    async function abrirLiberados(horarios, instrutorId = '') {
+        const a = await acoesInteresse(), d = modal(raiz, horarios.length === 1 ? 'Interessados neste horário' : 'Horários liberados', 'opAgendaLiberados'), corpo = el('div', undefined, 'op-agenda-liberados');
+        d.classList.add('op-agenda-liberados-dialogo');
+        const { descricaoHorario, aulaParaAntecipar, podeRemarcar, motivoSemRemarcar } = await import('../../../shared/components/antecipacaoPainel.js');
+        const depois = acao => () => { d.close(); acao(); };
+        for (const h of horarios) {
+            const grupo = el('section', undefined, 'op-liberado'); grupo.dataset.agendaLiberado = h.data + 'T' + h.inicio;
+            grupo.append(el('h3', descricaoHorario(h)));
+            const lista = el('ul');
+            for (const i of h.interessados) {
+                const li = el('li'), info = el('div'), linhaAcoes = el('div', undefined, 'op-liberado-acoes');
+                li.dataset.agendaInteressado = i.id; if (!interessadoApto(i)) li.dataset.semAula = '';
+                info.append(el('strong', i.aluno), el('span', [i.telefone, i.situacao, 'Aula a antecipar: ' + aulaParaAntecipar(i)].filter(Boolean).join(' · ')));
+                const remarcar = botao('Remarcar…', depois(() => a.remarcar(h, i, { instrutorId })), 'op-button op-button-primary'); remarcar.dataset.agendaRemarcar = i.id;
+                if (!podeRemarcar(h, i)) { remarcar.disabled = true; remarcar.title = motivoSemRemarcar(h, i); }
+                const menu = a.menu(h, i, { instrutorId });
+                for (const item of menu.caixa.querySelectorAll('[role=menuitem]')) item.addEventListener('click', () => { if (d.open) d.close(); }, { capture: true });
+                linhaAcoes.append(remarcar, menu.caixa); li.append(info, linhaAcoes); lista.append(li);
+            }
+            grupo.append(lista); corpo.append(grupo);
+        }
+        const rodape = el('footer', undefined, 'op-dialog-actions'), nav = raiz.querySelector('[data-op-nav=antecipacao]');
+        if (nav) rodape.append(botao('Abrir Antecipação de aulas', () => { d.close(); nav.click(); }));
+        rodape.append(botao('Fechar', () => d.close(), 'op-button op-button-primary'));
+        d.append(corpo, rodape); d.addEventListener('close', () => d.remove(), { once: true }); d.showModal();
+        d.querySelector('[data-agenda-remarcar]:not(:disabled)')?.focus();
+    }
+    if (antecipacao?.servico?.consultarLiberados) {
+        raiz.addEventListener('sipa-antecipacao-atualizada', () => carregarLiberados(true));
+        window.addEventListener('focus', () => carregarLiberados());
+        setInterval(() => { if (!document.hidden && !painel.closest('[hidden]')) carregarLiberados(); }, 30000);
+        carregarLiberados(true);
+    }
     // O instrutor é escolhido na central, nunca implicitamente pelo primeiro recurso.
     seletorInstrutor.parentElement.hidden=false;
     controles.querySelector('[data-agenda-filtro=categoria]').parentElement.hidden=true;
@@ -96,9 +157,17 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
                 livre.dataset.agendarHorario = hora; livre.dataset.agendarData = d; livre.disabled = !aoAgendar;
                 livre.setAttribute("aria-label", `Agendar ${formatarData(d)} às ${hora}, categoria ${categorias}`);
                 livre.append(el("strong", "＋ Agendar"), el("span", `Categoria ${categorias}`)); celula.append(livre);
+                // Horário que vagou com aluno interessado: o selo abre os interessados com o Remarcar.
+                const liberado = antecipacao ? liberadoDaCelula(liberados, { data: d, hora, categorias: categoriasAtuais, instrutorId: filtros.instrutorId }) : null;
+                if (liberado) {
+                    const n = interessadosAptos(liberado).length, selo = botao('', () => abrirLiberados([liberado], filtros.instrutorId), 'op-slot-interesse');
+                    selo.dataset.agendaInteresse = hora; selo.dataset.agendaInteresseData = d;
+                    selo.setAttribute('aria-label', `${n} aluno(s) interessado(s) em ${formatarData(d)} às ${hora}: remarcar`); selo.title = `${n} interessado(s) · clique para remarcar`;
+                    selo.append(el('strong', `★ ${n}`), el('span', n === 1 ? 'interessado' : 'interessados')); celula.append(selo);
+                }
             } else if (!ocupadas.length) {
                 const mensagem = motivo || motivoRecursoIndisponivel(obterEstado(),{id:'consulta-agenda',unidade,permissoes:['consultar']},d,hora,{...filtros,categoria:categoriaHorario});
-                const curto = mensagem.startsWith('Horário passado')?'Passado':mensagem.includes('almoço')||mensagem.includes('Intervalo')?'Intervalo':mensagem;
+                const curto = textoCurtoBloqueio(mensagem);
                 const bloqueado = el("p", curto, `op-slot-closed${mensagem.includes("almoço") ? " op-slot-almoco" : ""}`); bloqueado.title = mensagem; celula.append(bloqueado);
             } else {
                 // O próprio evento já identifica a ocupação; evita um segundo
@@ -167,7 +236,7 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
         } else conteudo.append(gradeDoDia(data));
     }
     renderizar(); return {
-        atualizar: renderizar,
+        atualizar() { renderizar(); carregarLiberados(); },
         abrirDia(d, hora) { data = d; modo = "dia"; renderizar(); if (hora) aoAgendar?.(d, hora); },
         confirmar(texto) { feedback.textContent = texto; feedback.hidden = false; }
     };

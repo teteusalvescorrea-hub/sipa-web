@@ -272,7 +272,10 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
 
     const agendaPanel=painel('agenda');
     const abrirAgendamento=montarReservaRecepcao(raiz,servico,executar);
-    agenda=montarAgenda(raiz,agendaPanel,estadoAgenda,{unidade:propria,detalhesAula:detalhes,obterPares:(estado,d,h,f)=>paresNaUnidade(estado,identidade,d,h,{...f,consultaOperacional:true}),aoAgendar:(data,hora,filtros)=>{abrirAgendamento(data,hora,filtros);return true;}});
+    // Antecipação na agenda (Recepção e Gerência com a capacidade antecipar; o Master não acompanha a fila): horários que
+    // vagaram com aluno interessado, com o Remarcar da tela de antecipação. Depois da remarcação, a agenda relê as aulas.
+    const antecipacao=identidade.nivel!==3&&permissoes.includes('antecipar')&&servico.consultarLiberados?{servico,aoAlterar:()=>dadosAtualizados()}:null;
+    agenda=montarAgenda(raiz,agendaPanel,estadoAgenda,{unidade:propria,detalhesAula:detalhes,antecipacao,obterPares:(estado,d,h,f)=>paresNaUnidade(estado,identidade,d,h,{...f,consultaOperacional:true}),aoAgendar:(data,hora,filtros)=>{abrirAgendamento(data,hora,filtros);return true;}});
 
     function inicio(){
         const indicador=card('Alunos vinculados',el('strong',String(dados.alunos.length)));
