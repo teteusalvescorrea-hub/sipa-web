@@ -31,8 +31,8 @@ test('servico respeita escopo e projeta historico sem documentos privados ou her
  const anterior=await s.detalhesInstrutor('i',{modo:'periodo',inicio:'2026-10-01',fim:'2026-10-02'}),atual=await s.detalhesInstrutor('j',{modo:'periodo',inicio:'2026-10-01',fim:'2026-10-02'});
  assert.equal(anterior.concluidas,1);assert.equal(atual.concluidas,0);assert.equal(anterior.historico[0].registradoPor,'recepcao');assert.ok(!JSON.stringify(anterior).includes('privado'));assert.equal(anterior.veiculos.length,0);assert.equal(atual.veiculos[0].id,'v');await assert.rejects(()=>s.detalhesInstrutor('externo'));
 });
-test('painel proprio atualiza semana e mes sem incluir falta em presencas',()=>{
- const aulas=[aula('p','2026-10-19'),aula('f','2026-10-18',6)].map(a=>({...a,inicio:a.data+'T07:00:00-03:00'}));const r=resumoInstrutor({aulas},'i',agora.getTime());assert.equal(r.realizadasSemana,1);assert.equal(r.presencasMes,1);assert.equal(r.faltasMes,1);
+test('painel proprio resume hoje e realizadas no mes sem incluir faltas nas presencas',()=>{
+ const aulas=[aula('p','2026-10-19'),aula('f','2026-10-18',6)].map(a=>({...a,inicio:a.data+'T07:00:00-03:00'}));const r=resumoInstrutor({aulas},'i',agora.getTime());assert.deepEqual([r.agendadas,r.realizadas,r.faltas,r.realizadasMes],[0,1,0,1]);
 });
 const iso=(id,quando,status,extra={})=>({id,inicio:quando+':00-03:00',fim:quando.slice(0,14)+'50:00-03:00',status,instrutorId:'i',categoria:'B',...extra});
 const carteira=[iso('r1','2026-10-13T08:00',5),iso('r2','2026-10-14T08:00',5,{categoria:'D'}),iso('r3','2026-10-14T09:00',5),iso('r4','2026-10-12T22:00',5),iso('f1','2026-10-16T14:00',6),iso('antiga','2026-09-01T08:00',5),

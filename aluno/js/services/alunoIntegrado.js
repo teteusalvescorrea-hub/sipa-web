@@ -286,6 +286,9 @@ export function criarServicoAluno(){
   alterarSenhaLocal:async({atual,nova})=>{try{await api.Put('usuarios/me/senha',{senhaAtual:atual,novaSenha:nova});}catch(e){throw comoErro(e);}},
   politicaSenhaLocal:{minimo:8,maximo:128},
   marcarInteresse,desmarcarInteresse,listarInteresses,
+  ofertaAntecipacao:async id=>{try{return await api.Get('alunos/me/ofertas-antecipacao/'+id);}catch(e){throw comoErro(e);}},
+  responderOferta:async(id,acao,aulaAnteriorId,chave)=>{try{return await api.Post('alunos/me/ofertas-antecipacao/'+id+'/resposta',{acao,aulaAnteriorId:aulaAnteriorId||null},{cabecalhos:{'Idempotency-Key':chave}});}catch(e){throw comoErro(e);}finally{invalidar();}},
+  consultarAvisos:async filtro=>{try{const r=await api.Get(api.ComParams('alunos/me/mensagens',filtro),{comTotal:true});return {...r,itens:r.itens.map(m=>({...m,unidade:nomeDe(m.unidade),remetente:nomeDe(m.remetente)||'Recepção'}))};}catch(e){throw comoErro(e);}},
   marcarMensagemLida:async id=>{try{await api.Post('alunos/me/mensagens/'+id+'/leitura');}catch(e){throw comoErro(e);}finally{invalidar();}},
   // Conversa com a Recepção (uma por autoescola em que o aluno tem matrícula), separada dos avisos.
   conversas:async()=>{try{return (await api.Get('alunos/me/conversas')||[]).map(adaptarConversaAluno);}catch(e){throw comoErro(e);}},
@@ -295,8 +298,8 @@ export function criarServicoAluno(){
    try{return adaptarMensagemConversa(await api.Post('alunos/me/conversas/'+autoescolaId+'/mensagens',{texto:t},{cabecalhos:{'Idempotency-Key':chave||chaveOperacao()}}));}catch(e){throw comoErro(e);}
   },
   marcarConversaLida:async autoescolaId=>{try{await api.Post('alunos/me/conversas/'+autoescolaId+'/leitura');}catch(e){throw comoErro(e);}},
-  // Sino e item Mensagens: avisos não lidos + mensagens da Recepção não lidas. Uma falha conta como zero naquela parte.
-  totalNaoLidas:async()=>{const [avisos,conversa]=await Promise.all([opcional(api.Get('alunos/me/mensagens/nao-lidas')),opcional(api.Get('alunos/me/conversas/nao-lidas'))]);return (Number(avisos?.total??avisos)||0)+(Number(conversa?.total??conversa)||0);},
+  // Sino e item Mensagens: somente os avisos ainda não lidos.
+  totalNaoLidas:async()=>{const avisos=await opcional(api.Get('alunos/me/mensagens/nao-lidas'));return Number(avisos?.total??avisos)||0;},
   // Agendamento automático: F13 (D19).
   buscarAgendamentoAutomatico,salvarPreferenciasAutomaticas,recursosAutomaticos};
 }

@@ -2576,3 +2576,15 @@ a {
 .lesson-hire-dialog .lesson-hire-whatsapp:focus-visible { outline:3px solid #2388d9; outline-offset:2px; }
 .lesson-hire-note { display:block; margin-top:10px; font-size:12px; text-align:right; color:var(--sipa-texto-neutro); }
 @media (max-width:380px) { .lesson-hire-dialog footer>* { flex:1; justify-content:center; } .lesson-hire-note { text-align:left; } }
+/* Filtros e paginação das listas de aulas. */
+.student-lesson-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:12px;align-items:end;margin:16px 0;padding:16px;border:1px solid var(--profile-border,#c7dbea);border-radius:14px;background:var(--profile-card,#f7fbff)}
+.student-lesson-filters label{display:grid;gap:7px;min-width:0;font-size:13px;font-weight:600}.student-lesson-filters :is(input,select){width:100%;min-width:0;padding:10px 12px;border:1px solid #b7cee2;border-radius:10px;background:var(--profile-card,#fff);color:inherit;font:inherit;min-height:42px}.student-lesson-filter-error{grid-column:1/-1;color:#a12525;margin:0}.student-lesson-filter-error:empty{display:none}
+.student-lesson-pagination{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:16px;margin-top:18px;font-size:13px}.student-lesson-pagination button:disabled{opacity:.45;cursor:default}.student-lesson-filter-empty{padding:20px 0;text-align:center}
+#student-lesson-filters[hidden],.student-lesson-pagination[hidden],.student-local-lesson[hidden]{display:none!important}
+html[data-theme=dark] .student-lesson-filters{background:#172b40;border-color:#4d6a86}html[data-theme=dark] .student-lesson-filters :is(input,select){background:#20384f;border-color:#667c93;color:#f4f7fb}
+@media(max-width:900px){.student-lesson-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.student-lesson-filters>button{justify-self:start}}@media(max-width:480px){.student-lesson-filters{grid-template-columns:minmax(0,1fr)}}
+/* Ação de cancelamento das aulas. */
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions > .local-lesson-cancel{background:#b4232d!important;border-color:#b4232d!important;color:#fff!important}
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions > .local-lesson-cancel:not(:disabled):hover{background:#941c25!important;border-color:#941c25!important}
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions > .local-lesson-cancel:focus-visible{outline:3px solid #ef9ba1;outline-offset:3px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions > .local-lesson-cancel:disabled{opacity:.5;cursor:not-allowed}

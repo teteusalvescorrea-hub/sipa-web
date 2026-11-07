@@ -211,7 +211,7 @@ export function adaptarLiberado(h,u){
   pares:(h.pares||[]).map(p=>({instrutorId:p.motoristaId,veiculoId:p.veiculoId,instrutor:nomeOu(p.instrutor)||'Instrutor',
    veiculo:[p.modelo,p.placa].filter(Boolean).join(' · ')||'Veículo'})),
   interessados:(h.interessados||[]).map(x=>({id:x.interesseId,alunoId:x.alunoId,aluno:nomeOu(x.nome)||'Aluno não informado',telefone:x.telefone??'',
-   situacao:SITUACAO_INTERESSE[numero(x.situacao)]??descricao(x.situacao)??'Aguardando',marcadoEm:x.marcadoEm??null,contatadoEm:x.contatadoEm??null,observacao:x.observacao??'',
+   ofertaEnviada:x.ofertaEnviada===true,situacao:SITUACAO_INTERESSE[numero(x.situacao)]??descricao(x.situacao)??'Aguardando',marcadoEm:x.marcadoEm??null,contatadoEm:x.contatadoEm??null,observacao:x.observacao??'',
    aulas:(x.aulas||[]).map(a=>{const ai=String(a.dataHoraInicio||'');return {id:a.id??a.agendamentoId,data:ai.slice(0,10),inicio:ai.slice(11,16),horasUteis:a.horasUteis??null,dentroPrazo:a.dentroPrazo!==false};})}))};
 }
 function observacaoInteresse(v){const t=String(v??'').trim();if(t.length>500)throw new Error('Use no máximo 500 caracteres na observação.');return t||null;}
@@ -466,7 +466,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    const r=await chamar(Get(ComParams('antecipacoes/horarios-liberados',{unidadeId:f.unidade?u.guid(f.unidade):undefined,categoria:NUMERO[f.categoria],de:f.de||undefined,ate:f.ate||undefined})));
    return lista(r).map(h=>adaptarLiberado(h,u));
   },
-  async totalLiberados(){exigirCapacidade(op,'antecipar',1);const r=await opcional(Get('antecipacoes/horarios-liberados/total'),0);return Number(r?.total??r)||0;},
+  async totalLiberados(){exigirCapacidade(op,'antecipar',1);const unidade=op.unidadeConsulta||op.unidade;const r=await opcional(Get(ComParams('antecipacoes/horarios-liberados/total',{unidadeId:unidade?u.guid(unidade):undefined})),0);return Number(r?.total??r)||0;},
+  async enviarOfertas(ids,f={},chave){exigirCapacidade(op,'antecipar',1);if(f.unidade&&!escopoPermitido(op,f.unidade))throw new Error('Unidade não autorizada.');return chamar(Post('antecipacoes/ofertas',{interesseIds:ids,unidadeId:f.unidade?u.guid(f.unidade):null},comChave(chave)));},
   async marcarContatado(id,observacao){exigirCapacidade(op,'antecipar',1);return chamar(Post(`antecipacoes/interesses/${id}/contato`,{observacao:observacaoInteresse(observacao)}));},
   async remarcarInteresse(id,{aulaId,instrutorId,veiculoId},chave){
    exigirCapacidade(op,'antecipar',1);if(!aulaId||!instrutorId||!veiculoId)throw new Error('Escolha a aula a antecipar, o instrutor e o veículo.');

@@ -44,6 +44,7 @@ test('Recepção: horários liberados vêm agrupados, com pares, interessados na
 test('Recepção: total do aviso aceita número ou objeto; sem a rota no servidor fica zero',async()=>{
  const s=criarServicoAdministrativoIntegrado(recepcao(),mapaUnidades(UNIDADES));
  respostas=[rota('GET','horarios-liberados/total',3)];assert.equal(await s.totalLiberados(),3);
+ assert.match(chamadas.at(-1).url,/horarios-liberados\/total\?unidadeId=g-cobi$/);
  respostas=[rota('GET','horarios-liberados/total',{total:2})];assert.equal(await s.totalLiberados(),2);
  respostas=[];assert.equal(await s.totalLiberados(),0);
 });
@@ -71,4 +72,11 @@ test('antecipação exige a capacidade antecipar; a demonstração abre com a li
  assert.equal(chamadas.length,0);
  const local=antecipacaoLocal(recepcao());assert.deepEqual(await local.consultarLiberados({}),[]);assert.equal(await local.totalLiberados(),0);
  await assert.rejects(local.remarcarInteresse('i1',{},'k'),/ambiente integrado/);
+});
+test('Recepção envia ofertas em lote com unidade e chave de idempotência',async()=>{
+ respostas=[rota('POST','antecipacoes/ofertas',{enviadas:2})];chamadas.length=0;
+ const s=criarServicoAdministrativoIntegrado(recepcao(),mapaUnidades(UNIDADES));
+ assert.deepEqual(await s.enviarOfertas(['i1','i2'],{unidade:'Cobilândia'},'lote-1'),{enviadas:2});
+ const c=chamadas.at(-1);assert.deepEqual(JSON.parse(c.corpo),{interesseIds:['i1','i2'],unidadeId:'g-cobi'});assert.equal(c.cabecalhos['Idempotency-Key'],'lote-1');
+ await assert.rejects(s.enviarOfertas(['i1'],{unidade:'Vila Velha'},'x'),/Unidade não autorizada/);
 });

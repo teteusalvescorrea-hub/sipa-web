@@ -2071,3 +2071,7 @@ html[data-sipa-theme=aluno][data-theme=dark] .booking-main :is(.booking-warning 
 [data-sipa-aluno] .booking-main .booking-mode-choice button { flex:1; padding:8px; } }
 @media(prefers-reduced-motion:reduce) {
 [data-sipa-aluno] .booking-main .category-option { transition:none; } }
+/* Resultado da confirmação do agendamento. */
+.booking-result-success{border:2px solid #22834d!important}.booking-result-success h2,.booking-result-success .booking-success-icon{color:#167344!important;stroke:#167344!important}.booking-result-error{border:2px solid #ba2834!important}.booking-result-error h2{color:#ba2834!important}.booking-result-error>button{background:#ba2834!important;border-color:#ba2834!important;color:#fff!important}.booking-result-error p{white-space:pre-wrap;line-height:1.6}
+#booking-unit-picker[hidden]{display:none!important}
+html[data-theme=dark] .booking-result-success h2,html[data-theme=dark] .booking-result-success .booking-success-icon{color:#74dba1!important;stroke:#74dba1!important}html[data-theme=dark] .booking-result-error h2{color:#ff9da6!important}

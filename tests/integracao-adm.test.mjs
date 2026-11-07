@@ -15,7 +15,7 @@ globalThis.fetch=async(url,init={})=>{
 };
 const rota=(metodo,trecho,corpo,status)=>({quando:(u,m)=>m===metodo&&u.includes(trecho),corpo,status});
 const corpoDe=trecho=>JSON.parse(chamadas.find(c=>c.url.includes(trecho)&&c.metodo!=='GET').corpo);
-const {carregarIdentidadeEquipe,criarServicoAdministrativoIntegrado,capacidadesDoMembro,mapaUnidades}=await import('../shared/js/services/administracaoIntegrada.js');
+const {carregarIdentidadeEquipe,criarServicoAdministrativoIntegrado,capacidadesDoMembro,mapaUnidades,adaptarRecursos}=await import('../shared/js/services/administracaoIntegrada.js');
 const {permissoesDoPerfil}=await import('../shared/js/permissoesAdministrativas.js');
 const {hojeBrasil,somarDias}=await import('../shared/js/calendario.js');
 
@@ -90,4 +90,12 @@ test('Gerência e Master: correção de atestado final, cancelamento excepcional
  assert.deepEqual(corpoDe('equipe/eq2/redefinir-acesso'),{justificativa:'Esqueceu a senha'});
  assert.equal(s.senhaPeloServidor,true);
  const est=await s.estado();assert.deepEqual(est.alunos.map(a=>a.id),['al1']);assert.equal(est.aulas.find(a=>a.id==='a2').solicitacaoMedica.status,'aprovado');
+});
+
+test("almoço retornado pela API atualiza as faixas bloqueadas da agenda",async()=>{
+ const {motivoAlmoco}=await import("../shared/js/categorias.js");
+ for(const [horarioAlmoco,bloqueada,livre] of [["11:00/12:00","11:00","13:00"],["13:00/14:00","13:00","11:00"]]){
+  const [instrutor]=adaptarRecursos([{...vinculoApi,horarioAlmoco}],mapaUnidades(UNIDADES));
+  assert.ok(motivoAlmoco(instrutor,bloqueada));assert.equal(motivoAlmoco(instrutor,livre),"");
+ }
 });

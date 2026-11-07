@@ -44,11 +44,11 @@ test('mensagens em ordem, envio com Idempotency-Key e leitura nas rotas da autoe
  await assert.rejects(s.enviarMensagemRecepcao('ae1','Oi','k2'),/não está matriculado/);
 });
 
-test('sino soma avisos e conversa; a parte que falha conta zero',async()=>{
+test('sino conta somente avisos e não consulta conversas removidas da tela',async()=>{
  const s=criarServicoAluno();
  respostas=[rota('GET','alunos/me/mensagens/nao-lidas',{total:2}),rota('GET','alunos/me/conversas/nao-lidas',{total:3})];chamadas.length=0;
- assert.equal(await s.totalNaoLidas(),5);
- assert.deepEqual(chamadas.map(c=>c.url.replace(/^.*\/api\//,'')).sort(),['alunos/me/conversas/nao-lidas','alunos/me/mensagens/nao-lidas']);
+ assert.equal(await s.totalNaoLidas(),2);
+ assert.deepEqual(chamadas.map(c=>c.url.replace(/^.*\/api\//,'')).sort(),['alunos/me/mensagens/nao-lidas']);
  respostas=[rota('GET','alunos/me/mensagens/nao-lidas',{total:1})];assert.equal(await s.totalNaoLidas(),1);
  respostas=[];assert.equal(await s.totalNaoLidas(),0);
 });

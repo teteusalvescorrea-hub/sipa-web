@@ -149,3 +149,12 @@ test('M1: login relativo ao app, não à raiz do domínio',()=>{
  assert.match(urlLogin(),/\/login\.html$/);assert.doesNotMatch(urlLogin(),/^\/login/);
  assert.match(urlLogin('sessao=expirada'),/login\.html\?sessao=expirada$/);
 });
+test('aluno consulta oferta e responde antecipar, nova ou descartar pela conta autenticada',async()=>{
+ const s=criarServicoAluno();
+ for(const acao of ['antecipar','nova','descartar']){
+  respostas=[rota('GET','ofertas-antecipacao/i1',{interesseId:'i1',disponivel:true}),rota('POST','ofertas-antecipacao/i1/resposta',{agendamentoId:'nova'})];
+  assert.equal((await s.ofertaAntecipacao('i1')).disponivel,true);
+  await s.responderOferta('i1',acao,acao==='antecipar'?'a1':null,'resposta-'+acao);
+  const c=chamadas.at(-1);assert.deepEqual(JSON.parse(c.corpo),{acao,aulaAnteriorId:acao==='antecipar'?'a1':null});assert.equal(c.cabecalhos['Idempotency-Key'],'resposta-'+acao);
+ }
+});

@@ -533,7 +533,7 @@ a {
    ========================================= */
 
 .progress-main {
-    width: calc(100% - 248px);
+    width: calc(100% - var(--sipa-sidebar, 244px));
 
     min-height: 100vh;
 
@@ -1123,103 +1123,9 @@ a {
 }
 
 
-/* =========================================
-   ESCALA PADRÃO
-   ========================================= */
-
-body {
-    zoom: .95;
-}
-
-/* =========================================
-   SIDEBAR — PADRÃO SIPA
-   ========================================= */
-
-.sipa-sidebar {
-    width: 228px !important;
-    padding: 22px 14px !important;
-}
-
-.sipa-sidebar-logo {
-    padding: 0 8px 20px !important;
-}
-
-.sipa-sidebar-logo-symbol {
-    width: 34px !important;
-    height: 34px !important;
-    min-width: 34px !important;
-}
-
-.sipa-sidebar-logo-symbol svg {
-    width: 34px !important;
-    height: 34px !important;
-}
-
-.sipa-sidebar-logo-text strong {
-    font-size: 17px !important;
-}
-
-.sipa-sidebar-logo-text span {
-    font-size: 6px !important;
-}
-
-.sipa-sidebar-menu {
-    margin-top: 25px !important;
-    gap: 5px !important;
-}
-
-.sipa-sidebar-title {
-    font-size: 7px !important;
-}
-
-.sipa-sidebar-link {
-    min-height: 42px !important;
-    padding: 8px 10px !important;
-    border-radius: 9px !important;
-    gap: 10px !important;
-    font-size: 10px !important;
-}
-
-.sipa-sidebar-icon {
-    width: 28px !important;
-    height: 28px !important;
-    min-width: 28px !important;
-    border-radius: 8px !important;
-    font-size: 13px !important;
-}
-
-.sipa-sidebar-bottom {
-    padding-top: 18px !important;
-}
-
-.sipa-sidebar-unit {
-    padding: 10px !important;
-}
-
-.sipa-sidebar-unit-text strong {
-    font-size: 8px !important;
-}
-
-.sipa-sidebar-unit-text small {
-    font-size: 7px !important;
-}
-
-.sipa-sidebar-logout {
-    min-height: 38px !important;
-    font-size: 9px !important;
-}
-
-/* =========================================
-   CORREÇÃO DE ESCALA — MEU PROGRESSO
-   ========================================= */
-
-html,
-body {
-    zoom: 1 !important;
-}
 /* Resumo por categoria: apenas a apresentação local, alimentada pelo serviço existente. */
 [data-sipa-aluno] .progress-main h1 { font-size:28px; }
-[data-sipa-aluno] .progress-main h2 { font-size:19px; line-height:1.4; }
+[data-sipa-aluno] .progress-main h2 { font-size:var(--sipa-font-section); line-height:1.4; }
 [data-sipa-aluno] .progress-header p { font-size:14px; }
 [data-sipa-aluno] .progress-overview { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:stretch; }
 [data-sipa-aluno] .progress-card.category-progress-card { padding:18px; min-height:0; border-radius:14px; container-type:inline-size; }

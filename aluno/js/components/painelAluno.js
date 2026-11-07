@@ -1,3 +1,4 @@
+import {montarFiltrosAulas} from './filtrosAulas.js';
 import {abrirSolicitacaoMedica} from './solicitacaoMedica.js';
 import {montarAtestadosAluno} from './atestadosAluno.js';
 import {situacaoMedica} from '../../../shared/components/situacaoMedica.js';
@@ -251,6 +252,7 @@ async function listarAulasAlunoLocal(servico,dados){
     }
     const texto=(id,v)=>{const n=document.getElementById(id);if(n)n.textContent=v;};texto('total-lessons',String(futuras.length));texto('lessons-count',String(futuras.length));texto('past-lessons-count',String(passadas.length));texto('next-lesson-summary',futuras.length?dataHoraBrasilia(futuras[0].inicio):'Nenhuma aula agendada');
     if(vistaAnterior!=='confirmadas')tabs.querySelector('[data-vista='+vistaAnterior+']')?.click();
+    montarFiltrosAulas(principal,anterior,{confirmadas:futuras,...grupos},tabs);
     const campo=document.querySelector('.lessons-summary .summary-card:last-child > div');if(campo){campo.querySelector('span').textContent='LOCAL DA PRÓXIMA AULA';campo.querySelector('strong').textContent=futuras.length?nomeLocalDaReserva(futuras[0]):'Nenhuma aula agendada';}
 
 }
@@ -332,6 +334,7 @@ async function iniciarReservaAlunoLocal(servico, inicial) {
         try{await consultar();d.querySelector('[data-instrutores] button')?.focus();}catch(e){erro.textContent=e.message;}
     }
     function resumo(){
+        $('#booking-unit-picker').hidden=categoria==='A';
         if(categoria==='D'||categoria==='A'){unidade.value=categoria==='D'?'Cobilândia':'Vila Velha';unidade.disabled=true;}else{unidade.value=normalizarUnidadeLocal(dados.aluno?.unidadeCarro||dados.aluno?.unidade);unidade.disabled=true;}
         const saldo=dados.resumo.categorias[categoria];texto('summary-category',(NOMES_CATEGORIA[categoria])+' · Categoria '+categoria);texto('summary-unit',['B','D'].includes(categoria)?(selecoes.size>1?'Local indicado em cada aula':nomeLocalDaReserva({categoria,data:ordenadas()[0]?.data||data,unidade:unidade.value})):unidade.value?nomeUnidadeLocal(unidade.value):'Selecione uma unidade');$('#summary-unit').parentElement.querySelector('span').textContent=['B','D'].includes(categoria)?'LOCAL DA AULA':'UNIDADE';label.textContent=['B','D'].includes(categoria)?'Local da aula':'Unidade da aula';if(['B','D'].includes(categoria))unidade.selectedOptions[0].textContent=nomeLocalDaReserva({categoria,data,unidade:unidade.value});else for(const o of unidade.options)o.textContent=nomeUnidadeLocal(o.value);
         contadorData.hidden=!data;contadorData.textContent=[...selecoes.values()].filter(i=>i.data===data).length+' selecionada(s) nesta data · '+selecoes.size+' no total';
@@ -458,7 +461,7 @@ async function iniciarReservaAlunoLocal(servico, inicial) {
             mostrarConfirmacaoAulasLocais(salvas,dados,confirmar);
             try { await calendario(); await horarios(); }
             catch { mensagem('As aulas foram salvas. Não foi possível atualizar o calendário; consulte Minhas aulas ou recarregue a página.'); }
-        }catch(e){try{dados=await servico.dadosAlunoLocal();if(categoria==='D')await horarios();}catch{}mensagem(e.message||'Não foi possível gravar as aulas.');feedback.setAttribute('role','alert');feedback.tabIndex=-1;feedback.focus();}
+        }catch(e){try{dados=await servico.dadosAlunoLocal();if(categoria==='D')await horarios();}catch{}mensagem(e.message||'Não foi possível gravar as aulas.');feedback.setAttribute('role','alert');feedback.tabIndex=-1;mostrarErroAgendamento(e.message||'Não foi possível gravar as aulas.',confirmar);}
         finally{ocupada=false;recursos();resumo();}
     };
     $('.availability-status').hidden=true;$('.availability-status').textContent='';
@@ -479,14 +482,20 @@ async function confirmarDescarteLocal(){
     });
 }
 function mostrarConfirmacaoAulasLocais(aulas,dados,origem){
-    const d=document.createElement('dialog');d.id='agendamentos-confirmados';d.className='booking-local-dialog';d.setAttribute('aria-labelledby','booking-success-title');
+    const d=document.createElement('dialog');d.id='agendamentos-confirmados';d.className='booking-local-dialog booking-result-success';d.setAttribute('aria-labelledby','booking-success-title');
     const icone=document.createElementNS('http://www.w3.org/2000/svg','svg');icone.setAttribute('viewBox','0 0 24 24');icone.setAttribute('aria-hidden','true');icone.classList.add('booking-success-icon');icone.innerHTML='<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>';
     const titulo=document.createElement('h2');titulo.id='booking-success-title';titulo.textContent=aulas.length===1?'Agendamento confirmado!':'Agendamentos confirmados!';
     const descricao=document.createElement('p'),c=aulas[0].categoria;descricao.textContent='Suas aulas foram agendadas com sucesso.';
     const lista=document.createElement('ul');lista.className='booking-success-list';
     for(const [i,a] of aulas.entries()){const li=document.createElement('li'),titulo=document.createElement('h3'),campos=document.createElement('dl');titulo.textContent='Aula '+String(i+1).padStart(2,'0')+' — '+(NOMES_CATEGORIA[a.categoria])+' | Categoria '+a.categoria;
-        for(const [label,valor] of [['Data',dataBrasilia(a.inicio)],['Horário',horaBrasilia(a.inicio)+' às '+horaBrasilia(a.fim)],['Local',localDaReservaOperacional(a)?.nome||nomeUnidadeLocal(a.unidade)],['Endereço',localDaReservaOperacional(a)?.endereco||obterUnidadeInstitucional(a.unidade)?.enderecoCompleto||'Não informado'],['Instrutor',dados.registros.find(r=>r.id===a.instrutor)?.nome||'Não informado'],['Veículo',dados.registros.find(r=>r.id===a.veiculo)?.nome||'Não informado'],['Situação',a.status===1?'Confirmada':'Situação registrada: '+a.status]]){const campo=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=valor;if(label==='Endereço')campo.className='booking-success-address';campo.append(dt,dd);campos.append(campo);}li.append(titulo,campos);const mapa=linkLocalizacaoReserva(a);if(mapa)li.append(mapa);lista.append(li);}
+        for(const [label,valor] of [['Data',dataBrasilia(a.inicio)],['Horário',horaBrasilia(a.inicio)+' às '+horaBrasilia(a.fim)],['Local',a.categoria==='A'?'KM Centro':localDaReservaOperacional(a)?.nome||nomeUnidadeLocal(a.unidade)],['Endereço',localDaReservaOperacional(a)?.endereco||obterUnidadeInstitucional(a.unidade)?.enderecoCompleto||'Não informado'],['Instrutor',dados.registros.find(r=>r.id===a.instrutor)?.nome||'Não informado'],['Veículo',dados.registros.find(r=>r.id===a.veiculo)?.nome||'Não informado'],['Situação',a.status===1?'Confirmada':'Situação registrada: '+a.status]]){const campo=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=valor;if(label==='Endereço')campo.className='booking-success-address';campo.append(dt,dd);campos.append(campo);}li.append(titulo,campos);const mapa=linkLocalizacaoReserva(a);if(mapa)li.append(mapa);lista.append(li);}
     const saldo=document.createElement('p');saldo.textContent='Total de aulas confirmadas: '+aulas.length+' · Créditos utilizados: '+aulas.length+' · Créditos restantes: '+(dados.resumo.categorias[c].disponiveis??'a conferir');
     const acoes=document.createElement('div');acoes.className='booking-dialog-actions';const ver=document.createElement('a');ver.href='minhas-aulas.html';ver.textContent='Ver minhas aulas';const mais=document.createElement('button');mais.type='button';mais.textContent='Agendar mais aulas';mais.autofocus=true;mais.onclick=()=>d.close();const fechar=document.createElement('button');fechar.type='button';fechar.textContent='Fechar';fechar.onclick=()=>d.close();acoes.append(ver,mais,fechar);d.append(icone,titulo,descricao,lista,saldo,acoes);
     d.addEventListener('close',()=>{d.remove();(origem.disabled?document.querySelector('.category-option.selected'):origem)?.focus();},{once:true});document.body.append(d);d.showModal();
+}
+
+function mostrarErroAgendamento(mensagem,origem){
+ const d=document.createElement('dialog');d.className='booking-local-dialog booking-result-error';d.setAttribute('role','alertdialog');d.setAttribute('aria-labelledby','booking-error-title');
+ const h=document.createElement('h2');h.id='booking-error-title';h.textContent='Não foi possível agendar';const p=document.createElement('p');p.textContent=mensagem;
+ const fechar=document.createElement('button');fechar.type='button';fechar.textContent='Voltar e revisar';fechar.onclick=()=>d.close();d.append(h,p,fechar);d.addEventListener('close',()=>{d.remove();origem?.focus();},{once:true});document.body.append(d);d.showModal();fechar.focus();
 }
