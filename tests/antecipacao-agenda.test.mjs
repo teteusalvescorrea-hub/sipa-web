@@ -60,6 +60,10 @@ test('aluno: horário com interesse descartado pela Recepção não oferece "Ten
  respostas=[respostas[0]];
  const sem=await criarServicoAluno().consultarRecursosLocal({categoria:'B',data:'2026-11-10'});
  assert.deepEqual(sem.horarios.map(h=>!!h.descartado),[false,false]);
+ // API v4: o campo interesseDescartado da grade basta, sem ler a lista de interesses.
+ respostas=[rota('GET','horarios-disponiveis',{data:'2026-11-10',fechado:false,horarios:[slot('10:00',{disponivel:false,motivo:'ocupado',motoristas:[],interesseDescartado:true}),slot('11:00',{disponivel:false,motivo:'ocupado',motoristas:[],interesseDescartado:false})]})];
+ const v4=await criarServicoAluno().consultarRecursosLocal({categoria:'B',data:'2026-11-10'});
+ assert.deepEqual(v4.horarios.map(h=>[h.hora,!!h.descartado]),[['10:00',true],['11:00',false]]);
 });
 
 test('aluno (C3/C4): textos da aba Interesses e unidade "Qualquer unidade"',()=>{

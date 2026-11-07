@@ -54,17 +54,21 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
     toolbar.prepend(campoInstrutor);painel.append(faixa,toolbar,escolha,cabecalho, painelFiltros, diagnostico, feedback, legenda, conteudo);
     let liberados = [], assinatura = '', revisaoLiberados = 0, ultimaConsulta = 0, acoes = null;
     async function acoesInteresse() {
-        if (!acoes) { const { criarAcoesInteresse } = await import('../../../shared/components/antecipacaoPainel.js'); acoes = criarAcoesInteresse(raiz, antecipacao.servico, { aoConcluir: async () => { if (antecipacao.aoAlterar) await antecipacao.aoAlterar(); await carregarLiberados(true); } }); }
+        if (!acoes) { const { criarAcoesInteresse } = await import('../../../shared/components/antecipacaoPainel.js'); acoes = criarAcoesInteresse(raiz, antecipacao.servico, { aoConcluir: async () => { if (antecipacao.aoAlterar) await antecipacao.aoAlterar(); await carregarLiberados(true, false); } }); }
         return acoes;
     }
     // Os mesmos 14 dias do aviso. Falha na consulta não mexe no que está na tela.
-    async function carregarLiberados(forcar = false) {
+    // releitura: quando a lista muda depois da primeira leitura (outro aluno cancelou e o horário vagou), relê as aulas da
+    // unidade, para a célula sair da aula cancelada e mostrar o horário livre com o selo.
+    async function carregarLiberados(forcar = false, releitura = true) {
         if (!antecipacao?.servico?.consultarLiberados || (!forcar && Date.now() - ultimaConsulta < 5000)) return;
         const pedido = ++revisaoLiberados; ultimaConsulta = Date.now();
         let r; try { const hoje = hojeBrasil(); r = await antecipacao.servico.consultarLiberados({ de: hoje, ate: somarDias(hoje, 14) }); } catch { return; }
         if (pedido !== revisaoLiberados) return;
         const nova = JSON.stringify(r || []); if (nova === assinatura) return;
-        assinatura = nova; liberados = r || []; desenharFaixa(); if (filtros.instrutorId) renderizar();
+        const primeira = !assinatura; assinatura = nova; liberados = r || []; desenharFaixa();
+        if (!primeira && releitura && antecipacao.aoAlterar) { try { await antecipacao.aoAlterar(); return; } catch { /* a agenda redesenha abaixo */ } }
+        if (filtros.instrutorId) renderizar();
     }
     function desenharFaixa() {
         const n = contarAguardandoContato(liberados); faixa.hidden = !n;
@@ -157,14 +161,6 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
                 livre.dataset.agendarHorario = hora; livre.dataset.agendarData = d; livre.disabled = !aoAgendar;
                 livre.setAttribute("aria-label", `Agendar ${formatarData(d)} às ${hora}, categoria ${categorias}`);
                 livre.append(el("strong", "＋ Agendar"), el("span", `Categoria ${categorias}`)); celula.append(livre);
-                // Horário que vagou com aluno interessado: o selo abre os interessados com o Remarcar.
-                const liberado = antecipacao ? liberadoDaCelula(liberados, { data: d, hora, categorias: categoriasAtuais, instrutorId: filtros.instrutorId }) : null;
-                if (liberado) {
-                    const n = interessadosAptos(liberado).length, selo = botao('', () => abrirLiberados([liberado], filtros.instrutorId), 'op-slot-interesse');
-                    selo.dataset.agendaInteresse = hora; selo.dataset.agendaInteresseData = d;
-                    selo.setAttribute('aria-label', `${n} aluno(s) interessado(s) em ${formatarData(d)} às ${hora}: remarcar`); selo.title = `${n} interessado(s) · clique para remarcar`;
-                    selo.append(el('strong', `★ ${n}`), el('span', n === 1 ? 'interessado' : 'interessados')); celula.append(selo);
-                }
             } else if (!ocupadas.length) {
                 const mensagem = motivo || motivoRecursoIndisponivel(obterEstado(),{id:'consulta-agenda',unidade,permissoes:['consultar']},d,hora,{...filtros,categoria:categoriaHorario});
                 const curto = textoCurtoBloqueio(mensagem);
@@ -173,6 +169,15 @@ export function montarAgenda(raiz, painel, obterEstado, { aoAgendar, detalhesAul
                 // O próprio evento já identifica a ocupação; evita um segundo
                 // bloco repetitivo abaixo da aula, sem liberar outro agendamento.
                 celula.title = motivo || "Recursos ocupados neste intervalo";
+            }
+            // Horário que vagou com aluno interessado: o selo abre os interessados com o Remarcar. A API confirma o par livre
+            // agora (liberados), então o selo aparece mesmo se a agenda local ainda mostra a aula que o outro aluno cancelou.
+            const liberado = antecipacao && !motivo ? liberadoDaCelula(liberados, { data: d, hora, categorias: categoriasAtuais, instrutorId: filtros.instrutorId }) : null;
+            if (liberado) {
+                const n = interessadosAptos(liberado).length, selo = botao('', () => abrirLiberados([liberado], filtros.instrutorId), 'op-slot-interesse');
+                selo.dataset.agendaInteresse = hora; selo.dataset.agendaInteresseData = d;
+                selo.setAttribute('aria-label', `${n} aluno(s) interessado(s) em ${formatarData(d)} às ${hora}: remarcar`); selo.title = `${n} interessado(s) · clique para remarcar`;
+                selo.append(el('strong', `★ ${n}`), el('span', n === 1 ? 'interessado' : 'interessados')); celula.append(selo);
             }
             linha.append(celula); secao.append(linha);
         }

@@ -225,14 +225,15 @@ export function criarServicoAluno(){
   const instrutores=new Set(),veiculos=new Set();
   // A unidade em que a grade foi montada vai no POST do interesse (C2), quando a API informa.
   const unidadeId=r.unidadeId??r.unidade?.id??null;
-  const semInteresse=(r.horarios||[]).some(h=>h.disponivel===false&&motivoIndisponivel(h)==='ocupado'&&!h.interesseId);
+  // A API v4 manda interesseDescartado por horário; só a antiga obriga a ler a lista de interesses do aluno.
+  const semInteresse=(r.horarios||[]).some(h=>h.disponivel===false&&motivoIndisponivel(h)==='ocupado'&&!h.interesseId&&typeof h.interesseDescartado!=='boolean');
   const recusados=semInteresse?await interessesDescartados(cat):new Set();
   const horarios=(r.horarios||[]).map(h=>{
    const hora=String(h.horario).slice(0,5),fim=String(h.dataHoraFim).slice(11,16),motivo=motivoIndisponivel(h);
    if(h.disponivel===false){
     if(motivo==='alunoocupado')return {hora,fim,inicio:h.dataHoraInicio,pares:[],propria:true};
     if(motivo!=='ocupado')return null;
-    const descartado=!h.interesseId&&(h.descartado===true||recusados.has(String(h.dataHoraInicio).slice(0,16)));
+    const descartado=!h.interesseId&&(h.interesseDescartado===true||h.descartado===true||recusados.has(String(h.dataHoraInicio).slice(0,16)));
     return {hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null,unidadeId,...(descartado?{descartado:true}:{})};
    }
    const pares=[];
