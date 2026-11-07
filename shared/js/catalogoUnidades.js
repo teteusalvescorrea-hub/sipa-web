@@ -28,6 +28,8 @@ export const UNIDADES_INSTITUCIONAIS=Object.freeze([
     "id": "Vila Velha",
     "nome": "Unidade Centro de Vila Velha",
     "aliases": [
+      "Centro",
+      "KM Centro",
       "Centro de Vila Velha"
     ],
     "logradouro": "Av. Luciano das Neves",

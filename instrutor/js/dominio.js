@@ -1,6 +1,5 @@
 import {desempenhoInstrutor,periodoDesempenho} from '../../shared/js/desempenhoInstrutor.js';
 import {agoraBrasil} from '../../shared/js/calendario.js';
-import {periodoMensal} from './historico.js';
 export const ORIGEM='sipa.instrutor.demo.v1';
 export const INSTRUTOR_ID='instrutor-demo-01';
 export const STATUS=Object.freeze({1:'Confirmada',2:'Cancelada',3:'Aguardando aceite',4:'Recusada',5:'Realizada',6:'Falta'});
@@ -19,8 +18,8 @@ export function registrarSituacao(estado,idAula,instrutorId,status,agora=Date.no
  return {...estado,aulas:estado.aulas.map(a=>a.id===idAula?{...a,status,validadaEm:em,historico:[...(a.historico||[]),{status,em,autor:instrutorId,acao:status===5?'realizada':'falta'}]}:a)};
 }
 export function resumoInstrutor(estado,id,agora=Date.now()){
- const dia=agoraBrasil(new Date(agora)).slice(0,10),mes=periodoMensal(dia.slice(0,7)),aulas=aulasDoInstrutor(estado,id);
+ const dia=agoraBrasil(new Date(agora)).slice(0,10),aulas=aulasDoInstrutor(estado,id);
  const datas=new Map(aulas.filter(a=>Number.isFinite(Date.parse(a.inicio))).map(a=>[a,agoraBrasil(new Date(a.inicio)).slice(0,10)])),hoje=aulas.filter(a=>datas.get(a)===dia);
- const desempenho=Object.fromEntries(['hoje','semana','mes'].map(m=>[m,desempenhoInstrutor(aulas,id,periodoDesempenho(m,{},agora),agora)])),realizadasMes=desempenho.mes.presencas;
- return {hoje,agendadas:hoje.filter(a=>a.status===1).length,realizadas:desempenho.hoje.presencas,faltas:desempenho.hoje.faltas,realizadasMes,realizadasSemana:desempenho.semana.presencas,presencasMes:desempenho.mes.presencas,faltasMes:desempenho.mes.faltas,proxima:hoje.find(a=>a.status===1&&Date.parse(a.inicio)>agora)||null};
+ const desempenho=Object.fromEntries(['hoje','mes'].map(m=>[m,desempenhoInstrutor(aulas,id,periodoDesempenho(m,{},agora),agora)])),realizadasMes=desempenho.mes.presencas;
+ return {hoje,agendadas:hoje.filter(a=>a.status===1).length,realizadas:desempenho.hoje.presencas,faltas:desempenho.hoje.faltas,realizadasMes,proxima:hoje.find(a=>a.status===1&&Date.parse(a.inicio)>agora)||null};
 }
