@@ -99,7 +99,10 @@ export async function montarAntecipacaoPainel(host,servico,root){
  }
  function desenhar(){
   // Mesma regra do aviso do menu: "aguardando contato" = horário com interessado Aguardando que pode ser atendido.
-  const horarios=visiveis(),aguardando=contarAguardandoContato(horarios),disponiveis=horarios.flatMap(h=>h.interessados.filter(i=>!i.ofertaEnviada).map(i=>i.id));marcarTodas.textContent=disponiveis.length>0&&disponiveis.every(id=>selecionadas.has(id))?'Limpar seleção':'Selecionar todas';marcarTodas.disabled=!disponiveis.length;
+  const horarios=visiveis(),aguardando=contarAguardandoContato(horarios),disponiveis=horarios.flatMap(h=>h.interessados.filter(i=>!i.ofertaEnviada).map(i=>i.id));
+  // A seleção vale só para quem está na tela: a busca que esconde um aluno tira ele do envio em lote.
+  const naTela=new Set(disponiveis);for(const id of [...selecionadas])if(!naTela.has(id))selecionadas.delete(id);
+  marcarTodas.textContent=disponiveis.length>0&&disponiveis.every(id=>selecionadas.has(id))?'Limpar seleção':'Selecionar todas';marcarTodas.disabled=!disponiveis.length;
   quantidade.textContent=plural(horarios.length,'horário liberado','horários liberados')+' · '+aguardando+' aguardando contato';
   selecao.hidden=!horarios.length;
   if(!horarios.length){selecionadas.clear();enviarLote.disabled=true;lista.replaceChildren(el('p','Nenhuma oferta pendente de envio para os filtros selecionados.','op-demo-no-results'));return;}
