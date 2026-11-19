@@ -173,3 +173,10 @@ html body[data-sipa-escala=aluno] dialog[open]{box-sizing:border-box;max-width:c
  html body[data-sipa-escala=aluno] dialog :is(footer,.booking-dialog-actions){display:flex;flex-direction:column-reverse;align-items:stretch;gap:8px}
  html body[data-sipa-escala=aluno] dialog :is(footer,.booking-dialog-actions)>:is(button,a){width:100%;justify-content:center;text-align:center}
 }
+
+/* 10/11/2026 (pente-fino: Minhas aulas no celular). O "Quero adiantar minhas aulas" / "Pedido de antecipação enviado" ocupa
+   a linha inteira (o texto ficava cortado em meia largura). O cabeçalho do Início alinha com o conteúdo. */
+@media(max-width:767px){
+ html body[data-sipa-escala=aluno] .lessons-header .lessons-header-actions>a.lessons-adiantar-button{grid-column:1/-1;white-space:normal;text-align:center;line-height:1.3;padding:8px 12px!important}
+ html body[data-sipa-escala=aluno] .dashboard-header .header-greeting{margin-left:0}
+}

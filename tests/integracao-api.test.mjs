@@ -23,6 +23,19 @@ const alunoApi={id:'al1',nome:'Ana',cpf:'52998224725',aulasContratadas:12,aulasR
  matriculas:[{unidadeBase:{id:'u1',nome:'Cobilândia'},unidadeCarro:null,tipoCambio:{valor:1,descricao:'Manual'}}],
  saldos:[{categoria:{valor:2,descricao:'B'},contratadas:10,disponiveis:7,agendadas:1,realizadas:2,faltas:0,retidas:0},{categoria:{valor:3,descricao:'D'},contratadas:2,disponiveis:2,agendadas:0,realizadas:0}]};
 
+test('aluno: o carro da consulta segue o cadastro, sem instrutor nem veículo do outro tipo',async()=>{
+ respostas=[
+  rota('GET','horarios-disponiveis',{data:'2026-11-03',fechado:false,horarios:[{horario:'09:00',dataHoraInicio:'2026-11-03T09:00:00',dataHoraFim:'2026-11-03T09:50:00',disponivel:true,motoristas:[
+   {motoristaId:'m1',nome:'Manual',veiculos:[{veiculoId:'v1',modelo:'Kwid',placa:'ABC1D23',tipoCambio:{valor:1}}]},
+   {motoristaId:'m2',nome:'Automático',veiculos:[{veiculoId:'v2',modelo:'E-Kwid',placa:'ABC1D24',tipoCambio:{valor:2}}]}]}]}),
+  rota('GET','alunos/me/mensagens',[]),rota('GET','alunos/me/acompanhamento',null),
+  rota('GET','alunos/me',alunoApi),rota('GET','contratacoes',[]),rota('GET','/api/agendamentos?',[])];
+ const s=criarServicoAluno();await s.carregar();
+ const c=await s.consultarRecursosLocal({categoria:'B',data:'2026-11-03'});
+ assert.deepEqual(c.horarios[0].pares,[{instrutorId:'m1',veiculoId:'v1',tipoCambio:'manual'}]);
+ assert.deepEqual(c.contagem,{instrutores:1,veiculos:1});
+});
+
 test('aluno: saldo por categoria (D = 3), hora de Brasília e status 7 como cancelada com crédito retido',()=>{
  const d=adaptarDadosAluno(alunoApi,[],[aulaApi(),aulaApi({id:'a2',status:{valor:7}})]);
  assert.deepEqual(d.categorias,['B','D']);

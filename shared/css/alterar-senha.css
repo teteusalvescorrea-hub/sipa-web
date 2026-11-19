@@ -1,0 +1,36 @@
+/* 11/11/2026: "Alterar senha" do Instrutor, da Recepção, da Gerência e do Master (shared/components/alterarSenha.js). */
+.sipa-senha-cartao{--senha-forte:#132132;--senha-suave:#5d6b7a;--senha-linha:#d6e1eb;--senha-acento:#1769aa}
+html[data-theme=dark] .sipa-senha-cartao{--senha-forte:#e6edf5;--senha-suave:#9fb0c2;--senha-linha:#34506b;--senha-acento:#6cb2ec}
+.sipa-senha-cartao h2{margin:0 0 6px}
+.sipa-senha-nota{margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--senha-suave)}
+.sipa-senha-botao{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid var(--senha-linha);border-radius:10px;background:transparent;color:var(--senha-acento);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.sipa-senha-botao:hover{border-color:var(--senha-acento);background:color-mix(in srgb,var(--senha-acento) 8%,transparent)}
+.sipa-senha-botao:focus-visible{outline:3px solid #62a9e5;outline-offset:2px}
+.sipa-senha-botao svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.sipa-senha-retorno{margin:10px 0 0;font-size:13px;font-weight:600;color:#17713f}.sipa-senha-retorno:empty{display:none}
+html[data-theme=dark] .sipa-senha-retorno{color:#7fd6a2}
+
+.sipa-senha-dialogo{--senha-forte:#132132;--senha-suave:#5d6b7a;--senha-linha:#d6e1eb;--senha-fundo:#fff;--senha-campo:#f6f9fc;--senha-acento:#1769aa;
+ margin:auto;max-height:calc(100dvh - 32px);overflow:auto;width:min(440px,calc(100vw - 32px));box-sizing:border-box;padding:24px;border:1px solid var(--senha-linha);border-radius:16px;background:var(--senha-fundo);color:var(--senha-forte);box-shadow:0 24px 60px #0b1d3040;font-family:inherit}
+html[data-theme=dark] .sipa-senha-dialogo{--senha-forte:#e6edf5;--senha-suave:#9fb0c2;--senha-linha:#34506b;--senha-fundo:#14263a;--senha-campo:#1b3047;--senha-acento:#6cb2ec}
+.sipa-senha-dialogo::backdrop{background:#0b1d3080}
+.sipa-senha-dialogo header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.sipa-senha-dialogo header svg{width:22px;height:22px;fill:none;stroke:var(--senha-acento);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.sipa-senha-dialogo h2{margin:0;font-size:19px}
+.sipa-senha-dialogo form{display:grid;gap:12px}
+.sipa-senha-campo{display:grid;gap:6px}.sipa-senha-campo label{font-size:13px;font-weight:600}
+.sipa-senha-entrada{position:relative}
+.sipa-senha-entrada input{width:100%;box-sizing:border-box;min-height:44px;padding:0 44px 0 12px;border:1px solid var(--senha-linha);border-radius:10px;background:var(--senha-campo);color:var(--senha-forte);font:inherit;font-size:14px}
+.sipa-senha-entrada input:focus{outline:2px solid var(--senha-acento);outline-offset:1px}
+.sipa-senha-olho{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:var(--senha-suave);cursor:pointer}
+.sipa-senha-olho svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
+.sipa-senha-olho[aria-pressed=true]{color:var(--senha-acento)}
+.sipa-senha-ajuda{font-size:12px;color:var(--senha-suave)}
+.sipa-senha-erro{margin:0;min-height:18px;font-size:13px;color:#b42318}
+html[data-theme=dark] .sipa-senha-erro{color:#f19a92}
+.sipa-senha-dialogo footer{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.sipa-senha-dialogo footer button{min-height:40px;padding:0 16px;border-radius:10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.sipa-senha-cancelar{border:1px solid var(--senha-linha);background:transparent;color:var(--senha-forte)}
+.sipa-senha-confirmar{border:1px solid var(--senha-acento);background:var(--senha-acento);color:#fff}
+html[data-theme=dark] .sipa-senha-confirmar{color:#0b1d30}
+.sipa-senha-confirmar:disabled{opacity:.5;cursor:default}

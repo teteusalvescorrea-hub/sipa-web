@@ -21,9 +21,11 @@ export function motivoAlmoco(instrutor,hora){
   const minutos=h=>Number(h.slice(0,2))*60+Number(h.slice(3));
   return minutos(hora)<minutos(intervalo.fim)&&minutos(hora)+50>minutos(intervalo.inicio)?'Intervalo de almoço do instrutor':'';
  }
- const h=Number(hora.slice(0,2));if(![11,12,13].includes(h))return '';
- if(!ALMOCOS.some(([id])=>id===instrutor?.horarioAlmoco))return 'Horário de almoço não configurado para este instrutor.';
- return (instrutor.horarioAlmoco==='11-12'?[11,12]:[12,13]).includes(h)?'Intervalo de almoço do instrutor':'';
+ const h=Number(hora.slice(0,2));
+ // Opção antiga ("11-12" ou "12-13"): as duas horas dela.
+ if(ALMOCOS.some(([id])=>id===instrutor?.horarioAlmoco))return (instrutor.horarioAlmoco==='11-12'?[11,12]:[12,13]).includes(h)?'Intervalo de almoço do instrutor':'';
+ // 16/11/2026 (pedido do usuário): almoço de no máximo 2 horas; sem configurar, 11:00 às 13:00 (como a API).
+ return [11,12].includes(h)?'Horário de almoço não configurado para este instrutor.':'';
 }
 export function localCategoriaD(data){
  if(typeof data==='string'&&data.includes('T')&&Number.isFinite(Date.parse(data)))data=agoraBrasil(new Date(data)).slice(0,10);
@@ -46,7 +48,7 @@ export function motivoCatalogoOnibus(recursos){
  const ativos=recursosOperacionaisD(recursos),instrutores=ativos.filter(r=>['Instrutores','instrutor'].includes(r.tipo)),veiculos=ativos.filter(r=>['Veículos','veiculo'].includes(r.tipo));
  if(!instrutores.length)return 'Sem instrutor ativo habilitado para a operação Categoria D neste ambiente. Solicite o cadastro ou a conferência do recurso à recepção.';
  if(!veiculos.length)return 'Sem ônibus ativo na operação Categoria D neste ambiente. Solicite o cadastro ou a conferência do recurso à recepção.';
- if(instrutores.length!==1||veiculos.length!==1)return 'Configuração da Categoria D inconsistente: deve existir um único instrutor e um único ônibus ativos. Consulte a recepção; nenhuma agenda paralela será utilizada.';
- if(instrutores[0].veiculoIds?.length&&!instrutores[0].veiculoIds.includes(veiculos[0].id))return 'O instrutor de ônibus não está vinculado ao ônibus ativo.';
+ // 12/11/2026: vários instrutores podem ter a categoria D; quem dirige o ônibus é o instrutor ligado a ele (o par da agenda),
+ // como na API, que só limita a um ônibus por autoescola.
  return '';
 }

@@ -14,7 +14,12 @@ export const cambioValido=valor=>CAMBIOS.some(([id])=>id===valor);
 // Com mais de um candidato o cadastro precisa de escolha explícita.
 export function resolverInstrutorCarro(recursos,veiculo){
  if(veiculo.instrutorId)return veiculo.instrutorId;
- const instrutores=recursos.filter(r=>['Instrutores','instrutor'].includes(r.tipo)&&r.ativo===true&&r.disponivel!==false&&r.categorias?.includes('B')&&(normalizarChaveUnidade(r.unidade)===normalizarChaveUnidade(veiculo.unidade)||(r.operacoesCarro||[]).some(op=>op.origem===normalizarChaveUnidade(veiculo.unidade)&&[op.origem,op.destino].includes(normalizarChaveUnidade(r.unidade)))));
+ // 12/11/2026: barato primeiro (só quem tem o carro na lista, ou o cadastro antigo sem lista); a unidade, que é cara de
+ // comparar, só para esses. Mesmo resultado de antes (a agenda chamava isto para cada carro e travava).
+ const candidatos=recursos.filter(r=>['Instrutores','instrutor'].includes(r.tipo)&&r.ativo===true&&r.disponivel!==false&&r.categorias?.includes('B')&&(r.veiculoIds==null||r.veiculoIds.includes(veiculo.id)));
+ if(!candidatos.length)return null;
+ const unidadeVeiculo=normalizarChaveUnidade(veiculo.unidade);
+ const instrutores=candidatos.filter(r=>normalizarChaveUnidade(r.unidade)===unidadeVeiculo||(r.operacoesCarro||[]).some(op=>op.origem===unidadeVeiculo&&[op.origem,op.destino].includes(normalizarChaveUnidade(r.unidade))));
  const vinculados=instrutores.filter(i=>i.veiculoIds?.includes(veiculo.id));
  if(vinculados.length)return vinculados.length===1?vinculados[0].id:null;
  const legados=instrutores.filter(i=>i.veiculoIds==null&&normalizarChaveUnidade(i.unidade)===normalizarChaveUnidade(veiculo.unidade));

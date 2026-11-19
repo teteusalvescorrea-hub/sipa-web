@@ -1,5 +1,5 @@
 /* =========================================
-   SIPA — MEU PROGRESSO
+   AgIA — MEU PROGRESSO
    ========================================= */
 
 import { exigirLogin } from "../../shared/js/sessao.js";
@@ -119,7 +119,7 @@ const progressError =
 function mostrarErro(erro) {
 
     console.error(
-        "SIPA — Erro ao carregar o progresso:",
+        "AgIA — Erro ao carregar o progresso:",
         erro
     );
 

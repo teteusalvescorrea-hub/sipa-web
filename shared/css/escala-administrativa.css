@@ -48,6 +48,7 @@ body.operador-page .op-unidade .op-button svg{width:19px;height:19px}
 body.operador-page .op-unidade :is(label,.op-form-fields label,.op-instrutor-fields label,.op-instrutor-filtros>label){font-size:var(--ger-base);gap:7px}
 body.operador-page .op-unidade :is(input,select,textarea){font-size:var(--ger-base);min-height:var(--sipa-field-height,44px);padding:10px 12px}
 body.operador-page .op-unidade .op-form-fields :is(input,select){height:var(--sipa-field-height,44px)}
+body.operador-page .op-unidade .sipa-select-busca-botao{min-height:var(--sipa-field-height,44px)}
 body.operador-page .op-unidade :is(input[type=checkbox],input[type=radio]){min-height:0;height:20px;width:20px;padding:0}
 body.operador-page .op-unidade .op-local-filters{gap:11px}
 body.operador-page .op-unidade .op-aluno-filter-input input::placeholder{font-size:15.4px}

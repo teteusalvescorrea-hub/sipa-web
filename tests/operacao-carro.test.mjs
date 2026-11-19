@@ -13,7 +13,7 @@ function fixture(origem='Cobilândia',tipoCambio='manual'){
  const recursos=[{id:'i',tipo:'Instrutores',nome:'Instrutor teste',categorias:['B'],veiculoIds:['v'],unidade:origem,ativo:true,horarioAlmoco:'11-12',operacoesCarro},{id:'v',tipo:'Veículos',nome:'Veículo teste',categoria:'B',tipoCambio,unidade:origem,ativo:true,operacoesCarro}];
  return {alunos:[aluno],recursos,aulas:[],ocupacoes:[]};
 }
-const dados=()=>({nome:'Aluno de Teste',cpf:'52998224725',nascimento:'2000-01-01',telefone:'27999999999',email:'teste@example.invalid',categoria:'B',tipoCambio:'manual',unidadeCarro:'Cobilândia',quantidadeCarro:'10',quantidadeMoto:'5',observacoes:'Cadastro explícito para teste.'});
+const dados=()=>({nome:'Aluno de Teste',cpf:'52998224725',nascimento:'2000-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha',telefone:'27999999999',email:'teste@example.invalid',categoria:'B',tipoCambio:'manual',unidadeCarro:'Cobilândia',quantidadeCarro:'10',quantidadeMoto:'5',observacoes:'Cadastro explícito para teste.'});
 for(const categoria of ['B','AB'])for(const tipoCambio of ['manual','automatico'])test(`cadastro ${categoria} ${tipoCambio} persistido, histórico e créditos imediatos`,()=>{
  const e={alunos:[],aulas:[],recursos:[]},n=cadastrarAluno(e,op('Cobilândia'),{...dados(),categoria,tipoCambio},'s',agora),a=n.alunos[0];
  assert.equal(a.tipoCambio,tipoCambio);assert.equal(a.unidadeCarro,'Cobilândia');assert.equal(a.creditos.B.disponiveis,10);assert.equal(JSON.parse(JSON.stringify(n)).alunos[0].tipoCambio,tipoCambio);

@@ -60,7 +60,7 @@ test('acompanhamento distingue aprovação de devolução e exige comprovante da
  assert.deepEqual(creditoDoAtestado({...aprovado,devolucao:confirmacao}),{texto:'Devolvido',quantidade:1,confirmado:true});
  for(const alteracao of [{aulaId:'outra'},{alunoId:'outro'},{categoria:'D'},{quantidade:2}])assert.equal(creditoDoAtestado({...aprovado,devolucao:{...confirmacao,aulas:[{...confirmacao.aulas[0],...alteracao}]}}).confirmado,false);
  assert.equal(creditoDoAtestado({...aprovado,devolucao:{...confirmacao,aulas:[confirmacao.aulas[0],confirmacao.aulas[0]]}}).confirmado,false);
- assert.equal(creditoDoAtestado({...s,status:'rejeitado',devolucao:confirmacao}).texto,'Não devolvido — solicitação rejeitada');
+ assert.equal(creditoDoAtestado({...s,status:'rejeitado',devolucao:confirmacao}).texto,'Não devolvido — atestado reprovado');
  assert.deepEqual(s,antes);assert.equal(aluno.creditos.B.disponiveis,9);
 });
 test('etapas e última atualização refletem somente eventos conhecidos sem concluir etapas futuras',()=>{
@@ -69,7 +69,8 @@ test('etapas e última atualização refletem somente eventos conhecidos sem con
  const em='2026-10-20T09:00:00-03:00',g={...s,status:'gerencia',parecer:{responsavel:'recepcao',em}};
  assert.deepEqual(etapasDoAtestado(g).map(e=>e.estado),['concluida','concluida','atual','pendente']);
  assert.equal(ultimaAtualizacaoAtestado(g),em);
- assert.equal(etapasDoAtestado({...s,status:'gerencia'})[1].estado,'pendente');
+ // Fase 3: sem passar pela recepção, o atestado vai direto para a gerência.
+ assert.deepEqual(etapasDoAtestado({...s,status:'gerencia'})[1],{titulo:'Direto para a gerência',estado:'concluida'});
  for(const status of ['aprovado','rejeitado'])assert.equal(etapasDoAtestado({...g,status}).at(-1).estado,'concluida');
  assert.equal(ultimaAtualizacaoAtestado({}),null);
 });

@@ -1,31 +1,39 @@
 import {confirmarExclusao} from '../../../shared/components/excluirCadastro.js';
+import {listaChecklists} from './checklists.js';
 import {gerirSituacaoRecurso} from '../../../shared/components/formularioAdministrativo.js';
 import {el,botao,campo,entrada,modal} from './uiOperador.js';
 import {formatarData} from '../../../shared/js/calendario.js';
-import {formatarCpf} from '../../../shared/js/formatacao.js';
+import {formatarCpf,nomeDoVeiculo} from '../../../shared/js/formatacao.js';
 import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {camposDetalhes,intervaloDoRecurso} from './detalhesRecurso.js';
 import {tornarOrdenavel} from '../../../shared/js/ordenacaoTabela.js';
+import {secaoAvaliacoes} from '../../../shared/components/avaliacoesInstrutorEquipe.js';
 
-export function abrirFichaInstrutor(raiz,servico,id,{aoEditar}={}){
+// somenteConsulta (17/11/2026): o instrutor de moto ou ônibus de outra unidade, só para ver (sem editar, realocar,
+// excluir ou mudar a situação).
+export function abrirFichaInstrutor(raiz,servico,id,{aoEditar,aoRealocar,verAvaliacoes=false,somenteConsulta=false}={}){
  const d=modal(raiz,'Detalhes do instrutor','opRecurso');d.classList.add('op-ficha-instrutor','op-resource-details');d.dataset.instrutorId=id;
  const resumo=el('header',undefined,'op-resource-summary'),corpo=el('div',undefined,'op-resource-content'),acoes=el('footer',undefined,'op-resource-actions'),cadastro=el('section',undefined,'op-resource-section'),totais=el('section',undefined,'op-resource-section op-instrutor-totais'),desempenho=el('section',undefined,'op-resource-section'),metricas=el('div',undefined,'op-instrutor-indicadores'),hist=el('section',undefined,'op-resource-section'),lista=el('div',undefined,'op-table-scroll'),erro=el('p',undefined,'op-acompanhamento-erro');erro.setAttribute('role','alert');
  const filtros=el('div',undefined,'op-resource-tabs');filtros.setAttribute('aria-label','Período de desempenho');const form=el('form',undefined,'op-instrutor-filtros'),inicio=entrada('date'),fim=entrada('date');inicio.required=fim.required=true;inicio.dataset.instrutorInicio='';fim.dataset.instrutorFim='';
  const consultar=el('button','Consultar período','op-button op-button-outline');consultar.type='submit';form.append(campo('Desde',inicio),campo('Até',fim),consultar);form.hidden=true;
  let modo='hoje',versao=0;
  for(const [valor,texto] of [['hoje','Hoje'],['semana','Semana'],['mes','Mês'],['periodo','Período personalizado']]){const b=botao(texto,()=>{modo=valor;form.hidden=modo!=='periodo';carregar();});b.dataset.instrutorPeriodo=valor;filtros.append(b);}
- const periodoAtual=el('p',undefined,'op-instrutor-periodo-atual');desempenho.append(el('h3','Desempenho do instrutor'),filtros,form,periodoAtual,metricas,erro);hist.classList.add('op-instrutor-historico');hist.append(el('h3','Histórico de aulas'),lista);corpo.append(resumo,cadastro,desempenho,totais,hist);d.append(corpo,acoes);
+ const periodoAtual=el('p',undefined,'op-instrutor-periodo-atual');desempenho.append(el('h3','Desempenho do instrutor'),filtros,form,periodoAtual,metricas,erro);hist.classList.add('op-instrutor-historico');hist.append(el('h3','Histórico de aulas'),lista);corpo.append(resumo,cadastro,...(verAvaliacoes&&servico.avaliacoesInstrutor?[secaoAvaliacoes(servico,id)]:[]),desempenho,totais,hist);d.append(corpo,acoes);
  form.onsubmit=e=>{e.preventDefault();if(form.reportValidity())carregar();};
  async function carregar(){const ticket=++versao;erro.textContent='';try{
   const dados=await servico.detalhesInstrutor(id,{modo,...(modo==='periodo'?{inicio:inicio.value,fim:fim.value}:{})});if(ticket!==versao||!d.open)return;
   const i=dados.instrutor,identificacao=i.cpf||i.documento||i.identificacao||'N\u00e3o informada',cpf=/^[\d.\-\s]+$/.test(identificacao)&&identificacao.replace(/\D/g,'').length===11;
   const situacao=i.ativo?(i.disponivel===false?'Indispon\u00edvel':'Ativo'):'Inativo',meta=el('div',undefined,'op-resource-meta'),estado=el('span',situacao,'op-resource-state');estado.dataset.situacao=situacao;meta.append(el('span','Categoria '+(i.categorias?.join(' + ')||'n\u00e3o informada')),estado);resumo.replaceChildren(el('h3',i.nome),meta);
-  cadastro.replaceChildren(el('h3','Informa\u00e7\u00f5es do instrutor'),camposDetalhes([[cpf?'CPF':'Identifica\u00e7\u00e3o',cpf?formatarCpf(identificacao):identificacao],...(i.identificacao&&i.identificacao!==identificacao?[['Identifica\u00e7\u00e3o',i.identificacao]]:[]),['Unidade vinculada',nomeUnidadeInstitucional(i.unidade)],['Hor\u00e1rio de almo\u00e7o',intervaloDoRecurso(i)||'Configura\u00e7\u00e3o pendente'],['Ve\u00edculo vinculado',dados.veiculos.map(v=>v.nome+(v.placa?' \u00b7 '+v.placa:'')).join('; ')||'Sem ve\u00edculo vinculado']]));
-  acoes.replaceChildren();if(servico.identidade.nivel===3&&servico.identidade.permissoes.includes('excluir-cadastro')&&servico.excluirCadastro)acoes.append(botao('Excluir',()=>confirmarExclusao(raiz,servico,'instrutor',i,()=>location.reload())));if(aoEditar&&servico.identidade.permissoes.includes('editar-instrutor'))acoes.append(botao('Editar instrutor',()=>aoEditar(i,d),'op-button op-button-primary'));
-  if(servico.situacaoRecurso&&servico.identidade.permissoes.includes('gerenciar-situacao'))acoes.append(botao('Gerenciar situa\u00e7\u00e3o',()=>gerirSituacaoRecurso(raiz,servico,i,carregar)));
+  cadastro.replaceChildren(el('h3','Informa\u00e7\u00f5es do instrutor'),camposDetalhes([[cpf?'CPF':'Identifica\u00e7\u00e3o',cpf?formatarCpf(identificacao):identificacao],...(i.identificacao&&i.identificacao!==identificacao?[['Identifica\u00e7\u00e3o',i.identificacao]]:[]),['Unidade vinculada',i.unidade?nomeUnidadeInstitucional(i.unidade):'Sem unidade fixa'],['Hor\u00e1rio de almo\u00e7o',intervaloDoRecurso(i)||'Configura\u00e7\u00e3o pendente'],['Ve\u00edculo vinculado',dados.veiculos.map(v=>nomeDoVeiculo(v.nome,v.placa)).join('; ')||'Sem ve\u00edculo vinculado']]));
+  acoes.replaceChildren();if(somenteConsulta){acoes.append(el('p','Instrutor de moto ou ônibus de outra unidade: só para consulta.','op-help'));}else{if(servico.identidade.nivel===3&&servico.identidade.permissoes.includes('excluir-cadastro')&&servico.excluirCadastro)acoes.append(botao('Excluir',()=>confirmarExclusao(raiz,servico,'instrutor',i,()=>location.reload())));if(aoEditar&&servico.identidade.permissoes.includes('editar-instrutor'))acoes.append(botao('Editar instrutor',()=>aoEditar(i,d),'op-button op-button-primary'));if(aoRealocar){const b=botao('Realocar alunos',()=>aoRealocar(i));b.dataset.opRealocar='';acoes.append(b);}
+  // 13/11/2026: no sistema com a API, ativar ou desativar é só do Master, direto e sem justificativa.
+  if(servico.situacaoRecurso&&servico.identidade.permissoes.includes('gerenciar-situacao')){if(servico.senhaPeloServidor!==true)acoes.append(botao('Gerenciar situa\u00e7\u00e3o',()=>gerirSituacaoRecurso(raiz,servico,i,carregar)));
+   else if(servico.identidade.nivel===3){const mudar=botao(i.ativo?'Desativar instrutor':'Ativar instrutor',async()=>{mudar.disabled=true;try{await servico.situacaoRecurso(i.id,!i.ativo);await carregar();}catch(e){erro.textContent=e.message;mudar.disabled=false;}});mudar.dataset.opSituacaoFicha='';acoes.append(mudar);}}}
   const conclusoes=camposDetalhes([['Hoje',String(dados.totais.hoje.concluidas)],['Semana',String(dados.totais.semana.concluidas)],['M\u00eas',String(dados.totais.mes.concluidas)],['Total',String(dados.total)]]);conclusoes.classList.add('op-instrutor-total-grid');totais.replaceChildren(el('h3','Aulas conclu\u00eddas'),conclusoes);
   periodoAtual.textContent=formatarData(dados.periodo.inicio)+' a '+formatarData(dados.periodo.fim);
-  metricas.replaceChildren();for(const [titulo,n,chave] of [['Aulas realizadas',dados.concluidas,'concluidas'],['Presenças',dados.presencas,'presencas'],['Faltas',dados.faltas,'faltas']]){const card=el('article'),valor=el('strong',String(n));valor.dataset.instrutorIndicador=chave;card.append(el('span',titulo),valor);metricas.append(card);}
+  // Fase 4: os checklists feitos pelo instrutor.
+  if(servico.checklists&&!d.querySelector('[data-op-checklists]'))corpo.append(listaChecklists(servico,{motoristaId:id},{titulo:'Checklists do instrutor (últimos 30 dias)'}));
+  metricas.replaceChildren();for(const [titulo,n,chave] of [['Aulas encerradas',dados.concluidas,'concluidas'],['Presenças',dados.presencas,'presencas'],['Faltas',dados.faltas,'faltas']]){const card=el('article'),valor=el('strong',String(n));valor.dataset.instrutorIndicador=chave;card.append(el('span',titulo),valor);metricas.append(card);}
   for(const b of filtros.children)b.setAttribute('aria-pressed',String(b.dataset.instrutorPeriodo===modo));
   if(modo!=='periodo'){inicio.value=dados.periodo.inicio;fim.value=dados.periodo.fim;}
   lista.replaceChildren();if(!dados.historico.length){lista.append(el('p','Nenhuma aula encontrada neste per\u00edodo.','op-help'));return;}

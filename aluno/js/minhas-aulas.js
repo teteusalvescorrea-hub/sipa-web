@@ -1,6 +1,6 @@
 import {orientacoesComparecimento} from '../../shared/components/localAula.js';
 /* =========================================
-   SIPA — MINHAS AULAS
+   AgIA — MINHAS AULAS
    As aulas vêm da API. Cancelar e ver o
    histórico também passam pela API.
    ========================================= */

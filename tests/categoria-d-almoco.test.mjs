@@ -25,7 +25,7 @@ test('locais oficiais nos seis dias, domingo fechado, Tartarugão não é unidad
  const sabado=localCategoriaD('2026-10-24');assert.equal(sabado.nome,LOCAIS_ONIBUS.sabado.nome);assert.equal(sabado.unidadeAdministrativa,'Cobilândia');assert.equal(sabado.latitude,-20.3621362);assert.equal(sabado.longitude,-40.3048018);assert.match(sabado.mapsUrl,/!3d-20\.3621362!4d-40\.3048018/);assert.doesNotMatch(sabado.mapsUrl,/search|Itaperuna/);assert.match(localCategoriaD('2026-10-19').endereco,/Jacinto Admiral, 125/);assert.equal(localCategoriaD('2026-10-25'),null);
 });
 test('cadastro D separado com creditos imediatos, combos não autorizados rejeitados, dados preservados',()=>{
- const e=fixture(),dados={nome:'Aluno Ônibus Teste',cpf:'93541134780',nascimento:'2000-01-01',telefone:'27999999999',email:'d@example.invalid',categoria:'D',quantidadeOnibus:'8',observacoes:'Cadastro de teste'};
+ const e=fixture(),dados={nome:'Aluno Ônibus Teste',cpf:'93541134780',nascimento:'2000-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha',telefone:'27999999999',email:'d@example.invalid',categoria:'D',quantidadeOnibus:'8',observacoes:'Cadastro de teste'};
  const n=cadastrarAluno(e,op,dados,'novo',agora);assert.deepEqual(n.alunos.at(-1).aulasAdquiridas,{D:8});assert.deepEqual(Object.fromEntries(Object.entries(n.alunos.at(-1).creditos).map(([k,v])=>[k,v.disponiveis])),n.alunos.at(-1).aulasAdquiridas);assert.deepEqual(n.alunos[0],e.alunos[0]);assert.throws(()=>cadastrarAluno(e,op,{...dados,categoria:'BD'},'err',agora));
 });
 test('cadastro obrigatório de almoço e recursos D por ação explícita, sem edição de existentes',()=>{
@@ -34,7 +34,7 @@ test('cadastro obrigatório de almoço e recursos D por ação explícita, sem e
 });
 test('almoço individual em A/B/D, nenhuma opção implícita para legado',()=>{
  for(const categoria of ['A','B','D'])for(const opcao of ['11-12','12-13']){const i={categorias:[categoria],horarioAlmoco:opcao};assert.equal(!!motivoAlmoco(i,'11:00'),opcao==='11-12');assert.ok(motivoAlmoco(i,'12:00'));assert.equal(!!motivoAlmoco(i,'13:00'),opcao==='12-13');assert.equal(motivoAlmoco(i,'14:00'),'');}
- assert.match(motivoAlmoco({},'13:00'),/não configurado/);assert.equal(motivoAlmoco({},'09:00'),'');
+ assert.match(motivoAlmoco({},'12:00'),/não configurado/);assert.equal(motivoAlmoco({},'13:00'),'');assert.equal(motivoAlmoco({},'09:00'),'');
 });
 test('pares: libera 11 para segundo almoço, 13 para primeiro, sem bloquear unidade inteira',()=>{
  const e=fixture();e.recursos[0].categorias=['B'];e.recursos[1].categoria='B';e.recursos[1].tipoCambio='manual';e.recursos[0].veiculoIds=['v'];e.recursos.push({...e.recursos[0],id:'i2',veiculoIds:['v2'],horarioAlmoco:'11-12'},{...e.recursos[1],id:'v2'});

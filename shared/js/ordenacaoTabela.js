@@ -3,7 +3,7 @@
 // ordem natural). Sem aoMudar, ordena as linhas já desenhadas; com aoMudar (listas paginadas), quem chama ordena os
 // dados com ordenarLinhas antes de paginar e redesenha.
 const SEM_ORDEM = new Set(['', 'Ações', 'Ação', 'Detalhes']);
-const textoDe = v => (v instanceof Node ? v.textContent : String(v ?? '')).replace(/\s+/g, ' ').trim();
+const textoDe = v => (typeof Node !== 'undefined' && v instanceof Node ? v.textContent : String(v ?? '')).replace(/\s+/g, ' ').trim();
 
 function chave(texto) {
   const data = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\D+(\d{2}):(\d{2}))?/);

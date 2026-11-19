@@ -30,7 +30,7 @@ test('xlsx do relatório de cancelamentos: pacote completo, cabeçalho, todas as
  const e={alunos:[{id:'s',nome:'Aluno Teste'}],recursos:[{id:'i',nome:'Instrutor'},{id:'v',nome:'Veículo'}],responsaveis:[{id:'g',nome:'Gerente'}],aulas:Array.from({length:60},(_,i)=>aula(i,2))};
  const r=gerarRelatorio(e,op,{tipo:'cancelamentos',inicio:'2026-10-19',fim:'2026-10-28'});assert.equal(r.linhas.length,60);
  const {bytes,nome,tipo}=criarExcelRelatorio(r,{titulo:'Cancelamentos',unidade:'Centro de Vila Velha',filtros:[['Categoria','Carro']]},new Date('2026-11-04T15:00:00Z'));
- assert.equal(nome,'SIPA_Relatorio_Cancelamentos_19-10-2026_a_28-10-2026.xlsx');assert.equal(tipo,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+ assert.equal(nome,'AgIA_Relatorio_Cancelamentos_19-10-2026_a_28-10-2026.xlsx');assert.equal(tipo,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
  const z=abrirZip(bytes);
  assert.deepEqual(Object.keys(z).sort(),['[Content_Types].xml','_rels/.rels','docProps/core.xml','xl/_rels/workbook.xml.rels','xl/styles.xml','xl/workbook.xml','xl/worksheets/sheet1.xml']);
  assert.match(z['[Content_Types].xml'],/PartName="\/xl\/worksheets\/sheet1.xml" ContentType="application\/vnd.openxmlformats-officedocument.spreadsheetml.worksheet\+xml"/);
@@ -38,7 +38,7 @@ test('xlsx do relatório de cancelamentos: pacote completo, cabeçalho, todas as
  assert.match(z['xl/workbook.xml'],/<sheet name="Relatório" sheetId="1" r:id="rId1"\/>/);
  assert.match(z['xl/styles.xml'],/formatCode="dd\/mm\/yyyy"/);assert.match(z['xl/styles.xml'],/formatCode="dd\/mm\/yyyy hh:mm"/);assert.match(z['xl/styles.xml'],/<cellXfs count="9">/);
  const s=z['xl/worksheets/sheet1.xml'];
- for(const t of ['SIPA - Sistema Inteligente Para Agendamentos','Relatório de Cancelamentos','Unidade: Centro de Vila Velha','Período: 19/10/2026 a 28/10/2026','Filtros da consulta','Resumo do período','Chuva &amp; frio &lt;forte&gt;'])assert.ok(s.includes(t),t);
+ for(const t of ['AgIA - Gestão Inteligente de Agenda','Relatório de Cancelamentos','Unidade: Centro de Vila Velha','Período: 19/10/2026 a 28/10/2026','Filtros da consulta','Resumo do período','Chuva &amp; frio &lt;forte&gt;'])assert.ok(s.includes(t),t);
  assert.ok(!s.includes('<forte>'));
  const cab=celulas(s,10);assert.deepEqual(cab.map(c=>c.t),r.colunas);assert.ok(cab.every(c=>c.s===ESTILO.cabecalho));
  const linhas=s.match(/<row /g).length,primeira=celulas(s,11);

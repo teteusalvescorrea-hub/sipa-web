@@ -75,7 +75,8 @@
 [data-op-agendar] .op-form-fields select { font-size: 13px; height: 46px; }
 .op-agenda-toolbar { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; padding: 6px 0 10px; }
 .op-agenda-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex: 1; min-width: 240px; }
-.op-agenda-nav h2 { font-size: 16px; color: var(--sipa-texto-neutro); line-height: 1.6; margin-left: 8px; text-transform: capitalize; }
+.op-agenda-nav h2 { font-size: 16px; color: var(--sipa-texto-neutro); line-height: 1.6; margin-left: 8px; }
+.op-agenda-nav h2::first-letter { text-transform: uppercase; }
 .op-agenda-nav .op-button { font-size: 12px; padding: 9px 12px; }
 .op-agenda-toolbar > label { display: grid; gap: 6px; font-size: 11px; color: var(--sipa-texto-neutro); }
 .op-agenda .op-agenda-modos { display: flex; padding: 4px; border: 1px solid #c8d9e8; border-radius: 10px; background: #eff5fb; gap: 3px; }
@@ -95,7 +96,8 @@
 .op-agenda-legenda .op-legenda-facultativo::before { background: #b7cfe4; }
 .op-agenda .op-agenda-day { margin: 0; padding: 0; border: 1px solid #c8d9e8; background: #f7fafd; border-radius: 12px; overflow: hidden; }
 .op-day-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; background: #e6f0fa; border-bottom: 1px solid #c8d9e8; }
-.op-agenda .op-day-heading h3 { font-size: 14px; margin: 0; text-transform: capitalize; }
+.op-agenda .op-day-heading h3 { font-size: 14px; margin: 0; }
+.op-agenda .op-day-heading h3::first-letter { text-transform: uppercase; }
 .op-day-heading span { color: var(--sipa-texto-neutro); font-size: 12px; }
 .op-agenda .op-agenda-slot { display: grid; grid-template-columns: 56px 1fr; gap: 0; padding: 0; border-bottom: 1px solid #dce6ef; }
 .op-agenda-slot > time { display: flex; align-items: center; justify-content: center; padding: 8px 6px; background: #eff5fb; color: var(--sipa-texto-neutro); font-size: 12px; border-right: 1px solid #dce6ef; }
@@ -178,7 +180,7 @@
 .op-medical-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
 .op-medical-metrics .op-card { padding:12px 16px; margin:0; display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; }
 .op-medical-metrics strong { font-size:24px; }
-.op-medical-filters { display:grid; grid-template-columns:minmax(170px,1.4fr) repeat(4,minmax(120px,1fr)); gap:10px; align-items:end; margin:14px 0; }
+.op-medical-filters { display:grid; grid-template-columns:minmax(0,420px); gap:10px; align-items:end; margin:14px 0; }
 .op-medical-filters label { min-width:0; font-size:12px; }
 .op-medical-filters button { justify-self:start; }
 .op-medical-dialog { max-height:88dvh; overflow:auto; width:min(850px,calc(100vw - 28px)); }
@@ -187,7 +189,6 @@
 .op-medical-document img { display:block; max-width:100%; max-height:360px; object-fit:contain; margin:10px auto; }
 .op-medical-document a { color:inherit; text-decoration:underline; }
 .op-medical-dialog textarea { width:100%; min-height:90px; resize:vertical; font:inherit; }
-@media(max-width:1000px){.op-medical-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }}
 @media(max-width:550px){.op-medical-metrics,.op-medical-filters { grid-template-columns:minmax(0,1fr); }.op-medical-metrics .op-card { padding:10px 12px; }}
 
 .op-agenda > [hidden] { display:none !important; }
@@ -255,6 +256,9 @@
 [data-theme=dark] .op-agenda .op-aula-evento:has(.op-aula-status-2) { background:#263341; }
 @media(max-width:700px){.op-agenda .op-agenda-seletor{flex-basis:100%;}.op-agenda .op-agenda-nav{flex-wrap:wrap;}.op-agenda .op-agenda-nav h2{white-space:normal;}}
 .op-mode-demo .op-dialog.op-instrutor-form-dialog { width:min(720px,calc(100vw - 28px)); }
+/* 12/11/2026: o cadastro e a edição do instrutor e do veículo numa janela mais larga (antes, 700px: muito embolado). */
+body.operador-page .op-unidade .op-dialog.op-instrutor-form-dialog, .op-unidade .op-dialog.op-instrutor-form-dialog, .op-dialog.op-instrutor-form-dialog { width:min(960px,calc(100vw - 32px)); }
+.op-instrutor-fields > .op-campo-linha-inteira { grid-column:1/-1; }
 .op-instrutor-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 16px; margin:16px 0; }
 .op-instrutor-fields > label { display:grid; gap:6px; min-width:0; font-size:12px; font-weight:600; }
 .op-unidade .op-dialog .op-instrutor-fields > label { margin:0; }
@@ -377,3 +381,338 @@ th[aria-sort=descending] .op-ordenar-seta::after { border-top-width:6px; border-
 [data-op-secao=instrutores] [data-op-acao-topo=instrutores], [data-op-secao=recursos] [data-op-acao-topo=recursos] { display:inline-flex; }
 /* O aviso rápido sempre em branco sobre o fundo (regras de [role=alert] da tela pintavam o texto de vermelho). */
 .op-toast, .op-toast * { color:#fff !important; }
+/* Confirmação da troca do almoço do instrutor. */
+.op-almoco-alterado { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:12px 0; }
+.op-almoco-alterado > div { padding:12px 14px; border:1px solid var(--progress-border-light,#d8e5f0); border-radius:10px; }
+.op-almoco-alterado > div:last-child { border-color:#1769aa; background:#edf5fc; }
+.op-almoco-alterado dt { font-size:12px; }
+.op-almoco-alterado dd { margin:3px 0 0; font-size:15px; font-weight:700; }
+[data-op-almoco-alterado] > .op-button { display:block; margin:14px 0 0 auto; }
+html[data-theme=dark] .op-almoco-alterado > div { border-color:#4d6a86; }
+html[data-theme=dark] .op-almoco-alterado > div:last-child { border-color:#7dbbf0; background:#1d344b; }
+@media(max-width:480px){ .op-almoco-alterado { grid-template-columns:minmax(0,1fr); } }
+
+/* Dias de prova (Gerência e Master, seção Agendas): formulário em grade e a lista dos próximos dias. */
+.op-dias-prova .op-card-heading { margin-bottom: 20px; }
+.op-dias-prova-form { grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; gap: 18px 20px; margin: 0 0 26px; padding: 20px; background: var(--progress-card-hover); border: 1px solid var(--progress-border-light); border-radius: 14px; }
+.op-dias-prova-form input, .op-dias-prova-form select { height: 44px; box-sizing: border-box; }
+.op-dias-prova-acoes { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 16px; border-top: 1px solid var(--progress-border-light); }
+.op-dias-prova-acoes .op-help { margin: 0; }
+.op-dias-prova-acoes .op-button { min-width: 180px; }
+.op-dias-prova-lista h3 { font-size: 13px; font-weight: 600; color: var(--progress-text); margin-bottom: 12px; }
+.op-dias-prova-lista .op-table-scroll { margin-top: 0; }
+.op-dias-prova-lista .op-table td:nth-child(-n+4) { white-space: nowrap; }
+.op-dias-prova-lista .op-table td { padding: 13px 12px; border-bottom: 1px solid var(--progress-border-light); vertical-align: middle; }
+.op-dias-prova-veiculo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.op-dias-prova-veiculo + .op-dias-prova-veiculo { margin-top: 6px; }
+.op-dias-prova-lotado { color: #b4541c; font-weight: 600; }
+.op-dias-prova-vazio { display: grid; gap: 4px; padding: 22px 18px; text-align: center; border: 1px dashed var(--progress-border); border-radius: 12px; }
+.op-dias-prova-vazio strong { font-size: 12px; color: var(--progress-text); }
+.op-dias-prova-vazio span { font-size: 11px; color: var(--sipa-texto-neutro); }
+html[data-theme=dark] .op-dias-prova-form { background: #152b40; border-color: #30465b; }
+html[data-theme=dark] .op-dias-prova-acoes, html[data-theme=dark] .op-dias-prova-lista .op-table td { border-color: #30465b; }
+html[data-theme=dark] .op-dias-prova-vazio { border-color: #3c536a; }
+html[data-theme=dark] .op-dias-prova-lotado { color: #f0a46b; }
+@media (max-width: 1000px) { .op-dias-prova-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+ .op-dias-prova-form { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+ .op-dias-prova-acoes { flex-direction: column; align-items: stretch; }
+ .op-dias-prova-acoes .op-button { width: 100%; }
+}
+
+/* Pedidos de mais aulas (Mensagens): faixa compacta que expande ao clicar. */
+.op-pedidos-aulas { margin-bottom: 14px; background: var(--progress-card); border: 1px solid var(--progress-border); border-radius: 14px; box-shadow: 0 4px 16px rgba(20,60,100,.05); overflow: hidden; }
+.op-pedidos-resumo { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; list-style: none; }
+.op-pedidos-resumo::-webkit-details-marker { display: none; }
+.op-pedidos-resumo:hover { background: var(--progress-card-hover); }
+.op-pedidos-icone { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #e6f2fb; color: var(--progress-blue); font-size: 18px; font-weight: 700; }
+.op-pedidos-textos { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.op-pedidos-textos strong { font-size: 13px; color: var(--progress-text); }
+.op-pedidos-textos small { font-size: 11px; color: var(--sipa-texto-neutro); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-pedidos-contador { flex: none; padding: 3px 10px; border-radius: 12px; background: #1f9d55; color: #fff; font-size: 11px; font-weight: 700; }
+.op-pedidos-contador[hidden] { display: none; }
+.op-pedidos-seta { flex: none; color: var(--sipa-texto-neutro); transition: transform .2s; }
+.op-pedidos-aulas[open] .op-pedidos-seta { transform: rotate(180deg); }
+.op-pedidos-aulas[open] .op-pedidos-resumo { border-bottom: 1px solid var(--progress-border-light); }
+.op-pedidos-barra { display: flex; justify-content: flex-end; padding: 12px 16px 0; }
+.op-pedidos-corpo { padding: 4px 16px 16px; }
+.op-pedidos-corpo .op-table-scroll { margin-top: 10px; }
+html[data-theme=dark] .op-pedidos-icone { background: #1b3650; color: #7dbbf0; }
+html[data-theme=dark] .op-pedidos-aulas { border-color: #2b4157; }
+
+/* Campo de arquivo do SIPA (campoArquivo): área de clicar/arrastar e o arquivo escolhido. */
+.op-arquivo { position: relative; display: grid; gap: 6px; min-width: 0; font-weight: 400; }
+.op-arquivo input.op-arquivo-input { position: absolute !important; top: 0; left: 0; width: 1px !important; height: 1px !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); pointer-events: none; }
+.op-arquivo-zona { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 12px 16px; border: 1.5px dashed #a9c6df; border-radius: 12px; background: #f3f8fc; cursor: pointer; transition: border-color .15s, background .15s; }
+.op-arquivo-zona:hover, .op-arquivo.arrastando .op-arquivo-zona { border-color: var(--progress-blue); background: #e8f2fb; }
+.op-arquivo-input:focus-visible + .op-arquivo-zona { outline: 2px solid var(--progress-blue); outline-offset: 2px; }
+.op-arquivo-icone, .op-arquivo-doc { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: #dcebf8; color: var(--progress-blue); }
+.op-arquivo-icone svg, .op-arquivo-doc svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.op-arquivo-textos, .op-arquivo-info { display: grid; gap: 2px; min-width: 0; }
+.op-arquivo-textos strong, .op-arquivo-info strong { font-size: 12.5px; font-weight: 600; color: var(--progress-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.op-arquivo-textos strong { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
+.op-arquivo-textos small, .op-arquivo-info small { font-size: 11px; color: var(--sipa-texto-neutro); }
+.op-arquivo-escolhido { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 16px; border: 1px solid #b9d7c4; border-radius: 12px; background: #eef8f1; }
+.op-arquivo-escolhido[hidden], .op-arquivo-zona[hidden] { display: none; }
+.op-arquivo-escolhido .op-arquivo-doc { background: #d4eedd; color: #1f7a45; }
+.op-arquivo-info { flex: 1; }
+.op-arquivo-remover { flex: none; height: 32px; padding: 0 12px; border: 1px solid #e3b4ad; border-radius: 8px; background: #fff; color: #b42318; font-size: 12px; font-weight: 600; cursor: pointer; }
+.op-arquivo-remover:hover { background: #fdecea; }
+.op-arquivo-aviso { color: #b42318; font-size: 11px; }
+.op-arquivo-aviso:empty { display: none; }
+html[data-theme=dark] .op-arquivo-zona { background: #152b40; border-color: #3c5a77; }
+html[data-theme=dark] .op-arquivo-zona:hover, html[data-theme=dark] .op-arquivo.arrastando .op-arquivo-zona { background: #1b3650; border-color: #7dbbf0; }
+html[data-theme=dark] .op-arquivo-icone { background: #1d3a55; color: #7dbbf0; }
+html[data-theme=dark] .op-arquivo-escolhido { background: #15352a; border-color: #2f6a4a; }
+html[data-theme=dark] .op-arquivo-escolhido .op-arquivo-doc { background: #1d4a35; color: #7fd6a2; }
+html[data-theme=dark] .op-arquivo-remover { background: transparent; border-color: #8a4a44; color: #f2a59c; }
+
+/* 09/11/2026: indicadores do Início da Recepção lado a lado (Alunos vinculados e Lançamento no SIT). */
+.op-home-indicadores{display:flex;flex-wrap:wrap;gap:14px}
+.op-home-indicadores>.op-home-count{flex:0 1 270px}
+.op-home-link{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.op-home-link:hover,.op-home-link:focus-visible{border-color:var(--progress-blue);box-shadow:0 6px 18px rgba(23,105,170,.12);outline:none}
+.op-home-link strong{color:var(--progress-blue)}
+
+/* 09/11/2026: Documentos do aluno na ficha. */
+.op-docs-aluno .op-docs-cabecalho{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.op-docs-aluno .op-docs-cabecalho h4{margin:0}
+.op-docs-aluno .op-inline-note{margin:6px 0 10px}
+.op-docs-lista{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.op-docs-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--progress-border,#d8e5f0);border-radius:10px;background:var(--progress-surface,#f7fbff)}
+.op-docs-info{display:grid;gap:2px;min-width:0}
+.op-docs-info strong{font-size:14px}
+.op-docs-info small{font-size:12px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.op-docs-tag{justify-self:start;margin-top:2px;padding:1px 8px;border-radius:999px;background:#e8f1fa;color:#12578f;font-size:11px;font-weight:600}
+.op-docs-acoes{display:flex;gap:10px;flex:none}
+.op-docs-vazio{padding:10px 12px;border:1px dashed var(--progress-border,#c7dbea);border-radius:10px;font-size:13px;opacity:.8}
+.op-link.op-link-perigo{color:#a12525}
+.op-docs-todos{display:flex!important;align-items:flex-start;gap:8px;font-weight:500!important}
+.op-docs-todos input{width:auto!important;min-height:0!important;margin-top:3px}
+
+/* 10/11/2026: a grade da agenda arredondada e com divisórias suaves (antes as linhas pretas pareciam tabela crua). As
+   células fechadas (Passado, Intervalo, feriado) viram etiquetas arredondadas dentro do horário. */
+.op-agenda .op-week-grid{border-radius:16px;overflow:clip;background:#fff;box-shadow:0 2px 12px rgba(16,44,72,.07)}
+.op-agenda .op-week-grid .op-day-heading{background:#f3f8fd}
+.op-agenda .op-week-grid .op-day-heading[aria-current=date]{background:#ddedfb}
+.op-agenda .op-week-hours>strong{background:#f3f8fd}
+.op-agenda .op-week-grid .op-slot-conteudo{padding:4px}
+.op-agenda .op-week-grid .op-slot-conteudo:has(.op-slot-closed){background:transparent}
+.op-agenda .op-week-grid .op-slot-closed{align-self:stretch;display:flex;align-items:center;margin:0;padding:5px 9px;border-radius:9px;background:#f1f4f8;color:#5d6f82}
+.op-agenda .op-week-grid .op-slot-disponivel{border-radius:9px}
+.op-agenda .op-week-grid .op-aula-evento{border-radius:10px}
+.op-agenda .op-week-grid .op-agenda-fechada{background:#f6f8fb}
+.op-agenda .op-month-grid{border-radius:16px}
+.op-agenda .op-agenda-day:not(.op-week-grid .op-agenda-day){border-radius:16px}
+[data-theme=dark] .op-agenda .op-week-grid{background:#13263a;box-shadow:none}
+[data-theme=dark] .op-agenda .op-week-grid .op-day-heading,[data-theme=dark] .op-agenda .op-week-hours>strong{background:#18304a}
+[data-theme=dark] .op-agenda .op-week-grid .op-day-heading[aria-current=date]{background:#214767}
+[data-theme=dark] .op-agenda .op-week-grid .op-slot-closed{background:#1b2c3c;color:#9fb3c6}
+[data-theme=dark] .op-agenda .op-week-grid .op-agenda-fechada{background:#16283a}
+
+/* 10/11/2026: Lançamento no SIT. Cada aula numa linha-cartão, o botão de lançado à direita, a barra e os filtros. */
+.op-sit .op-sit-dia{max-width:280px}
+.op-sit-resumo{display:grid;gap:7px;margin:14px 0 6px}
+.op-sit-resumo:empty{display:none}
+.op-sit-resumo strong{font-size:13.5px}
+.op-sit-barra{height:8px;border-radius:999px;background:#e3ecf5;overflow:hidden}
+.op-sit-barra span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1f9d55,#3cc47f);transition:width .3s}
+.op-sit-filtros{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
+.op-sit-filtros:empty{display:none}
+.op-sit-filtros button{padding:6px 13px;border:1px solid #c9d8e6;border-radius:999px;background:#fff;color:#2b4157;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.op-sit-filtros button[aria-pressed=true]{background:#1769aa;border-color:#1769aa;color:#fff}
+.op-sit-lista{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.op-sit-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 14px;border:1px solid #d6e2ee;border-radius:12px;background:#fff;transition:background .2s,border-color .2s}
+.op-sit-item.op-sit-lancado{background:#f3faf5;border-color:#bfe3cb}
+.op-sit-info{display:grid;gap:5px;min-width:0}
+.op-sit-topo{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}
+.op-sit-aluno{font-size:14px}
+.op-sit-ordem,.op-sit-cat{padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.op-sit-ordem{background:#e8f1fa;color:#12578f}
+.op-sit-cat{background:#f1f4f8;color:#475569;font-weight:600}
+.op-sit-cpf{font-size:12px;color:#64748b}
+.op-sit-detalhe{margin:0;font-size:12.5px;color:#4b5b6b;overflow-wrap:anywhere}
+.op-sit-acao{display:grid;justify-items:end;gap:4px;flex:none}
+.op-sit .op-sit-marca,.op-unidade .op-sit .op-sit-marca{display:inline-flex;align-items:center;gap:8px;margin:0;padding:7px 13px;border:1px solid #c9d8e6;border-radius:999px;background:#f7fafd;color:#2b4157;font-size:12.5px;font-weight:600;white-space:nowrap;cursor:pointer}
+.op-sit-marca:hover{border-color:#1769aa}
+.op-sit-marca input{flex:none;width:18px;height:18px;min-height:0;margin:0;padding:0;accent-color:#1f9d55;cursor:pointer}
+.op-sit-lancado .op-sit-marca{background:#e3f5ea;border-color:#9fd5b3;color:#1d6b3e}
+.op-sit-quem{font-size:11.5px;color:#4b7a5e}
+[data-theme=dark] .op-sit-item{background:#13263a;border-color:#2b4157}
+[data-theme=dark] .op-sit-item.op-sit-lancado{background:#15301f;border-color:#2f6b45}
+[data-theme=dark] .op-sit-barra{background:#22384e}
+[data-theme=dark] .op-sit-filtros button{background:#13263a;border-color:#2b4157;color:#d6e5f3}
+[data-theme=dark] .op-sit-filtros button[aria-pressed=true]{background:#1769aa;border-color:#1769aa;color:#fff}
+[data-theme=dark] .op-sit-ordem{background:#20384f;color:#82c4fa}
+[data-theme=dark] .op-sit-cat{background:#1b2c3c;color:#b6c6d6}
+[data-theme=dark] .op-sit-detalhe,[data-theme=dark] .op-sit-cpf{color:#a9bccd}
+[data-theme=dark] .op-sit-marca{background:#13263a;border-color:#2b4157;color:#d6e5f3}
+[data-theme=dark] .op-sit-lancado .op-sit-marca{background:#173826;border-color:#2f6b45;color:#7fd6a2}
+[data-theme=dark] .op-sit-quem{color:#7fd6a2}
+@media (max-width:700px){.op-sit-item{flex-direction:column;align-items:stretch}.op-sit-acao{justify-items:start}}
+
+/* 10/11/2026: a caixinha do SIT desenhada (quadrado arredondado; marcada fica verde com o visto) e o progresso do ônibus. */
+.op-sit .op-sit-marca input.op-sit-check{appearance:none;-webkit-appearance:none;display:grid;place-items:center;width:20px;height:20px;border:2px solid #9fb6cc;border-radius:7px;background:#fff;transition:background .15s,border-color .15s,box-shadow .15s}
+.op-sit .op-sit-marca input.op-sit-check::after{content:'';width:11px;height:11px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/contain no-repeat;transform:scale(0);transition:transform .15s}
+.op-sit .op-sit-marca input.op-sit-check:checked{border-color:#1f9d55;background:#1f9d55}
+.op-sit .op-sit-marca input.op-sit-check:checked::after{transform:scale(1)}
+.op-sit .op-sit-marca input.op-sit-check:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(23,105,170,.3)}
+.op-sit .op-sit-marca input.op-sit-check:disabled{opacity:.6;cursor:progress}
+.op-sit .op-sit-marca:hover input.op-sit-check:not(:checked){border-color:#1769aa}
+.op-sit .op-sit-marca{padding:7px 14px 7px 9px;box-shadow:0 1px 2px rgba(16,44,72,.06)}
+.op-sit-minimo{padding:2px 9px;border-radius:999px;background:#fff1dc;color:#9a4a12;font-size:11.5px;font-weight:700;white-space:nowrap}
+.op-sit-minimo.ok{background:#e3f5ea;color:#1d6b3e}
+[data-theme=dark] .op-sit .op-sit-marca input.op-sit-check{background:#0f2133;border-color:#5b7690}
+[data-theme=dark] .op-sit .op-sit-marca input.op-sit-check:checked{background:#1f9d55;border-color:#1f9d55}
+[data-theme=dark] .op-sit-minimo{background:#3a2a17;color:#f0b77f}
+[data-theme=dark] .op-sit-minimo.ok{background:#173826;color:#7fd6a2}
+
+/* 13/11/2026: a seção "Provas" (dois blocos: marcar o dia e os próximos dias). */
+.op-provas{display:grid;gap:18px}.op-provas>.op-card{margin:0}
+.op-provas .op-dias-prova-form{grid-template-columns:repeat(4,minmax(0,1fr))}
+.op-dias-prova-proximos .op-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.op-dias-prova-semana{display:block;margin-top:2px;font-size:11px;font-weight:500;color:var(--sipa-texto-neutro);opacity:.8}
+.op-dias-prova-ocupacao{display:inline-block;padding:4px 10px;border:1px solid var(--progress-border-light);border-radius:999px;background:var(--progress-bg-secondary,#f3f7fb);font-size:12px;font-weight:600;white-space:nowrap}
+.op-dias-prova-ocupacao.op-dias-prova-lotado{border-color:#f0b98c;background:#fff4ea}
+.op-dias-prova-acoes-linha{text-align:right;white-space:nowrap}.op-dias-prova-acoes-linha .op-button{min-height:34px;padding:6px 14px;font-size:12px}
+html[data-theme=dark] .op-dias-prova-ocupacao{border-color:#3a5068;background:#20364d}
+html[data-theme=dark] .op-dias-prova-ocupacao.op-dias-prova-lotado{border-color:#8a5a33;background:#3a2a1c}
+@media(max-width:900px){.op-provas .op-dias-prova-form,.op-dias-prova-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.op-provas .op-dias-prova-form,.op-dias-prova-form{grid-template-columns:minmax(0,1fr)}.op-dias-prova-acoes{flex-direction:column;align-items:stretch}}
+/* 16/11/2026 (pedido do usuário): acabamento da tela de Provas. Rótulos numa linha só e campos da mesma altura (antes o
+   rótulo do limite quebrava em duas linhas e descia o campo), as regras do dia como etiquetas e o estado vazio com ícone. */
+.op-provas .op-dias-prova .op-card-heading{margin-bottom:16px}
+.op-provas .op-dias-prova .op-card-heading p{margin:4px 0 0;max-width:70ch;line-height:1.5}
+.op-dias-prova-regras{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.op-dias-prova-regras span{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--progress-border-light);border-radius:999px;background:var(--progress-card-hover);color:var(--progress-text);font-size:12px;font-weight:600}
+.op-dias-prova-regras span::before{content:"";width:6px;height:6px;border-radius:50%;background:#3686db}
+.op-provas .op-dias-prova-form{align-items:end;gap:16px 18px;margin:0;padding:18px}
+.op-provas .op-dias-prova-form>label{display:grid;gap:6px;margin:0;min-width:0;font-size:13px;font-weight:600;color:var(--progress-text);white-space:nowrap}
+.op-provas .op-dias-prova-form>label>:is(input,select){height:44px;min-height:44px;margin:0;font-size:14px;font-weight:500}
+.op-provas .op-dias-prova-form .sipa-select-busca-botao{height:44px;min-height:44px;font-size:14px;font-weight:500}
+.op-provas .op-dias-prova-form input::placeholder{font-weight:400;color:var(--op-muted,#6b8299)}
+.op-provas .op-dias-prova-acoes{padding-top:14px}
+.op-provas .op-dias-prova-acoes .op-help{font-size:12px}
+.op-provas .op-dias-prova-vazio{gap:6px;padding:28px 18px;background:var(--progress-card-hover)}
+.op-provas .op-dias-prova-vazio::before{content:"";justify-self:center;width:40px;height:40px;margin-bottom:4px;border-radius:50%;background:var(--progress-card) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%233686db%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%274%27 y=%275%27 width=%2716%27 height=%2715%27 rx=%272%27/%3E%3Cpath d=%27M8 3v4M16 3v4M4 10h16M9.5 15l2 2 3.5-4%27/%3E%3C/svg%3E") center/22px no-repeat;border:1px solid var(--progress-border-light)}
+.op-provas .op-dias-prova-vazio strong{font-size:14px}
+.op-provas .op-dias-prova-vazio span{font-size:12px;opacity:.85}
+/* O título da seção recebe foco ao trocar de seção (para o leitor de tela); não é clicável, então sem contorno. */
+.op-unidade [data-op-heading]:focus,[data-op-heading]:focus{outline:none}
+html[data-theme=dark] .op-dias-prova-regras span{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .op-provas .op-dias-prova-vazio{background:#152b40}
+@media(max-width:1100px){.op-provas .op-dias-prova-form>label{white-space:normal}}
+/* 16/11/2026 (pedido do usuário): Lançamento no SIT com "Buscar" ao lado da data e o calendário dos dias com pendência. */
+.op-sit-barra-dia{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin-top:12px}
+.op-sit .op-sit-barra-dia .op-sit-dia{flex:0 1 240px;margin:0}
+.op-sit-barra-dia .op-button{min-height:44px;height:44px;margin:0}
+.op-sit .op-sit-barra-dia input[type=date]{height:44px;box-sizing:border-box}
+.op-sit-abrir-cal{display:inline-flex;align-items:center;gap:8px}
+.op-sit-abrir-cal::before{content:"";width:16px;height:16px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%274%27 y=%275%27 width=%2716%27 height=%2715%27 rx=%272%27/%3E%3Cpath d=%27M8 3v4M16 3v4M4 10h16%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Crect x=%274%27 y=%275%27 width=%2716%27 height=%2715%27 rx=%272%27/%3E%3Cpath d=%27M8 3v4M16 3v4M4 10h16%27/%3E%3C/svg%3E") center/contain no-repeat}
+.op-sit-abrir-cal[aria-expanded=true]{border-color:#1769aa;background:#e8f1fa;color:#12578f}
+.op-sit-cal-conta{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#d9630f;color:#fff;font-size:11px;font-weight:700}
+.op-sit-cal-conta[hidden]{display:none}
+.op-sit-cal{width:min(100%,360px);margin-top:10px;padding:14px;border:1px solid #d6e2ee;border-radius:14px;background:#fff;box-shadow:0 10px 28px rgba(15,40,70,.10)}
+.op-sit-cal[hidden]{display:none}
+.op-sit-cal-topo{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.op-sit-cal-topo strong{font-size:14px}
+.op-sit .op-sit-cal-nav{display:grid;place-items:center;width:32px;height:32px;min-height:0;margin:0;padding:0;border:1px solid #d6e2ee;border-radius:8px;background:#f5f9fc;color:#2b4157;font-size:18px;line-height:1;cursor:pointer}
+.op-sit .op-sit-cal-nav:disabled{opacity:.4;cursor:default}
+.op-sit-cal-grade{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.op-sit-cal-grade[aria-busy=true]{opacity:.55}
+.op-sit-cal-semana{padding:2px 0 4px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;color:#64748b}
+.op-sit .op-sit-cal-dia{position:relative;display:grid;place-items:center;aspect-ratio:1;min-height:0;margin:0;padding:0;border:1px solid transparent;border-radius:9px;background:transparent;color:#2b4157;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.op-sit .op-sit-cal-dia:hover:not(:disabled){border-color:#9cc3e6;background:#f2f7fc}
+.op-sit .op-sit-cal-dia:disabled{color:#b6c3d0;cursor:default}
+.op-sit .op-sit-cal-dia.hoje .op-sit-cal-num{text-decoration:underline;text-underline-offset:3px}
+.op-sit .op-sit-cal-dia.pendente{background:#fff3e8;border-color:#f3c39b;color:#9a4a0f}
+.op-sit .op-sit-cal-dia.ok{background:#eef8f2;border-color:#c4e6d1;color:#1d6b3e}
+.op-sit .op-sit-cal-dia[aria-current=date]{outline:2px solid #1769aa;outline-offset:1px}
+.op-sit-cal-marca{position:absolute;top:-5px;right:-5px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border-radius:999px;font-size:10px;font-weight:700;line-height:1}
+.pendente>.op-sit-cal-marca{background:#d9630f;color:#fff}
+.ok>.op-sit-cal-marca{background:#1f9d55;color:#fff}
+.op-sit-cal-legenda{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid #e3ecf5;font-size:11.5px;color:#4b5b6b}
+.op-sit-cal-legenda span{display:inline-flex;align-items:center;gap:6px}
+.op-sit-cal-legenda span::before{content:"";width:10px;height:10px;border-radius:3px}
+.op-sit-cal-legenda .pendente::before{background:#d9630f}
+.op-sit-cal-legenda .ok::before{background:#1f9d55}
+[data-theme=dark] .op-sit-cal{background:#13263a;border-color:#2b4157;box-shadow:0 10px 28px rgba(0,0,0,.35)}
+[data-theme=dark] .op-sit .op-sit-cal-nav{background:#1b2c3c;border-color:#2b4157;color:#d6e5f3}
+[data-theme=dark] .op-sit .op-sit-cal-dia{color:#d6e5f3}
+[data-theme=dark] .op-sit .op-sit-cal-dia:disabled{color:#4f6377}
+[data-theme=dark] .op-sit .op-sit-cal-dia:hover:not(:disabled){background:#1b3148;border-color:#4a7aa8}
+[data-theme=dark] .op-sit .op-sit-cal-dia.pendente{background:#3a2a1c;border-color:#8a5a33;color:#f0b98c}
+[data-theme=dark] .op-sit .op-sit-cal-dia.ok{background:#15301f;border-color:#2f6b45;color:#7fd6a2}
+[data-theme=dark] .op-sit-cal-legenda{border-color:#2b4157;color:#a9bccd}
+[data-theme=dark] .op-sit-abrir-cal[aria-expanded=true]{background:#20384f;border-color:#5aa2e6;color:#cfe6fb}
+@media(max-width:560px){.op-sit .op-sit-barra-dia .op-sit-dia{flex:1 1 100%}.op-sit-barra-dia .op-button{flex:1}}
+/* 16/11/2026 (pedido do usuário): o local das aulas em cada dia da agenda; o dia de deslocamento em destaque. */
+.op-agenda .op-agenda-local,.op-agenda-local{display:block;margin:3px 0 0;font-size:10.5px;font-weight:600;line-height:1.3;color:#3f5a73;white-space:normal}
+.op-agenda-local.op-agenda-local-desloca{display:inline-block;padding:1px 7px;border-radius:999px;background:#fff1e3;color:#9a4a0f}
+html[data-theme=dark] .op-agenda-local{color:#a9bccd}
+html[data-theme=dark] .op-agenda-local.op-agenda-local-desloca{background:#3a2a1c;color:#f0b98c}
+/* 17/11/2026 (pedido do usuário): a aula de reposição por atestado em roxo na agenda e no agendamento. */
+.op-evento-reposicao{display:inline-block;justify-self:start;width:max-content;margin:1px 0;padding:1px 7px;border-radius:999px;background:#efe7ff;color:#5b21b6;font-size:10.5px;font-weight:700;line-height:1.5}
+.op-aula-evento.op-aula-reposicao{border-left-color:#7c3aed!important}
+.op-aula-card.op-aula-reposicao{border-left-color:#7c3aed}
+.op-badge.op-aula-reposicao-badge{background:#efe7ff;color:#5b21b6;border-color:#d6c6fb}
+.op-reserva-chip-reposicao{background:#efe7ff!important;border-color:#d6c6fb!important;color:#5b21b6}
+.op-reserva-aviso-reposicao{margin:8px 0 0;padding:8px 10px;border:1px solid #d6c6fb;border-radius:8px;background:#f7f2ff;color:#4c1d95;font-size:12.5px;font-weight:600}
+html[data-theme=dark] .op-evento-reposicao,html[data-theme=dark] .op-badge.op-aula-reposicao-badge,html[data-theme=dark] .op-reserva-chip-reposicao{background:#2e1f52!important;color:#d8c7ff;border-color:#5b3fa0!important}
+html[data-theme=dark] .op-reserva-aviso-reposicao{background:#241a3d;border-color:#5b3fa0;color:#d8c7ff}
+/* 17/11/2026 (pedido do usuário): o local diferente do dia num selo azul com ícone de local, no lugar do laranja. */
+html body .op-agenda .op-day-heading .op-agenda-local.op-agenda-local-dia,html body .op-agenda-local.op-agenda-local-dia{display:inline-flex;align-items:center;gap:4px;max-width:100%;margin:6px 0 0;padding:2px 9px 2px 7px;border:1px solid #c9ddf2;border-radius:999px;background:#eaf3fc;color:#12578f;font-size:10.5px;font-weight:600;line-height:1.45;white-space:nowrap;vertical-align:middle}
+html body .op-agenda-local.op-agenda-local-dia::before{content:"";flex:none;width:11px;height:11px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z%27/%3E%3Ccircle cx=%2712%27 cy=%2710%27 r=%272.3%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z%27/%3E%3Ccircle cx=%2712%27 cy=%2710%27 r=%272.3%27/%3E%3C/svg%3E") center/contain no-repeat}
+html body .op-agenda .op-day-heading .op-agenda-local-dia span,html body .op-agenda-local-dia span{display:inline;min-width:0;margin:0;font-size:inherit;font-weight:inherit;color:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-theme=dark] body .op-agenda-local.op-agenda-local-dia{background:#1a3350;border-color:#2f5478;color:#a9d2f7}
+html body .op-agenda .op-day-heading .op-agenda-local.op-agenda-local-dia,html body .op-agenda-local.op-agenda-local-dia{white-space:normal;border-radius:10px;text-align:left}
+html body .op-agenda .op-day-heading .op-agenda-local-dia span,html body .op-agenda-local-dia span{white-space:normal;overflow:visible}
+/* 17/11/2026 (pedido do usuário): o período fechado (feriado, domingo, sábado depois do expediente) num bloco liso, um
+   pouco mais escuro, com uma mensagem só no meio. */
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-bloco{display:flex;align-items:center;justify-content:center;padding:12px 10px;background:#e3e9ef}
+html body .op-agenda .op-slot-bloco-msg{display:grid;justify-items:center;gap:5px;max-width:180px;text-align:center}
+html body .op-agenda .op-slot-bloco-msg::before{content:"";width:26px;height:26px;background:#7b8ea2;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%274%27 y=%275%27 width=%2716%27 height=%2715%27 rx=%272%27/%3E%3Cpath d=%27M8 3v4M16 3v4M4 10h16M10 13.5l4 4M14 13.5l-4 4%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%274%27 y=%275%27 width=%2716%27 height=%2715%27 rx=%272%27/%3E%3Cpath d=%27M8 3v4M16 3v4M4 10h16M10 13.5l4 4M14 13.5l-4 4%27/%3E%3C/svg%3E") center/contain no-repeat}
+html body .op-agenda .op-slot-bloco-msg strong{font-size:13px;font-weight:700;line-height:1.3;color:#34475a}
+html body .op-agenda .op-slot-bloco-msg span{font-size:11.5px;line-height:1.45;color:#5a6c7e}
+html[data-theme=dark] body .op-agenda .op-week-grid .op-agenda-slot.op-slot-bloco{background:#12202e}
+html[data-theme=dark] body .op-agenda .op-slot-bloco-msg strong{color:#c9d6e3}
+html[data-theme=dark] body .op-agenda .op-slot-bloco-msg span{color:#93a7ba}
+html[data-theme=dark] body .op-agenda .op-slot-bloco-msg::before{background:#7f95ab}
+/* 17/11/2026 (pedido do usuário): na semana, a aula agendada preenche a célula inteira. */
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-com-aula{padding:0}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-com-aula>.op-slot-conteudo{display:flex;flex-direction:column;align-items:stretch;gap:0;height:100%;min-height:0;padding:0}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-com-aula .op-aula-evento{flex:1 1 auto;width:100%;height:100%;margin:0;border:0;border-left:4px solid #2388d9;border-radius:0;box-shadow:none;padding:7px 9px;align-content:center}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-com-aula .op-aula-evento+.op-aula-evento{border-top:1px solid #d6e4f2}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-com-aula .op-aula-evento:has(.op-aula-status-3){border-left-color:#c98a1a}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-com-aula .op-aula-evento:has(.op-aula-status-2){border-left-color:#94a3b8}
+/* 17/11/2026 (pedido do usuário): cada hora de almoço na própria célula, toda cinza, com "Horário de almoço" (sem juntar). */
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio{padding:0;background:#e5e7eb}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio>.op-slot-conteudo{display:flex;align-items:center;justify-content:center;height:100%;min-height:0;padding:0;background:transparent}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio .op-slot-closed{display:inline-flex;align-items:center;gap:6px;margin:0;padding:0;border:0;background:transparent;color:#4b5563;font-size:11.5px;font-weight:600;font-style:normal;white-space:nowrap}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio .op-slot-closed::before{content:"";flex:none;width:13px;height:13px;background:#6b7280;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M7 3v6a2 2 0 0 0 2 2v10M11 3v6a2 2 0 0 1-2 2M7 3v4M11 3v4M17 21V3c-2.2 1.3-3 3.5-3 6.5V13h3%27/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M7 3v6a2 2 0 0 0 2 2v10M11 3v6a2 2 0 0 1-2 2M7 3v4M11 3v4M17 21V3c-2.2 1.3-3 3.5-3 6.5V13h3%27/%3E%3C/svg%3E") center/contain no-repeat}
+html[data-theme=dark] body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio{background:#1f2933}
+html[data-theme=dark] body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio .op-slot-closed{color:#d1d5db}
+html[data-theme=dark] body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio .op-slot-closed::before{background:#9ca3af}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio{display:flex!important;align-items:center;justify-content:center}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio>time{display:none}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio>.op-slot-conteudo{flex:0 1 auto;height:auto;width:auto}
+html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio .op-slot-closed{display:inline-flex!important;width:auto!important;justify-content:center}
+/* 17/11/2026 (pedido do usuário): "Enviar arquivo para o aluno" (botão na ficha e janela com o tipo e a mensagem). */
+.op-local-tabs .op-ficha-enviar-arquivo{margin-left:auto;min-height:36px;padding:0 16px;font-size:13px;align-self:center}
+.op-enviar-arquivo{width:min(620px,calc(100vw - 24px))}
+.op-envio-form{display:grid;gap:12px}
+.op-envio-ajuda{margin:0;padding:10px 12px;border-radius:8px;background:#eef5fc;font-size:13px;color:#1d3a55}
+.op-envio-tipos{display:grid;gap:10px}
+.op-envio-grupo{display:grid;gap:6px}
+.op-envio-grupo-titulo{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#5a6c7e}
+.op-envio-opcoes{display:flex;flex-wrap:wrap;gap:6px}
+.op-envio-opcao{min-height:34px;padding:0 14px;border:1px solid #c9dbeb;border-radius:999px;background:#fff;color:#1d3a55;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.op-envio-opcao:hover{border-color:#1769aa}
+.op-envio-opcao[aria-checked=true]{background:#1769aa;border-color:#1769aa;color:#fff}
+.op-envio-form textarea{width:100%;box-sizing:border-box;min-height:150px;padding:10px 12px;border:1px solid #c9dbeb;border-radius:10px;font:inherit;font-size:13.5px;line-height:1.5;resize:vertical}
+.op-envio-erro{margin:0;color:#b42318;font-size:13px;font-weight:600}
+.op-envio-erro:empty{display:none}
+.op-envio-acoes{display:flex;justify-content:flex-end;gap:8px}
+html[data-theme=dark] .op-envio-ajuda{background:#1b3248;color:#d6e8f8}
+html[data-theme=dark] .op-envio-opcao,html[data-theme=dark] .op-envio-form textarea{background:#1a3148;border-color:#35536f;color:#dbe7f2}
+html[data-theme=dark] .op-envio-opcao[aria-checked=true]{background:#1f78c1;border-color:#1f78c1;color:#fff}

@@ -21,5 +21,5 @@ export function abrirSolicitacaoMedica({aula,servico,origem,aoConcluir}){
   await aoConcluir();d.close();
  }catch(e){erro.textContent=e.message||'Não foi possível enviar a solicitação. Nenhuma devolução foi realizada.';}finally{ocupado=false;enviar.disabled=voltar.disabled=false;arq.disabled=obs.disabled=false;}};
  d.addEventListener('cancel',e=>{if(ocupado)e.preventDefault();});d.addEventListener('close',()=>{arq.value='';d.remove();if(origem.isConnected)origem.focus();},{once:true});
- form.append(label,labelObs,labelConsent,erro,footer);d.append(h,resumo,el('p','Anexe somente documentação relacionada a esta aula, para análise da recepção e gerência.'),aviso,form);document.body.append(d);d.showModal();h.focus();
+ form.append(label,labelObs,labelConsent,erro,footer);d.append(h,resumo,el('p','Anexe somente documentação relacionada a esta aula, para análise da Gerência.'),aviso,form);document.body.append(d);d.showModal();h.focus();
 }

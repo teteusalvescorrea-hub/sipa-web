@@ -5,6 +5,6 @@ if (desenvolvimentoAtivo()) {
         const {montarPainelContaRecepcao}=await import('../../dev/aluno/acessoRecepcao.js');
         await montarPainelContaRecepcao();
     } else {
-    location.replace('/login.html');
+    location.replace(new URL('../../login.html',import.meta.url).href);
     }
 } else await import('./integrado.js');

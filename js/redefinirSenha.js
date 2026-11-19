@@ -1,5 +1,5 @@
 // Página do link de redefinição de senha: o token vem no #token= (nunca vai ao servidor na URL), a senha nova segue
-// a política da API (8 a 100 caracteres, letras e números) e o POST usuarios/redefinir-senha consome o link.
+// a política da API (aluno: 4 a 100 caracteres; a API confere a regra de cada conta) e o POST usuarios/redefinir-senha consome o link.
 import {Post} from '../shared/js/api.js';
 import {textoErro} from '../shared/js/apiErro.js';
 import {marcarErroCampo} from '../shared/js/errosDeCampo.js';
@@ -15,9 +15,7 @@ if (!token) { avisar('Link inválido ou incompleto. Peça um novo link de redefi
 
 // Os requisitos marcam conforme a pessoa digita.
 const regras = {
-    tamanho: () => senha.value.length >= 8 && senha.value.length <= 100,
-    letra: () => /[A-Za-zÀ-ÿ]/.test(senha.value),
-    numero: () => /\d/.test(senha.value),
+    tamanho: () => senha.value.length >= 4 && senha.value.length <= 100,
     iguais: () => !!senha.value && senha.value === confirmar.value
 };
 function conferir() { for (const [k, ok] of Object.entries(regras)) document.querySelector(`[data-requisito=${k}]`).classList.toggle('ok', ok()); }
@@ -32,7 +30,7 @@ for (const b of document.querySelectorAll('[data-mostrar]')) b.addEventListener(
 
 form.addEventListener('submit', async e => {
     e.preventDefault();
-    if (!regras.tamanho() || !regras.letra() || !regras.numero()) { marcarErroCampo(senha, 'Use de 8 a 100 caracteres, com letras e números.'); senha.focus(); return; }
+    if (!regras.tamanho()) { marcarErroCampo(senha, 'Use de 4 a 100 caracteres.'); senha.focus(); return; }
     if (!regras.iguais()) { marcarErroCampo(confirmar, 'As senhas não conferem.'); confirmar.focus(); return; }
     enviar.disabled = true;
     try {

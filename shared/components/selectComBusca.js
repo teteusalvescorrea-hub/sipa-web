@@ -54,8 +54,30 @@ export function aprimorarSelect(select, { placeholder, busca = 'Buscar...', vazi
     marcar(itens.findIndex(i => i.o.selected));
   }
   function marcar(i) { ativo = i; itens.forEach((x, n) => x.d.classList.toggle('sipa-select-busca-ativa', n === i)); const x = itens[i]; if (x) { campo.setAttribute('aria-activedescendant', x.d.id); x.d.scrollIntoView({ block: 'nearest' }); } else campo.removeAttribute('aria-activedescendant'); }
-  function abrir() { if (select.disabled) return; painel.hidden = false; botao.setAttribute('aria-expanded', 'true'); campo.value = ''; montar(); campo.focus(); }
-  function fechar(focar = false) { if (painel.hidden) return; painel.hidden = true; botao.setAttribute('aria-expanded', 'false'); if (focar) botao.focus(); }
+  // Dentro de uma janela a lista sairia cortada: abre fixa na tela, para baixo ou para cima, e fecha se a janela rolar.
+  function posicionar() {
+    const dentroDeJanela = !!caixa.closest('dialog');
+    painel.classList.toggle('sipa-select-busca-flutuante', dentroDeJanela);
+    if (!dentroDeJanela) return;
+    // 12/11/2026: a lista cresce até caber a linha inteira de cada opção (nunca menor que o botão nem maior que a tela) e,
+    // se passar da borda direita, volta para a esquerda.
+    const b = botao.getBoundingClientRect();
+    painel.style.width = 'max-content'; painel.style.minWidth = b.width + 'px'; painel.style.maxWidth = (window.innerWidth - 16) + 'px';
+    const largura = painel.offsetWidth, altura = painel.offsetHeight, abaixo = window.innerHeight - b.bottom - 8;
+    painel.style.left = Math.max(8, Math.min(b.left, window.innerWidth - largura - 8)) + 'px';
+    painel.style.top = (altura > abaixo && b.top > abaixo ? Math.max(8, b.top - altura - 4) : b.bottom + 4) + 'px';
+  }
+  // 12/11/2026: rolar a janela (ou a página) com a lista aberta não fecha mais a lista de repente (era a "piscada"): ela
+  // acompanha o botão e só fecha quando o botão sai da área visível da janela ou da tela.
+  const aoRolar = e => {
+    if (painel.contains(e.target)) return;
+    const b = botao.getBoundingClientRect(), j = caixa.closest('dialog')?.getBoundingClientRect();
+    const fora = b.bottom < 0 || b.top > window.innerHeight || (j && (b.bottom < j.top || b.top > j.bottom));
+    if (fora) fechar(); else posicionar();
+  };
+  // Lista curta não precisa de busca: o campo segue focado para o teclado, mas não aparece.
+  function abrir() { if (select.disabled) return; painel.classList.toggle('sipa-select-busca-curta', select.options.length <= 6); painel.hidden = false; botao.setAttribute('aria-expanded', 'true'); campo.value = ''; montar(); posicionar(); campo.focus({ preventScroll: true }); document.addEventListener('scroll', aoRolar, true); }
+  function fechar(focar = false) { if (painel.hidden) return; painel.hidden = true; document.removeEventListener('scroll', aoRolar, true); botao.setAttribute('aria-expanded', 'false'); if (focar) botao.focus(); }
   function escolher(o) { const mudou = select.value !== o.value; VALOR.set.call(select, o.value); sincronizar(); fechar(true); if (mudou) { select.dispatchEvent(new Event('input', { bubbles: true })); select.dispatchEvent(new Event('change', { bubbles: true })); } }
 
   botao.addEventListener('click', () => (painel.hidden ? abrir() : fechar()));
@@ -67,7 +89,13 @@ export function aprimorarSelect(select, { placeholder, busca = 'Buscar...', vazi
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); fechar(true); }
     else if (e.key === 'Tab') fechar();
   });
-  caixa.addEventListener('focusout', e => { if (!caixa.contains(e.relatedTarget)) fechar(); });
+  // 12/11/2026: clicar ou arrastar a barra de rolagem da lista (ou um título de grupo) tirava o foco da busca e fechava a
+  // lista no meio da rolagem (a "piscada"). Com o botão do mouse apertado dentro da lista, a perda de foco não fecha mais;
+  // ao soltar, o foco volta para a busca. (Não usa preventDefault no mousedown: isso travava a barra de rolagem.)
+  let apontandoNoPainel = false;
+  painel.addEventListener('pointerdown', () => { apontandoNoPainel = true; });
+  document.addEventListener('pointerup', () => { if (!apontandoNoPainel) return; apontandoNoPainel = false; if (!painel.hidden && document.activeElement !== campo) campo.focus({ preventScroll: true }); });
+  caixa.addEventListener('focusout', e => { if (!apontandoNoPainel && !caixa.contains(e.relatedTarget)) fechar(); });
   document.addEventListener('pointerdown', e => { if (!caixa.contains(e.target)) fechar(); });
   // O clique no texto do <label> ia para o select invisível: vai para a caixa.
   select.closest('label')?.addEventListener('click', e => { if (!caixa.contains(e.target)) { e.preventDefault(); botao.focus(); } });

@@ -28,7 +28,9 @@ const resposta={id:'m2',texto:'Pode sim.',em:'2026-11-04T10:20:00',daEquipe:true
 test('Recepção e Gerência têm as capacidades da conversa; sem equipe/me.capacidades vêm da tela Alunos',()=>{
  for(const p of ['operador','gerencia','master'])for(const c of ['mensagens','responder-mensagem'])assert.ok(permissoesDoPerfil(p).includes(c),p+' '+c);
  const so=le=>({telas:[{alias:'alunos',le,atualiza:false}]});
- assert.deepEqual(capacidadesDoMembro(so(true),'operador').filter(c=>c.includes('mensage')),['mensagens']);
+ // 17/11/2026: quem lê a tela Alunos vê e responde a conversa (toda a equipe que vê, responde).
+ assert.deepEqual(capacidadesDoMembro(so(true),'operador').filter(c=>c.includes('mensage')),['mensagens','responder-mensagem']);
+ assert.deepEqual(capacidadesDoMembro(so(false),'operador').filter(c=>c.includes('mensage')),[]);
  assert.deepEqual(capacidadesDoMembro({telas:[{alias:'alunos',le:true,atualiza:true}]},'operador').filter(c=>c.includes('mensage')),['mensagens','responder-mensagem']);
 });
 
@@ -38,7 +40,7 @@ test('caixa: filtros na query, total do X-Total-Count e item no formato da tela'
  const r=await s.conversas({unidade:'Cobilândia',busca:'  ana ',somenteNaoLidas:true,pagina:2,tamanho:20});
  assert.match(chamadas.at(-1).url,/\/conversas\?unidadeId=g-cobi&busca=ana&somenteNaoLidas=true&pagina=2&tamanho=20$/);
  assert.equal(r.total,7);
- assert.deepEqual(r.itens[0],{id:'c1',alunoId:'al1',aluno:'Ana Souza',unidadeId:'g-cobi',unidade:'Cobilândia',unidadeNome:'Cobilândia',ultimaMensagemEm:'2026-11-04T10:15:00-03:00',ultimaMensagem:'Posso trocar o horário?',ultimaDoAluno:true,naoLida:true,podeResponder:true});
+ assert.deepEqual(r.itens[0],{id:'c1',alunoId:'al1',aluno:'Ana Souza',unidadeId:'g-cobi',unidade:'Cobilândia',unidadeNome:'Cobilândia',ultimaMensagemEm:'2026-11-04T10:15:00-03:00',ultimaMensagem:'Posso trocar o horário?',ultimaDoAluno:true,naoLida:true,podeResponder:true,encaminhada:false,diretoria:false});
  await s.conversas({});assert.match(chamadas.at(-1).url,/\/conversas\?pagina=1&tamanho=20$/);
  await assert.rejects(s.conversas({unidade:'Vila Velha'}),/Unidade não autorizada/);
  respostas=[rota('GET','/conversas?',[item,item])];assert.equal((await s.conversas({})).total,2);

@@ -3,6 +3,7 @@
 // consultarRecursosLocal, disponibilidadeLocal, reservarAulasLocais,
 // cancelarReservaLocal, solicitarCancelamentoMedico, documentoMedico etc.
 // O servidor é a autoridade: aqui só se converte o formato.
+import {nomeDoVeiculo} from '../../../shared/js/formatacao.js';
 import * as api from '../../../shared/js/api.js';
 import {textoErro} from '../../../shared/js/apiErro.js';
 import {sair} from '../../../shared/js/services/authService.js';
@@ -52,14 +53,16 @@ export function adaptarPropostaAutomatica(p,aluno){
 // Conversa com a Recepção (ConversasDtos.cs): datas em Brasília sem fuso. O aluno vê o painel de quem escreveu
 // ("Recepção", "Gerência"), não o nome do membro.
 export const adaptarConversaAluno=c=>({autoescolaId:c?.autoescolaId,autoescola:c?.autoescola||'Autoescola',conversaId:c?.conversaId??null,ultimaMensagemEm:comFusoBrasil(c?.ultimaMensagemEm)??null,naoLidas:Number(c?.naoLidas)||0,podeEnviar:c?.podeEnviar===true});
-export const adaptarMensagemConversa=m=>({id:m?.id,texto:m?.texto??'',em:comFusoBrasil(m?.em)??null,daEquipe:m?.daEquipe===true,remetente:m?.remetente||(m?.daEquipe?'Recepção':'Você')});
+export const adaptarMensagemConversa=m=>({id:m?.id,texto:m?.texto??'',em:comFusoBrasil(m?.em)??null,daEquipe:m?.daEquipe===true,remetente:m?.remetente||(m?.daEquipe?'Recepção':'Você'),lida:m?.lida===true});
 
 // Solicitação médica (SolicitacaoMedicaReadDto) no formato de solicitacoesMedicas.js.
 export function adaptarSolicitacao(s,alunoId){
  if(!s)return null;
  return {...s,alunoId:s.alunoId??alunoId,status:statusMedico(s.status),categoria:categoria(s.categoria),
   eventos:(s.eventos||[]).map(e=>({...e,anterior:statusMedico(e.anterior),novo:statusMedico(e.novo)})),
-  devolucao:s.devolucao?{...s.devolucao,aulas:(s.devolucao.aulas||[]).map(a=>({...a,categoria:categoria(a.categoria)}))}:s.devolucao};
+  devolucao:s.devolucao?{...s.devolucao,aulas:(s.devolucao.aulas||[]).map(a=>({...a,categoria:categoria(a.categoria)}))}:s.devolucao,
+  // 18/11/2026: as outras aulas do afastamento abonadas na aprovação do atestado de mais dias.
+  aulasDoAfastamento:(s.aulasDoAfastamento||[]).map(a=>({id:a.id,inicio:comFusoBrasil(a.dataHoraInicio),fim:comFusoBrasil(a.dataHoraFim),categoria:categoria(a.categoria),instrutor:a.motoristaNome||'',unidade:a.unidade||'',veiculo:a.veiculo||''}))};
 }
 
 // Acompanhamento (MeuAcompanhamentoReadDto): situação vem como {descricao,valor} ou nula. A API só manda as provas
@@ -73,7 +76,7 @@ export function adaptarAcompanhamento(a,categorias=[]){
  const tipos=Object.entries(PROVAS_ALUNO).filter(([t,p])=>!p.categoria||categorias.includes(p.categoria)||vindas.has(t)).map(([t])=>t);
  for(const t of vindas.keys())if(!tipos.includes(t))tipos.push(t);
  const provas=tipos.map(tipo=>{const p=vindas.get(tipo);return {tipo,nome:PROVAS_ALUNO[tipo]?.nome||p?.nome||'Prova',
-  tentativas:(p?.tentativas||[]).map(t=>({id:t.id,ordem:t.ordem||1,data:t.data||'',situacao:textoSituacao(t.situacao),resultado:t.resultado?textoSituacao(t.resultado):null}))};});
+  tentativas:(p?.tentativas||[]).map(t=>({id:t.id,ordem:t.ordem||1,data:t.data||'',situacao:textoSituacao(t.situacao),resultado:t.resultado?textoSituacao(t.resultado):null,periodo:Number(t.periodo?.valor??t.periodo)||null,hora:t.horario?String(t.horario).slice(0,5):'',temAgendamento:!!t.temAgendamento}))};});
  return {exames:(a.exames||[]).map(item),provas,processo:(a.processo||[]).map(item)};
 }
 
@@ -104,7 +107,7 @@ function registrosDasAulas(aulas){
  const registros=[];
  for(const a of aulas){
   if(a.motoristaId&&!registros.some(r=>r.id===a.motoristaId))registros.push({id:a.motoristaId,tipo:'instrutor',nome:a.motoristaNome||'Não informado'});
-  if(a.veiculoId&&!registros.some(r=>r.id===a.veiculoId))registros.push({id:a.veiculoId,tipo:'veiculo',nome:[a.veiculoModelo,a.veiculoPlaca].filter(Boolean).join(' · ')||'Não informado',modelo:a.veiculoModelo,placa:a.veiculoPlaca,documento:a.veiculoPlaca});
+  if(a.veiculoId&&!registros.some(r=>r.id===a.veiculoId))registros.push({id:a.veiculoId,tipo:'veiculo',nome:nomeDoVeiculo(a.veiculoModelo,a.veiculoPlaca)||'Não informado',modelo:a.veiculoModelo,placa:a.veiculoPlaca,documento:a.veiculoPlaca});
  }
  return registros;
 }
@@ -139,7 +142,11 @@ export function adaptarDadosAluno(aluno,contratacoes,aulas,extras={}){
  const mensagens=(extras.mensagens||[]).map(m=>({...m,unidade:nomeDe(m.unidade),remetente:nomeDe(m.remetente)||'Recepção'}));
  const cadastro={id:aluno.id,tipo:'aluno',nome:aluno.nome,documento:aluno.cpf,email:aluno.email,telefone:aluno.telefone,
   unidade:nomeDe(matricula?.unidadeBase)||aluno.unidades?.[0]?.nome||'Não informada',unidadeBaseId:matricula?.unidadeBase?.id??null,
-  unidadeCarro:nomeDe(matricula?.unidadeCarro)||null,tipoCambio:CAMBIO[numero(matricula?.tipoCambio)]??null,nascimento:aluno.dataNascimento||null,
+  unidadeCarro:nomeDe(matricula?.unidadeCarro)||null,tipoCambio:CAMBIO[numero(matricula?.tipoCambio)]??null,
+  // Fase 1: o que falta para agendar, a validade do contrato e se o próximo pedido é o primeiro (24h).
+  pendenciasAgendamento:matricula?.liberacao?.pendencias||[],
+  // Fase 3 (5.4): as reposições por atestado (a aula que faltou e a que repõe).
+  reposicoes:(aluno.reposicoes||[]).map(r=>({id:r.id,categoria:r.categoria?.descricao??r.categoria,aulaOrigemId:r.aulaOrigemId,aulaReposicaoId:r.aulaReposicaoId||null,criadaEm:r.criadaEm})),validadeContrato:matricula?.liberacao?.validadeContrato||null,primeiroAgendamento:matricula?.liberacao?.primeiroAgendamento===true,nascimento:aluno.dataNascimento||null,
   categoria:letras.join(''),categoriasFormacao:aluno.categoriasFormacao,
   preferenciasAutomaticas:adaptarPreferenciasAutomaticas(aluno.preferenciasAutomaticas),
   avisosInternos:mensagens,leiturasMensagens:{}};
@@ -186,13 +193,18 @@ export function criarServicoAluno(){
  function lembrar(r){recursosVistos.set(r.id,r);if(dados&&!dados.registros.some(x=>x.id===r.id))dados.registros.push(r);}
 
  // Calendário: um dias-disponiveis por mês e categoria, em cache até reservar ou cancelar.
- async function disponibilidadeLocal({categoria:cat,data}){
-  if(!NUMERO[cat]||!data)return [];
+ async function diaDoCalendario(cat,data){
   const chave=cat+'|'+data.slice(0,7);
   if(!dias.has(chave))dias.set(chave,api.Get(api.ComParams('agendamentos/dias-disponiveis',{categoria:NUMERO[cat],mes:data.slice(0,7)})).catch(()=>({dias:[]})));
-  const dia=(await dias.get(chave)).dias?.find(d=>String(d.data).slice(0,10)===data);
+  return (await dias.get(chave)).dias?.find(d=>String(d.data).slice(0,10)===data);
+ }
+ async function disponibilidadeLocal({categoria:cat,data}){
+  if(!NUMERO[cat]||!data)return [];
+  const dia=await diaDoCalendario(cat,data);
   return dia&&!dia.fechado&&dia.temHorario?[{data}]:[];
  }
+ // Por que o dia fecha na API (feriado, dia bloqueado pelo Master); vazio quando abre.
+ async function motivoFechamentoDoDia({categoria:cat,data}){return NUMERO[cat]&&data?(await diaDoCalendario(cat,data))?.motivo||'':'';}
 
  // Horários do dia com os pares instrutor × veículo livres (incluirMotoristas). O horário ocupado por outro aluno
  // (motivo "ocupado") vem sem pares, para o "Tenho interesse"; passado e aula própria no horário ficam de fora.
@@ -207,9 +219,13 @@ export function criarServicoAluno(){
    const hora=String(h.horario).slice(0,5),fim=String(h.dataHoraFim).slice(11,16);
    if(h.disponivel===false)return motivoIndisponivel(h)==='ocupado'?{hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null}:null;
    const pares=[];
+   // O carro segue o cadastro do aluno: quem é manual só vê carro manual e os instrutores dele; o automático, idem.
+   const cambioDoAluno=cat==='B'?dados?.aluno?.tipoCambio:null;
    for(const m of h.motoristas||[]){
+    const doCadastro=(m.veiculos||[]).filter(v=>{const tipo=CAMBIO[numero(v.tipoCambio)];return !cambioDoAluno||!tipo||tipo===cambioDoAluno;});
+    if(m.veiculos?.length&&!doCadastro.length)continue;
     lembrar({id:m.motoristaId,tipo:'instrutor',nome:m.nome});anotar(m.motoristaId,cat);instrutores.add(m.motoristaId);
-    for(const v of m.veiculos||[]){lembrar({id:v.veiculoId,tipo:'veiculo',nome:[v.modelo,v.placa].filter(Boolean).join(' · ')||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio:CAMBIO[numero(v.tipoCambio)]??null});anotar(v.veiculoId,cat);veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId});}
+    for(const v of doCadastro){const tipoCambio=CAMBIO[numero(v.tipoCambio)]??null;lembrar({id:v.veiculoId,tipo:'veiculo',nome:nomeDoVeiculo(v.modelo,v.placa)||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio});anotar(v.veiculoId,cat);veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId,...(tipoCambio?{tipoCambio}:{})});}
    }
    return {hora,fim,inicio:h.dataHoraInicio,pares};
   }).filter(h=>h&&(h.ocupado||h.pares.length));
@@ -276,19 +292,27 @@ export function criarServicoAluno(){
    .sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
  }
 
- return {capacidades,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
+ // Fase 8: o horário do chat, o pedido de mais aulas e a avaliação pós-aula.
+ const atendimento=async autoescolaId=>{try{return await api.Get('alunos/me/atendimento/'+autoescolaId);}catch(e){throw comoErro(e);}};
+ const pedirMaisAulas=async()=>{try{return await api.Post('alunos/me/pedidos-aulas',{});}catch(e){throw comoErro(e);}};
+ const avaliacoesPendentes=async()=>{try{return await api.Get('alunos/me/avaliacoes-pendentes');}catch(e){throw comoErro(e);}};
+ const avaliarAula=async(id,d)=>{try{return await api.Post('alunos/me/aulas/'+id+'/avaliacao',d);}catch(e){throw comoErro(e);}};
+ return {capacidades,atendimento,pedirMaisAulas,avaliacoesPendentes,avaliarAula,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
   registros:async()=>(await dadosAlunoLocal()).registros,sair,
   consultarHistorico:async id=>(await api.Get('agendamentos/'+id)).historico||[],
-  disponibilidadeLocal,consultarRecursosLocal,reservarAulasLocais,cancelarReservaLocal,solicitarCancelamentoMedico,
+  disponibilidadeLocal,motivoFechamentoDoDia,consultarRecursosLocal,reservarAulasLocais,cancelarReservaLocal,solicitarCancelamentoMedico,
   consultarPoliticaCancelamento:id=>api.Get('agendamentos/'+id+'/politica-cancelamento'),
   documentoMedico:async id=>{try{return await api.Get('solicitacoes-medicas/'+id+'/documento',{binario:true});}catch(e){throw comoErro(e);}},
   metadadosDocumentoMedico:id=>api.Get('solicitacoes-medicas/'+id+'/documento/metadados'),
   alterarSenhaLocal:async({atual,nova})=>{try{await api.Put('usuarios/me/senha',{senhaAtual:atual,novaSenha:nova});}catch(e){throw comoErro(e);}},
-  politicaSenhaLocal:{minimo:8,maximo:128},
+  politicaSenhaLocal:{minimo:4,maximo:100},
   marcarInteresse,desmarcarInteresse,listarInteresses,
   ofertaAntecipacao:async id=>{try{return await api.Get('alunos/me/ofertas-antecipacao/'+id);}catch(e){throw comoErro(e);}},
   responderOferta:async(id,acao,aulaAnteriorId,chave)=>{try{return await api.Post('alunos/me/ofertas-antecipacao/'+id+'/resposta',{acao,aulaAnteriorId:aulaAnteriorId||null},{cabecalhos:{'Idempotency-Key':chave}});}catch(e){throw comoErro(e);}finally{invalidar();}},
   consultarAvisos:async filtro=>{try{const r=await api.Get(api.ComParams('alunos/me/mensagens',filtro),{comTotal:true});return {...r,itens:r.itens.map(m=>({...m,unidade:nomeDe(m.unidade),remetente:nomeDe(m.remetente)||'Recepção'}))};}catch(e){throw comoErro(e);}},
+  // 18/11/2026 (pedido do usuário): avisos ainda não lidos (resultado do atestado = tipo 4, aula cancelada pela
+  // autoescola, ofertas), para o número no item "Minhas aulas" e nas abas "Avisos e ofertas" e "Atestados médicos".
+  avisosNaoLidos:async()=>{const r=await api.Get(api.ComParams('alunos/me/mensagens',{lidas:false,pagina:1,tamanho:100}));return (Array.isArray(r)?r:r?.itens||[]).filter(m=>!m.lidaEm).map(m=>({id:m.id,tipo:Number(m.tipo?.valor??m.tipo)||0}));},
   marcarMensagemLida:async id=>{try{await api.Post('alunos/me/mensagens/'+id+'/leitura');}catch(e){throw comoErro(e);}finally{invalidar();}},
   // Conversa com a Recepção (uma por autoescola em que o aluno tem matrícula), separada dos avisos.
   conversas:async()=>{try{return (await api.Get('alunos/me/conversas')||[]).map(adaptarConversaAluno);}catch(e){throw comoErro(e);}},
@@ -298,8 +322,14 @@ export function criarServicoAluno(){
    try{return adaptarMensagemConversa(await api.Post('alunos/me/conversas/'+autoescolaId+'/mensagens',{texto:t},{cabecalhos:{'Idempotency-Key':chave||chaveOperacao()}}));}catch(e){throw comoErro(e);}
   },
   marcarConversaLida:async autoescolaId=>{try{await api.Post('alunos/me/conversas/'+autoescolaId+'/leitura');}catch(e){throw comoErro(e);}},
+  // Conversas que a Gerência ou o Master começaram com o aluno (09/11/2026).
+  chatResumo:async()=>{try{return await api.Get('alunos/me/chat/resumo');}catch(e){throw comoErro(e);}},
+  chatConversa:async id=>{try{return (await api.Get('alunos/me/chat/conversas/'+id))||[];}catch(e){throw comoErro(e);}},
+  chatEnviar:async(id,texto)=>{const t=String(texto??'').trim();if(!t||t.length>2000)throw new Error('Mensagem deve ter entre 1 e 2000 caracteres.');try{return await api.Post('alunos/me/chat/conversas/'+id+'/mensagens',{texto:t});}catch(e){throw comoErro(e);}},
+  chatLer:async id=>{try{await api.Post('alunos/me/chat/conversas/'+id+'/leitura');}catch(e){throw comoErro(e);}},
   // Sino e item Mensagens: somente os avisos ainda não lidos.
-  totalNaoLidas:async()=>{const avisos=await opcional(api.Get('alunos/me/mensagens/nao-lidas'));return Number(avisos?.total??avisos)||0;},
+  // 09/11/2026: a página Mensagens é só o chat; o número do menu soma as não lidas da Recepção e da Gerência.
+  totalNaoLidas:async()=>{const [recepcao,diretas]=await Promise.all([opcional(api.Get('alunos/me/conversas/nao-lidas')),opcional(api.Get('alunos/me/chat/resumo'))]);return (Number(recepcao?.total??recepcao)||0)+(Number(diretas?.naoLidas)||0);},
   // Agendamento automático: F13 (D19).
   buscarAgendamentoAutomatico,salvarPreferenciasAutomaticas,recursosAutomaticos};
 }

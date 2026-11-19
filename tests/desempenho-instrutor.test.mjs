@@ -10,7 +10,9 @@ const aula=(id,data,status=5,instrutorId='i')=>({id,data,inicio:'07:00',fim:'07:
 for(const [categoria,unidade] of [['A','Vila Velha'],['D','Cobilândia']])test('troca '+categoria+' move apenas futuras e preserva autoria historica',()=>{
  const op={id:'op',nivel:1,unidade,permissoes:['consultar','editar-veiculo']},e={alunos:[],recursos:[{id:'i',nome:'Anterior',tipo:'Instrutores',categorias:[categoria],unidade,ativo:true,veiculoIds:['v']},{id:'j',nome:'Novo',cpf:'11111111111',tipo:'Instrutores',categorias:[categoria],unidade,ativo:true,veiculoIds:[]},{id:'v',tipo:'Veículos',categoria,unidade,ativo:true,instrutorId:'i'}],aulas:[{...aula('futura','2026-10-23',1),categoria,unidade},{...aula('passada','2026-10-18'),categoria,unidade}]};
  const n=trocarInstrutorVeiculo(e,op,'v','j',agora);assert.equal(n.aulas[0].instrutorId,'j');assert.deepEqual(n.aulas[1],e.aulas[1]);assert.equal(e.recursos[2].instrutorId,'i');assert.equal(instrutoresParaVeiculo(e,op,categoria).find(i=>i.id==='j').cpf,'11111111111');
- const conflito=structuredClone(e);conflito.aulas.push({...e.aulas[0],id:'conflito',veiculoId:'outro',instrutorId:'j'});assert.throws(()=>trocarInstrutorVeiculo(conflito,op,'v','j',agora),/Conflitos/);
+ const conflito=structuredClone(e);conflito.aulas.push({...e.aulas[0],id:'conflito',veiculoId:'outro',instrutorId:'j',categoria:categoria==='A'?'B':categoria});assert.throws(()=>trocarInstrutorVeiculo(conflito,op,'v','j',agora),/Conflitos/);
+ // 16/11/2026 (pedido do usuário): na moto, a aula do instrutor novo em outra moto no mesmo horário não impede a troca (ele atende as duas motos).
+ if(categoria==='A'){const outraMoto=structuredClone(e);outraMoto.aulas.push({...e.aulas[0],id:'outra-moto',veiculoId:'outro',instrutorId:'j'});assert.equal(trocarInstrutorVeiculo(outraMoto,op,'v','j',agora).aulas[0].instrutorId,'j');}
  if(categoria==='A'){e.recursos.push({id:'m1',tipo:'Veículos',categoria:'A',instrutorId:'j'},{id:'m2',tipo:'Veículos',categoria:'A',instrutorId:'j'});assert.throws(()=>trocarInstrutorVeiculo(e,op,'v','j',agora),/duas motos/);}
 });
 test('periodos usam Brasilia e semana de segunda a domingo; intervalo invalido falha',()=>{

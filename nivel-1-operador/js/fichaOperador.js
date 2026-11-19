@@ -1,5 +1,7 @@
 import {autorizar,alunoAutorizado,substituir,cpfValido,formatarCpf,vinculo} from './dominioOperador.js';
 import {dataValida,agoraBrasil} from '../../shared/js/calendario.js';
+import {nomeUnidadeInstitucional} from '../../shared/js/catalogoUnidades.js';
+import {historicoMedicoParaExibicao} from '../../shared/js/solicitacoesMedicas.js';
 export const EXAMES_FICHA={toxicologico:'Exame toxicológico',oftalmologico:'Exame(s) oftalmológico(s)',psicologico:'Exame(s) psicológico(s)',medico:'Exame(s) médico(s)'};
 export const SITUACOES_EXAME=['Não informado','Pendente','Aprovado','Reprovado','Não se aplica'];
 export const PROVAS_FICHA={teorica:{nome:'Prova teórica'},praticaCarro:{nome:'Prova prática de carro — Categoria B',categoria:'B'},praticaMoto:{nome:'Prova prática de moto — Categoria A',categoria:'A'},praticaOnibus:{nome:'Prova prática de ônibus — Categoria D',categoria:'D'}};
@@ -109,12 +111,13 @@ export function movimentarProva(e,op,id,dados,eventoId,agora=new Date()){
 }
 const tipos={cadastro:'cadastro','acompanhamento-exames':'exames',verificacao:'exames',exame:'exames',transferencia:'unidades','acesso-local':'acessos',observacao:'cadastro',pacote:'aulas','pacote-adicional':'aulas'};
 export function linhaTempoAluno(a,aulas){
- const eventos=(a.historico||[]).map((h,i)=>({...h,id:h.id||'administrativo-'+a.id+'-'+i,alunoId:a.id,grupo:tipos[h.tipo]||(['exames','provas','unidades','acessos'].includes(h.tipo)?h.tipo:'cadastro'),titulo:h.titulo||({cadastro:'Aluno cadastrado',transferencia:'Unidade de carro alterada','acesso-local':'Conta local criada',verificacao:'Verificação administrativa',observacao:'Observações atualizadas','acompanhamento-exames':'Acompanhamento atualizado'}[h.tipo]||h.tipo),descricao:h.antes?String(h.antes)+' → '+String(h.depois||''):h.depois||'',dados:h.dados||h.alteracoes||[]}));
+ const eventos=(a.historico||[]).map((h,i)=>({...h,id:h.id||'administrativo-'+a.id+'-'+i,alunoId:a.id,grupo:tipos[h.tipo]||(['exames','provas','unidades','acessos','aulas'].includes(h.tipo)?h.tipo:'cadastro'),titulo:h.titulo||({cadastro:'Aluno cadastrado',transferencia:'Unidade de carro alterada','acesso-local':'Conta local criada',verificacao:'Verificação administrativa',observacao:'Observações atualizadas','acompanhamento-exames':'Acompanhamento atualizado'}[h.tipo]||h.tipo),descricao:h.antes?String(h.antes)+' → '+String(h.depois||''):h.depois||'',dados:h.dados||h.alteracoes||[]}));
  if(a.criadoEm&&!eventos.some(h=>h.tipo==='cadastro'))eventos.push({id:'cadastro-'+a.id,alunoId:a.id,grupo:'cadastro',titulo:'Aluno cadastrado',em:a.criadoEm,descricao:'Registro legado; responsável e condições iniciais não informados.'});
  for(const p of provasDoAluno(a).filter(p=>p.legado))eventos.push({id:p.id,alunoId:a.id,grupo:'provas',titulo:PROVAS_FICHA[p.tipo].nome+' · registro anterior',em:p.em,descricao:p.status+(p.data?' · data da prova: '+p.data:''),responsavel:p.responsavel});
  for(const aula of aulas){
-  for(const h of aula.solicitacaoMedica?.eventos||[])eventos.push({id:h.id,alunoId:a.id,grupo:'aulas',titulo:h.acao,em:h.em,responsavel:h.responsavel,referencia:aula.id,descricao:h.observacoes||'',dados:[{campo:'Solicitação médica',antes:h.anterior||'Não enviada',depois:h.novo}]});
-  const referencia=`${aula.categoria} · ${aula.data} · ${aula.inicio}–${aula.fim} · ${aula.unidade} · ${aula.instrutorNome||aula.instrutorId||'Instrutor não informado'} · ${aula.veiculoNome||aula.veiculoId||'Veículo não informado'}`;
+  const medicos=aula.solicitacaoMedica?historicoMedicoParaExibicao(aula.solicitacaoMedica,{aluno:a}):[];
+  for(const [i,h] of (aula.solicitacaoMedica?.eventos||[]).entries()){const x=medicos[i];eventos.push({id:h.id,alunoId:a.id,grupo:'aulas',titulo:h.acao,em:h.em,responsavel:x?.responsavel==='Aluno'&&a.nome?'Aluno — '+a.nome:x?.responsavel||h.responsavel,referencia:aula.id,descricao:h.observacoes||'',dados:[{campo:'Solicitação médica',antes:x&&x.anterior!=='—'?x.anterior:'Não enviada',depois:x?.novo||h.novo}]});}
+  const referencia=`${aula.categoria} · ${aula.data} · ${aula.inicio}–${aula.fim} · ${nomeUnidadeInstitucional(aula.unidade)} · ${aula.instrutorNome||aula.instrutorId||'Instrutor não informado'} · ${aula.veiculoNome||aula.veiculoId||'Veículo não informado'}`;
   const hs=aula.historico||[],status={1:'Aula agendada',2:'Aula cancelada',3:'Aula aguardando aceite',4:'Aula recusada',5:'Aula realizada',6:'Falta registrada pelo instrutor'};
   if(aula.criadoEm)eventos.push({id:'aula-criada-'+aula.id,grupo:'aulas',titulo:'Aula agendada',em:aula.criadoEm,descricao:referencia,referencia:aula.id});
   hs.forEach((h,i)=>eventos.push({id:'aula-'+aula.id+'-'+i,alunoId:a.id,grupo:'aulas',titulo:h.acao==='troca-instrutor'?'Instrutor alterado':h.origem==='recepcao'&&h.status===6?'Falta registrada pela recepção':status[h.status]||'Aula atualizada',em:h.em,descricao:referencia+(h.motivo?' · '+h.motivo:''),responsavel:h.autor||h.responsavel,referencia:aula.id}));

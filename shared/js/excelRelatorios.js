@@ -30,14 +30,14 @@ function celula(coluna,bruto,apresentado,tipo){
 // Cabeçalho como o do PDF, filtros, tabela com TODAS as linhas, resumo do período e observação.
 export function linhasPlanilha(relatorio,meta={},agora=new Date()){
  const r=apresentarRelatorio(relatorio),tipo=relatorio.filtros?.tipo,linhas=[];
- linhas.push([texto('SIPA - Sistema Inteligente Para Agendamentos',ESTILO.titulo)],[texto('Relatório de '+(meta.titulo||'Aulas'),ESTILO.negrito)],[texto('Unidade: '+(meta.unidade||r.filtros.unidade||'Todas as unidades autorizadas'))],[texto('Período: '+dataRelatorio(r.filtros.inicio)+' a '+dataRelatorio(r.filtros.fim))],[texto('Emitido em: '+dataRelatorio(agora.toISOString()))],[]);
+ linhas.push([texto('AgIA - Gestão Inteligente de Agenda',ESTILO.titulo)],[texto('Relatório de '+(meta.titulo||'Aulas'),ESTILO.negrito)],[texto('Unidade: '+(meta.unidade||r.filtros.unidade||'Todas as unidades autorizadas'))],[texto('Período: '+dataRelatorio(r.filtros.inicio)+' a '+dataRelatorio(r.filtros.fim))],[texto('Emitido em: '+dataRelatorio(agora.toISOString()))],[]);
  if(meta.filtros?.length)linhas.push([texto('Filtros da consulta',ESTILO.cabecalho),texto('Seleção',ESTILO.cabecalho)],...meta.filtros.map(([a,b])=>[texto(a,ESTILO.texto),texto(b,ESTILO.texto)]),[]);
  const inicioTabela=linhas.length;
  linhas.push(r.colunas.map(c=>texto(c,ESTILO.cabecalho)));
  if(!relatorio.linhas.length)linhas.push([livre('Nenhum registro encontrado para os filtros selecionados.',ESTILO.texto)]);
  relatorio.linhas.forEach((l,i)=>linhas.push(r.colunas.map((c,j)=>celula(c,l[j],r.linhas[i][j],tipo))));
  linhas.push([],[texto('Resumo do período',ESTILO.negrito)]);
- for(const [k,v] of Object.entries(r.totais||{}))linhas.push([texto(ROTULOS_RESUMO[k]||k,ESTILO.texto),v==null?texto('Sem base elegível',ESTILO.texto):typeof v==='number'?{n:v,estilo:k==='ocupacao'?ESTILO.percentual:ESTILO.numero}:texto(v,ESTILO.texto)]);
+ for(const [k,v] of Object.entries(r.totais||{}))linhas.push([texto(ROTULOS_RESUMO[k]||k,ESTILO.texto),v==null?texto('Sem horários disponíveis no período',ESTILO.texto):typeof v==='number'?{n:v,estilo:k==='ocupacao'?ESTILO.percentual:ESTILO.numero}:texto(v,ESTILO.texto)]);
  linhas.push([],[livre(OBSERVACAO)]);
  return {linhas,inicioTabela,colunas:r.colunas};
 }
@@ -78,14 +78,14 @@ export function criarZip(arquivos,agora=new Date()){
  const saida=new Uint8Array(todas.reduce((n,p)=>n+p.length,0));let i=0;for(const p of todas){saida.set(p,i);i+=p.length;}
  return saida;
 }
-export function nomeArquivoRelatorio(r,meta={},extensao='xlsx'){return 'SIPA_Relatorio_'+(meta.titulo||'Aulas').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'_')+'_'+dataRelatorio(r.filtros.inicio).replaceAll('/','-')+'_a_'+dataRelatorio(r.filtros.fim).replaceAll('/','-')+'.'+extensao;}
+export function nomeArquivoRelatorio(r,meta={},extensao='xlsx'){return 'AgIA_Relatorio_'+(meta.titulo||'Aulas').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'_')+'_'+dataRelatorio(r.filtros.inicio).replaceAll('/','-')+'_a_'+dataRelatorio(r.filtros.fim).replaceAll('/','-')+'.'+extensao;}
 const XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 export function criarExcelRelatorio(relatorio,meta={},agora=new Date()){
- const titulo=xml('SIPA - Relatório de '+(meta.titulo||'Aulas'));
+ const titulo=xml('AgIA - Relatório de '+(meta.titulo||'Aulas'));
  const arquivos=[
   ['[Content_Types].xml',XML+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>'],
   ['_rels/.rels',XML+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>'],
-  ['docProps/core.xml',XML+'<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>'+titulo+'</dc:title><dc:creator>SIPA</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">'+agora.toISOString().slice(0,19)+'Z</dcterms:created></cp:coreProperties>'],
+  ['docProps/core.xml',XML+'<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>'+titulo+'</dc:title><dc:creator>AgIA</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">'+agora.toISOString().slice(0,19)+'Z</dcterms:created></cp:coreProperties>'],
   ['xl/workbook.xml',XML+'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Relatório" sheetId="1" r:id="rId1"/></sheets></workbook>'],
   ['xl/_rels/workbook.xml.rels',XML+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'],
   ['xl/worksheets/sheet1.xml',planilhaXml(linhasPlanilha(relatorio,meta,agora))],

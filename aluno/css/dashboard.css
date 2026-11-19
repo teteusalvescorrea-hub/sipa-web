@@ -2302,9 +2302,22 @@ a {
  .dashboard-content>.dashboard-grid .card-header{align-content:end}
  .dashboard-content>.dashboard-grid :is(.next-class-state,.quick-actions){margin-top:0}
 }
-.dashboard-content .credit-card:has(:is(#credito-A,#credito-B)) .credit-heading span,
+.dashboard-content .credit-card:has(:is(#credito-A,#credito-B,#credito-D)) .credit-heading span,
 .dashboard-content .next-lesson-card .card-eyebrow,
 .dashboard-content .quick-actions-card .card-header h3{font-weight:700}
 @media(max-width:640px){
  .dashboard-page[data-sipa-escala=aluno] .dashboard-main .dashboard-content :is(.credit-card,.next-lesson-card,.quick-actions-card,.progress-card){padding:16px}
+}
+/* 16/11/2026 (pedido do usuário): os cartões de saldo casam na linha. A grade segue quantos estão visíveis (data-cartoes,
+   posto pelo dashboard.js): na tela larga, 3 categorias em 3 colunas (antes, o Ônibus descia sozinho); na média, o
+   terceiro ocupa a linha inteira. */
+@media(min-width:1001px){
+ .dashboard-page .dashboard-main .dashboard-content>.summary-grid[data-cartoes="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+ /* Embaixo, as bordas seguem as dos cartões: a próxima aula na largura de dois, o acesso rápido na de um. */
+ .dashboard-page .dashboard-main .dashboard-content>.summary-grid[data-cartoes="3"]~.dashboard-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .dashboard-page .dashboard-main .dashboard-content>.summary-grid[data-cartoes="3"]~.dashboard-grid>.next-lesson-card{grid-column:span 2}
+}
+@media(min-width:641px) and (max-width:1000px){
+ .dashboard-page .dashboard-main .dashboard-content>.summary-grid[data-cartoes="3"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dashboard-page .dashboard-main .dashboard-content>.summary-grid[data-cartoes="3"]>.credit-card:not([hidden]):last-of-type{grid-column:1/-1}
 }

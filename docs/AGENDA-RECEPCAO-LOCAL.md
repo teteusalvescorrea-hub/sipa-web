@@ -144,8 +144,9 @@ externos não são entregues pela projeção global das agendas.
 Para moto, o instrutor deve declarar a moto em `veiculoIds`. A estrutura esperada
 é de seis motos e três instrutores, com duas motos por instrutor. Recursos ausentes
 e vínculos ausentes aparecem como pendências; não são inferidos nem preenchidos.
-As duas motos compartilham a ocupação do instrutor: uma reserva bloqueia o mesmo
-horário na outra moto. O serviço também verifica conflitos do aluno e saldo por
+Cada moto tem a própria agenda na recepção, seis ao todo. As duas motos do
+instrutor compartilham a ocupação dele: uma reserva bloqueia o mesmo horário na
+outra moto. O serviço também verifica conflitos do aluno e saldo por
 categoria antes de gravar no armazenamento local compartilhado.
 
 A grade diferencia expediente, intervalo, veículo bloqueado, instrutor ocupado,

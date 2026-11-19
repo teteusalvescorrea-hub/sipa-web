@@ -4,6 +4,8 @@ import {nomeLocalDaReserva,linkLocalizacaoReserva} from '../../../shared/compone
 import { dataPorExtenso, formatarData } from "../../../shared/js/calendario.js";
 import { STATUS_AGENDAMENTO } from "../../../shared/js/disponibilidade.js";
 import { el, botao, modal } from "./uiOperador.js";
+import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
+import {acoesDeCancelamento} from './substituicao.js';
 export function identificarAula(estado, aula) {
     const recursos = estado.recursos.filter(r => r.unidade === aula.unidade);
     return { aluno: aula.alunoNome || estado.alunos.find(a => a.id === aula.alunoId)?.nome || "Aluno não informado",
@@ -11,6 +13,10 @@ export function identificarAula(estado, aula) {
         veiculo: aula.veiculoNome || recursos.find(r => r.id === aula.veiculoId)?.nome || "Veículo não informado",
         identificacao: recursos.find(r => r.id === aula.veiculoId)?.descricao || "" };
 }
+// 17/11/2026 (pedido do usuário): a aula que repõe outra abonada por atestado aparece como "Reposição" na agenda da
+// Recepção, da Gerência e do Master, com a aula de origem no detalhe.
+const textoOrigem = r => { const s = String(r?.aulaOrigemInicio || ""); return s ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)} às ${s.slice(11, 16)}` : ""; };
+export function seloReposicao(aula, classe = "op-evento-reposicao") { const s = el("span", "Reposição", classe); s.title = "Aula de reposição por atestado" + (textoOrigem(aula.reposicao) ? " · repõe a aula de " + textoOrigem(aula.reposicao) : ""); return s; }
 export function cardAula(estado, aula, abrir, variante = "completo") {
     // Preserva os consumidores antigos que usavam um booleano como quarto argumento.
     if (typeof variante === "boolean") variante = variante ? "semana" : "completo";
@@ -23,6 +29,7 @@ export function cardAula(estado, aula, abrir, variante = "completo") {
         evento.append(nome, el("span", `${aula.inicio} às ${aula.fim}`, "op-evento-horario"), el("span", aula.categoria, "op-evento-categoria"),
             el("span", STATUS_AGENDAMENTO[aula.status], `op-badge op-aula-status-${aula.status}`));
         evento.querySelector(".op-badge").title = STATUS_AGENDAMENTO[aula.status];
+        if (aula.reposicao) { evento.classList.add("op-aula-reposicao"); nome.after(seloReposicao(aula)); evento.setAttribute("aria-label", evento.getAttribute("aria-label") + ", aula de reposição por atestado"); }
         return evento;
     }
     const card = el("article", undefined, `op-aula-card${variante === "lista" ? " op-aula-lista" : ""}`);
@@ -33,6 +40,7 @@ export function cardAula(estado, aula, abrir, variante = "completo") {
     recursos.append(el("p", `Instrutor: ${nomes.instrutor}`), el("p", `Veículo: ${nomes.identificacao || nomes.veiculo}`));
     const rodape = el("div", undefined, "op-aula-footer");
     rodape.append(el("span", `Categoria ${aula.categoria}`, "op-aula-categoria"), el("span", STATUS_AGENDAMENTO[aula.status], `op-badge op-aula-status-${aula.status}`), botao("Ver detalhes", () => abrir(aula)));
+    if (aula.reposicao) { card.classList.add("op-aula-reposicao"); rodape.prepend(seloReposicao(aula, "op-badge op-aula-reposicao-badge")); }
     card.append(recursos, rodape);
     card.querySelector("h3").title = nomes.aluno;
     recursos.querySelectorAll("p").forEach(p => { p.title = p.textContent; });
@@ -43,15 +51,19 @@ export function criarDetalhesAula(raiz,obterEstado,{servico,executar}={}){
  async function abrir(referencia){const ticket=++versao;corpo.replaceChildren(el('p','Carregando agendamento…','op-help'));if(!dialogo.open)dialogo.showModal();
   try{const resultado=servico?await servico.detalhesAgendamento(referencia.id):{aula:referencia,podeCancelar:false,podeRegistrar:false},aula=resultado.aula;if(ticket!==versao)return;
    const nomes=identificarAula(obterEstado(),aula),header=el('header',undefined,'op-aula-resumo');header.append(el('h3',nomes.aluno),el('p','Categoria '+aula.categoria+' · '+formatarData(aula.data)+' · '+aula.inicio+'–'+aula.fim),el('span',STATUS_AGENDAMENTO[aula.status],'op-badge op-aula-status-'+aula.status));
+   const reposicao=aula.reposicao||referencia.reposicao;if(reposicao){header.append(seloReposicao({reposicao},'op-badge op-aula-reposicao-badge'));}
    const dados=el('dl',undefined,'op-aula-dados'),minutos=h=>Number(h.slice(0,2))*60+Number(h.slice(3));
-   for(const [nome,valor] of [['Instrutor',nomes.instrutor],['Veículo',nomes.veiculo],...(aula.categoria==='B'?[['Câmbio',nomeCambio(aula.tipoCambio)]]:[]),['Unidade responsável',aula.unidade],['Local real',nomeLocalDaReserva(aula)],['Duração',(minutos(aula.fim)-minutos(aula.inicio))+' minutos']]){const n=el('div');n.append(el('dt',nome),el('dd',valor));dados.append(n);}
+   for(const [nome,valor] of [['Instrutor',nomes.instrutor],['Veículo',nomes.veiculo],...(aula.categoria==='B'?[['Câmbio',nomeCambio(aula.tipoCambio)]]:[]),['Unidade responsável',nomeUnidadeInstitucional(aula.unidade)],['Local real',nomeLocalDaReserva(aula)],['Duração',(minutos(aula.fim)-minutos(aula.inicio))+' minutos'],...((aula.reposicao||referencia.reposicao)?[['Reposição','Repõe a aula de '+(textoOrigem(aula.reposicao||referencia.reposicao)||'data não informada')+', abonada por atestado']]:[])]){const n=el('div');n.append(el('dt',nome),el('dd',valor));dados.append(n);}
    const acoes=el('footer',undefined,'op-dialog-actions'),mapa=linkLocalizacaoReserva(aula);if(mapa)acoes.append(mapa);
-   if(resultado.podeCancelar){const b=botao('Cancelar aula',()=>confirmar('cancelar',aula,resultado),'op-button op-button-outline');b.dataset.opAulaCancelar='';acoes.append(b);}
+   // Fase 3: só a Gerência (e o Master) cancela; a Recepção pede a substituição e marca a falta com ônus.
+   const nivel=servico?.identidade?.nivel||1;
+   if(resultado.podeCancelar&&nivel>=2){const b=botao('Cancelar aula',()=>confirmar('cancelar',aula,resultado),'op-button op-button-outline');b.dataset.opAulaCancelar='';acoes.append(b);}
+   if(servico&&resultado.podeCancelar&&[1,3].includes(aula.status))acoes.append(...acoesDeCancelamento(raiz,servico,aula,obterEstado(),{executar,aoConcluir:()=>dialogo.close()}));
    if(resultado.podeRegistrar)for(const [status,texto] of [[5,'Registrar presença'],[6,'Registrar falta']]){const b=botao(texto,()=>confirmar(status,aula,resultado),'op-button op-button-outline');b.dataset.opAulaResultado=String(status);acoes.append(b);}
-   if(resultado.podeSolicitarMedico){const b=botao('Anexar atestado para análise',()=>{abrirSolicitacaoMedica({aula:{...aula,inicio:aula.data+'T'+aula.inicio+':00-03:00'},servico:{solicitarCancelamentoMedico:dados=>executar(()=>servico.solicitarAtestadoRecepcao(dados),'Atestado encaminhado à recepção para análise.').then(ok=>{if(!ok)throw new Error('Solicitação recusada. Confira o aviso do atendimento.');})},origem:b,aoConcluir:()=>abrir(aula)});const d=document.querySelector('dialog[data-medical-request]');d.querySelector('[data-medical-submit]').textContent='Enviar atestado para análise';const c=d.querySelector('[name=confirmacaoMedica]');d.querySelector('.medical-consent').replaceChildren(c,document.createTextNode(' Confirmo o envio do atestado, sem devolução automática do crédito.'));d.querySelector('h2').textContent='Anexar atestado · análise administrativa';d.querySelector('.lesson-cancel-policy').textContent='Documento vinculado ao aluno. Crédito retido: a recepção analisa e encaminha; somente a gerência poderá decidir a devolução.';},'op-button op-button-outline');b.dataset.opAulaAtestado='';acoes.append(b);}
+   if(resultado.podeSolicitarMedico){const b=botao('Anexar atestado para análise',()=>{abrirSolicitacaoMedica({aula:{...aula,inicio:aula.data+'T'+aula.inicio+':00-03:00'},servico:{solicitarCancelamentoMedico:dados=>executar(()=>servico.solicitarAtestadoRecepcao(dados),'Atestado enviado para análise da Gerência.').then(ok=>{if(!ok)throw new Error('Solicitação recusada. Confira o aviso do atendimento.');})},origem:b,aoConcluir:()=>abrir(aula)});const d=document.querySelector('dialog[data-medical-request]');d.querySelector('[data-medical-submit]').textContent='Enviar atestado para análise';const c=d.querySelector('[name=confirmacaoMedica]');d.querySelector('.medical-consent').replaceChildren(c,document.createTextNode(' Confirmo o envio do atestado, sem devolução automática do crédito.'));d.querySelector('h2').textContent='Anexar atestado · análise administrativa';d.querySelector('.lesson-cancel-policy').textContent='Documento vinculado ao aluno. O crédito fica retido até a decisão: o atestado vai direto para a Gerência, que decide a devolução.';},'op-button op-button-outline');b.dataset.opAulaAtestado='';acoes.append(b);}
    corpo.replaceChildren(header,dados,acoes);
    if(aula.cancelamento)corpo.append(el('p',aula.cancelamento.credito==='retido'?'Crédito retido. Eventual justificativa médica deve seguir o fluxo de atestados, com decisão exclusiva da gerência.':'Crédito: '+aula.cancelamento.credito,'op-help'));
-   if(aula.historico?.length){const h=el('details'),lista=el('ul');h.append(el('summary','Histórico da aula'));for(const e of aula.historico)lista.append(el('li',(e.em?new Date(e.em).toLocaleString('pt-BR')+' · ':'')+(e.acao||STATUS_AGENDAMENTO[e.status]||'Movimentação')+' · '+(e.autor||e.responsavel||'Responsável não informado')+(e.motivo?' · '+e.motivo:'')));h.append(lista);corpo.append(h);}
+   if(aula.historico?.length){const h=el('details'),lista=el('ul');h.append(el('summary','Histórico da aula'));for(const e of aula.historico)lista.append(el('li',(e.em?new Date(e.em).toLocaleString('pt-BR')+' · ':'')+(e.acao||STATUS_AGENDAMENTO[e.status]||({Solicitado:'Aula agendada'})[e.descricao]||e.descricao||'Movimentação')+' · '+(e.autor||e.responsavel||'Responsável não informado')+(e.motivo?' · '+e.motivo:'')));h.append(lista);corpo.append(h);}
   }catch(e){if(ticket===versao)corpo.replaceChildren(el('p',e.message,'op-acompanhamento-erro'));}
  }
  function confirmar(acao,aula,resultado){

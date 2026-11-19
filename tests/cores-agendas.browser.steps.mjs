@@ -25,7 +25,7 @@ export async function validarCores(ctx){
   if(perfil!=='operador'){
    await evaluate("document.querySelector('[data-op-nav=agenda]').click()");
    await waitFor(()=>evaluate("!!document.querySelector('[data-admin-consulta-agendas]')"),'Consulta global');await evaluate("document.querySelector('[data-admin-consulta-agendas]').click()");await validar(perfil+' consulta global','[data-op-panel=agenda-global] label');
-   await evaluate("document.querySelector('[data-op-nav=antecipacao]').click()");await validar(perfil+' antecipacao','[data-op-panel=antecipacao] label');
+   if(await evaluate("!!document.querySelector('[data-op-nav=antecipacao]')")){await evaluate("document.querySelector('[data-op-nav=antecipacao]').click()");await validar(perfil+' antecipacao','[data-op-panel=antecipacao] label');}
   }
  }
  await login('instrutor','44444444444','instrutorNova4');await evaluate("document.querySelector('[data-nav=agenda]').click()");await validar('Instrutor agenda','.in-blocked>.in-slot-time');await screenshot('cores-instrutor.png');

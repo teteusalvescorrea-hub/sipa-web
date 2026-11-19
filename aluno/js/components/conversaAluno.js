@@ -45,6 +45,8 @@ export async function montarConversaAluno(host,servico,abas){
    const c=conversas.find(x=>x.autoescolaId===atual);
    if(!c){aviso.textContent='Você ainda não tem matrícula em uma autoescola para conversar com a Recepção.';form.hidden=true;lista.hidden=true;abas?.contar('conversa',0);return;}
    lista.hidden=false;form.hidden=!c.podeEnviar;aviso.textContent=c.podeEnviar?'':'Você não está mais matriculado nesta autoescola. O histórico continua disponível.';
+   // Fase 8 (5.6): fora do horário comercial o envio fica desligado e o aviso mostra o horário de atendimento.
+   if(c.podeEnviar&&servico.atendimento){try{const h=await servico.atendimento(c.autoescolaId),fechado=!h.aberto;texto.disabled=fechado;if(!enviando)enviar.disabled=fechado;form.dataset.conversaFechada=String(fechado);aviso.textContent=fechado?h.mensagem:'Atendimento: '+h.descricao+'.';}catch{}}
    desenhar(await servico.mensagensConversa(c.autoescolaId));
    if(c.naoLidas&&visivel()){try{await servico.marcarConversaLida(c.autoescolaId);c.naoLidas=0;atualizarIndicadorMensagens(servico);}catch{}}
    abas?.contar('conversa',conversas.reduce((n,x)=>n+x.naoLidas,0));

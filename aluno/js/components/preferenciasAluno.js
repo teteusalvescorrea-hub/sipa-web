@@ -33,16 +33,38 @@ export async function montarAgendamentoAutomatico(servico,aoConfirmar) {
     const form=criar('form');form.noValidate=true;const campos=criar('fieldset');campos.className='preference-fields';form.append(campos);secao.append(form);
     const label=criar('label','Categoria'),categoria=criar('select');categoria.name='categoria';categoria.id='auto-categoria';label.htmlFor=categoria.id;categoria.append(new Option('Categoria A — Moto','A'),new Option('Categoria B — Carro','B'),...((dados.categorias?.includes('D')||dados.resumo.categorias.D?.total>0)?[new Option('Categoria D — Ônibus','D')]:[]));if(dados.categorias?.length)for(const o of [...categoria.options])if(!dados.categorias.includes(o.value))o.remove();categoria.value=salvo?.categoria||dados.categorias?.[0]||'B';label.append(categoria);campos.append(label);
     grupo(campos,'unidades','Unidades aceitas',unidades,salvo?.unidades||[dados.aluno?.unidade].filter(Boolean));
-    grupo(campos,'dias','Dias da semana',dias,salvo?.dias||[1,2,3,4,5,6]);
-    grupo(campos,'horarios','Horários de início',HORAS_AGENDAMENTO.map(h=>[h,h]),salvo?.horarios||HORAS_AGENDAMENTO);periodos(form);
+    grupo(campos,'dias','Dias da semana',dias,[]);
+    grupo(campos,'horarios','Horários de início',HORAS_AGENDAMENTO.map(h=>[h,h]),[]);periodos(form);
     const instrutores=grupo(campos,'instrutores','Instrutores preferidos',[]),veiculos=grupo(campos,'veiculos','Veículos preferidos',[]);
     const instrucoes=criar('p','Nenhum recurso marcado significa sem preferência. A busca sempre exige um instrutor e um veículo compatíveis e disponíveis.');campos.append(instrucoes);
+    // 09/11/2026: uma chave "Qualquer …" em cada bloco (dia, horário, instrutor e veículo). Ligada, recolhe as opções do
+    // bloco e vale tudo; desligada, o aluno escolhe só o que quiser (nada vem marcado ao entrar).
+    const chaves={};
+    function chaveQualquer(fieldset,nome,rotulo,ajuda){
+        if(!fieldset)return;
+        const linha=criar('label',null,'preference-qualquer'),i=criar('input'),textos=criar('span',null,'preference-qualquer-texto');i.type='checkbox';i.dataset.qualquer=nome;
+        textos.append(criar('strong',rotulo),criar('small',ajuda));linha.append(i,textos,criar('span',null,'preference-qualquer-chave'));
+        fieldset.querySelector('legend').after(linha);chaves[nome]=i;
+        i.addEventListener('change',()=>{fieldset.classList.toggle('preference-com-qualquer',i.checked);if(i.checked)fieldset.querySelectorAll('.preference-options input').forEach(x=>{x.checked=false;});form.dispatchEvent(new Event('input',{bubbles:true}));});
+    }
+    chaveQualquer(form.querySelector('[data-grupo=dias]'),'dias','Qualquer dia','Segunda a sábado, o dia livre mais próximo.');
+    chaveQualquer(form.querySelector('[data-grupo=horarios]'),'horarios','Qualquer horário','Manhã ou tarde, o horário livre mais próximo.');
+    chaveQualquer(instrutores,'instrutores','Qualquer instrutor','O primeiro instrutor disponível e compatível.');
+    chaveQualquer(veiculos,'veiculos','Qualquer veículo','O primeiro veículo disponível do seu tipo de carro.');
+    instrucoes.textContent='Marque só o que preferir. Sem instrutor ou veículo marcado, vale qualquer um compatível e disponível.';
     const qtdLabel=criar('label','Quantidade de aulas'),qtd=criar('input');qtd.type='number';qtd.name='quantidade';qtd.id='auto-quantidade';qtd.min='1';qtd.value=String(salvo?.quantidade||1);qtdLabel.htmlFor=qtd.id;qtdLabel.append(qtd);campos.append(qtdLabel);
     const saldo=criar('p');saldo.id='auto-saldo';campos.append(saldo);
     const acoes=criar('div',null,'preference-actions'),salvar=botao('Salvar preferências','auto-salvar'),buscar=botao('Buscar horários automaticamente','auto-buscar');acoes.append(salvar,buscar);campos.append(acoes);
     const msg=criar('p');msg.id='auto-feedback';msg.setAttribute('role','status');const resultado=criar('div');resultado.id='auto-proposta';form.append(msg,resultado);
     let proposta=null,operacaoId=null,ocupado=false;
-    const valores=()=>({categoria:categoria.value,unidades:marcados(form,'unidades'),dias:marcados(form,'dias').map(Number),horarios:marcados(form,'horarios'),instrutores:marcados(form,'instrutores'),veiculos:marcados(form,'veiculos'),quantidade:Number(qtd.value)});
+    const valores=()=>{
+        const diasEscolhidos=chaves.dias?.checked?dias.map(([d])=>d):marcados(form,'dias').map(Number);
+        const horasEscolhidas=chaves.horarios?.checked?[...HORAS_AGENDAMENTO]:marcados(form,'horarios');
+        if(!diasEscolhidos.length)throw new Error('Escolha pelo menos um dia ou ligue "Qualquer dia".');
+        if(!horasEscolhidas.length)throw new Error('Escolha pelo menos um horário ou ligue "Qualquer horário".');
+        return {categoria:categoria.value,unidades:marcados(form,'unidades'),dias:diasEscolhidos,horarios:horasEscolhidas,
+            instrutores:chaves.instrutores?.checked?[]:marcados(form,'instrutores'),veiculos:chaves.veiculos?.checked?[]:marcados(form,'veiculos'),quantidade:Number(qtd.value)};
+    };
     // Marcas por categoria: trocar de categoria e voltar não perde o que o aluno marcou.
     const marcasPorCategoria={};let categoriaAtual=null;
     function recursos(inicial=false){
@@ -54,7 +76,7 @@ export async function montarAgendamentoAutomatico(servico,aoConfirmar) {
         let aviso=form.querySelector('[data-local-fixo]');if(!aviso){aviso=criar('p');aviso.dataset.localFixo='';grupoUnidades.after(aviso);}aviso.hidden=!fixa;aviso.textContent=categoria.value==='D'?AVISO_ONIBUS:categoria.value==='B'?'Carro '+nomeCambio(dados.aluno.tipoCambio)+' · unidade cadastrada: '+(obterUnidadeInstitucional(fixa)?.nome||fixa)+'. O local pode variar conforme a data.':'Categoria A: aulas na pista Centro de Vila Velha.';
         const us=marcados(form,'unidades');
         for(const [tipo,box] of [['instrutor',instrutores],['veiculo',veiculos]]){
-            const nome=tipo==='instrutor'?'instrutores':'veiculos',antes=marcasPorCategoria[categoria.value]?.[nome]??(salvo?.categoria===categoria.value?salvo[nome]||[]:[]),lista=box.querySelector('.preference-options');lista.replaceChildren();
+            const nome=tipo==='instrutor'?'instrutores':'veiculos',antes=marcasPorCategoria[categoria.value]?.[nome]??[],lista=box.querySelector('.preference-options');lista.replaceChildren();
             const rs=servico.recursosAutomaticos?servico.recursosAutomaticos(categoria.value).filter(r=>r.tipo===tipo):dados.registros.filter(r=>r.tipo===tipo&&r.ativo===true&&r.disponivel!==false&&(categoria.value==='D'?recursosOperacionaisD(dados.registros).some(x=>x.id===r.id):categoria.value==='B'?recursoCarroConsultavel(r,fixa)&&(tipo==='instrutor'||r.tipoCambio===dados.aluno.tipoCambio):us.includes(normalizarChaveUnidade(r.unidade)))&&(tipo==='instrutor'?r.categorias?.includes(categoria.value):r.categoria===categoria.value));
             for(const r of rs){const l=criar('label'),i=criar('input');i.type='checkbox';i.name=nome;i.value=r.id;i.checked=antes.includes(r.id);l.append(i,document.createTextNode(r.nome));lista.append(l);}
             // Integrado: a API não lista a frota para o aluno, então o id salvo que não apareceu nas aulas ou consultas continua marcado (não está indisponível).

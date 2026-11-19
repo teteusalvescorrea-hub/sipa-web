@@ -53,12 +53,13 @@ test('16/12: disponibilidade física independe das pendências, jornada e ocupa�
  c.recursos=[];r=await consultarRecursosLocais(projetarContaRecepcao(c),q,agora);assert.equal(r.horarios.length,0);assert.match(r.mensagem,/instrutor|ônibus/i);
 });
 
-test('operação D encontra recursos de outras unidades e recusa duplicidade global',async()=>{
+// 12/11/2026: um segundo instrutor com a categoria D não trava mais a operação (antes: mensagem de duplicidade e nenhum horário).
+test('operação D encontra recursos de outras unidades e aceita mais de um instrutor D',async()=>{
  const c=contexto('D');c.recursos[0].unidade='Santa Rita';c.recursos[1].unidade='Itaparica';
  const q={categoria:'D',data:'2026-12-19',unidade:'Cobilândia'},agora='2026-10-19T08:00:00';
  const antes=structuredClone(c);let d=projetarContaRecepcao(c),r=await consultarRecursosLocais(d,q,agora);
  assert.ok(r.horarios.some(h=>h.hora==='18:00'));assert.equal(elegibilidadeContaRecepcao(d,q.data),'');assert.deepEqual(c,antes);
- c.recursos.push({...c.recursos[0],id:'segundo',unidade:'Terra Vermelha'});r=await consultarRecursosLocais(projetarContaRecepcao(c),q,agora);assert.equal(r.horarios.length,0);assert.match(r.mensagem,/único/);
+ c.recursos.push({...c.recursos[0],id:'segundo',unidade:'Terra Vermelha'});r=await consultarRecursosLocais(projetarContaRecepcao(c),q,agora);assert.ok(r.horarios.some(h=>h.hora==='18:00'));assert.doesNotMatch(String(r.mensagem||''),/único/);
 });
 
 test('acompanhamento usa o cadastro próprio, preserva tentativas e omite campos administrativos internos',()=>{

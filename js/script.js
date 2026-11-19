@@ -1,5 +1,5 @@
 /* =========================================
-   SIPA — SCRIPT PRINCIPAL
+   AgIA — SCRIPT PRINCIPAL
    PÁGINA INICIAL
    ========================================= */
 

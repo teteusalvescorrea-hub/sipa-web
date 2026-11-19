@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {editarCadastro,salvarExamesFicha,movimentarProva,provasDoAluno,linhaTempoAluno,EXAMES_FICHA,SITUACOES_PROVA} from '../nivel-1-operador/js/fichaOperador.js';
 import {transferirAluno} from '../nivel-1-operador/js/dominioOperador.js';
 const op={nivel:2,id:'op',unidade:'Itaparica',permissoes:['consultar','verificar','editar-cadastro','editar-categoria','editar-prova','excluir-prova','cancelar-prova']},agora=new Date('2026-10-21T17:35:00Z');
-function fixture(){return {alunos:[{id:'a',nome:'Aluno Original',cpf:'52998224725',nascimento:'2000-01-01',telefone:'27999999999',email:'teste@example.invalid',tipoCambio:'manual',categoria:'AB',unidade:'Itaparica',unidadePrincipal:'Itaparica',unidadeCarro:'Cobilândia',aulasAdquiridas:{A:5,B:10},creditos:{A:{disponiveis:2}},historico:[],etapas:{medico:{status:'Aprovado'}},exames:{teorica:{status:'Pendente'}},contaId:'conta'},{id:'outro',cpf:'11144477735',unidade:'Santa Rita',tipoCambio:'manual',categoria:'B'}],contasAlunos:[{id:'conta',alunoId:'a',login:'52998224725',hash:'preservado'}],aulas:[],recursos:[]};}
+function fixture(){return {alunos:[{id:'a',nome:'Aluno Original',cpf:'52998224725',nascimento:'2000-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha',telefone:'27999999999',email:'teste@example.invalid',tipoCambio:'manual',categoria:'AB',unidade:'Itaparica',unidadePrincipal:'Itaparica',unidadeCarro:'Cobilândia',aulasAdquiridas:{A:5,B:10},creditos:{A:{disponiveis:2}},historico:[],etapas:{medico:{status:'Aprovado'}},exames:{teorica:{status:'Pendente'}},contaId:'conta'},{id:'outro',cpf:'11144477735',unidade:'Santa Rita',tipoCambio:'manual',categoria:'B'}],contasAlunos:[{id:'conta',alunoId:'a',login:'52998224725',hash:'preservado'}],aulas:[],recursos:[]};}
 let seq=0;const mover=(e,d,chave='e-'+(++seq))=>movimentarProva(e,op,'a',d,chave,agora);
 test('somente seis situações; Adiada rejeitada para novos registros sem apagar legado',()=>{
  assert.deepEqual(SITUACOES_PROVA,['Não solicitado','Solicitado','Agendado','Aprovado','Reprovado','Cancelado']);
@@ -24,7 +24,7 @@ test('N1 não edita cadastro, data confirmada ou exclui tentativas, mesmo com ca
 });
 test('edição validada, CPF duplicado/protegidos, conta por ID, no-op e auditoria sem segredos',()=>{
  const e=fixture();assert.equal(editarCadastro(e,op,'a',{},'noop',agora),e);
- for(const d of [{cpf:'123'},{cpf:'11144477735'},{unidade:'Centro'},{nome:'Um'},{telefone:'1'},{email:'erro'},{nascimento:'2030-01-01'}])assert.throws(()=>editarCadastro(e,op,'a',d,'err',agora));
+ for(const d of [{cpf:'123'},{cpf:'11144477735'},{unidade:'Centro'},{nome:'Um'},{telefone:'1'},{email:'erro'},{nascimento:'2030-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha'}])assert.throws(()=>editarCadastro(e,op,'a',d,'err',agora));
  const n=editarCadastro(e,op,'a',{nome:'Aluno Atualizado',cpf:'93541134780',telefone:'27988888888'},'edit',agora);
  assert.equal(n.alunos[0].id,'a');assert.equal(n.contasAlunos[0].login,'93541134780');assert.equal(n.contasAlunos[0].hash,'preservado');assert.deepEqual(n.alunos[0].creditos,e.alunos[0].creditos);assert.deepEqual(n.alunos[1],e.alunos[1]);assert.equal(n.alunos[0].historico.length,1);assert.equal(n.alunos[0].historico[0].responsavel,'op');assert.ok(!JSON.stringify(n.alunos[0].historico).includes('93541134780'));assert.deepEqual(e,fixture());
 });

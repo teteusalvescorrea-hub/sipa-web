@@ -20,6 +20,8 @@ export function apresentarDashboard({aluno,resumo,aulas=[],registros=[],categori
         const saldo=resumo?.categorias?.[categoria]; texto('credito-'+categoria,saldo?.disponiveis??'—');
         texto('credito-'+categoria+'-detalhe',saldo?`${saldo.total??'Total não informado'} créditos${Number.isFinite(saldo.liberadas)?' · '+saldo.liberadas+' liberadas':''} · ${saldo.reservadas} reservadas · ${saldo.realizadas} concluídas`:'Saldo por categoria ainda não informado.');
     }
+    // 16/11/2026: a grade do saldo segue quantos cartões estão visíveis (o CSS casa 1, 2 ou 3 na mesma linha).
+    const grade=document.querySelector('.summary-grid');if(grade)grade.dataset.cartoes=String(grade.querySelectorAll('.credit-card:not([hidden])').length);
     texto('creditos-resumo',resumo?'':'Seus saldos serão apresentados por categoria.');
     const percentual=resumo?.percentual;
     texto('progress-number',percentual!=null?percentual+'%':'Ainda não iniciado');
@@ -35,7 +37,7 @@ export function apresentarDashboard({aluno,resumo,aulas=[],registros=[],categori
         selo.textContent=statusAula[numeroStatus(proxima)];const dados=document.createElement('dl');dados.className='next-class-details';const inicio=new Date(dataInicio(proxima));
         detalhe(dados,'Data',inicio.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'long',year:'numeric'}));
         const hora=v=>new Date(v).toLocaleTimeString('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'});detalhe(dados,'Horário',hora(dataInicio(proxima))+((proxima.fim||proxima.dataHoraFim)?' às '+hora(proxima.fim||proxima.dataHoraFim):''));
-        detalhe(dados,'Categoria',proxima.categoria?.descricao||proxima.categoria||'Não informada');
+        {const c=proxima.categoria?.descricao||proxima.categoria,nome={A:'Moto',B:'Carro',D:'Ônibus'}[c];detalhe(dados,'Categoria',c?(nome?c+' — '+nome:c):'Não informada');}
         const recusada=numeroStatus(proxima)===4;
         detalhe(dados,'Veículo',recusada?null:proxima.veiculoModelo||registros.find(r=>r.id===proxima.veiculo)?.nome);
         detalhe(dados,'Instrutor',recusada?'Aguardando nova designação':proxima.motoristaNome||registros.find(r=>r.id===proxima.instrutor)?.nome);

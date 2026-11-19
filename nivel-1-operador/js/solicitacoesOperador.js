@@ -5,7 +5,7 @@ export function obterSolicitacaoMedica(e,op,id){
  autorizar(op,'consultar');const aula=e.aulas.find(a=>a.solicitacaoMedica?.id===id);
  if(!aula)throw new Error('Solicitação médica não autorizada para esta unidade.');
  const {aluno,unidadeBase,inconsistencia}=exigirAdministrativoAluno(e,op,aula,{leitura:true});
- return {solicitacao:structuredClone(aula.solicitacaoMedica),aluno:structuredClone(aluno),unidadeBase,inconsistencia,aula:{...structuredClone(aula),instrutorNome:e.recursos.find(r=>r.id===aula.instrutorId)?.nome||'Não informado',veiculoNome:e.recursos.find(r=>r.id===aula.veiculoId)?.nome||'Não informado'}};
+ return {solicitacao:structuredClone(aula.solicitacaoMedica),aluno:structuredClone(aluno),unidadeBase,inconsistencia,aula:{...structuredClone(aula),instrutorNome:e.recursos.find(r=>r.id===aula.instrutorId)?.nome||aula.instrutorNome||'Não informado',veiculoNome:e.recursos.find(r=>r.id===aula.veiculoId)?.nome||aula.veiculoNome||'Não informado'}};
 }
 export function consultarSolicitacoesMedicas(e,op){
  autorizar(op,'consultar');return e.aulas.filter(a=>a.solicitacaoMedica).flatMap(a=>{try{return [obterSolicitacaoMedica(e,op,a.solicitacaoMedica.id)];}catch{return [];}});

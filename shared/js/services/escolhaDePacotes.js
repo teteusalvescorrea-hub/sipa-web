@@ -1,5 +1,5 @@
 /* =========================================
-   SIPA — ESCOLHA DE PACOTES
+   AgIA — ESCOLHA DE PACOTES
    Cards da vitrine por categoria (1 = A, 2 = B).
    O aluno marca o pacote que comprou e pede a contratação.
    Usado no cadastro (login.html) e em pacotes.html.

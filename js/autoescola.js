@@ -1,5 +1,5 @@
 /* =========================================
-   SIPA — AUTOESCOLA
+   AgIA — AUTOESCOLA
    Pedidos dos alunos (aprovar e recusar) e pacotes à venda.
    ========================================= */
 

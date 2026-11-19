@@ -19,11 +19,11 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .sipa-page { width: calc(100% - 40px); max-width: 1440px; margin: 20px auto; border: 1px solid var(--border); border-radius: 24px; background: var(--bg-main); box-shadow: 0 12px 36px #123f680b; }
 .header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 40px; background: var(--blue-dark); border-radius: 23px 23px 0 0; color: #fff; }
 .logo { display: inline-flex; align-items: center; gap: 12px; border-radius: 7px; }
-.logo-symbol { display: grid; place-items: center; width: 45px; height: 45px; }
+.logo-symbol { display: grid; place-items: center; width: 44px; height: 44px; }
 .logo-symbol svg { display: block; width: 100%; height: 100%; stroke-width: 10; }
 .logo-text { display: grid; gap: 5px; }
-.logo-text strong { font-size: 29px; font-weight: 800; line-height: 1; letter-spacing: -1.2px; }
-.logo-text > span { font-size: 8px; line-height: 1.4; letter-spacing: .5px; color: #d0dfec; }
+.logo-text strong { font-size: 25px; font-weight: 900; line-height: 1; letter-spacing: -1px; }
+.logo-text > span { font-size: 7px; line-height: 1.25; font-weight: 700; letter-spacing: 1.1px; color: rgba(255,255,255,.72); }
 .header-link { display: inline-flex; align-items: center; gap: 16px; border: 1px solid #ffffff35; border-radius: 9px; padding: 11px 15px; font-size: 12px; color: #f5f9ff; transition: background .18s; }
 .header-link:hover { background: #ffffff12; }
 main { padding: 0 40px; }
@@ -106,4 +106,46 @@ a:focus-visible { outline: 3px solid var(--blue-light); outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     * { transition: none !important; }
+}
+/* 16/11/2026 (pedido do usuário): o slogan da marca e a faixa "Organiza o hoje / Acelera o amanhã / Seu caminho". */
+.hero-slogan { display: flex; align-items: center; gap: 12px; max-width: 520px; margin-top: 20px; font-size: 16px; font-weight: 600; line-height: 1.5; color: var(--blue-dark); }
+.hero-slogan::before { content: ""; width: 36px; height: 3px; border-radius: 3px; background: #1fb6e8; flex-shrink: 0; }
+.brand-band { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 28px 0; border-bottom: 1px solid var(--border); }
+.brand-item { padding: 20px 22px; border: 1px solid var(--border); border-left: 4px solid #1fb6e8; border-radius: 14px; background: var(--bg-card); }
+.brand-item:nth-child(2) { border-left-color: var(--blue); }
+.brand-item:nth-child(3) { border-left-color: var(--blue-dark); }
+.brand-kicker { margin-bottom: 6px; font-size: 16px; font-weight: 800; letter-spacing: -.3px; color: var(--blue-dark); }
+.brand-item p:last-child { font-size: 13px; line-height: 1.7; color: var(--sipa-texto-neutro); }
+@media (max-width: 800px) { .brand-band { grid-template-columns: minmax(0, 1fr); } }
+/* Telas largas (ou zoom do navegador em 80%): o cartão ocupa mais da tela e o texto acompanha. */
+@media (min-width: 1600px) {
+    .sipa-page { max-width: min(1880px, calc(100% - 64px)); margin: 28px auto; }
+    .header { padding: 26px 64px; }
+    .logo-symbol { width: 52px; height: 52px; }
+    .logo-text strong { font-size: 30px; }
+    .logo-text > span { font-size: 8.5px; }
+    .header-link { font-size: 14px; padding: 13px 18px; }
+    main { padding: 0 64px; }
+    .hero { gap: 72px; padding: 64px 0 48px; }
+    .hero-tag { font-size: 12px; }
+    .hero h1 { max-width: 760px; font-size: clamp(58px, 3.6vw, 76px); }
+    .hero-slogan { max-width: 640px; font-size: 20px; }
+    .hero-description { max-width: 600px; font-size: 17px; }
+    .action-button { min-height: 58px; padding: 16px 24px; font-size: 15px; }
+    .sipa-features { gap: 40px; padding: 32px 0 36px; }
+    .feature-icon { width: 44px; height: 44px; }
+    .feature h3 { font-size: 16px; }
+    .feature p { max-width: 420px; font-size: 14px; }
+    .brand-band { gap: 24px; padding: 36px 0; }
+    .brand-item { padding: 26px 28px; }
+    .brand-kicker { font-size: 19px; }
+    .brand-item p:last-child { font-size: 15px; }
+    .units { padding: 44px 0; }
+    .eyebrow { font-size: 11px; }
+    .section-heading h2 { font-size: 30px; }
+    .section-heading > p:last-child { font-size: 15px; }
+    .units-grid { gap: 12px; }
+    .units-grid li { padding: 18px 20px; font-size: 15px; }
+    .footer { margin: 0 64px; padding: 26px 0; font-size: 13px; }
+    .footer strong { font-size: 18px; }
 }

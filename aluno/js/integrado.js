@@ -5,7 +5,7 @@ import {criarServicoAluno} from './services/alunoIntegrado.js';
 import {ROTA_CONTRATAR_AULAS} from './domain/contatoRecepcao.js';
 import {apresentarDashboard} from './dashboard.js';
 import {apresentarProgresso,apresentarPerfil,apresentarAulas,apresentarAgendamento,montarAlteracaoSenha} from './components/painelAluno.js';
-import {marcarIndicadorMensagens} from './components/mensagensAluno.js';
+import {marcarIndicadorMensagens,atualizarIndicadorNovidades} from './components/mensagensAluno.js';
 const pagina=location.pathname.split('/').pop();
 function aviso(texto){let n=document.getElementById('student-service-status');if(!n){n=document.createElement('p');n.id='student-service-status';n.className='dashboard-notice';n.setAttribute('role','status');document.querySelector('main').prepend(n);}n.textContent=texto;n.hidden=!texto;}
 function preparar(){
@@ -24,7 +24,7 @@ async function iniciar(){
  aviso('Carregando seus dados…');const servico=criarServicoAluno();
  try{
  const dados=await servico.carregar();aviso('');
- if(pagina==='dashboard.html')apresentarDashboard(dados);
+ if(pagina==='dashboard.html'){apresentarDashboard(dados);/* 17/11/2026: a avaliação da aula não abre mais sozinha; fica no cartão da aula em Minhas aulas. */}
  else if(pagina==='minhas-aulas.html')await apresentarAulas(servico,dados);
  else if(pagina==='agendamento.html'){await apresentarAgendamento(servico,dados);
   // Agendamento automático (F13): ligado pela capacidade do serviço; sem ela, só o manual.
@@ -36,5 +36,5 @@ async function iniciar(){
  acompanharNaoLidas(servico);
 }
 // Sino e item Mensagens em todas as páginas: avisos + conversa com a Recepção, a cada 15 s e ao voltar para a janela.
-function acompanharNaoLidas(servico){const contar=()=>{if(!document.hidden)servico.totalNaoLidas().then(marcarIndicadorMensagens,()=>{});};setInterval(contar,15000);window.addEventListener('focus',contar);contar();}
+function acompanharNaoLidas(servico){const contar=()=>{if(!document.hidden){servico.totalNaoLidas().then(marcarIndicadorMensagens,()=>{});atualizarIndicadorNovidades(servico);}};setInterval(contar,15000);window.addEventListener('focus',contar);contar();}
 iniciar();

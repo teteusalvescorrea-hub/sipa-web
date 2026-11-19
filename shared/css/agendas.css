@@ -49,9 +49,10 @@ html .op-unidade .op-agenda :is(input,select),
 html .op-unidade :is([data-op-panel=agenda-global],[data-op-panel=antecipacao],[data-op-agendar]) :is(input,select){color:var(--agenda-texto-neutro)!important}
 
 /* Divisórias existentes: mesma tinta da Recepção no claro. Não altera
-   espessuras, dimensões, cartões de aulas ou cores de disponibilidade. */
-:root{--agenda-divisoria:#000000}
-html[data-theme=dark]{--agenda-divisoria:#8fa3b8}
+   espessuras, dimensões, cartões de aulas ou cores de disponibilidade.
+   10/11/2026: grafite (um pouco mais claro que o preto), com a grade arredondada (operador-paineis.css). */
+:root{--agenda-divisoria:#4b5563}
+html[data-theme=dark]{--agenda-divisoria:#7d91a6}
 .in-agenda :is(.in-time-slot,.in-slot-time,.in-agenda-summary,.in-timeline-end){border-color:var(--agenda-divisoria)}
 #administracao-root:is([data-op-nivel="2"],[data-op-nivel="3"]) .op-agenda :is(.op-week-grid,.op-agenda-day,.op-agenda-slot,.op-day-heading,.op-week-hours>*,.op-agenda-slot>time,.op-month-grid){border-color:var(--agenda-divisoria)}
 /* No mês, as linhas de 1px são os gaps entre células, não bordas adicionais. */

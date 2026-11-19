@@ -2588,3 +2588,254 @@ html[data-theme=dark] .student-lesson-filters{background:#172b40;border-color:#4
 [data-sipa-aluno] .lessons-main .confirmed-lesson-actions > .local-lesson-cancel:not(:disabled):hover{background:#941c25!important;border-color:#941c25!important}
 [data-sipa-aluno] .lessons-main .confirmed-lesson-actions > .local-lesson-cancel:focus-visible{outline:3px solid #ef9ba1;outline-offset:3px}
 [data-sipa-aluno] .lessons-main .confirmed-lesson-actions > .local-lesson-cancel:disabled{opacity:.5;cursor:not-allowed}
+
+/* 09/11/2026: resumo de Minhas aulas (próxima aula, aulas agendadas e local) com ícone, cor e hierarquia. */
+.lessons-summary .summary-card{position:relative;min-height:84px;gap:14px;padding:16px 18px;border-left:4px solid var(--resumo-cor,#1769aa);overflow:hidden}
+.lessons-summary .summary-card:nth-child(1){--resumo-cor:#1769aa;--resumo-fundo:#e6f1fb;--resumo-icone:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231769aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E")}
+/* 10/11/2026: os três cartões no mesmo azul da Próxima aula (antes: verde em Aulas agendadas e roxo em Unidade). */
+.lessons-summary .summary-card:nth-child(2){--resumo-cor:#1769aa;--resumo-fundo:#e6f1fb;--resumo-icone:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231769aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M7 2v6M17 2v6M3 11h18'/%3E%3C/svg%3E")}
+.lessons-summary .summary-card:nth-child(3){--resumo-cor:#1769aa;--resumo-fundo:#e6f1fb;--resumo-icone:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231769aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z'/%3E%3Ccircle cx='12' cy='9.5' r='2.5'/%3E%3C/svg%3E")}
+.lessons-summary .summary-card::before{content:"";flex:none;width:44px;height:44px;border-radius:12px;background:var(--resumo-fundo) var(--resumo-icone) center/22px no-repeat}
+.lessons-summary .summary-card>div{gap:5px}
+.lessons-summary .summary-card>div>span{font-size:10.5px;font-weight:700;letter-spacing:.8px;color:var(--resumo-cor)}
+.lessons-summary .summary-card>div>strong{font-size:17px;font-weight:700;color:var(--text,#18324a)}
+html[data-theme=dark] .lessons-summary .summary-card{--resumo-fundo:#1b3046}
+html[data-theme=dark] .lessons-summary .summary-card>div>strong{color:#e3edf6}
+
+/* 09/11/2026: Contratar mais aulas — as duas formas de pedir como cartões, um embaixo do outro, e o Fechar discreto. */
+.lesson-hire-dialog .lesson-hire-escolha{margin:18px 0 8px;font-size:13px;font-weight:600;color:#365a78}
+.lesson-hire-opcoes{display:grid;gap:10px}
+.lesson-hire-dialog .lesson-hire-opcao{display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 14px;border:1px solid #cfe0ee;border-radius:12px;background:#f7fbff;color:#18324a;font:inherit;text-align:left;text-decoration:none;cursor:pointer;box-sizing:border-box;transition:border-color .15s,box-shadow .15s,background .15s}
+.lesson-hire-dialog .lesson-hire-opcao:hover{border-color:#1769aa;background:#eef6fd;box-shadow:0 4px 14px rgba(23,105,170,.12)}
+.lesson-hire-dialog .lesson-hire-opcao:focus-visible{outline:3px solid rgba(35,136,217,.35);outline-offset:2px}
+.lesson-hire-opcao-icone{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:#1769aa;color:#fff}
+.lesson-hire-opcao-wpp .lesson-hire-opcao-icone{background:#1f9d55}
+.lesson-hire-opcao-icone svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lesson-hire-opcao-texto{display:grid;gap:2px;flex:1;min-width:0}
+.lesson-hire-opcao-texto strong{font-size:14.5px;font-weight:700}
+.lesson-hire-opcao-texto small{font-size:12.5px;line-height:1.4;color:#5b7690}
+.lesson-hire-opcao-seta{flex:none;font-size:22px;line-height:1;color:#7d97ad}
+.lesson-hire-dialog .lesson-hire-opcao:disabled{cursor:default;opacity:1;box-shadow:none}
+.lesson-hire-dialog .lesson-hire-opcao.lesson-hire-opcao-ok{border-color:#1f9d55;background:#effaf3}
+.lesson-hire-opcao-ok .lesson-hire-opcao-icone{background:#1f9d55}
+.lesson-hire-opcao-ok .lesson-hire-opcao-seta{color:#1f9d55;font-size:18px}
+.lesson-hire-dialog p.lesson-hire-note{margin:10px 0 0;text-align:left;font-size:13px}
+.lesson-hire-dialog p.lesson-hire-note:empty{display:none}
+.lesson-hire-dialog p.lesson-hire-note.lesson-hire-erro{color:#a12525}
+.lesson-hire-dialog .lesson-hire-ir{color:#1769aa;font-weight:600}
+.lesson-hire-dialog footer{display:flex;justify-content:flex-end;margin-top:16px}
+.lesson-hire-dialog .lesson-hire-fechar{min-height:40px;padding:0 20px;border:1px solid #c9d9e6;border-radius:9px;background:transparent;color:#365a78;font:inherit;font-weight:600;cursor:pointer}
+.lesson-hire-dialog .lesson-hire-fechar:hover{background:#f1f6fb}
+html[data-theme=dark] .lesson-hire-dialog .lesson-hire-opcao{background:#172b40;border-color:#36506a;color:#eef4fa}
+html[data-theme=dark] .lesson-hire-dialog .lesson-hire-opcao:hover{background:#1d3550;border-color:#82c4fa}
+html[data-theme=dark] .lesson-hire-dialog .lesson-hire-opcao.lesson-hire-opcao-ok{background:#163a2a;border-color:#3cc27a}
+html[data-theme=dark] .lesson-hire-opcao-texto small{color:#a9bfd3}
+html[data-theme=dark] .lesson-hire-dialog .lesson-hire-escolha{color:#c7d8e8}
+html[data-theme=dark] .lesson-hire-dialog .lesson-hire-fechar{color:#dbe7f2;border-color:#4d6a86}
+html[data-theme=dark] .lesson-hire-dialog .lesson-hire-ir{color:#82c4fa}
+
+/* 10/11/2026: Quero adiantar minhas aulas (botão no topo e a confirmação). */
+.lessons-adiantar-button { gap:8px; font:inherit; cursor:pointer; }
+.lessons-adiantar-button i { display:inline-grid; place-items:center; width:18px; height:18px; }
+.lessons-adiantar-button i svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.lessons-adiantar-button[aria-busy=true] { opacity:.7; cursor:progress; }
+.lesson-adiantar-dialog .lesson-adiantar-corpo { display:grid; justify-items:center; gap:10px; text-align:center; padding:6px 4px 2px; }
+.lesson-adiantar-dialog .lesson-adiantar-corpo p { margin:0; line-height:1.55; }
+.lesson-adiantar-selo { display:grid; place-items:center; width:46px; height:46px; border-radius:50%; background:#e3f5ea; color:#1f7a45; font-size:24px; font-weight:800; }
+.lesson-adiantar-dica { font-size:12.5px; color:#5b6f82; }
+.lesson-adiantar-erro .lesson-adiantar-corpo p { color:#b42318; }
+html[data-theme=dark] .lesson-adiantar-selo { background:#173826; color:#7fd6a2; }
+html[data-theme=dark] .lesson-adiantar-dica { color:#a9bccd; }
+
+/* 10/11/2026: o "Quero adiantar minhas aulas" depois de enviado (verde, com o visto). */
+.lessons-adiantar-button.lessons-adiantar-enviado { background:#e9f7ef; border-color:#9fd5b3; color:#1d6b3e; }
+.lessons-adiantar-button.lessons-adiantar-enviado:hover { background:#dcf2e5; border-color:#1f9d55; }
+.lessons-adiantar-button.lessons-adiantar-enviado i svg { stroke-width:2.6; }
+html[data-theme=dark] body .lessons-header-actions .lessons-adiantar-button.lessons-adiantar-enviado { background:#173826!important; border-color:#2f6b45!important; color:#7fd6a2!important; }
+
+/* 11/11/2026: tema escuro — os rótulos azuis dos cartões (2,5:1) e o "Visualizar documento" dos atestados (texto claro
+   sobre fundo claro) ficavam ilegíveis. */
+html[data-theme=dark] .lessons-summary .summary-card>div>span,html[data-theme=dark] .lessons-card-header>div>span{color:#8cc4ef}
+html[data-theme=dark] .medical-request-document button{background:#1b3046;color:#e3edf6;border-color:#3a5470}
+
+/* 16/11/2026 (pedido do usuário): filtro de categoria em Minhas aulas (Todas, Moto, Carro, Ônibus), com a contagem. */
+.student-lesson-categorias{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-4px 0 16px}
+.student-lesson-categorias[hidden]{display:none}
+[data-sipa-aluno] .student-lesson-categorias button{display:inline-flex;align-items:center;gap:8px;min-height:36px;margin:0;padding:6px 8px 6px 14px;border:1px solid #cbddec;border-radius:999px;background:#fff;color:var(--sipa-texto-neutro);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+[data-sipa-aluno] .student-lesson-categorias button::before{content:"";width:8px;height:8px;border-radius:50%;background:#8aa4bd}
+[data-sipa-aluno] .student-lesson-categorias [data-categoria-filtro=A]::before{background:#d9630f}
+[data-sipa-aluno] .student-lesson-categorias [data-categoria-filtro=B]::before{background:#1769aa}
+[data-sipa-aluno] .student-lesson-categorias [data-categoria-filtro=D]::before{background:#1f9d55}
+[data-sipa-aluno] .student-lesson-categorias button:hover{border-color:#1769aa}
+[data-sipa-aluno] .student-lesson-categorias button[aria-pressed=true]{border-color:#1769aa;background:#e8f1fa;color:#12578f;box-shadow:0 0 0 1px #1769aa inset}
+.student-lesson-categoria-conta{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:999px;background:#eef3f8;color:#475569;font-size:11.5px;font-weight:700}
+[aria-pressed=true]>.student-lesson-categoria-conta{background:#1769aa;color:#fff}
+html[data-theme=dark] [data-sipa-aluno] .student-lesson-categorias button,html[data-theme=dark] .student-lesson-categorias button{background:#172b40;border-color:#4d6a86;color:#d6e5f3}
+html[data-theme=dark] .student-lesson-categorias button[aria-pressed=true]{background:#1d3a57!important;border-color:#5aa2e6!important;color:#cfe6fb!important;box-shadow:0 0 0 1px #5aa2e6 inset!important}
+html[data-theme=dark] .student-lesson-categoria-conta{background:#22384e;color:#b6c6d6}
+html[data-theme=dark] [aria-pressed=true]>.student-lesson-categoria-conta{background:#5aa2e6;color:#0d1b2a}
+/* 16/11/2026 (pedido do usuário): "Quero adiantar minhas aulas" pergunta os dias e os horários em que o aluno pode. */
+.lesson-adiantar-escolha{width:min(560px,calc(100vw - 32px))}
+.lesson-adiantar-form{display:grid;gap:14px;padding:4px 2px 2px}
+.lesson-adiantar-intro{margin:0;font-size:13.5px;line-height:1.55;color:var(--sipa-texto-neutro)}
+.lesson-adiantar-grupo{display:grid;gap:8px;margin:0;padding:12px 14px;border:1px solid #d6e2ee;border-radius:12px;background:#f7fafd}
+.lesson-adiantar-grupo legend{padding:0 6px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#12578f}
+.lesson-adiantar-chips{display:flex;flex-wrap:wrap;gap:6px}
+.lesson-adiantar-dias .lesson-adiantar-chip{flex:1 1 0;min-width:52px}
+.lesson-adiantar-escolha .lesson-adiantar-chip{min-height:36px;margin:0;padding:6px 12px;border:1px solid #cbddec;border-radius:9px;background:#fff;color:var(--sipa-texto-neutro);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.lesson-adiantar-escolha .lesson-adiantar-chip:hover{border-color:#1769aa}
+.lesson-adiantar-escolha .lesson-adiantar-chip[aria-pressed=true]{background:#1769aa;border-color:#1769aa;color:#fff}
+.lesson-adiantar-periodo{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:2px;font-size:12.5px;font-weight:700;color:#475569}
+.lesson-adiantar-escolha .lesson-adiantar-todos{min-height:0;margin:0;padding:2px 8px;border:0;background:none;color:#1769aa;font:inherit;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer}
+.lesson-adiantar-escolha .lesson-adiantar-dica{margin:-4px 0 0;font-size:12px;color:#5b6f82}
+.lesson-adiantar-aviso{margin:0;font-size:12.5px;font-weight:600;color:#12578f}
+.lesson-adiantar-escolha footer,.lesson-adiantar-dialog footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.lesson-adiantar-escolha .lesson-adiantar-enviar{min-height:40px;margin:0;padding:8px 18px;border:1px solid #1769aa;border-radius:9px;background:#1769aa;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.lesson-adiantar-escolha .lesson-adiantar-enviar:disabled{opacity:.5;cursor:not-allowed}
+html[data-theme=dark] .lesson-adiantar-grupo{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .lesson-adiantar-grupo legend,html[data-theme=dark] .lesson-adiantar-aviso{color:#82c4fa}
+html[data-theme=dark] .lesson-adiantar-escolha .lesson-adiantar-chip{background:#13263a;border-color:#2b4157;color:#d6e5f3}
+html[data-theme=dark] .lesson-adiantar-escolha .lesson-adiantar-chip[aria-pressed=true]{background:#1769aa;border-color:#5aa2e6;color:#fff}
+html[data-theme=dark] .lesson-adiantar-periodo{color:#a9bccd}
+html[data-theme=dark] .lesson-adiantar-escolha .lesson-adiantar-todos{color:#82c4fa}
+/* 16/11/2026 (pedido do usuário): a aba "Avisos e ofertas" de Minhas aulas no padrão dos cartões da página. */
+.student-avisos-card{margin-top:4px;padding:22px 24px;border:1px solid #d6e2ee;border-radius:16px;background:var(--profile-card,#fff);box-shadow:0 4px 18px rgba(18,63,104,.05)}
+.student-avisos-card[hidden]{display:none}
+.student-avisos-card>h2{margin:0;font-size:18px;font-weight:700;color:var(--sipa-texto-neutro)}
+.student-avisos-ajuda{margin:4px 0 16px;font-size:13px;line-height:1.5;color:#5b6f82}
+#student-avisos .mensagens-abas{margin-bottom:14px}
+#student-avisos .mensagens-lista{gap:10px}
+#student-avisos .mensagem-item{gap:6px;padding:14px 16px;border-radius:12px;border-color:#dbe5ef;cursor:pointer;transition:border-color .15s,background .15s}
+#student-avisos .mensagem-item:hover{border-color:#8fb8e3}
+#student-avisos .mensagem-topo{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+#student-avisos .mensagem-topo strong{font-size:14px;font-weight:700}
+#student-avisos .mensagem-situacao{margin-left:auto;padding:2px 9px;border-radius:999px;background:#eef3f8;color:#475569;font-size:11.5px;font-weight:600}
+#student-avisos .mensagem-item[data-nao-lida=true] .mensagem-situacao{background:#e2eefa;color:#12578f}
+#student-avisos .mensagem-item>span,#student-avisos .mensagem-item>p,#student-avisos .mensagem-item small{font-size:13px;line-height:1.5;color:#4b5b6b}
+#student-avisos .mensagens-paginacao{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:16px;font-size:13px}
+#student-avisos .mensagens-paginacao button{min-height:34px;padding:6px 14px;border:1px solid #cbddec;border-radius:8px;background:#fff;color:#12578f;font:inherit;font-weight:600;cursor:pointer}
+#student-avisos .mensagens-paginacao button:disabled{opacity:.45;cursor:default}
+#student-avisos .mensagens-vazio{margin:0;padding:22px;border:1px dashed #cbddec;border-radius:12px;text-align:center;font-size:13px;color:#5b6f82}
+html[data-theme=dark] .student-avisos-card{background:#13263a;border-color:#2b4157;box-shadow:none}
+html[data-theme=dark] .student-avisos-ajuda,html[data-theme=dark] #student-avisos .mensagem-item>span,html[data-theme=dark] #student-avisos .mensagem-item>p{color:#a9bccd}
+html[data-theme=dark] #student-avisos .mensagem-item{border-color:#2b4157}
+html[data-theme=dark] #student-avisos .mensagem-situacao{background:#1b2c3c;color:#b6c6d6}
+html[data-theme=dark] #student-avisos .mensagens-paginacao button{background:#13263a;border-color:#2b4157;color:#82c4fa}
+#student-avisos .mensagem-item{grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:4px}
+#student-avisos .mensagem-item>.mensagem-topo,#student-avisos .mensagem-item>:nth-child(n+4){grid-column:1/-1}
+#student-avisos .mensagem-item>:nth-child(2),#student-avisos .mensagem-item>:nth-child(3){font-size:12px;color:#6b7b8b}
+#student-avisos .mensagem-item>:nth-child(3)::before{content:"·";margin-right:10px}
+#student-avisos .mensagem-item>:nth-child(n+4){color:var(--sipa-texto-neutro)}
+/* 17/11/2026 (pedido do usuário): a aula cancelada em cartão baixo: dados da aula numa linha corrida, sem o bloco do local,
+   e uma faixa com quem cancelou ("Cancelamento feito pela Recepção") e o motivo. */
+[data-sipa-aluno] .lessons-main .student-local-lesson.local-lesson-cancelada{gap:6px;padding:10px 14px;margin-top:8px}
+[data-sipa-aluno] .lessons-main .local-lesson-cancelada .local-lesson-heading h3{font-size:14px;line-height:1.35}
+[data-sipa-aluno] .lessons-main .local-lesson-cancelada .local-lesson-status{padding:2px 9px;font-size:11px}
+[data-sipa-aluno] .lessons-main .local-lesson-cancelada .local-lesson-fields{display:flex;flex-wrap:wrap;gap:2px 16px;padding:0;border-radius:0;background:none}
+[data-sipa-aluno] .local-lesson-cancelada .local-lesson-fields>div{display:flex;align-items:baseline;gap:4px;min-width:0}
+[data-sipa-aluno] .local-lesson-cancelada .local-lesson-fields dt{font-size:11px;letter-spacing:.02em;color:#6b7785}
+[data-sipa-aluno] .local-lesson-cancelada .local-lesson-fields dt::after{content:':'}
+[data-sipa-aluno] .local-lesson-cancelada .local-lesson-fields dd{margin:0;font-size:13px}
+[data-sipa-aluno] .lessons-main .local-lesson-cancelada .local-lesson-cancel-info{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;margin:0;padding:6px 10px;border-left:3px solid #c4505a;border-radius:6px;background:#fbf2f3;font-size:13px;line-height:1.45;color:#4a2b2f}
+[data-sipa-aluno] .local-lesson-cancel-info strong{font-weight:700;color:#9b2c36}
+[data-sipa-aluno] .local-lesson-cancel-info span{min-width:0;overflow-wrap:anywhere}
+[data-sipa-aluno] .local-lesson-cancelada .confirmed-lesson-actions{padding-top:0;border-top:0}
+[data-sipa-aluno] .local-lesson-cancelada .local-lesson-history summary{min-height:28px;font-size:12px}
+@media(pointer:coarse){[data-sipa-aluno] .local-lesson-cancelada .local-lesson-history summary{min-height:36px}}
+/* 17/11/2026 (pedido do usuário): a confirmada cujo horário já começou ("Em andamento" ou "Aguardando registro de
+   presença") ganha um selo neutro, diferente do azul da confirmada. */
+[data-sipa-aluno] [data-horario-passou] .local-lesson-status{background:#eef1f5;color:#44546a}
+/* 17/11/2026 (pedido do usuário): em "Aulas realizadas e faltas", presente em verde e falta em vermelho. */
+[data-sipa-aluno] [data-status='5'] .local-lesson-status{background:#e3f4e9;color:#1f7a45;border:1px solid #b8e0c6}
+[data-sipa-aluno] [data-status='6'] .local-lesson-status{background:#fdecea;color:#b42318;border:1px solid #f3c1bb}
+[data-sipa-aluno] .lessons-main .student-local-lesson[data-status='5']{border-left:4px solid #1f8a4c}
+[data-sipa-aluno] .lessons-main .student-local-lesson[data-status='6']{border-left:4px solid #b42318}
+[data-sipa-aluno] .lessons-main .local-lesson-falta-info{margin:0;padding:6px 10px;border-radius:6px;background:#fdf1f0;color:#7a1d16;font-size:13px;line-height:1.45}
+[data-sipa-aluno] .local-lesson-falta-info strong{color:#b42318}
+/* 17/11/2026 (pedido do usuário, 2ª vez): TODOS os cartões de Minhas aulas baixos, como o da cancelada: dados numa linha
+   corrida, o local numa linha só e "Detalhes e histórico" com o "Cancelar aula" na mesma linha, sem borda no rodapé. */
+[data-sipa-aluno] .lessons-main .student-local-lesson.confirmed-lesson{gap:6px;padding:10px 14px;margin-top:8px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .local-lesson-heading h3{font-size:14px;line-height:1.35}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .local-lesson-status{padding:2px 9px;font-size:11px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .local-lesson-fields{display:flex;flex-wrap:wrap;gap:2px 16px;padding:0;border-radius:0;background:none}
+[data-sipa-aluno] .confirmed-lesson .local-lesson-fields>div{display:flex;align-items:baseline;gap:4px;min-width:0}
+[data-sipa-aluno] .confirmed-lesson .local-lesson-fields dt{font-size:11px;letter-spacing:.02em;color:#6b7785}
+[data-sipa-aluno] .confirmed-lesson .local-lesson-fields dt::after{content:':'}
+[data-sipa-aluno] .confirmed-lesson .local-lesson-fields dd{margin:0;font-size:13px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .confirmed-lesson-location,[data-sipa-aluno] .lessons-main .confirmed-lesson .confirmed-lesson-location p{font-size:12px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .confirmed-lesson-actions{align-items:center;padding-top:0;border-top:0}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .local-lesson-history summary{min-height:28px;font-size:12px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .confirmed-lesson-actions>.local-lesson-cancel{min-height:30px;padding:0 14px;font-size:12.5px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson .local-lesson-falta-info{padding:4px 10px;font-size:12.5px}
+@media(pointer:coarse){[data-sipa-aluno] .lessons-main .confirmed-lesson .local-lesson-history summary{min-height:36px}[data-sipa-aluno] .lessons-main .confirmed-lesson .confirmed-lesson-actions>.local-lesson-cancel{min-height:36px}}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .confirmed-lesson .local-lesson-fields{background:none!important}
+/* 17/11/2026 (pedido do usuário): o cartão do atestado (Atestados médicos) mais baixo, no padrão dos outros cartões. */
+[data-sipa-aluno] .lessons-main .student-local-lesson.medical-request-card{gap:6px;padding:10px 14px}
+[data-sipa-aluno] .medical-request-card .local-lesson-heading h3{font-size:14px;line-height:1.35}
+[data-sipa-aluno] .medical-request-card .local-lesson-heading>*:not(h3){font-size:11.5px}
+[data-sipa-aluno] .lessons-main .medical-request-card>.local-lesson-fields{display:flex;flex-wrap:wrap;gap:2px 16px;padding:0;border-radius:0;background:none}
+[data-sipa-aluno] .medical-request-card .local-lesson-fields>div{display:flex;align-items:baseline;gap:4px;min-width:0}
+[data-sipa-aluno] .medical-request-card .local-lesson-fields dt{font-size:11px;letter-spacing:.02em;color:#6b7785}
+[data-sipa-aluno] .medical-request-card .local-lesson-fields dt::after{content:':'}
+[data-sipa-aluno] .medical-request-card .local-lesson-fields dd{margin:0;font-size:13px}
+[data-sipa-aluno] .medical-request-card .medical-request-document{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0;font-size:12px}
+[data-sipa-aluno] .medical-request-card .medical-request-document button{min-height:28px;padding:0 12px;font-size:12px}
+[data-sipa-aluno] .medical-request-card .medical-request-observations,[data-sipa-aluno] .medical-request-card .medical-request-credit{margin:0;font-size:12.5px;line-height:1.45}
+[data-sipa-aluno] .medical-request-card .medical-request-progress{display:flex;flex-wrap:wrap;gap:4px 14px;margin:2px 0 0;padding:6px 0 0;border-top:1px solid #e6eef6}
+[data-sipa-aluno] .medical-request-card .medical-request-progress li{display:flex;align-items:baseline;gap:5px;flex:0 1 auto;min-width:0;margin:0;padding:0 0 0 8px;font-size:11.5px;line-height:1.4}
+[data-sipa-aluno] .medical-request-card .medical-request-progress li strong{font-size:11.5px}
+[data-sipa-aluno] .medical-request-card .medical-request-progress li span{font-size:11px;color:#6b7785}
+[data-sipa-aluno] .medical-request-card .medical-request-progress li span::before{content:'· '}
+@media(pointer:coarse){[data-sipa-aluno] .medical-request-card .medical-request-document button{min-height:36px}}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .medical-request-card>.local-lesson-fields{background:none!important}
+html[data-sipa-theme=aluno][data-theme=dark] .medical-request-card .medical-request-progress{border-top-color:#2b4560}
+/* 17/11/2026 (pedido do usuário): a faixa da aula com atestado pelo resultado (verde aprovado, azul em análise, vermelho
+   só recusado) e o selo no mesmo tom; o vermelho de cancelamento parecia erro no atestado. */
+[data-sipa-aluno] .lessons-main .local-lesson-cancelada .local-lesson-atestado-info.aprovado{border-left-color:#1f8a4c;background:#ecf8f0;color:#1d4d33}
+[data-sipa-aluno] .local-lesson-atestado-info.aprovado strong{color:#1f7a45}
+[data-sipa-aluno] .lessons-main .local-lesson-cancelada .local-lesson-atestado-info.analise{border-left-color:#1769aa;background:#eef5fc;color:#1d3a55}
+[data-sipa-aluno] .local-lesson-atestado-info.analise strong{color:#12578f}
+[data-sipa-aluno] [data-atestado='aprovado'] .local-lesson-status{background:#e3f4e9;color:#1f7a45;border:1px solid #b8e0c6}
+[data-sipa-aluno] [data-atestado='analise'] .local-lesson-status{background:#eaf3fb;color:#12578f;border:1px solid #c9dbeb}
+[data-sipa-aluno] [data-atestado='recusado'] .local-lesson-status{background:#fdecea;color:#b42318;border:1px solid #f3c1bb}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .local-lesson-cancelada .local-lesson-atestado-info.aprovado{background:#173a27!important;border-left-color:#5bc489!important;color:#d3f0de!important}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .local-lesson-cancelada .local-lesson-atestado-info.analise{background:#1b3248!important;border-left-color:#6fb6f2!important;color:#d6e8f8!important}
+html[data-sipa-theme=aluno][data-theme=dark] [data-atestado] .local-lesson-status{background:#223f59!important;color:#cfe6fa!important}
+/* 17/11/2026 (pedido do usuário): o cartão único do atestado (aula, resultado, acompanhamento e documento). */
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;margin:0;padding:7px 10px;border-left:3px solid #1769aa;border-radius:6px;font-size:13px;line-height:1.45}
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info.aprovado{border-left-color:#1f8a4c;background:#ecf8f0;color:#1d4d33}
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info.aprovado strong{color:#1f7a45}
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info.analise{border-left-color:#1769aa;background:#eef5fc;color:#1d3a55}
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info.analise strong{color:#12578f}
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info.recusado{border-left-color:#b42318;background:#fbf2f3;color:#4a2b2f}
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info.recusado strong{color:#9b2c36}
+[data-sipa-aluno] .medical-request-unico .medical-request-document{padding-top:6px;border-top:1px solid #e6eef6;color:#5a6c7e}
+[data-sipa-aluno] .medical-request-unico .medical-request-enviado{white-space:nowrap}
+[data-sipa-aluno] .medical-request-unico .medical-request-document>span:nth-child(2){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-sipa-aluno] .medical-request-unico .medical-request-observations{color:#5a6c7e}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .medical-request-unico .local-lesson-atestado-info.aprovado{background:#173a27!important;color:#d3f0de!important}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .medical-request-unico .local-lesson-atestado-info.analise{background:#1b3248!important;color:#d6e8f8!important}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .medical-request-unico .local-lesson-atestado-info.recusado{background:#3a2b31!important;color:#ecd9dc!important}
+html[data-sipa-theme=aluno][data-theme=dark] .medical-request-unico .medical-request-document{border-top-color:#2b4560}
+/* 17/11/2026 (pedido do usuário): mais respiro entre as partes do cartão único do atestado. */
+[data-sipa-aluno] .lessons-main .student-local-lesson.medical-request-card.medical-request-unico{gap:12px;padding:16px 20px}
+[data-sipa-aluno] .lessons-main .medical-request-unico>.local-lesson-fields{gap:6px 24px}
+[data-sipa-aluno] .lessons-main .medical-request-unico .local-lesson-atestado-info{padding:10px 14px}
+[data-sipa-aluno] .medical-request-unico .medical-request-progress{gap:6px 18px;padding:10px 0 0}
+[data-sipa-aluno] .medical-request-unico .medical-request-document{padding-top:10px}
+[data-sipa-aluno] .medical-request-unico .medical-request-observations{margin-top:-4px}
+/* 17/11/2026: Interesses e Atestados médicos no mesmo cartão das outras abas (antes ficavam soltos no fundo). */
+.lessons-main :is(.student-interests,.student-medical-requests){padding:20px 22px;border:1px solid #d5e2ed;border-radius:12px;background:#f7fafd;box-shadow:0 5px 18px rgba(18,59,99,.05)}
+.lessons-main :is(.student-interests,.student-medical-requests)[hidden]{display:none}
+.lessons-main :is(.student-interests,.student-medical-requests)>h2{margin-top:0}
+html[data-theme=dark] .lessons-main :is(.student-interests,.student-medical-requests){background:#13263a;border-color:#2b4157;box-shadow:none}
+
+/* 18/11/2026: número de novidades nas abas (avisos não lidos e resultado de atestado), como o do menu. */
+.local-lesson-tabs .aba-novidade{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-width:20px;height:20px;padding:0 6px;margin-left:7px;border-radius:10px;background:#137c43;color:#fff;font-size:12px;font-weight:700;line-height:1;vertical-align:middle}
+.local-lesson-tabs .aba-novidade[hidden]{display:none}
+/* 18/11/2026: outras aulas abonadas pelo atestado de mais dias. */
+.medical-request-abonadas{margin:10px 0 4px;padding:10px 14px;border:1px solid #cfe9da;border-radius:10px;background:#f3fbf6}
+.medical-request-abonadas strong{display:block;margin-bottom:6px;color:#137c43;font-size:14px}
+.medical-request-abonadas ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+[data-theme="dark"] .medical-request-abonadas{background:rgba(19,124,67,.14);border-color:rgba(19,124,67,.45)}
+[data-theme="dark"] .medical-request-abonadas strong{color:#6fd39b}

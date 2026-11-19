@@ -1,10 +1,10 @@
-.mensagens-lista{display:grid;gap:12px;max-width:100%;min-width:0}.mensagem-item{display:grid;gap:8px;text-align:left;width:100%;padding:16px;border:1px solid var(--profile-border,#b9c8d7);border-radius:10px;background:var(--profile-card,#fff);color:var(--sipa-texto-neutro,#000);font:inherit;font-size:14px;line-height:1.5;cursor:pointer;overflow-wrap:anywhere}.mensagem-topo{display:flex;justify-content:space-between;gap:12px;align-items:center}.mensagem-situacao{font-size:12px;white-space:nowrap}.mensagem-item:focus-visible{outline:2px solid #1769ab;outline-offset:2px}.mensagem-dialog{width:min(680px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:20px;border:1px solid var(--profile-border,#b9c8d7);border-radius:12px;background:var(--profile-card,#fff);color:var(--sipa-texto-neutro,#000)}.mensagem-dialog[open]{display:flex;flex-direction:column;gap:12px}.mensagem-dialog::backdrop{background:rgb(8 20 36 / 55%);backdrop-filter:blur(4px)}.mensagem-conteudo{overflow:auto;min-height:0}.mensagem-texto{white-space:pre-wrap;line-height:1.7;overflow-wrap:break-word}.mensagem-dialog footer{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.mensagem-dialog button{padding:10px 16px;border:1px solid #1769ab;border-radius:8px;color:var(--sipa-texto-neutro,#000);background:var(--profile-card,#fff);font:inherit;cursor:pointer}.mensagem-dialog button:last-child{background:#1769ab;color:#fff}.mensagem-dialog h2{margin:0;font-size:21px}html[data-theme=dark] .mensagem-item,html[data-theme=dark] .mensagem-dialog,html[data-theme=dark] .mensagem-dialog button{background:#172b40;color:#f4f7fb;border-color:#667c93}html[data-theme=dark] .mensagem-dialog button:last-child{background:#1769ab}#mensagens-menu{display:none}@media(max-width:900px){#mensagens-menu{display:inline-flex}.mensagem-topo{align-items:flex-start;flex-wrap:wrap}}
+.mensagens-lista{display:grid;gap:12px;max-width:100%;min-width:0}.mensagem-item{display:grid;gap:8px;text-align:left;width:100%;padding:16px;border:1px solid var(--profile-border,#b9c8d7);border-radius:10px;background:var(--profile-card,#fff);color:var(--sipa-texto-neutro,#000);font:inherit;font-size:14px;line-height:1.5;cursor:pointer;overflow-wrap:anywhere}.mensagem-topo{display:flex;justify-content:space-between;gap:12px;align-items:center}.mensagem-situacao{font-size:12px;white-space:nowrap}.mensagem-item:focus-visible{outline:2px solid #1769ab;outline-offset:2px}.mensagem-dialog{width:min(560px,calc(100vw - 32px));max-height:min(85dvh,calc(100dvh - 32px));padding:20px;border:1px solid var(--profile-border,#b9c8d7);border-radius:16px;box-shadow:0 18px 65px #123f6830;background:var(--profile-card,#fff);color:var(--sipa-texto-neutro,#000)}.mensagem-dialog[open]{display:flex;flex-direction:column;gap:12px}.mensagem-dialog::backdrop{background:#102f4c66;backdrop-filter:blur(4px)}.mensagem-conteudo{overflow:auto;min-height:0;padding:2px;scrollbar-width:thin}.mensagem-texto{white-space:pre-wrap;line-height:1.7;overflow-wrap:break-word}.mensagem-dialog footer{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.mensagem-dialog button{padding:10px 16px;border:1px solid #c8d9e8;border-radius:8px;color:#12578f;background:var(--profile-card,#fff);font:inherit;font-weight:600;cursor:pointer}.mensagem-dialog footer button:last-child{background:#1769ab;border-color:#1769ab;color:#fff}.mensagem-dialog h2{margin:0;font-size:21px}html[data-theme=dark] .mensagem-item,html[data-theme=dark] .mensagem-dialog,html[data-theme=dark] .mensagem-dialog button{background:#172b40;color:#f4f7fb;border-color:#667c93}html[data-theme=dark] .mensagem-dialog footer button:last-child{background:#1769ab;border-color:#1769ab}#mensagens-menu{display:none}@media(max-width:900px){#mensagens-menu{display:inline-flex}.mensagem-topo{align-items:flex-start;flex-wrap:wrap}}
 .mensagem-item[data-nao-lida=true]{border-left:3px solid #1769ab;background:#f0f6fc}
 .mensagem-item[data-nao-lida=true] .mensagem-situacao{font-weight:700;color:#1769ab}
 html[data-theme=dark] .mensagem-item[data-nao-lida=true]{background:#1d344b;border-left-color:#7dbbf0}
 html[data-theme=dark] .mensagem-item[data-nao-lida=true] .mensagem-situacao{color:#a3d1fa}
 /* Abas "Avisos" e "Conversa com a Recepção": sublinhadas, sem cor de destaque além do azul do SIPA. */
-.mensagens-abas{display:flex;gap:4px;margin:0 0 16px;border-bottom:1px solid var(--profile-border,#b9c8d7);overflow-x:auto}
+.mensagens-abas{display:flex;gap:4px;margin:0 0 16px;border-bottom:1px solid var(--profile-border,#b9c8d7);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}.mensagens-abas::-webkit-scrollbar{display:none}
 .mensagens-abas[hidden]{display:none}
 .mensagens-abas [role=tab]{display:inline-flex;gap:8px;align-items:center;padding:10px 14px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--sipa-texto-neutro,#000);font:inherit;font-size:14px;cursor:pointer;white-space:nowrap}
 .mensagens-abas [role=tab][aria-selected=true]{border-bottom-color:#1769ab;font-weight:600}
@@ -35,11 +35,71 @@ html[data-theme=dark] .conversa-item{background:#1d3044;border-color:#4d6a86;col
 html[data-theme=dark] .conversa-erro{color:#f3a6a6}
 @media(max-width:600px){.conversa-item{max-width:90%}.mensagens-abas [role=tab]{padding:10px}}
 
-.oferta-acoes{display:grid;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--profile-border,#b9c8d7)}.oferta-acoes>div{display:grid;gap:12px}.oferta-acoes label{display:grid;gap:8px}.oferta-acoes select{max-width:100%;padding:10px;font:inherit;background:var(--profile-card,#fff);color:inherit;border:1px solid var(--profile-border,#b9c8d7);border-radius:8px}.oferta-acoes button{padding:10px 14px;min-height:44px;font:inherit;border-radius:8px;border:1px solid #1769ab;background:#1769ab;color:#fff;cursor:pointer}.oferta-acoes button:disabled{opacity:.6;cursor:default}
-/* Etapas e confirmação da oferta: sem repetir o conteúdo da mensagem. */
-.oferta-acoes .oferta-voltar{background:transparent;color:var(--sipa-texto-neutro,#17456b);border-color:var(--profile-border,#b9c8d7)}
-.mensagem-dialog .mensagem-conteudo>[hidden]{display:none!important}
-.oferta-confirmacao{border:2px solid #22834d!important;text-align:center}.oferta-confirmacao h2{color:#167344}.oferta-confirmacao-icone{display:grid;place-items:center;width:52px;height:52px;margin:0 auto;background:#e6f6ed;color:#167344;border-radius:50%;font-size:30px;font-weight:700}.oferta-confirmacao>p{line-height:1.7;margin:4px 0 16px}.oferta-confirmacao>button{background:#167344!important;border-color:#167344!important;color:#fff!important}
+/* Só o conteúdo rola: o título e os botões do rodapé ficam sempre à vista. */
+html body[data-sipa-escala] .mensagem-dialog[open]{overflow:hidden}
+.mensagem-dialog h2:focus{outline:none}.mensagem-dialog [hidden]{display:none!important}
+.mensagem-dialog button:not(:disabled):hover{background:#edf5fc}.mensagem-dialog footer button:last-child:not(:disabled):hover{background:#125a94;border-color:#125a94}
+.mensagem-dialog button:disabled{opacity:.6;cursor:default}.mensagem-dialog :is(button,input):focus-visible{outline:3px solid #2388d9;outline-offset:2px}
+.mensagem-dialog>[role=alert]{margin:0;color:#a12525;font-size:14px}.mensagem-dialog>[role=alert]:empty{display:none}
+.mensagem-origem{margin:0 0 8px;font-size:13px;opacity:.8}.mensagem-conteudo .mensagem-texto{margin:0}
+/* Oferta de vaga: o horário em destaque, as ações em cartões e a confirmação no rodapé. */
+.oferta-acoes{display:grid;gap:14px;margin-top:14px}.oferta-acoes:first-child{margin-top:0}.oferta-etapa{display:grid;gap:12px}
+.oferta-vaga{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:12px 14px;border:1px solid #c8dcee;border-radius:10px;background:#edf5fc}
+.oferta-vaga span{grid-column:1;font-size:12px}.oferta-vaga strong{grid-column:1;font-size:18px;line-height:1.3}
+.oferta-vaga em{grid-column:2;grid-row:1/3;padding:4px 10px;border-radius:999px;background:#e6f6ed;color:#167344;font-size:12px;font-style:normal;font-weight:600;white-space:nowrap}
+.oferta-vaga[data-disponivel=false] em{background:#fbeaea;color:#a12525}
+.oferta-pergunta{margin:0;font-size:14px;font-weight:600}.oferta-opcoes{display:grid;gap:8px}
+.mensagem-dialog .oferta-opcao{position:relative;display:grid;gap:2px;width:100%;border-radius:10px;color:var(--sipa-texto-neutro,#000);text-align:left;font-weight:400}html body[data-sipa-escala] .mensagem-dialog .oferta-opcao{padding:12px 36px 12px 14px}
+.oferta-opcao strong{color:#12578f;font-size:14px}.oferta-opcao span{font-size:13px;line-height:1.4}
+.oferta-opcao::after{content:"›";position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#1769ab;font-size:22px;line-height:1}.oferta-opcao:disabled::after{content:none}
+.mensagem-dialog .oferta-opcao:not(:disabled):hover{border-color:#1769ab}
+.oferta-nota{display:grid;gap:4px;margin:0;font-size:14px;line-height:1.5}
+.oferta-aulas{display:grid;gap:8px;min-width:0;margin:0;padding:0;border:0}.oferta-aulas legend{margin-bottom:8px;padding:0;font-size:14px;font-weight:600}
+.oferta-aula{display:flex;gap:10px;align-items:center;padding:12px 14px;border:1px solid #c8d9e8;border-radius:10px;font-size:14px;cursor:pointer}.oferta-aula:hover{background:#edf5fc}.oferta-aula:has(input:checked){border-color:#1769ab;background:#edf5fc}.oferta-aula input{width:18px;height:18px;margin:0;accent-color:#1769ab}
+.mensagem-dialog[data-etapa=inicio] footer button:last-child{background:var(--profile-card,#fff);border-color:#c8d9e8;color:#12578f}.mensagem-dialog[data-etapa=inicio] footer button:last-child:not(:disabled):hover{background:#edf5fc;border-color:#c8d9e8}
+.mensagem-dialog[data-etapa=descartar] footer button:last-child{background:#b4232d;border-color:#b4232d}.mensagem-dialog[data-etapa=descartar] footer button:last-child:not(:disabled):hover{background:#941c25;border-color:#941c25}
+.oferta-final{padding:12px 14px;border:1px solid #c8dcee;border-radius:10px;background:#edf5fc;line-height:1.5}.oferta-final p{margin:0}
+.oferta-final.oferta-atendida{border-color:#a9dcc0;background:#e6f6ed;color:#167344;font-weight:600}
+.mensagem-dialog.oferta-confirmacao{width:min(440px,calc(100vw - 32px));align-items:center;border:1px solid var(--profile-border,#b9c8d7);text-align:center}.oferta-confirmacao h2{color:#167344}
+.oferta-confirmacao-icone{display:grid;place-items:center;width:52px;height:52px;background:#e6f6ed;color:#167344;border-radius:50%;font-size:30px;font-weight:700}
+.oferta-confirmacao>p{margin:0;line-height:1.6}.mensagem-dialog.oferta-confirmacao>button{width:100%;margin-top:4px;background:#1769ab;border-color:#1769ab;color:#fff}.mensagem-dialog.oferta-confirmacao>button:hover{background:#125a94}
+html[data-theme=dark] .mensagem-dialog button:not(:disabled):hover,html[data-theme=dark] .oferta-aula:hover{background:#20384f}
+html[data-theme=dark] .mensagem-dialog footer button:last-child:not(:disabled):hover{background:#125a94}
+html[data-theme=dark] .mensagem-dialog>[role=alert]{color:#f3a6a6}
+html[data-theme=dark] :is(.oferta-vaga,.oferta-final){background:#1d344b;border-color:#4d6a86}
+html[data-theme=dark] .oferta-vaga em{background:#163e2c;color:#74dba1}html[data-theme=dark] .oferta-vaga[data-disponivel=false] em{background:#4a2428;color:#f3a6a6}
+html[data-theme=dark] .oferta-opcao strong{color:#a3d1fa}html[data-theme=dark] .oferta-opcao::after{color:#7dbbf0}
+html[data-theme=dark] .oferta-aula{border-color:#667c93}html[data-theme=dark] .oferta-aula:has(input:checked){border-color:#7dbbf0;background:#1d344b}
+html[data-theme=dark] .mensagem-dialog[data-etapa=inicio] footer button:last-child{background:#172b40;border-color:#667c93;color:#f4f7fb}html[data-theme=dark] .mensagem-dialog[data-etapa=inicio] footer button:last-child:not(:disabled):hover{background:#20384f}
+html[data-theme=dark] .mensagem-dialog[data-etapa=descartar] footer button:last-child{background:#b4232d;border-color:#b4232d}
+html[data-theme=dark] .oferta-final.oferta-atendida{background:#163e2c;border-color:#2f7a55;color:#74dba1}
 html[data-theme=dark] .oferta-confirmacao h2{color:#74dba1}html[data-theme=dark] .oferta-confirmacao-icone{background:#163e2c;color:#74dba1}
-.oferta-atendida{color:#167344;font-weight:600}html[data-theme=dark] .oferta-atendida{color:#74dba1}
-.mensagens-filtros{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:16px 0}.mensagens-filtros label{display:grid;gap:6px;font-size:13px}.mensagens-filtros input,.mensagens-filtros button,.mensagens-paginacao button{padding:10px 14px;min-height:42px;border:1px solid #b7cee2;border-radius:10px;background:var(--profile-card,#fff);color:inherit;font:inherit}.mensagens-filtros>p{width:100%;margin:0;color:#b4232d}.mensagens-filtros>p:empty{display:none}.mensagens-paginacao{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:20px 0;font-size:13px}.mensagens-paginacao button:disabled{opacity:.45;cursor:default}html[data-theme=dark] :is(.mensagens-filtros input,.mensagens-filtros button,.mensagens-paginacao button){background:#20384f;color:#f4f7fb;border-color:#667c93}
+html[data-theme=dark] .mensagem-dialog.oferta-confirmacao>button{background:#1769ab;border-color:#1769ab;color:#fff}
+.mensagens-paginacao button{padding:10px 14px;min-height:42px;border:1px solid #b7cee2;border-radius:10px;background:var(--profile-card,#fff);color:inherit;font:inherit}
+.mensagens-paginacao{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:20px 0;font-size:13px}.mensagens-paginacao button:disabled{opacity:.45;cursor:default}
+html[data-theme=dark] .mensagens-paginacao button{background:#20384f;color:#f4f7fb;border-color:#667c93}
+
+/* 09/11/2026: Mensagens do aluno = só o chat, ocupando a página. */
+.conversa-recepcao.chat-wa{gap:0;max-width:none;height:calc(100vh - 200px);min-height:520px;margin-top:4px}
+.chat-wa .chat-wa-topo h2{margin:0;font-size:18px;line-height:1.3}
+.chat-wa input.chat-wa-busca{width:auto;height:38px;margin:0 14px 10px;padding:0 14px;border-radius:19px;font-size:13px;box-sizing:border-box}
+.chat-wa .chat-wa-filtros{padding:0 14px 12px}
+/* 09/11/2026: Mensagens do aluno igual à Recepção — sem o título grande; o chat sobe e ocupa a altura da tela. */
+main:has(#conversa-recepcao.chat-wa) .profile-header{margin-bottom:12px;padding-bottom:0;border-bottom:0;min-height:0}
+main:has(#conversa-recepcao.chat-wa) .profile-header h1,main:has(#conversa-recepcao.chat-wa) .profile-header > div > p{display:none}
+main:has(#conversa-recepcao.chat-wa) #conversa-recepcao.chat-wa{height:calc(100vh - 110px);margin-top:0}
+
+/* 09/11/2026: na tela larga o cabeçalho da página some e o botão de tema fica dentro do cabeçalho da conversa, à direita. */
+@media (min-width:1025px){
+main:has(#conversa-recepcao.chat-wa) > header.profile-header{min-height:0;height:0;padding:0;margin:0 0 12px;border:0}
+main:has(#conversa-recepcao.chat-wa) > header .sipa-theme-toggle{top:22px;right:16px;width:36px;height:36px;min-height:36px;z-index:3;border-radius:10px}
+}
+/* 10/11/2026 (pente-fino: sem a linha solta acima do chat no celular). */
+main:has(#conversa-recepcao.chat-wa) > header.profile-header{border-bottom:0!important}
+
+/* 11/11/2026: bloco "Avisos e ofertas de horário" acima das conversas (só aparece quando há aviso). */
+.mensagens-avisos-titulo{margin:0 0 10px;font-size:1.05rem;font-weight:600;color:var(--sipa-texto,#10233f)}
+.mensagens-avisos-titulo~.mensagens-paginacao{margin-bottom:24px}
+
+/* 17/11/2026: a rolagem da conversa não passa para a página ao chegar no fim. */
+.conversa-lista{overscroll-behavior:contain}
