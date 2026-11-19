@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgIA | Confirmar e-mail</title>
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="shared/css/escala.css">
+    <style>
+        /* Mesmo layout da redefinir-senha.html: uma coluna só, centralizada. */
+        .redefinir-pagina { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px 16px; background: #eaf4fc; box-sizing: border-box; }
+        .redefinir-pagina .login-logo { color: #10233f; text-decoration: none; }
+        .redefinir-pagina .login-card { max-width: 480px; }
+        .redefinir-requisitos { display: grid; gap: 6px; margin: -4px 0 18px; padding: 0; list-style: none; font-size: 13px; color: #6a7f99; }
+        .redefinir-requisitos li { display: flex; align-items: center; gap: 8px; }
+        .redefinir-requisitos li::before { content: '\f111'; font: var(--fa-font-regular); font-size: 12px; }
+        .redefinir-requisitos li.ok { color: #1d6b3a; }
+        .redefinir-requisitos li.ok::before { content: '\f058'; font: var(--fa-font-solid); }
+        .confirmar-ajuda { margin: -6px 0 14px; font-size: 13px; color: #4c6278; }
+        .redefinir-sucesso { display: grid; justify-items: center; gap: 12px; padding: 8px 0 4px; text-align: center; }
+        .redefinir-sucesso i { font-size: 44px; color: #1d6b3a; }
+        .redefinir-sucesso h2 { margin: 0; }
+        .redefinir-sucesso p { margin: 0 0 8px; color: #4c6278; }
+        .redefinir-sucesso a { width: 100%; text-decoration: none; justify-content: center; }
+    </style>
+</head>
+<!-- 11/11/2026: página do link "Confirme seu e-mail" (ModelosDeEmail.LinkDeConfirmacao). Não existia: o link dava 404 e a
+     conta nova da equipe não conseguia entrar. Lê o token do #token=, pede a senha atual (a provisória, no primeiro
+     acesso) e, quando é o primeiro acesso, a senha nova; chama POST usuarios/confirmar-email. -->
+<body data-sipa-escala="login" class="login-page">
+<main class="redefinir-pagina">
+    <a href="login.html" class="login-logo" aria-label="AgIA, ir para o login">
+        <div class="login-logo-symbol">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M44 5h11L31 64H13Z" fill="currentColor" stroke="none"/><path d="M55 5l37 90H75L49 30Z" fill="#1fb6e8" stroke="none"/><path d="M6 95C14 72 34 56 70 50l1 8C42 63 26 76 22 95Z" fill="currentColor" stroke="none"/><path d="M15 91C22 76 36 65 60 58" fill="none" stroke="#1fb6e8" stroke-width="2.6" stroke-dasharray="6 5" stroke-linecap="round"/><path d="M40 71l10 11L86 38" fill="none" stroke="#1fb6e8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div><strong>Ag<em style="color:#1fb6e8;font-style:normal">IA</em></strong><span>GESTÃO INTELIGENTE<br>DE AGENDA</span></div>
+    </a>
+    <div class="login-card">
+        <div id="confirmar-painel" class="access-panel active">
+            <div class="login-header">
+                <span class="form-eyebrow">CONFIRMAR E-MAIL</span>
+                <h2>Confirme seu e-mail</h2>
+                <p>Informe a sua senha atual. No primeiro acesso, use a senha provisória e crie a sua senha pessoal.</p>
+            </div>
+            <div id="confirmar-mensagem" role="alert" aria-live="polite" class="form-message"></div>
+            <form id="confirmar-form" novalidate class="login-form">
+                <div class="form-field">
+                    <label for="senha-atual">Senha atual ou provisória</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="password" id="senha-atual" name="senha" required maxlength="128" autocomplete="current-password" placeholder="Digite a senha que você recebeu">
+                        <button type="button" class="password-toggle" data-mostrar="senha-atual" aria-label="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+                <p class="confirmar-ajuda">Primeiro acesso? Crie também a senha nova abaixo. Se você já tem senha própria, deixe em branco.</p>
+                <div class="form-field">
+                    <label for="nova-senha">Nova senha</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="nova-senha" name="novaSenha" maxlength="100" autocomplete="new-password" placeholder="Digite a nova senha" aria-describedby="confirmar-requisitos">
+                        <button type="button" class="password-toggle" data-mostrar="nova-senha" aria-label="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="confirmar-senha">Confirmar nova senha</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="confirmar-senha" name="confirmarSenha" maxlength="100" autocomplete="new-password" placeholder="Repita a nova senha">
+                        <button type="button" class="password-toggle" data-mostrar="confirmar-senha" aria-label="Mostrar senha" aria-pressed="false"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+                <ul id="confirmar-requisitos" class="redefinir-requisitos" aria-live="polite">
+                    <li data-requisito="tamanho">De 4 a 100 caracteres (letras, números ou símbolos)</li>
+                    <li data-requisito="iguais">As duas senhas iguais</li>
+                </ul>
+                <button type="submit" id="confirmar-enviar" class="primary-button">
+                    <span>Confirmar e-mail</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+        <div id="confirmar-sucesso" class="redefinir-sucesso" hidden>
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <h2>E-mail confirmado</h2>
+            <p>Agora é só entrar com o seu e-mail (ou CPF) e a sua senha.</p>
+            <a href="login.html" class="primary-button"><span>Ir para o login</span><i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </div>
+</main>
+<script type="module" src="js/confirmarEmail.js"></script>
+</body>
+</html>

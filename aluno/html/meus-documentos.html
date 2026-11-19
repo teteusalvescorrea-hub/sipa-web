@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meus documentos | AgIA</title>
+<script src="../../shared/js/tema.js"></script><script src="../js/tema-aluno.js"></script><script src="../js/sidebar-aluno.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"><link rel="stylesheet" href="../css/meu-perfil.css"><link rel="stylesheet" href="../../shared/css/sidebar.css"><link rel="stylesheet" href="../css/tema-aluno.css"><link rel="stylesheet" href="../css/meus-documentos.css">
+<link rel="stylesheet" href="../../shared/css/escala.css">
+<link rel="stylesheet" href="../css/responsivo-aluno.css">
+</head><body data-sipa-escala="aluno" data-sipa-aluno>
+<aside class="sipa-sidebar">
+
+    <!-- LOGO -->
+    <a href="dashboard.html" class="sipa-sidebar-logo">
+
+        <div class="sipa-sidebar-logo-symbol">
+
+            <svg
+                viewBox="0 0 100 100"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            ><path d="M44 5h11L31 64H13Z" fill="currentColor" stroke="none"/><path d="M55 5l37 90H75L49 30Z" fill="#1fb6e8" stroke="none"/><path d="M6 95C14 72 34 56 70 50l1 8C42 63 26 76 22 95Z" fill="currentColor" stroke="none"/><path d="M15 91C22 76 36 65 60 58" fill="none" stroke="#1fb6e8" stroke-width="2.6" stroke-dasharray="6 5" stroke-linecap="round"/><path d="M40 71l10 11L86 38" fill="none" stroke="#1fb6e8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+        </div>
+
+        <div class="sipa-sidebar-logo-text">
+
+            <strong>Ag<em style="color:#1fb6e8;font-style:normal">IA</em></strong>
+
+            <span>
+                GESTÃO INTELIGENTE
+                <br>
+                DE AGENDA
+            </span>
+
+        </div>
+
+    </a>
+
+
+    <!-- MENU -->
+    <nav class="sipa-sidebar-menu">
+
+        <span class="sipa-sidebar-title">
+            MENU
+        </span>
+
+
+        <!-- INÍCIO -->
+        <a
+            href="dashboard.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Início
+            </span>
+        </a>
+
+
+        <!-- AGENDAR AULA -->
+        <a
+            href="agendamento.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Agendar aula
+            </span>
+        </a>
+
+
+        <!-- MINHAS AULAS -->
+        <a
+            href="minhas-aulas.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Minhas aulas
+            </span>
+        </a>
+
+
+        <!-- MEU PROGRESSO -->
+        <a
+            href="meu-progresso.html"
+            class="sipa-sidebar-link"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu progresso
+            </span>
+        </a>
+
+
+        <!-- CONTA -->
+        <span class="sipa-sidebar-title account">
+            CONTA
+        </span>
+
+
+        <!-- MEU PERFIL -->
+        <a
+            href="meu-perfil.html"
+            class="sipa-sidebar-link active"
+        >
+            <span class="sipa-sidebar-icon" aria-hidden="true"></span>
+
+            <span>
+                Meu perfil
+            </span>
+        </a>
+
+    </nav>
+
+
+    <!-- RODAPÉ -->
+    <div class="sipa-sidebar-bottom">
+
+        <div class="sipa-sidebar-unit">
+
+            <span class="sipa-sidebar-status"></span>
+
+            <div class="sipa-sidebar-unit-text">
+
+                <strong>
+                    Ag<em style="color:#1fb6e8;font-style:normal">IA</em>
+                </strong>
+
+                <small>
+                    Atendimento disponível
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- SAIR -->
+        <button
+            type="button"
+            id="profile-logout"
+            class="sipa-sidebar-logout"
+        >
+
+            <span></span>
+
+            Sair da conta
+
+        </button>
+
+    </div>
+
+</aside>
+<main class="profile-main"><header class="profile-header"><button id="documentos-menu" class="student-menu-toggle" type="button" aria-expanded="false">Menu</button><div><span class="profile-eyebrow">MEUS DOCUMENTOS</span><h1>Meus documentos</h1><p>Contrato, regras de roupas e calçados, LADV, provas e tudo o que a Recepção anexar para você.</p></div></header>
+<section class="meus-documentos" id="meus-documentos" aria-live="polite"><p class="docs-carregando">Carregando seus documentos…</p></section>
+<footer class="profile-footer">AgIA — Gestão Inteligente de Agenda</footer></main>
+<script type="module" src="../js/meus-documentos.js"></script></body></html>

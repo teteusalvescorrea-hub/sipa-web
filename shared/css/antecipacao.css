@@ -1,27 +1,137 @@
-.sipa-antecipacao{min-width:0;color:var(--sipa-texto-neutro)}
+/* Antecipação de aulas (Recepção, Gerência e Master). 10/11/2026: visual sóbrio — cinza, branco e o azul do sistema só no
+   que está selecionado; vermelho só para o saldo zerado e verde só para "vaga livre". */
+.sipa-antecipacao{--ant-forte:#132132;--ant-suave:#5d6b7a;--ant-linha:#dde3ea;--ant-fundo:#f6f8fa;--ant-acento:#1769aa;--ant-acento-fundo:#eef5fb;--ant-alerta:#b42318;--ant-ok:#17713f;
+ min-width:0;color:var(--sipa-texto-neutro);display:grid;gap:16px}
+html[data-theme=dark] .sipa-antecipacao{--ant-forte:#e6edf5;--ant-suave:#9fb0c2;--ant-linha:#2e4053;--ant-fundo:#1a2a3b;--ant-acento:#6cb2ec;--ant-acento-fundo:#17314b;--ant-alerta:#f19a92;--ant-ok:#7fd6a2}
+.sipa-antecipacao>*,.ant-conteudo,.ant-painel{min-width:0}
 .sipa-antecipacao .adm-nota{font-size:13px;line-height:1.6;margin:8px 0 12px}
+.sipa-antecipacao svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ---- Indicadores no topo (também são as abas) */
+.ant-resumo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ant-aba{position:relative;display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icone topo" "icone desc";column-gap:14px;row-gap:2px;align-items:center;text-align:left;padding:15px 18px;min-width:0;font:inherit;color:inherit;cursor:pointer;background:var(--progress-card,#fff);border:1px solid var(--ant-linha);border-radius:12px;box-shadow:0 1px 2px #10233608;transition:border-color .15s,box-shadow .15s}
+.ant-aba:hover{border-color:#b7c4d1;box-shadow:0 2px 8px #10233612}
+html[data-theme=dark] .ant-aba:hover{border-color:#47607a}
+.ant-aba:focus-visible{outline:3px solid #62a9e5;outline-offset:3px}
+.ant-aba[aria-selected=true]{border-color:var(--ant-acento);box-shadow:inset 0 -3px 0 var(--ant-acento),0 2px 8px #10233612}
+.ant-aba-icone{grid-area:icone;display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:var(--ant-fundo);color:var(--ant-suave);border:1px solid var(--ant-linha)}
+.ant-aba[aria-selected=true] .ant-aba-icone{color:var(--ant-acento);background:var(--ant-acento-fundo);border-color:transparent}
+.ant-aba-topo{grid-area:topo;display:flex;align-items:baseline;gap:9px;min-width:0}
+.ant-aba-numero{font-size:24px;line-height:1.15;font-weight:700;color:var(--ant-forte);font-variant-numeric:tabular-nums}
+.ant-aba-numero.zero{color:var(--ant-suave);font-weight:600}
+.ant-aba-titulo{font-size:14px;font-weight:600;line-height:1.3;color:var(--ant-forte)}
+.ant-aba-desc{grid-area:desc;font-size:12.5px;line-height:1.45;color:var(--ant-suave)}
+
+/* ---- Painel da aba aberta */
+.ant-painel[hidden]{display:none!important}
+.ant-painel-titulo{margin:0 0 6px;font-size:16px!important;color:var(--ant-forte)}
+.ant-dica{display:flex;gap:8px;align-items:flex-start;margin:0 0 16px;color:var(--ant-suave)}
+.ant-dica p{margin:0;font-size:13.5px;line-height:1.55}
+.ant-dica svg{width:17px;height:17px;margin-top:2px}
+
+/* ---- Filtros: um bloco só, dentro da aba aberta, que vale para as três */
+.ant-filtros-card{padding:12px 14px;margin:0 0 16px;background:var(--ant-fundo);border:1px solid var(--ant-linha);border-radius:10px}
 /* Filtros numa linha, como na tela de alunos: busca, selects e período que aplicam ao mudar, e "Limpar filtros" no fim. */
-.ant-filtros{display:grid;grid-template-columns:minmax(160px,1.4fr) repeat(4,minmax(110px,1fr)) auto;gap:10px;align-items:end;margin-bottom:12px}
+.ant-filtros{display:grid;grid-template-columns:minmax(160px,1.4fr) repeat(4,minmax(110px,1fr)) auto;gap:10px;align-items:end;margin:0}
 .ant-filtro{display:grid;gap:6px;min-width:0;font-size:13px}.ant-filtro :is(input,select){min-width:0;width:100%;font-size:14px}
 .ant-filtro-acoes{display:flex;align-items:flex-end}.ant-filtro-acoes button{min-height:32px;padding:6px 10px;font-size:11px}
-.ant-retorno{line-height:1.6;margin:0}.ant-retorno:empty{display:none}
-/* Tabela agrupada por horário liberado: a linha de cabeçalho do grupo traz data, hora, unidade e categoria. */
-.ant-tabela{width:100%}.ant-grupo-cabecalho th{padding:10px 9px;text-align:left;font-weight:400;background:var(--op-soft,#f3f6f9);border-top:1px solid var(--op-line,#c6ccd2)}.ant-grupo-cabecalho strong{font-weight:600}
-.ant-situacao{display:inline-block;padding:3px 8px;border-radius:6px;font-size:12px;background:#edf5fc;color:#12578f}.ant-situacao[data-situacao=Contatado]{background:#f4f5f7;color:#424b55}
-html[data-theme=dark] .ant-grupo-cabecalho th{background:#1d3044}html[data-theme=dark] .ant-situacao{background:#1d3044;color:#cfe3f5}html[data-theme=dark] .ant-situacao[data-situacao=Contatado]{background:#2a3440;color:#d8dee5}
+.ant-retorno{line-height:1.6;margin:0 0 12px;padding:9px 12px;border-radius:8px;background:var(--ant-acento-fundo);color:var(--ant-forte);font-size:13.5px;border-left:3px solid var(--ant-acento)}.ant-retorno:empty{display:none}
+.ant-carregando{margin:8px 0;color:var(--ant-suave);font-size:14px}
+
+/* Texto de apoio: horário, categoria e unidade, situação do horário */
+.ant-horario{font-size:14px;font-weight:600;color:var(--ant-forte)}
+.ant-meta{font-size:13px;color:var(--ant-suave)}
+.ant-estado{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ant-suave)}
+.ant-estado::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ant-estado.livre{color:var(--ant-ok)}
+.ant-avatar{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;border-radius:50%;background:var(--ant-fundo);color:var(--ant-suave);border:1px solid var(--ant-linha);font-weight:600;font-size:13px;letter-spacing:.3px}
+
+/* ---- 1. Pedidos para adiantar: cartões */
+.ant-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.ant-cartao{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:12px;background:var(--progress-card,#fff);border:1px solid var(--ant-linha);box-shadow:0 1px 2px #10233608}
+.ant-cartao-topo{display:flex;align-items:center;gap:12px;min-width:0}
+.ant-cartao-nome{display:grid;gap:2px;min-width:0;flex:1}
+.ant-cartao-nome strong{font-size:15px;line-height:1.3;color:var(--ant-forte);overflow-wrap:anywhere}
+.ant-cartao-nome span{font-size:12.5px;color:var(--ant-suave);overflow-wrap:anywhere}
+/* O nome do aluno abre a conversa no chat do SIPA (10/11/2026). */
+.sipa-antecipacao .ant-nome-link{all:unset;box-sizing:border-box;cursor:pointer;font-weight:600;color:var(--ant-forte);overflow-wrap:anywhere;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:color .15s,text-decoration-color .15s}
+.sipa-antecipacao .ant-nome-link:hover{color:var(--ant-acento);text-decoration-color:currentColor}
+.sipa-antecipacao .ant-nome-link:focus-visible{outline:3px solid #62a9e5;outline-offset:2px;border-radius:4px}
+.sipa-antecipacao .ant-cartao-nome .ant-nome-link{font-size:15px;line-height:1.3}
+.ant-tempo{flex-shrink:0;align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ant-suave);white-space:nowrap}
+.ant-tempo svg{width:14px;height:14px}
+.ant-dados{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:10px;margin:0;padding:10px 12px;background:var(--ant-fundo);border-radius:8px}
+.ant-dado{min-width:0}.ant-dado dt{font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ant-suave)}
+.ant-dado dd{margin:2px 0 0;font-size:13.5px;font-weight:600;color:var(--ant-forte)}
+.ant-dado.alerta dd{color:var(--ant-alerta)}
+.ant-cartao-acoes{margin-top:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.ant-cartao-acoes .op-button{display:inline-flex;align-items:center;gap:7px;border-radius:10px;min-height:36px;padding:7px 14px;text-decoration:none}
+.ant-cartao-acoes .op-button svg{width:16px;height:16px}
+.sipa-antecipacao .ant-botao-ok svg{stroke-width:2.4}
+.sipa-antecipacao .ant-botao-ok:disabled{opacity:.6}
+
+/* ---- Estado vazio */
+.ant-vazio{display:grid;justify-items:center;gap:6px;text-align:center;padding:28px 16px;border:1px dashed var(--ant-linha);border-radius:12px}
+.ant-vazio svg{width:26px;height:26px;padding:11px;box-sizing:content-box;border-radius:50%;background:var(--ant-fundo);color:var(--ant-suave);margin-bottom:4px}
+.ant-vazio strong{font-size:15px;color:var(--ant-forte)}
+.ant-vazio p{margin:0;max-width:440px;font-size:13.5px;line-height:1.55;color:var(--ant-suave)}
+
+/* ---- 2. Horários liberados: tabela agrupada por horário (o cabeçalho do grupo traz dia, hora, categoria, unidade e vagas) */
+.ant-tabela{width:100%}
+.ant-grupo-cabecalho th{display:table-cell;padding:11px 12px;text-align:left;font-weight:400;background:var(--ant-fundo);border-top:1px solid var(--ant-linha)}
+.ant-grupo-cabecalho .ant-meta{margin:0 14px 0 10px}
+.ant-situacao{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;background:var(--ant-fundo);color:var(--ant-forte);border:1px solid var(--ant-linha)}
+.ant-situacao[data-situacao=Contatado]{color:var(--ant-suave)}
 .ant-dialogo{width:min(560px,calc(100vw - 32px))}.ant-dialogo textarea{width:100%;box-sizing:border-box}
 .ant-aulas{display:grid;gap:8px;margin:12px 0;padding:10px 12px;border:1px solid var(--op-line,#c6ccd2);border-radius:8px}.ant-aulas legend{padding:0 4px;font-weight:600}.ant-aulas label{display:flex;gap:8px;align-items:center;font-size:14px}.ant-aulas input{width:18px;min-height:18px;margin:0;accent-color:#1769ab}.ant-aulas input:disabled+*,.ant-aulas label:has(input:disabled){opacity:.6}
-@media(max-width:1180px){.ant-filtros{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:760px){.ant-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.ant-filtros>.ant-filtro:first-child{grid-column:1/-1}}
-@media(max-width:700px){.ant-tabela thead{display:none}.ant-tabela,.ant-tabela tbody,.ant-tabela tr,.ant-tabela td,.ant-tabela th{display:block;width:auto}.ant-tabela tr:not(.ant-grupo-cabecalho){border:1px solid var(--op-line,#c6ccd2);border-radius:8px;padding:10px;margin:8px 0}.ant-tabela td{display:flex;gap:10px;padding:5px 0;border:0;min-width:0}.ant-tabela td::before{content:attr(data-rotulo) ':';font-weight:600;flex:0 0 110px}.ant-tabela td.op-demo-no-results::before{content:none}}
-
-
-
-.ant-acoes-lote{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:12px 0 18px}.ant-acoes-lote .op-button,.ant-tabela .op-button{border-radius:12px;transition:background-color .15s,border-color .15s,box-shadow .15s}.ant-acoes-lote .op-button:not(:disabled):hover{box-shadow:0 3px 10px #1769ab18}
-.sipa-antecipacao .ant-tabela input[type=checkbox]{appearance:none;-webkit-appearance:none;display:inline-block;vertical-align:middle;box-sizing:border-box;width:22px;height:22px;min-height:22px;margin:0;padding:0;flex-shrink:0;border:1.5px solid #9db8cf;border-radius:7px;background:var(--op-card,#fff);box-shadow:0 1px 3px #173c5a10;cursor:pointer;transition:background-color .15s,border-color .15s,box-shadow .15s}
-.sipa-antecipacao .ant-tabela input[type=checkbox]:checked{border-color:#1769ab;background:#1769ab url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m5 10 3 3 7-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px no-repeat}
+.ant-acoes-lote{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:0 0 14px}.ant-acoes-lote .op-button,.ant-tabela .op-button{border-radius:10px;transition:background-color .15s,border-color .15s,box-shadow .15s}
+.sipa-antecipacao .ant-tabela input[type=checkbox]{appearance:none;-webkit-appearance:none;display:inline-block;vertical-align:middle;box-sizing:border-box;width:20px;height:20px;min-height:20px;margin:0;padding:0;flex-shrink:0;border:1.5px solid #9aabbb;border-radius:5px;background:var(--op-card,#fff);cursor:pointer;transition:background-color .15s,border-color .15s,box-shadow .15s}
+.sipa-antecipacao .ant-tabela input[type=checkbox]:checked{border-color:#1769ab;background:#1769ab url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='m5 10 3 3 7-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat}
 .sipa-antecipacao .ant-tabela input[type=checkbox]:not(:disabled):hover{border-color:#1769ab;box-shadow:0 0 0 3px #1769ab18}.sipa-antecipacao .ant-tabela input[type=checkbox]:focus-visible{outline:3px solid #62a9e5;outline-offset:3px}.sipa-antecipacao .ant-tabela input[type=checkbox]:disabled{opacity:.45;cursor:default}.ant-tabela button{white-space:normal}
-html[data-theme=dark] .sipa-antecipacao .ant-tabela input[type=checkbox]:not(:checked){background:#20384f;border-color:#789ab8}
+html[data-theme=dark] .sipa-antecipacao .ant-tabela input[type=checkbox]:not(:checked){background:#20384f;border-color:#6f879e}
 @media(forced-colors:active){.sipa-antecipacao .ant-tabela input[type=checkbox]{appearance:auto}}
 .ant-acoes-lote[hidden]{display:none!important}
-.ant-envio-sucesso{width:min(480px,calc(100vw - 32px));border:2px solid #22834d!important;border-radius:16px!important;padding:24px!important}.ant-envio-sucesso .op-dialog-heading h2{color:#167344!important}.ant-envio-sucesso>p{line-height:1.6;margin:16px 0}.ant-envio-sucesso>.op-button{background:#167344!important;border-color:#167344!important;color:#fff!important}.ant-envio-icone{display:grid;place-items:center;width:48px;height:48px;background:#e6f6ed;color:#167344;border-radius:50%;font-size:28px;font-weight:700;margin-bottom:14px}html[data-theme=dark] .ant-envio-sucesso .op-dialog-heading h2{color:#74dba1!important}html[data-theme=dark] .ant-envio-icone{background:#163e2c;color:#74dba1}
+
+/* ---- 3. Aguardando vaga: um bloco por horário desejado */
+.ant-grupos-espera{display:grid;gap:12px}
+.ant-grupo-espera{border:1px solid var(--ant-linha);border-radius:12px;overflow:hidden;background:var(--progress-card,#fff)}
+.ant-grupo-espera>header{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:11px 16px;background:var(--ant-fundo);border-bottom:1px solid var(--ant-linha)}
+.ant-grupo-espera>header .ant-estado{margin-left:auto}
+.ant-lista-espera{list-style:none;margin:0;padding:0}
+.ant-lista-espera li{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;padding:12px 16px}
+.ant-lista-espera li+li{border-top:1px solid var(--ant-linha)}
+.ant-quando{margin-left:auto;display:grid;gap:1px;text-align:right}
+.ant-quando span{font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--ant-suave)}
+.ant-quando strong{font-size:13px;font-weight:600;color:var(--ant-forte)}
+.ant-quando.alerta strong{color:var(--ant-alerta)}
+
+.ant-envio-sucesso{width:min(480px,calc(100vw - 32px));border-radius:14px!important;padding:24px!important}.ant-envio-sucesso>p{line-height:1.6;margin:16px 0}.ant-envio-icone{display:grid;place-items:center;width:44px;height:44px;background:#e6f6ed;color:#167344;border-radius:50%;font-size:24px;font-weight:700;margin-bottom:14px}html[data-theme=dark] .ant-envio-icone{background:#163e2c;color:#74dba1}
+
+@media(max-width:1180px){.ant-filtros{grid-template-columns:repeat(3,minmax(0,1fr))}.ant-aba{grid-template-columns:1fr;grid-template-areas:"icone" "topo" "desc";row-gap:8px}.ant-aba-icone{width:36px;height:36px}}
+@media(max-width:760px){
+ .ant-filtros{grid-template-columns:repeat(2,minmax(0,1fr))}.ant-filtros>.ant-filtro:first-child{grid-column:1/-1}
+ .ant-resumo{gap:8px}
+ .ant-aba{padding:12px 8px;justify-items:center;text-align:center;row-gap:4px}
+ .ant-aba-icone{width:32px;height:32px;border-radius:9px}.ant-aba-icone svg{width:18px;height:18px}
+ .ant-aba-topo{flex-direction:column;align-items:center;gap:2px}
+ .ant-aba-numero{font-size:21px}.ant-aba-titulo{font-size:12px}.ant-aba-desc{display:none}
+ .ant-filtros-card{padding:12px}
+ .ant-cards{grid-template-columns:1fr}
+ .ant-cartao-topo{flex-wrap:wrap}.ant-cartao-nome{flex:1 1 160px}.ant-tempo{margin-left:50px;align-self:auto}
+ .ant-dados{grid-template-columns:1fr 1fr}.ant-dados .ant-dado:first-child{grid-column:1/-1}
+ .ant-cartao-acoes .op-button{flex:1;justify-content:center}
+ .ant-grupo-espera>header .ant-estado{margin-left:0}
+ .ant-quando{margin-left:50px;text-align:left}
+}
+@media(max-width:700px){.sipa-antecipacao .ant-tabela{min-width:0}.ant-tabela thead{display:none}.ant-tabela,.ant-tabela tbody,.ant-tabela tr,.ant-tabela td,.ant-tabela th{display:block;width:auto}.ant-grupo-cabecalho th{display:block;border-radius:8px}.ant-grupo-cabecalho .ant-meta{display:block;margin:2px 0}.ant-tabela tr:not(.ant-grupo-cabecalho){border:1px solid var(--ant-linha);border-radius:10px;padding:10px;margin:8px 0}.ant-tabela td{display:flex;gap:10px;padding:5px 0;border:0;min-width:0}.ant-tabela td::before{content:attr(data-rotulo) ':';font-weight:600;flex:0 0 110px}.ant-tabela td.op-demo-no-results::before{content:none}}
+/* 16/11/2026 (pedido do usuário): no pedido para adiantar, os dias e os horários em que o aluno pode. */
+.ant-disponibilidade{display:grid;gap:6px;padding:10px 12px;border:1px dashed #cbddec;border-radius:10px;background:#f7fafd}
+.ant-disp-linha{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.ant-disp-rotulo{min-width:62px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#64748b}
+.ant-disp-chip{padding:2px 8px;border:1px solid #dbe5ef;border-radius:999px;background:#fff;color:#94a3b8;font-size:12px;font-weight:600}
+.ant-disp-chip.sim{border-color:#1769aa;background:#e8f1fa;color:#12578f}
+.ant-disp-vazio{font-size:12px;color:#64748b}
+html[data-theme=dark] .ant-disponibilidade{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .ant-disp-chip{background:#13263a;border-color:#2b4157;color:#6b8299}
+html[data-theme=dark] .ant-disp-chip.sim{background:#1d3a57;border-color:#5aa2e6;color:#cfe6fb}
+html[data-theme=dark] .ant-disp-rotulo,html[data-theme=dark] .ant-disp-vazio{color:#a9bccd}

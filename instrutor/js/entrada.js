@@ -2,13 +2,13 @@ import {desenvolvimentoAtivo} from '../../shared/js/ambiente.js';
 const root = document.getElementById('instrutor-root');
 if (desenvolvimentoAtivo()) {
     const {exigirPerfil,sair,vigiarPerfil} = await import('../../dev/autenticacao.js');let conta;try{conta=await exigirPerfil('instrutor');}catch{};
-    if (!conta) location.replace('/login.html');
+    if (!conta) location.replace(new URL('../../login.html',import.meta.url).href);
     else {
         const {criarServicoAutenticado} = await import('../../dev/instrutor/repositorio.js');
         const {montarPainel} = await import('./painel.js');
         try {
             
-            await montarPainel(root, criarServicoAutenticado(), {async aoSair() { await sair(); location.assign('/login.html'); }});
+            await montarPainel(root, criarServicoAutenticado(), {async aoSair() { await sair(); location.assign(new URL('../../login.html',import.meta.url).href); }});
             vigiarPerfil('instrutor',root);
         } catch (erro) { root.textContent = erro.message; }
     }

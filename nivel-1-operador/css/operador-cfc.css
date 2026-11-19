@@ -238,7 +238,8 @@
 .op-agenda-layout { display: grid; grid-template-columns: minmax(290px, .85fr) minmax(0, 1.5fr); gap: 20px; margin-top: 16px; align-items: start; }
 .op-calendar { position: sticky; top: 18px; }
 .op-calendar-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 15px; }
-.op-calendar-heading h2 { text-transform: capitalize; font-size: 14px; }
+.op-calendar-heading h2 { font-size: 14px; }
+.op-calendar-heading h2::first-letter { text-transform: uppercase; }
 .op-calendar > label { display: inline-grid; width: 110px; margin: 0 12px 15px 0; }
 .op-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
 .op-calendar-grid > small { text-align: center; font-size: 9px; padding: 9px 0; color: var(--sipa-texto-neutro); }
@@ -278,3 +279,11 @@
     .op-mode-demo .op-table { min-width: 660px; }
     .op-dialog .op-fields { grid-template-columns: 1fr 1fr; }
 }
+
+/* 11/11/2026: tema escuro — a aba selecionada (Verificações, Recursos) ficava com fundo claro e texto claro (1,5:1). */
+html[data-theme=dark] .op-resource-tabs button[aria-pressed=true],html[data-theme=dark] .op-resource-tabs button[aria-selected="true"]{background:#1d3a5c;color:#e3edf6}
+/* 11/11/2026: tema escuro — o "×" dos diálogos (fundo claro, texto claro) e o "✓" das etapas da ficha (branco sobre azul claro). */
+html[data-theme=dark] .op-dialog-heading .op-close{background:#22364f;color:#e3edf6}
+html[data-theme=dark] .op-passo-feito .op-passo-marca{color:#0f2236}
+/* 11/11/2026: tema escuro — o horário dentro do cartão da aula na agenda (azul escuro sobre o cartão escuro, 2,1:1). */
+html[data-theme=dark] .op-aula-card .op-evento-horario{color:#8cc4ef}

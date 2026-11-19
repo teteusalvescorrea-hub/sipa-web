@@ -8,11 +8,11 @@ const INDICADORES = [
     ["financeiro", "Pendências financeiras", "Alunos com situação pendente", "check"],
     ["exames", "Prova / exames pendentes", "Alunos com etapas a concluir", "file"],
     ["aptos", "Aptos para aulas", "Financeiro, exames e saldo em dia", "check"],
-    ["hoje", "Aulas hoje", "Programação da data atual", "grid"],
-    ["semana", "Próximos 7 dias", "Hoje e os seis dias seguintes", "grid"],
+    ["hoje", "Aulas hoje", "Programação da data atual", "calendar"],
+    ["semana", "Próximos 7 dias", "Hoje e os seis dias seguintes", "calendar"],
     ["veiculos", "Veículos disponíveis", "Ativos; ocupação varia por horário", "car"],
-    ["instrutores", "Instrutores", "Ativos na unidade", "users"],
-    ["livres", "Horários livres hoje", "Inícios futuros com recursos livres", "grid"]
+    ["instrutores", "Instrutores", "Ativos na unidade", "badge"],
+    ["livres", "Horários livres hoje", "Inícios futuros com recursos livres", "clock"]
 ];
 export function montarVisaoGeral(raiz, painel, obterEstado, { verAluno, verAula, agendar, navegar }) {
     // Substitui apenas a apresentação da visão geral. Dados/regras permanecem nos módulos existentes.

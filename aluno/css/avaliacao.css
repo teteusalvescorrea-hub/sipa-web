@@ -1,0 +1,77 @@
+/* 17/11/2026 (pedido do usuário): a janela "Como foi sua aula?" com estilo (antes aparecia sem formatação no painel). */
+.rating-dialog{width:min(560px,calc(100vw - 24px));max-height:90dvh;padding:0;border:0;border-radius:14px;background:#fff;color:#14263a;box-shadow:0 24px 60px rgba(9,30,52,.28);overflow:hidden;font-family:inherit}
+.rating-dialog[open]{display:flex;flex-direction:column}
+.rating-dialog::backdrop{background:rgba(9,30,52,.45)}
+.rating-cabecalho{padding:20px 22px 14px;border-bottom:1px solid #e3ecf4}
+.rating-cabecalho h2{margin:0 0 4px;font-size:20px;line-height:1.3;outline:none}
+.rating-resumo{margin:0;font-size:13px;color:#53687d}
+.rating-form{display:flex;flex-direction:column;gap:14px;padding:16px 22px 0;overflow-y:auto;overscroll-behavior:contain}
+.rating-notas{display:grid;gap:4px}
+.rating-linha{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 10px;border-radius:8px;background:#f5f9fc}
+.rating-rotulo{font-size:13.5px;font-weight:600}
+.rating-estrelas{display:inline-flex;flex-direction:row-reverse;gap:2px}
+.rating-estrelas input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.rating-estrelas label{font-size:24px;line-height:1;color:#c8d3de;cursor:pointer;padding:0 2px;transition:color .1s,transform .1s}
+.rating-estrelas label:hover,.rating-estrelas label:hover~label,.rating-estrelas input:checked~label{color:#f5a524}
+.rating-estrelas label:hover{transform:scale(1.12)}
+.rating-estrelas input:focus-visible+label{outline:2px solid #1769aa;outline-offset:2px;border-radius:4px}
+.rating-tags{margin:0;padding:0;border:0;display:flex;flex-wrap:wrap;gap:6px}
+.rating-tags legend{margin-bottom:8px;padding:0;font-size:13.5px;font-weight:600}
+.rating-tags label{position:relative}
+.rating-tags input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.rating-tags span{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border:1px solid #c9dbeb;border-radius:999px;background:#fff;font-size:12.5px;font-weight:600;color:#33506b;cursor:pointer;user-select:none}
+.rating-tags span:hover{border-color:#1769aa}
+.rating-tags input:checked+span{background:#1769aa;border-color:#1769aa;color:#fff}
+.rating-tags input:focus-visible+span{outline:2px solid #1769aa;outline-offset:2px}
+.rating-comentario{display:grid;gap:6px;font-size:13.5px;font-weight:600}
+.rating-comentario textarea{width:100%;box-sizing:border-box;min-height:76px;padding:10px 12px;border:1px solid #c9dbeb;border-radius:10px;font:inherit;font-size:14px;font-weight:400;resize:vertical;color:inherit;background:#fff}
+.rating-comentario textarea:focus{outline:none;border-color:#1769aa;box-shadow:0 0 0 3px rgba(23,105,170,.18)}
+.rating-erro{margin:0;color:#b42318;font-size:13px;font-weight:600}
+.rating-erro:empty{display:none}
+.rating-rodape{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:8px;margin:0 -22px;padding:14px 22px;border-top:1px solid #e3ecf4;background:#fff}
+.rating-botao{min-height:40px;padding:0 18px;border:1px solid #c9dbeb;border-radius:10px;background:#fff;color:#1d3a55;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.rating-botao:hover{border-color:#1769aa}
+.rating-botao-primario{border-color:#1769aa;background:#1769aa;color:#fff}
+.rating-botao-primario:hover{background:#125a92}
+.rating-botao:disabled{opacity:.6;cursor:not-allowed}
+.rating-pronto{display:grid;gap:4px;padding:18px 0 20px;text-align:center}
+.rating-pronto strong{font-size:18px;color:#1f7a45}
+.rating-pronto p{margin:0;color:#53687d}
+@media(max-width:520px){.rating-linha{flex-direction:column;align-items:flex-start;gap:4px}.rating-estrelas label{font-size:28px}}
+html[data-theme=dark] .rating-dialog{background:#13263a;color:#e6eef6}
+html[data-theme=dark] .rating-cabecalho,html[data-theme=dark] .rating-rodape{border-color:#2b4560}
+html[data-theme=dark] .rating-rodape{background:#13263a}
+html[data-theme=dark] .rating-resumo,html[data-theme=dark] .rating-pronto p{color:#a9bccd}
+html[data-theme=dark] .rating-linha{background:#1a3148}
+html[data-theme=dark] .rating-estrelas label{color:#3d5670}
+html[data-theme=dark] .rating-estrelas label:hover,html[data-theme=dark] .rating-estrelas label:hover~label,html[data-theme=dark] .rating-estrelas input:checked~label{color:#f5b440}
+html[data-theme=dark] .rating-tags span,html[data-theme=dark] .rating-botao,html[data-theme=dark] .rating-comentario textarea{background:#1a3148;border-color:#35536f;color:#dbe7f2}
+html[data-theme=dark] .rating-tags input:checked+span,html[data-theme=dark] .rating-botao-primario{background:#1f78c1;border-color:#1f78c1;color:#fff}
+/* O botão "Avaliar minha aula" no cartão da aula realizada (Minhas aulas). */
+/* 2ª rodada (pedido do usuário): um pouco maior e sempre azul sólido. */
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions>.local-lesson-avaliar{min-height:36px;padding:0 20px;border:1px solid #1769aa;border-radius:8px;background:#1769aa;color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions>.local-lesson-avaliar:hover{background:#125a92;border-color:#125a92}
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions>.local-lesson-avaliar:focus-visible{outline:3px solid #8cc4ee;outline-offset:2px}
+[data-sipa-aluno] .lessons-main .confirmed-lesson-actions>.local-lesson-avaliada{font-size:12.5px;font-weight:600;color:#1f7a45}
+html[data-theme=dark] [data-sipa-aluno] .lessons-main .confirmed-lesson-actions>.local-lesson-avaliar{background:#1f78c1;border-color:#1f78c1;color:#fff}
+/* Reforço: a janela no centro e as estrelas grandes, mesmo com as regras gerais da página (dialog e label). */
+dialog.rating-dialog{position:fixed;inset:0;margin:auto;height:fit-content}
+dialog.rating-dialog .rating-estrelas label{display:inline-block;min-width:0;min-height:0;font-size:26px!important;line-height:1;padding:0 2px}
+@media(max-width:520px){dialog.rating-dialog .rating-estrelas label{font-size:30px!important}}
+/* 17/11/2026 (pedido do usuário): a confirmação final em painel próprio. */
+dialog.rating-dialog.rating-enviada{width:min(420px,calc(100vw - 24px))}
+.rating-enviada .rating-form{padding:0}
+.rating-enviada .rating-pronto{display:flex;flex-direction:column;align-items:center;gap:8px;padding:32px 28px 26px;text-align:center}
+.rating-pronto-icone{display:grid;place-items:center;width:64px;height:64px;margin-bottom:4px;border-radius:50%;background:#e3f4e9;color:#1f8a4c;font-size:32px;font-weight:800;box-shadow:0 0 0 8px #f1faf4}
+.rating-enviada .rating-pronto h2{margin:0;font-size:21px;color:#14263a}
+.rating-pronto-aula{margin:0;font-size:13px;color:#53687d}
+.rating-pronto-nota{display:inline-flex;align-items:center;gap:8px;margin:6px 0 2px;padding:6px 14px;border-radius:999px;background:#fff7e6}
+.rating-pronto-estrelas{font-size:20px;letter-spacing:2px;color:#f5a524}
+.rating-pronto-nota strong{font-size:15px;color:#7a5200}
+.rating-pronto-texto{margin:2px 0 10px;max-width:320px;font-size:13.5px;line-height:1.5;color:#3d5268}
+.rating-botao-largo{width:100%;min-height:44px}
+html[data-theme=dark] .rating-enviada .rating-pronto h2{color:#e6eef6}
+html[data-theme=dark] .rating-pronto-icone{background:#1d4430;color:#8fe0ad;box-shadow:0 0 0 8px #173826}
+html[data-theme=dark] .rating-pronto-nota{background:#3a2f16}
+html[data-theme=dark] .rating-pronto-nota strong{color:#ffd58a}
+html[data-theme=dark] .rating-pronto-texto,html[data-theme=dark] .rating-pronto-aula{color:#a9bccd}

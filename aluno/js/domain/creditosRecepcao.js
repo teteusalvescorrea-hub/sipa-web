@@ -9,7 +9,8 @@ export function motivoBloqueioCreditos(aluno){
 }
 // Projecao sem migracao: saldo liquido ja debitado nunca sofre segundo desconto.
 export function resumirCreditosRecepcao(aluno,aulas){
- const categorias=['A','B','D'].filter(k=>aluno.categoria.includes(k));
+ // A lista 'categorias' (vinda da API) inclui o D, que o texto 'categoria' pode não trazer.
+ const categorias=aluno.categorias?.length?['A','B','D'].filter(k=>aluno.categorias.includes(k)):['A','B','D'].filter(k=>String(aluno.categoria||'').includes(k));
  const totais=Object.fromEntries(categorias.map(k=>[k,aluno.aulasAdquiridas?.[k]??aluno.creditos?.[k]?.contratadas??null]));
  const resumo=progressoPorCategoria({categorias:totais},aulas);
  const bloqueio=motivoBloqueioCreditos(aluno);

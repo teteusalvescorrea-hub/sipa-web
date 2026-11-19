@@ -38,8 +38,12 @@ test('seis motos, tres instrutores e reservas centralizadas respeitam vinculos, 
   assert.equal(r.paresNaUnidade(base,op,data,'09:00',{categoria:'A'},agora).length,6);
   const e=r.agendarAula(base,op,{alunoId:'s'+n,categoria:'A',data,inicio:'09:00',instrutorId:'i0',veiculoId:'m0'},'reserva',agora);
   assert.equal(e.aulas[0].unidade,'Vila Velha');assert.equal(e.alunos[n].creditos.A.disponiveis,1);
-  assert.equal(r.paresNaUnidade(e,op,data,'09:00',{categoria:'A',veiculoId:'m1'},agora).length,0);
-  assert.match(r.motivoRecursoIndisponivel(e,op,data,'09:00',{categoria:'A',veiculoId:'m1'},agora),/Instrutor ocupado/);
+  // 16/11/2026 (pedido do usuário): o instrutor atende as duas motos no mesmo horário, um aluno em cada; a moto usada fica ocupada.
+  assert.equal(r.paresNaUnidade(e,op,data,'09:00',{categoria:'A',veiculoId:'m1'},agora).length,1);
+  // A tela junta aulas e ocupações (a mesma aula nas duas listas): a aula repetida não conta como a segunda moto.
+  assert.equal(r.paresNaUnidade({...e,ocupacoes:e.aulas.map(({id,alunoId,...a})=>a)},op,data,'09:00',{categoria:'A',veiculoId:'m1'},agora).length,1);
+  assert.equal(r.paresNaUnidade(e,op,data,'09:00',{categoria:'A',veiculoId:'m0'},agora).length,0);
+  assert.match(r.motivoRecursoIndisponivel(e,op,data,'09:00',{categoria:'A',veiculoId:'m0'},agora),/ocupado neste veículo/);
   assert.throws(()=>r.agendarAula(e,op,{alunoId:'s'+n,categoria:'A',data,inicio:'09:00',instrutorId:'i1',veiculoId:'m2'},'mesmo-aluno',agora),/aluno já possui/);
   const externo={...op,unidade:unidades[(n+1)%6]};assert.equal(r.consultarAgendaMotos(e,externo).length,1);assert.throws(()=>r.alunoAutorizado(e,externo,'s'+n),/autorizado/);
   e.alunos[n].aulasAdquiridas={A:1};e.alunos[n].creditos.A={contratadas:1,disponiveis:0};

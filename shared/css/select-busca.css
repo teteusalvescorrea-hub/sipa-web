@@ -10,7 +10,7 @@
 .sipa-select-busca-painel { position:absolute; z-index:30; left:0; min-width:max(100%, 240px); max-width:min(480px, 90vw); top:calc(100% + 4px); padding:8px 0 6px; border:1px solid #d3dde6; border-radius:10px; background:var(--progress-card,#fff); color:var(--sipa-texto-neutro,#14263a); box-shadow:0 8px 24px rgba(15,40,70,.18); }
 .sipa-select-busca-painel > input { display:block !important; flex:none !important; width:calc(100% - 16px) !important; min-width:0 !important; height:32px !important; min-height:0 !important; margin:0 8px 6px !important; box-sizing:border-box; padding:4px 10px !important; border:1px solid #bacddd !important; border-radius:6px !important; background:transparent; color:inherit; font:inherit; font-size:13px !important; line-height:1.2 !important; }
 .sipa-select-busca-painel > input::placeholder { text-transform:uppercase; font-size:12px; }
-.sipa-select-busca-lista { max-height:300px; overflow-y:auto; overflow-x:hidden; }
+.sipa-select-busca-lista { max-height:300px; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; }
 .sipa-select-busca-opcao { padding:11px 16px; cursor:pointer; font-size:14px; white-space:normal; overflow-wrap:anywhere; }
 .sipa-select-busca-recuo { padding-left:24px; }
 .sipa-select-busca-limpar { text-align:center; text-transform:uppercase; opacity:.6; }
@@ -25,3 +25,7 @@
 .sipa-select-busca-painel > input:focus { outline:1px solid var(--progress-blue,#1769aa) !important; outline-offset:0; border-color:var(--progress-blue,#1769aa) !important; }
 .sipa-select-busca-opcao[aria-selected=true] { color:var(--progress-blue,#1769aa); font-weight:600; }
 .sipa-select-busca-botao[aria-expanded=true], .sipa-select-busca-botao:focus-visible { border-color:var(--progress-blue,#1769aa); }
+/* Dentro de janelas: a lista abre fixa na tela, sem ser cortada. Lista curta: sem o campo de busca visível. */
+.sipa-select-busca-painel.sipa-select-busca-flutuante { position:fixed; right:auto; bottom:auto; z-index:1000; min-width:0; max-width:none; }
+.sipa-select-busca-painel.sipa-select-busca-curta { padding-top:6px; }
+.sipa-select-busca-painel.sipa-select-busca-curta > input { position:absolute !important; width:1px !important; height:1px !important; margin:0 !important; padding:0 !important; border:0 !important; opacity:0; pointer-events:none; }

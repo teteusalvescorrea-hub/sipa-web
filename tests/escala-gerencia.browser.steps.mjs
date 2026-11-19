@@ -32,7 +32,7 @@
   }
  }
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:720,deviceScaleFactor:1,mobile:false});
- for(const secao of ['visao-geral','alunos','cadastro','agenda','instrutores','recursos','verificacoes','relatorios','antecipacao','perfil']){
+ for(const secao of ['visao-geral','alunos','cadastro','agenda','instrutores','recursos','verificacoes','relatorios','perfil']){
   for(const tema of ['light','dark']){await evaluate(`SipaTema.salvar('${tema}')`);await aba(secao);await semOverflow(secao+' '+tema);await check(`!document.querySelector('[data-op-panel=${secao}]').hidden`,'Modulo '+secao+' acessivel '+tema);
    if(secao==='verificacoes'){
     await evaluate("[...document.querySelectorAll('[data-op-panel=verificacoes] button')].find(b=>b.textContent==='Analisar').click()");

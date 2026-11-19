@@ -44,11 +44,12 @@ test('mensagens em ordem, envio com Idempotency-Key e leitura nas rotas da autoe
  await assert.rejects(s.enviarMensagemRecepcao('ae1','Oi','k2'),/não está matriculado/);
 });
 
-test('sino conta somente avisos e não consulta conversas removidas da tela',async()=>{
+// 09/11/2026: a página Mensagens do aluno é só o chat; o número do menu soma a Recepção e a Gerência (sem os avisos).
+test('sino conta as mensagens do chat (Recepção e Gerência), não os avisos',async()=>{
  const s=criarServicoAluno();
- respostas=[rota('GET','alunos/me/mensagens/nao-lidas',{total:2}),rota('GET','alunos/me/conversas/nao-lidas',{total:3})];chamadas.length=0;
- assert.equal(await s.totalNaoLidas(),2);
- assert.deepEqual(chamadas.map(c=>c.url.replace(/^.*\/api\//,'')).sort(),['alunos/me/mensagens/nao-lidas']);
- respostas=[rota('GET','alunos/me/mensagens/nao-lidas',{total:1})];assert.equal(await s.totalNaoLidas(),1);
+ respostas=[rota('GET','alunos/me/mensagens/nao-lidas',{total:2}),rota('GET','alunos/me/conversas/nao-lidas',{total:3}),rota('GET','alunos/me/chat/resumo',{naoLidas:1})];chamadas.length=0;
+ assert.equal(await s.totalNaoLidas(),4);
+ assert.deepEqual(chamadas.map(c=>c.url.replace(/^.*\/api\//,'')).sort(),['alunos/me/chat/resumo','alunos/me/conversas/nao-lidas']);
+ respostas=[rota('GET','alunos/me/conversas/nao-lidas',{total:1})];assert.equal(await s.totalNaoLidas(),1);
  respostas=[];assert.equal(await s.totalNaoLidas(),0);
 });

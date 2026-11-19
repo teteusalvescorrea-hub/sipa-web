@@ -3,6 +3,14 @@
 // A demonstração local injeta callbacks próprios e nunca utiliza a sessão real.
 import { iconeSvg } from "./uiOperador.js";
 
+// 10/11/2026: o ícone de cada seção registrada depois (Recepção, Gerência e Master). Mensagens usa o balão, igual ao do
+// Instrutor e do Aluno; o grid genérico só fica para alguma seção nova sem ícone próprio.
+const ICONE_DA_SECAO = Object.freeze({
+    mensagens: "chat", antecipacao: "timer", sit: "sit", "agenda-global": "calendar", acessos: "key", relatorios: "chart",
+    auditoria: "gauge", provas: "exam", unidades: "building", permissoes: "lock", configuracoes: "sliders", "visao-geral": "home", agenda: "calendar",
+    alunos: "users", cadastro: "user-plus", instrutores: "badge", perfil: "user", verificacoes: "check", recursos: "car"
+});
+
 const SECOES = Object.freeze({
     "visao-geral": ["Visão geral", "Visão geral da unidade", "Acompanhe os alunos e organize as etapas do atendimento."],
     alunos: ["Alunos", "Cadastro e consulta de alunos", "Encontre informações e acompanhe o atendimento de cada aluno."],
@@ -34,7 +42,7 @@ export function montarEstruturaOperador(raiz, template, { aoSair, aoSelecionarRe
         todos("[data-op-nav]").forEach((item) => {
             const ativo = item.dataset.opNav === secao;
             item.classList.toggle("active", ativo);
-            if (ativo) item.setAttribute("aria-current", "page");
+            if (ativo) { item.setAttribute("aria-current", "page"); item.scrollIntoView?.({ block: "nearest" }); }
             else item.removeAttribute("aria-current");
         });
         $("[data-op-breadcrumb]").textContent = rotulo;
@@ -98,7 +106,7 @@ export function montarEstruturaOperador(raiz, template, { aoSair, aoSelecionarRe
     return { navegar, registrarSecao(id,titulo,descricao=''){
         secoes[id]=[titulo,titulo,descricao];let painel=$(`[data-op-panel="${id}"]`);
         if(!painel){painel=document.createElement('section');painel.dataset.opPanel=id;painel.hidden=true;$('.op-footer').before(painel);}
-        let link=$(`[data-op-nav="${id}"]`);if(!link){link=document.createElement('a');link.className='sipa-sidebar-link';link.href='#'+id;link.dataset.opNav=id;link.append(iconeSvg('grid'),document.createTextNode(titulo));$('.sipa-sidebar-menu').append(link);link.onclick=e=>{e.preventDefault();navegar(id);$('.op-sidebar').classList.remove('op-open');$('.op-menu-mobile')?.setAttribute('aria-expanded','false');};}return painel;
+        let link=$(`[data-op-nav="${id}"]`);if(!link){link=document.createElement('a');link.className='sipa-sidebar-link';link.href='#'+id;link.dataset.opNav=id;link.append(iconeSvg(ICONE_DA_SECAO[id]||'grid'),document.createTextNode(titulo));const ultimo=$('.sipa-sidebar-menu [data-op-ultimo]');if(ultimo)ultimo.before(link);else $('.sipa-sidebar-menu').append(link);link.onclick=e=>{e.preventDefault();navegar(id);$('.op-sidebar').classList.remove('op-open');$('.op-menu-mobile')?.setAttribute('aria-expanded','false');};}return painel;
     },
     // Contador no item do menu (como o de mensagens do aluno): some com zero e é anunciado ao mudar.
     marcarContador(id,n,descricao){

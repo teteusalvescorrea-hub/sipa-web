@@ -1,0 +1,102 @@
+/* Visual do guia em PDF: azul-marinho, azul, branco e cinza claro (identidade do AgIA). */
+:root { --marinho: #0f2f57; --azul: #1a6fc4; --azul-claro: #e8f1fb; --cinza: #f3f5f8; --borda: #d6dee9; --texto: #1d2633; --suave: #5b6778; }
+@page {
+  size: A4; margin: 19mm 16mm 17mm 16mm;
+  @top-left { content: "AgIA · Guia do sistema"; font: 600 7.5pt "Segoe UI", Arial, sans-serif; color: #0f2f57; vertical-align: bottom; padding-bottom: 3mm; }
+  @top-right { content: "KM Autoescola · versão de 18/11/2026"; font: 7.5pt "Segoe UI", Arial, sans-serif; color: #5b6778; vertical-align: bottom; padding-bottom: 3mm; }
+  @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 7.5pt "Segoe UI", Arial, sans-serif; color: #5b6778; vertical-align: top; padding-top: 3mm; }
+  @bottom-left { content: "Telas capturadas com contas de teste · dados pessoais ocultos"; font: 7pt "Segoe UI", Arial, sans-serif; color: #8a95a5; vertical-align: top; padding-top: 3mm; }
+}
+@page capa { margin: 0; @top-left { content: none; } @top-right { content: none; } @bottom-right { content: none; } @bottom-left { content: none; } }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font: 10pt/1.5 "Segoe UI", Arial, sans-serif; color: var(--texto); }
+
+/* capa */
+.capa { page: capa; height: 297mm; width: 210mm; background: linear-gradient(160deg, #0f2f57 0%, #12406f 62%, #1a6fc4 100%); color: #fff; padding: 26mm 22mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page; }
+.marca { font: 800 30pt "Segoe UI", Arial, sans-serif; letter-spacing: -0.5pt; }
+.marca .ia { color: #6fb6ff; }
+.marca small { display: block; font: 600 8pt "Segoe UI", Arial, sans-serif; letter-spacing: 2.4pt; color: #b9d4f2; margin-top: 2mm; }
+.capa .sobre { font: 600 10pt "Segoe UI", Arial, sans-serif; letter-spacing: 2pt; text-transform: uppercase; color: #b9d4f2; margin: 0 0 5mm; }
+.capa .titulo { font: 800 34pt/1.08 "Segoe UI", Arial, sans-serif; margin: 0 0 6mm; max-width: 150mm; }
+.capa .sub { font: 13pt/1.45 "Segoe UI", Arial, sans-serif; color: #dce9f7; max-width: 145mm; margin: 0; }
+.capa-rodape { border-top: 1px solid rgba(255,255,255,.3); padding-top: 6mm; font-size: 9.5pt; color: #dce9f7; display: grid; gap: 1.5mm; }
+.capa-rodape strong { color: #fff; }
+
+/* sumário */
+.sumario { break-after: page; }
+.sumario ul { list-style: none; padding: 0; margin: 0; }
+.sumario li a { display: flex; gap: 3mm; align-items: baseline; color: var(--texto); text-decoration: none; padding: 1.1mm 0; }
+.sumario li.n1 a { font-weight: 700; color: var(--marinho); margin-top: 3mm; font-size: 10.5pt; }
+.sumario li.n2 a { padding-left: 8mm; font-size: 9.3pt; }
+.sumario .tt { flex: 1; border-bottom: 1px dotted #b8c3d2; }
+.sumario .tn { min-width: 9mm; color: var(--azul); }
+.sumario .pt { min-width: 8mm; text-align: right; }
+
+/* títulos */
+h2.sem-num, h1 { font: 800 21pt/1.15 "Segoe UI", Arial, sans-serif; color: var(--marinho); margin: 0 0 6mm; padding-bottom: 3mm; border-bottom: 2.5px solid var(--azul); }
+h1 { break-before: page; display: flex; gap: 4mm; align-items: baseline; }
+h1 .num { color: var(--azul); }
+h2 { font: 700 13.5pt/1.25 "Segoe UI", Arial, sans-serif; color: var(--marinho); margin: 8mm 0 2.5mm; padding-left: 3mm; border-left: 4px solid var(--azul); break-after: avoid; }
+h2 .num { color: var(--azul); font-weight: 600; margin-right: 1.5mm; }
+h2.nova-pagina { break-before: page; margin-top: 0; }
+h3 { font: 700 10.5pt "Segoe UI", Arial, sans-serif; color: var(--marinho); margin: 5mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.6mm; text-align: justify; hyphens: auto; }
+ul, ol { margin: 0 0 3mm; padding-left: 5.5mm; }
+li { margin: 0 0 1.1mm; }
+strong { color: #10233d; }
+code { font: 8.6pt Consolas, monospace; background: var(--cinza); padding: 0 1mm; border-radius: 2px; }
+
+/* figuras */
+.figuras { margin: 3mm 0 4mm; break-inside: avoid; }
+.figuras.lado { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 5mm; align-items: start; }
+figure { margin: 0; break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; max-height: 196mm; border: 1px solid var(--borda); border-radius: 3px; box-shadow: 0 1px 4px rgba(15,47,87,.12); }
+figure.media img { max-height: 150mm; }
+figure.baixa img { max-height: 115mm; }
+figure.alta img { max-height: 228mm; }
+.figuras.lado figure img { max-height: 150mm; }
+figcaption { font-size: 8.3pt; color: var(--suave); margin-top: 1.6mm; text-align: center; }
+figcaption b { color: var(--marinho); }
+
+/* tabelas e notas */
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 5mm; font-size: 8.6pt; break-inside: auto; }
+thead { display: table-header-group; }
+th { background: var(--marinho); color: #fff; text-align: left; padding: 1.8mm 2.2mm; font-weight: 600; }
+td { border-bottom: 1px solid var(--borda); padding: 1.6mm 2.2mm; vertical-align: top; }
+tr { break-inside: avoid; }
+tbody tr:nth-child(even) td { background: var(--cinza); }
+.ok, .pend, .parcial { display: inline-block; padding: .2mm 1.8mm; border-radius: 8px; font-weight: 700; font-size: 7.8pt; }
+.ok { background: #e3f4ea; color: #17663a; }
+.pend { background: #e8eefb; color: #1b3f8f; }
+.parcial { background: #eef1f5; color: #4a5568; }
+.nota { background: var(--azul-claro); border-left: 4px solid var(--azul); padding: 3mm 4mm; margin: 3mm 0 4mm; border-radius: 0 3px 3px 0; font-size: 9.3pt; break-inside: avoid; }
+.mapa { break-inside: avoid; margin: 2mm 0 5mm; }
+.mapa svg { width: 100%; height: auto; }
+.perfis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2.5mm; margin: 3mm 0 5mm; }
+.perfis div { border: 1px solid var(--borda); border-top: 4px solid var(--azul); border-radius: 3px; padding: 2.5mm; font-size: 8.4pt; background: #fff; }
+.perfis div b { display: block; color: var(--marinho); font-size: 9.5pt; margin-bottom: 1mm; }
+
+/* Formato direto: uma tela por página, imagem marcada e legenda numerada com os mesmos círculos da imagem */
+figure.tela img { max-height: 158mm; }
+figure.tela-alta img { max-height: 172mm; }
+ol { list-style: none; counter-reset: n; columns: 2; column-gap: 9mm; padding: 0; margin: 3.5mm 0 0; }
+ol li { counter-increment: n; position: relative; padding-left: 8mm; break-inside: avoid; margin: 0 0 2.4mm; font-size: 9.4pt; line-height: 1.42; }
+ol li::before { content: counter(n); position: absolute; left: 0; top: .1mm; width: 5.6mm; height: 5.6mm; border-radius: 50%; background: #0b63ce; color: #fff; font: 700 8.2pt/5.6mm "Segoe UI", Arial, sans-serif; text-align: center; }
+ol.uma { columns: 1; }
+.resumo { font-size: 10pt; color: #33415a; margin: 0 0 1mm; }
+.telas { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm 6mm; margin: 4mm 0; }
+.telas div { border: 1px solid var(--borda); border-left: 4px solid var(--azul); border-radius: 3px; padding: 2.5mm 3mm; font-size: 9pt; break-inside: avoid; }
+.telas div b { display: block; color: var(--marinho); font-size: 10pt; }
+ol li::before { content: none; }
+ol li .n { position: absolute; left: 0; top: .1mm; min-width: 5.6mm; height: 5.6mm; padding: 0 1.2mm; border-radius: 2.8mm; background: #0b63ce; color: #fff; font: 700 8.2pt/5.6mm "Segoe UI", Arial, sans-serif; text-align: center; box-sizing: border-box; }
+ol li:has(.larga) { padding-left: 11mm; }
+/* números da legenda em linha (sem posição absoluta) e ficha alta com a legenda ao lado */
+ol li { display: flex; gap: 2.4mm; align-items: flex-start; padding-left: 0; }
+ol li:has(.larga) { padding-left: 0; }
+ol li .n { position: static; flex: 0 0 auto; margin-top: .2mm; }
+.figuras.lateral { float: left; width: 58%; margin: 1mm 6mm 2mm 0; }
+.figuras.lateral img { max-height: 232mm; }
+.figuras.lateral + ol { columns: 1; margin-top: 1mm; }
+h1, h2 { clear: both; }
+ol li .t { flex: 1 1 auto; min-width: 0; }

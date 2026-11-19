@@ -1,9 +1,9 @@
 import {criarBuscaComSugestoes} from '../../../shared/components/buscaComSugestoes.js';
 import {montarHistoricoMedico} from '../../../shared/components/historicoMedico.js';
 import {situacaoMedica} from '../../../shared/components/situacaoMedica.js';
-import {agoraBrasil,dataHoraBrasilia} from '../../../shared/js/calendario.js';
-import {el,botao,campo,entrada,select,modal} from './uiOperador.js';
-import {STATUS_MEDICO} from '../../../shared/js/solicitacoesMedicas.js';
+import {dataHoraBrasilia} from '../../../shared/js/calendario.js';
+import {el,botao,campo,modal} from './uiOperador.js';
+import {dataDecisaoMedica,solicitacaoDecidida,STATUS_MEDICO} from '../../../shared/js/solicitacoesMedicas.js';
 import {formatarCpf,ativarMascaraCpf} from '../../../shared/js/formatacao.js';
 import {nomeUnidadeInstitucional} from '../../../shared/js/catalogoUnidades.js';
 import {nomeLocalDaReserva} from '../../../shared/components/localAula.js';
@@ -13,11 +13,14 @@ export function montarVerificacoesMedicas(raiz,painel,servico,executar,tabela){
  const metricas=el('div',undefined,'op-medical-metrics'),form=el('form',undefined,'op-medical-filters op-form-fields'),lista=el('div'),paginas=el('nav',undefined,'op-local-pagination');paginas.setAttribute('aria-label','Páginas das solicitações médicas');
  // Busca com sugestões dos alunos da unidade (decisão do João em 03/11): ao focar ou digitar lista os alunos; escolher um
  // filtra as solicitações dele; texto solto continua filtrando por nome ou CPF.
- const sugestao=criarBuscaComSugestoes({placeholder:'Nome ou CPF',vazio:'Nenhum aluno encontrado.',aoEscolher:()=>{pagina=1;renderizar();}}),busca=sugestao.input,status=select([['','Todos'],...Object.entries(STATUS_MEDICO)]),unidade=select([['','Todas as autorizadas']]),inicio=entrada('date'),fim=entrada('date');
- for(const [id,titulo,n] of [['busca','Buscar aluno',sugestao.elemento],['status','Status da solicitação',status],['unidade','Unidade-base do aluno',unidade],['inicio','Solicitações desde',inicio],['fim','Solicitações até',fim]]){n.dataset.medicalFilter=id;form.append(campo(titulo,n));}
- const erroFiltros=el('p');erroFiltros.setAttribute('role','status');busca.addEventListener('input',()=>{pagina=1;renderizar();});for(const n of [status,unidade,inicio,fim])n.addEventListener('change',()=>{pagina=1;renderizar();});form.onsubmit=e=>{e.preventDefault();pagina=1;renderizar();};for(const n of [status,unidade,inicio,fim])n.onchange=()=>{pagina=1;renderizar();};
- const card=el('article',undefined,'op-card');card.append(el('h2','Solicitações médicas'),el('p','Atestados locais de teste. A recepção analisa e encaminha; somente a futura gerência poderá decidir sobre créditos.','op-help'),form,erroFiltros,lista,paginas);painel.replaceChildren(metricas,card);
- let registros=[],pagina=1,atual=null,url=null;const ordem=estadoOrdenacao();
+ const sugestao=criarBuscaComSugestoes({placeholder:'Nome ou CPF',vazio:'Nenhum aluno encontrado.',aoEscolher:()=>{pagina=1;renderizar();}}),busca=sugestao.input;
+ sugestao.elemento.dataset.medicalFilter='busca';form.append(campo('Nome do aluno ou CPF',sugestao.elemento));
+ const erroFiltros=el('p');erroFiltros.setAttribute('role','status');busca.addEventListener('input',()=>{pagina=1;renderizar();});form.onsubmit=e=>{e.preventDefault();pagina=1;renderizar();};
+ // Pendentes: ainda com a Recepção ou a Gerência. Histórico: aprovadas e reprovadas, como na tela da Gerência.
+ const abas=el('div',undefined,'op-resource-tabs');abas.setAttribute('role','group');abas.setAttribute('aria-label','Visualização das solicitações médicas');
+ const botoesAba={};for(const id of ['pendentes','historico']){const b=botao('',()=>{if(aba===id)return;aba=id;pagina=1;renderizar();});b.dataset.medicalAba=id;botoesAba[id]=b;abas.append(b);}
+ const card=el('article',undefined,'op-card');card.append(el('h2','Solicitações médicas'),el('p','Os atestados vão direto para a Gerência, que decide sobre os créditos. Aqui a Recepção acompanha cada pedido.','op-help'),abas,form,erroFiltros,lista,paginas);painel.replaceChildren(metricas,card);
+ let registros=[],pagina=1,atual=null,url=null,aba='pendentes';const ordem=estadoOrdenacao();
  const d=modal(raiz,'Analisar solicitação médica','opMedica'),corpo=el('div');d.classList.add('op-medical-dialog');d.append(corpo);
  const revogar=()=>{if(url){URL.revokeObjectURL(url);url=null;}};d.addEventListener('close',()=>{revogar();corpo.replaceChildren();atual=null;});
  async function analisar(r){
@@ -31,7 +34,7 @@ export function montarVerificacoesMedicas(raiz,painel,servico,executar,tabela){
   const encaminhar=botao('Encaminhar para gerência',async()=>{encaminhar.disabled=true;fechar.disabled=true;d.querySelector('.op-close').disabled=true;d.oncancel=e=>e.preventDefault();try{await executar(()=>servico.encaminharSolicitacaoMedica(s.id,parecer.value),'Solicitação encaminhada. Crédito permanece retido.',()=>d.close());}finally{if(d.open)encaminhar.disabled=s.status!=='recepcao';fechar.disabled=false;d.querySelector('.op-close').disabled=false;d.oncancel=null;}},'op-button op-button-primary');encaminhar.dataset.medicalForward='';encaminhar.disabled=true;
   const fechar=botao('Fechar',()=>d.close()),acoes=el('footer',undefined,'op-dialog-actions');acoes.append(fechar,encaminhar);
   encaminhar.hidden=s.status!=='recepcao';
-  corpo.append(resumo,documento,el('p','Observações do aluno: '+(s.observacoes||'Não informadas')),campo('Parecer da recepção',parecer),erro,acoes,montarHistoricoMedico(s,{aluno,responsaveis:[servico.identidade]}));
+  corpo.append(resumo,documento,el('p','Observações do envio: '+(s.observacoes||'Não informadas')),...(s.status==='recepcao'||s.parecer?.texto?[campo('Parecer da recepção',parecer)]:[]),erro,acoes,montarHistoricoMedico(s,{aluno,responsaveis:[servico.identidade]}));
   if(s.parecer)corpo.append(el('p','Encaminhado pela recep\u00e7\u00e3o \u00b7 '+data(s.parecer.em),'op-help'));
   if(!d.open)d.showModal();
   try{const arquivo=await servico.documentoMedico(s.id);if(!d.open||atual!==s.id)return;url=URL.createObjectURL(arquivo);documento.replaceChildren(el('h3','Atestado enviado'));
@@ -40,13 +43,16 @@ export function montarVerificacoesMedicas(raiz,painel,servico,executar,tabela){
   }catch(e){if(d.open&&atual===s.id){documento.replaceChildren(el('h3','Documento indisponível'),el('p',e.message));erro.textContent='Não é possível encaminhar sem consultar o documento original.';}}
  }
  function renderizar(){
-  metricas.replaceChildren(...[['Aguardando análise',registros.filter(r=>r.solicitacao.status==='recepcao').length],['Encaminhadas à gerência',registros.filter(r=>r.solicitacao.status==='gerencia').length],['Concluídas',registros.filter(r=>['aprovado','rejeitado'].includes(r.solicitacao.status)).length]].map(([titulo,n])=>{const c=el('article',undefined,'op-card');c.append(el('span',titulo),el('strong',String(n)));return c;}));
-  if(inicio.value&&fim.value&&inicio.value>fim.value){erroFiltros.textContent='A data inicial deve ser anterior ou igual à final.';lista.replaceChildren();paginas.replaceChildren();return;}erroFiltros.textContent='';
+  metricas.replaceChildren(...[['Aguardando análise',registros.filter(r=>r.solicitacao.status==='recepcao').length],['Na Gerência',registros.filter(r=>r.solicitacao.status==='gerencia').length],['Concluídas',registros.filter(r=>['aprovado','rejeitado'].includes(r.solicitacao.status)).length]].filter(([titulo,n])=>titulo!=='Aguardando análise'||n>0).map(([titulo,n])=>{const c=el('article',undefined,'op-card');c.append(el('span',titulo),el('strong',String(n)));return c;}));
+  const historico=aba==='historico',totalHistorico=registros.filter(r=>solicitacaoDecidida(r.solicitacao)).length;
+  for(const [id,nome,n] of [['pendentes','Pendentes',registros.length-totalHistorico],['historico','Histórico',totalHistorico]]){botoesAba[id].textContent=nome+' ('+n+')';botoesAba[id].setAttribute('aria-pressed',String(aba===id));}
+  erroFiltros.textContent='';
   const termo=busca.value.trim().toLocaleLowerCase('pt-BR'),cpf=termo.replace(/\D/g,''),numerico=/^[\d.\-\s]+$/.test(termo);
   const escolhido=sugestao.valor;
-  const filtrados=registros.filter(r=>(escolhido?r.aluno.id===escolhido:!termo||(numerico?r.aluno.cpf.includes(cpf):r.aluno.nome.toLocaleLowerCase('pt-BR').includes(termo)))&&(!status.value||r.solicitacao.status===status.value)&&(!unidade.value||r.unidadeBase===unidade.value)&&(!inicio.value||agoraBrasil(new Date(r.solicitacao.criadaEm)).slice(0,10)>=inicio.value)&&(!fim.value||r.solicitacao.criadaEm.slice(0,10)<=fim.value)).sort((a,b)=>b.solicitacao.criadaEm.localeCompare(a.solicitacao.criadaEm));
-  const total=Math.ceil(filtrados.length/10);pagina=Math.max(1,Math.min(pagina,total||1));lista.replaceChildren(tabela(['Aluno','Categoria','Aula cancelada','Unidade / local','Solicitação','Situação','Ação'],ordenarLinhas(filtrados.map(r=>{const b=botao(r.solicitacao.status==='recepcao'?'Analisar':'Visualizar',()=>analisar(r));b.dataset.medicalAnalyze=r.solicitacao.id;return [r.aluno.nome,r.aula.categoria,r.aula.data.split('-').reverse().join('/')+' · '+r.aula.inicio,nomeLocalDaReserva(r.aula),data(r.solicitacao.criadaEm),situacaoMedica(r.solicitacao),b];}),ordem).slice((pagina-1)*10,pagina*10),'Nenhuma solicitação médica nos filtros selecionados.',{estado:ordem,aoMudar:()=>{pagina=1;renderizar();}}));
+  const momento=r=>String((historico&&dataDecisaoMedica(r.solicitacao))||r.solicitacao.criadaEm);
+  const filtrados=registros.filter(r=>solicitacaoDecidida(r.solicitacao)===historico).filter(r=>(escolhido?r.aluno.id===escolhido:!termo||(numerico?r.aluno.cpf.includes(cpf):r.aluno.nome.toLocaleLowerCase('pt-BR').includes(termo)))).sort((a,b)=>momento(b).localeCompare(momento(a)));
+  const total=Math.ceil(filtrados.length/10);pagina=Math.max(1,Math.min(pagina,total||1));lista.replaceChildren(tabela(['Aluno','Categoria','Aula cancelada','Unidade / local','Solicitação',...(historico?['Decidido em']:[]),'Situação','Ação'],ordenarLinhas(filtrados.map(r=>{const b=botao(r.solicitacao.status==='recepcao'?'Analisar':'Visualizar',()=>analisar(r));b.dataset.medicalAnalyze=r.solicitacao.id;return [r.aluno.nome,r.aula.categoria,r.aula.data.split('-').reverse().join('/')+' · '+r.aula.inicio,nomeLocalDaReserva(r.aula),data(r.solicitacao.criadaEm),...(historico?[data(dataDecisaoMedica(r.solicitacao))]:[]),situacaoMedica(r.solicitacao),b];}),ordem).slice((pagina-1)*10,pagina*10),historico?'Nenhuma decisão encontrada.':'Nenhuma solicitação pendente encontrada.',{estado:ordem,aoMudar:()=>{pagina=1;renderizar();}}));
   paginas.replaceChildren();for(let p=1;p<=total;p++){if(total<=1)break;const b=botao(String(p),()=>{pagina=p;renderizar();});b.setAttribute('aria-current',p===pagina?'page':'false');paginas.append(b);}
  }
- return {atualizar(dados){registros=dados.solicitacoesMedicas||[];sugestao.definirOpcoes((dados.alunos||[]).filter(a=>!a.somenteAgenda).map(a=>({id:a.id,nome:a.nome,cpf:a.cpf})));const anterior=unidade.value;unidade.replaceChildren(...[['','Todas as autorizadas'],...[...new Set(registros.map(r=>r.unidadeBase).filter(Boolean))].map(u=>[u,nomeUnidadeInstitucional(u)])].map(([id,nome])=>new Option(nome,id)));unidade.value=anterior;renderizar();}};
+ return {atualizar(dados){registros=dados.solicitacoesMedicas||[];sugestao.definirOpcoes((dados.alunos||[]).filter(a=>!a.somenteAgenda).map(a=>({id:a.id,nome:a.nome,cpf:a.cpf})));renderizar();}};
 }

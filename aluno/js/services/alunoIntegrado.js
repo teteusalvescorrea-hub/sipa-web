@@ -3,6 +3,7 @@
 // consultarRecursosLocal, disponibilidadeLocal, reservarAulasLocais,
 // cancelarReservaLocal, solicitarCancelamentoMedico, documentoMedico etc.
 // O servidor é a autoridade: aqui só se converte o formato.
+import {nomeDoVeiculo} from '../../../shared/js/formatacao.js';
 import * as api from '../../../shared/js/api.js';
 import {textoErro} from '../../../shared/js/apiErro.js';
 import {sair} from '../../../shared/js/services/authService.js';
@@ -19,23 +20,14 @@ const statusMedico=v=>STATUS_MEDICO_API[numero(v)]??v;
 const comoErro=e=>{const n=new Error(textoErro(e));n.status=e?.status;return n;};
 const chaveOperacao=()=>crypto.randomUUID();
 
-// Motivo do horário indisponível (null, "ocupado", "indisponivel", "passado" ou "alunoOcupado"); a API antiga não manda.
-// "ocupado" = existe instrutor e veículo aptos, mas todos com aula de outro aluno (só esse aceita interesse).
-// "indisponivel" = nenhum par apto (almoço, jornada, bloqueio, validade, sem recurso): não vira interesse.
+// Motivo do horário indisponível (null, "ocupado", "passado" ou "alunoOcupado"); a API antiga não manda.
 const motivoIndisponivel=h=>String(h.motivo?.descricao??h.motivo??'').toLowerCase();
-// Textos do aluno para a situação do interesse (a Recepção usa Contatado/Remarcado/Descartado).
-export const SITUACAO_INTERESSE_ALUNO=Object.freeze({1:'Aguardando',2:'Recepção entrou em contato',3:'Atendido',4:'Não atendido'});
-export const SEM_AULA_PARA_ANTECIPAR='Sem aula para antecipar · desmarque';
-// Interesse em antecipar (aluno): horário ocupado em que ele quer aula. O interesse aberto num horário em que ele já tem
-// aula volta da API como atendido (situação lida, C3). O que não pode ser atendido (podeSerAtendido false, C4) continua
-// aberto, mas pede para desmarcar.
+const SITUACAO_INTERESSE=Object.freeze({1:'Aguardando',2:'Em contato',3:'Remarcado',4:'Encerrado'});
+// Interesse em antecipar (aluno): horário ocupado em que ele quer aula.
 export function adaptarInteresse(i){
- const inicio=comFusoBrasil(i?.dataHoraInicio),s=numero(i?.situacao),texto=String(i?.situacao?.descricao??(typeof s==='string'?s:'')).trim();
- const atendido=i?.atendido===true||s===3||/^(atendido|remarcado)$/i.test(texto),naoAtendido=!atendido&&(s===4||/^(descartado|n[aã]o atendido)$/i.test(texto));
- const aberto=!atendido&&!naoAtendido,podeSerAtendido=aberto&&i?.podeSerAtendido!==false;
- const situacao=atendido?SITUACAO_INTERESSE_ALUNO[3]:naoAtendido?SITUACAO_INTERESSE_ALUNO[4]:!podeSerAtendido?SEM_AULA_PARA_ANTECIPAR:SITUACAO_INTERESSE_ALUNO[s]??SITUACAO_INTERESSE_ALUNO[1];
- return {id:i?.id??i?.interesseId,categoria:categoria(i?.categoria),inicio,data:inicio?.slice(0,10),hora:inicio?.slice(11,16),unidade:nomeDe(i?.unidade)||'Qualquer unidade',
-  situacao,aberto,podeSerAtendido,marcadoEm:i?.marcadoEm??i?.criadoEm??null};
+ const inicio=comFusoBrasil(i?.dataHoraInicio),s=numero(i?.situacao);
+ return {id:i?.id??i?.interesseId,categoria:categoria(i?.categoria),inicio,data:inicio?.slice(0,10),hora:inicio?.slice(11,16),unidade:nomeDe(i?.unidade),
+  situacao:SITUACAO_INTERESSE[s]??i?.situacao?.descricao??(typeof s==='string'?s:'Aguardando'),aberto:![3,4].includes(s),marcadoEm:i?.marcadoEm??i?.criadoEm??null};
 }
 
 // Agendamento automático (F13Dtos.cs). Ida: categoria 1/2/3 e só ids da API (as unidades da tela são nomes do
@@ -61,14 +53,16 @@ export function adaptarPropostaAutomatica(p,aluno){
 // Conversa com a Recepção (ConversasDtos.cs): datas em Brasília sem fuso. O aluno vê o painel de quem escreveu
 // ("Recepção", "Gerência"), não o nome do membro.
 export const adaptarConversaAluno=c=>({autoescolaId:c?.autoescolaId,autoescola:c?.autoescola||'Autoescola',conversaId:c?.conversaId??null,ultimaMensagemEm:comFusoBrasil(c?.ultimaMensagemEm)??null,naoLidas:Number(c?.naoLidas)||0,podeEnviar:c?.podeEnviar===true});
-export const adaptarMensagemConversa=m=>({id:m?.id,texto:m?.texto??'',em:comFusoBrasil(m?.em)??null,daEquipe:m?.daEquipe===true,remetente:m?.remetente||(m?.daEquipe?'Recepção':'Você')});
+export const adaptarMensagemConversa=m=>({id:m?.id,texto:m?.texto??'',em:comFusoBrasil(m?.em)??null,daEquipe:m?.daEquipe===true,remetente:m?.remetente||(m?.daEquipe?'Recepção':'Você'),lida:m?.lida===true});
 
 // Solicitação médica (SolicitacaoMedicaReadDto) no formato de solicitacoesMedicas.js.
 export function adaptarSolicitacao(s,alunoId){
  if(!s)return null;
  return {...s,alunoId:s.alunoId??alunoId,status:statusMedico(s.status),categoria:categoria(s.categoria),
   eventos:(s.eventos||[]).map(e=>({...e,anterior:statusMedico(e.anterior),novo:statusMedico(e.novo)})),
-  devolucao:s.devolucao?{...s.devolucao,aulas:(s.devolucao.aulas||[]).map(a=>({...a,categoria:categoria(a.categoria)}))}:s.devolucao};
+  devolucao:s.devolucao?{...s.devolucao,aulas:(s.devolucao.aulas||[]).map(a=>({...a,categoria:categoria(a.categoria)}))}:s.devolucao,
+  // 18/11/2026: as outras aulas do afastamento abonadas na aprovação do atestado de mais dias.
+  aulasDoAfastamento:(s.aulasDoAfastamento||[]).map(a=>({id:a.id,inicio:comFusoBrasil(a.dataHoraInicio),fim:comFusoBrasil(a.dataHoraFim),categoria:categoria(a.categoria),instrutor:a.motoristaNome||'',unidade:a.unidade||'',veiculo:a.veiculo||''}))};
 }
 
 // Acompanhamento (MeuAcompanhamentoReadDto): situação vem como {descricao,valor} ou nula. A API só manda as provas
@@ -82,7 +76,7 @@ export function adaptarAcompanhamento(a,categorias=[]){
  const tipos=Object.entries(PROVAS_ALUNO).filter(([t,p])=>!p.categoria||categorias.includes(p.categoria)||vindas.has(t)).map(([t])=>t);
  for(const t of vindas.keys())if(!tipos.includes(t))tipos.push(t);
  const provas=tipos.map(tipo=>{const p=vindas.get(tipo);return {tipo,nome:PROVAS_ALUNO[tipo]?.nome||p?.nome||'Prova',
-  tentativas:(p?.tentativas||[]).map(t=>({id:t.id,ordem:t.ordem||1,data:t.data||'',situacao:textoSituacao(t.situacao),resultado:t.resultado?textoSituacao(t.resultado):null}))};});
+  tentativas:(p?.tentativas||[]).map(t=>({id:t.id,ordem:t.ordem||1,data:t.data||'',situacao:textoSituacao(t.situacao),resultado:t.resultado?textoSituacao(t.resultado):null,periodo:Number(t.periodo?.valor??t.periodo)||null,hora:t.horario?String(t.horario).slice(0,5):'',temAgendamento:!!t.temAgendamento}))};});
  return {exames:(a.exames||[]).map(item),provas,processo:(a.processo||[]).map(item)};
 }
 
@@ -113,7 +107,7 @@ function registrosDasAulas(aulas){
  const registros=[];
  for(const a of aulas){
   if(a.motoristaId&&!registros.some(r=>r.id===a.motoristaId))registros.push({id:a.motoristaId,tipo:'instrutor',nome:a.motoristaNome||'Não informado'});
-  if(a.veiculoId&&!registros.some(r=>r.id===a.veiculoId))registros.push({id:a.veiculoId,tipo:'veiculo',nome:[a.veiculoModelo,a.veiculoPlaca].filter(Boolean).join(' · ')||'Não informado',modelo:a.veiculoModelo,placa:a.veiculoPlaca,documento:a.veiculoPlaca});
+  if(a.veiculoId&&!registros.some(r=>r.id===a.veiculoId))registros.push({id:a.veiculoId,tipo:'veiculo',nome:nomeDoVeiculo(a.veiculoModelo,a.veiculoPlaca)||'Não informado',modelo:a.veiculoModelo,placa:a.veiculoPlaca,documento:a.veiculoPlaca});
  }
  return registros;
 }
@@ -148,7 +142,11 @@ export function adaptarDadosAluno(aluno,contratacoes,aulas,extras={}){
  const mensagens=(extras.mensagens||[]).map(m=>({...m,unidade:nomeDe(m.unidade),remetente:nomeDe(m.remetente)||'Recepção'}));
  const cadastro={id:aluno.id,tipo:'aluno',nome:aluno.nome,documento:aluno.cpf,email:aluno.email,telefone:aluno.telefone,
   unidade:nomeDe(matricula?.unidadeBase)||aluno.unidades?.[0]?.nome||'Não informada',unidadeBaseId:matricula?.unidadeBase?.id??null,
-  unidadeCarro:nomeDe(matricula?.unidadeCarro)||null,tipoCambio:CAMBIO[numero(matricula?.tipoCambio)]??null,nascimento:aluno.dataNascimento||null,
+  unidadeCarro:nomeDe(matricula?.unidadeCarro)||null,tipoCambio:CAMBIO[numero(matricula?.tipoCambio)]??null,
+  // Fase 1: o que falta para agendar, a validade do contrato e se o próximo pedido é o primeiro (24h).
+  pendenciasAgendamento:matricula?.liberacao?.pendencias||[],
+  // Fase 3 (5.4): as reposições por atestado (a aula que faltou e a que repõe).
+  reposicoes:(aluno.reposicoes||[]).map(r=>({id:r.id,categoria:r.categoria?.descricao??r.categoria,aulaOrigemId:r.aulaOrigemId,aulaReposicaoId:r.aulaReposicaoId||null,criadaEm:r.criadaEm})),validadeContrato:matricula?.liberacao?.validadeContrato||null,primeiroAgendamento:matricula?.liberacao?.primeiroAgendamento===true,nascimento:aluno.dataNascimento||null,
   categoria:letras.join(''),categoriasFormacao:aluno.categoriasFormacao,
   preferenciasAutomaticas:adaptarPreferenciasAutomaticas(aluno.preferenciasAutomaticas),
   avisosInternos:mensagens,leiturasMensagens:{}};
@@ -195,27 +193,21 @@ export function criarServicoAluno(){
  function lembrar(r){recursosVistos.set(r.id,r);if(dados&&!dados.registros.some(x=>x.id===r.id))dados.registros.push(r);}
 
  // Calendário: um dias-disponiveis por mês e categoria, em cache até reservar ou cancelar.
- async function disponibilidadeLocal({categoria:cat,data}){
-  if(!NUMERO[cat]||!data)return [];
+ async function diaDoCalendario(cat,data){
   const chave=cat+'|'+data.slice(0,7);
   if(!dias.has(chave))dias.set(chave,api.Get(api.ComParams('agendamentos/dias-disponiveis',{categoria:NUMERO[cat],mes:data.slice(0,7)})).catch(()=>({dias:[]})));
-  const dia=(await dias.get(chave)).dias?.find(d=>String(d.data).slice(0,10)===data);
-  if(dia&&!dia.fechado&&dia.temHorario)return [{data}];
-  // Dia sem horário livre, mas com horário ocupado por aula de outro aluno (temLotado, C5): dá para marcar interesse.
-  const vazio=[];if(dia&&!dia.fechado&&dia.temLotado===true)vazio.lotado=true;return vazio;
+  return (await dias.get(chave)).dias?.find(d=>String(d.data).slice(0,10)===data);
  }
-
- // Interesses que a Recepção descartou (situação 4), por "AAAA-MM-DDTHH:MM" na categoria. Lidos uma vez e relidos depois
- // de marcar ou desmarcar; falha na leitura não esconde nada.
- let descartados=null;
- async function interessesDescartados(cat){
-  descartados??=api.Get('alunos/me/interesses-antecipacao').then(r=>(Array.isArray(r)?r:r?.itens||[]).filter(i=>numero(i?.situacao)===4),()=>[]);
-  return new Set((await descartados).filter(i=>categoria(i.categoria)===cat).map(i=>String(i.dataHoraInicio).slice(0,16)));
+ async function disponibilidadeLocal({categoria:cat,data}){
+  if(!NUMERO[cat]||!data)return [];
+  const dia=await diaDoCalendario(cat,data);
+  return dia&&!dia.fechado&&dia.temHorario?[{data}]:[];
  }
+ // Por que o dia fecha na API (feriado, dia bloqueado pelo Master); vazio quando abre.
+ async function motivoFechamentoDoDia({categoria:cat,data}){return NUMERO[cat]&&data?(await diaDoCalendario(cat,data))?.motivo||'':'';}
 
- // Horários do dia com os pares instrutor × veículo livres (incluirMotoristas). O horário ocupado por aula de outro aluno
- // (motivo "ocupado") vem sem pares, para o "Tenho interesse"; a aula do próprio aluno vem como "Sua aula" (propria);
- // passado e "indisponivel" (almoço, jornada, bloqueio, sem recurso) ficam de fora.
+ // Horários do dia com os pares instrutor × veículo livres (incluirMotoristas). O horário ocupado por outro aluno
+ // (motivo "ocupado") vem sem pares, para o "Tenho interesse"; passado e aula própria no horário ficam de fora.
  async function consultarRecursosLocal({categoria:cat,data}){
   const vazio={horarios:[],contagem:{instrutores:0,veiculos:0},permiteAgendar:true};
   if(!data)return {...vazio,mensagem:'Escolha uma data no calendário para consultar os horários.'};
@@ -223,28 +215,22 @@ export function criarServicoAluno(){
   try{r=await api.Get(api.ComParams('agendamentos/horarios-disponiveis',{categoria:NUMERO[cat],data,incluirMotoristas:true}));}
   catch(e){if(e?.status===400||e?.status===404){const motivo=textoErro(e);return {...vazio,mensagem:motivo,permiteAgendar:false,motivoElegibilidade:motivo};}throw comoErro(e);}
   const instrutores=new Set(),veiculos=new Set();
-  // A unidade em que a grade foi montada vai no POST do interesse (C2), quando a API informa.
-  const unidadeId=r.unidadeId??r.unidade?.id??null;
-  // A API v4 manda interesseDescartado por horário; só a antiga obriga a ler a lista de interesses do aluno.
-  const semInteresse=(r.horarios||[]).some(h=>h.disponivel===false&&motivoIndisponivel(h)==='ocupado'&&!h.interesseId&&typeof h.interesseDescartado!=='boolean');
-  const recusados=semInteresse?await interessesDescartados(cat):new Set();
   const horarios=(r.horarios||[]).map(h=>{
-   const hora=String(h.horario).slice(0,5),fim=String(h.dataHoraFim).slice(11,16),motivo=motivoIndisponivel(h);
-   if(h.disponivel===false){
-    if(motivo==='alunoocupado')return {hora,fim,inicio:h.dataHoraInicio,pares:[],propria:true};
-    if(motivo!=='ocupado')return null;
-    const descartado=!h.interesseId&&(h.interesseDescartado===true||h.descartado===true||recusados.has(String(h.dataHoraInicio).slice(0,16)));
-    return {hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null,unidadeId,...(descartado?{descartado:true}:{})};
-   }
+   const hora=String(h.horario).slice(0,5),fim=String(h.dataHoraFim).slice(11,16);
+   if(h.disponivel===false)return motivoIndisponivel(h)==='ocupado'?{hora,fim,inicio:h.dataHoraInicio,pares:[],ocupado:true,interesseId:h.interesseId??null}:null;
    const pares=[];
+   // O carro segue o cadastro do aluno: quem é manual só vê carro manual e os instrutores dele; o automático, idem.
+   const cambioDoAluno=cat==='B'?dados?.aluno?.tipoCambio:null;
    for(const m of h.motoristas||[]){
+    const doCadastro=(m.veiculos||[]).filter(v=>{const tipo=CAMBIO[numero(v.tipoCambio)];return !cambioDoAluno||!tipo||tipo===cambioDoAluno;});
+    if(m.veiculos?.length&&!doCadastro.length)continue;
     lembrar({id:m.motoristaId,tipo:'instrutor',nome:m.nome});anotar(m.motoristaId,cat);instrutores.add(m.motoristaId);
-    for(const v of m.veiculos||[]){lembrar({id:v.veiculoId,tipo:'veiculo',nome:[v.modelo,v.placa].filter(Boolean).join(' · ')||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio:CAMBIO[numero(v.tipoCambio)]??null});anotar(v.veiculoId,cat);veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId});}
+    for(const v of doCadastro){const tipoCambio=CAMBIO[numero(v.tipoCambio)]??null;lembrar({id:v.veiculoId,tipo:'veiculo',nome:nomeDoVeiculo(v.modelo,v.placa)||'Veículo',modelo:v.modelo,placa:v.placa,documento:v.placa,tipoCambio});anotar(v.veiculoId,cat);veiculos.add(v.veiculoId);pares.push({instrutorId:m.motoristaId,veiculoId:v.veiculoId,...(tipoCambio?{tipoCambio}:{})});}
    }
    return {hora,fim,inicio:h.dataHoraInicio,pares};
-  }).filter(h=>h&&(h.ocupado||h.propria||h.pares.length));
-  const mensagem=r.fechado?'Não há expediente nesta data.':horarios.some(h=>!h.ocupado&&!h.propria)?'':'Nenhum horário com instrutor e veículo livres nesta data.';
-  return {horarios,contagem:{instrutores:instrutores.size,veiculos:veiculos.size},mensagem,permiteAgendar:true,unidade:r.unidade,unidadeId,local:r.local};
+  }).filter(h=>h&&(h.ocupado||h.pares.length));
+  const mensagem=r.fechado?'Não há expediente nesta data.':horarios.some(h=>!h.ocupado)?'':'Nenhum horário com instrutor e veículo livres nesta data.';
+  return {horarios,contagem:{instrutores:instrutores.size,veiculos:veiculos.size},mensagem,permiteAgendar:true,unidade:r.unidade,local:r.local};
  }
 
  // POST /api/agendamentos em lote (tudo ou nada), com o operacaoId como Idempotency-Key.
@@ -272,14 +258,12 @@ export function criarServicoAluno(){
  }
 
  // Interesse num horário ocupado: a Recepção vê quando o horário vaga e liga para remarcar.
- // Só o horário "ocupado" aceita interesse (C2): a API recusa os outros com 400 e a mensagem dela aparece na tela.
- async function marcarInteresse({categoria:cat,data,hora,unidadeId}){
+ async function marcarInteresse({categoria:cat,data,hora}){
   if(!NUMERO[cat]||!data||!hora)throw new Error('Escolha a categoria, a data e o horário.');
-  const corpo={categoria:NUMERO[cat],dataHoraInicio:data+'T'+hora+':00',...(GUID.test(String(unidadeId||''))?{unidadeId}:{})};
-  try{return adaptarInteresse(await api.Post('alunos/me/interesses-antecipacao',corpo,{cabecalhos:{'Idempotency-Key':chaveOperacao()}}));}
-  catch(e){throw comoErro(e);}finally{descartados=null;}
+  try{return adaptarInteresse(await api.Post('alunos/me/interesses-antecipacao',{categoria:NUMERO[cat],dataHoraInicio:data+'T'+hora+':00'},{cabecalhos:{'Idempotency-Key':chaveOperacao()}}));}
+  catch(e){throw comoErro(e);}
  }
- async function desmarcarInteresse(id){try{await api.Delete('alunos/me/interesses-antecipacao/'+id);}catch(e){throw comoErro(e);}finally{descartados=null;}}
+ async function desmarcarInteresse(id){try{await api.Delete('alunos/me/interesses-antecipacao/'+id);}catch(e){throw comoErro(e);}}
  async function listarInteresses(){
   try{const r=await api.Get('alunos/me/interesses-antecipacao');return (Array.isArray(r)?r:r?.itens||[]).map(adaptarInteresse).sort((a,b)=>String(a.inicio).localeCompare(String(b.inicio)));}
   catch(e){throw comoErro(e);}
@@ -308,19 +292,27 @@ export function criarServicoAluno(){
    .sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
  }
 
- return {capacidades,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
+ // Fase 8: o horário do chat, o pedido de mais aulas e a avaliação pós-aula.
+ const atendimento=async autoescolaId=>{try{return await api.Get('alunos/me/atendimento/'+autoescolaId);}catch(e){throw comoErro(e);}};
+ const pedirMaisAulas=async()=>{try{return await api.Post('alunos/me/pedidos-aulas',{});}catch(e){throw comoErro(e);}};
+ const avaliacoesPendentes=async()=>{try{return await api.Get('alunos/me/avaliacoes-pendentes');}catch(e){throw comoErro(e);}};
+ const avaliarAula=async(id,d)=>{try{return await api.Post('alunos/me/aulas/'+id+'/avaliacao',d);}catch(e){throw comoErro(e);}};
+ return {capacidades,atendimento,pedirMaisAulas,avaliacoesPendentes,avaliarAula,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
   registros:async()=>(await dadosAlunoLocal()).registros,sair,
   consultarHistorico:async id=>(await api.Get('agendamentos/'+id)).historico||[],
-  disponibilidadeLocal,consultarRecursosLocal,reservarAulasLocais,cancelarReservaLocal,solicitarCancelamentoMedico,
+  disponibilidadeLocal,motivoFechamentoDoDia,consultarRecursosLocal,reservarAulasLocais,cancelarReservaLocal,solicitarCancelamentoMedico,
   consultarPoliticaCancelamento:id=>api.Get('agendamentos/'+id+'/politica-cancelamento'),
   documentoMedico:async id=>{try{return await api.Get('solicitacoes-medicas/'+id+'/documento',{binario:true});}catch(e){throw comoErro(e);}},
   metadadosDocumentoMedico:id=>api.Get('solicitacoes-medicas/'+id+'/documento/metadados'),
   alterarSenhaLocal:async({atual,nova})=>{try{await api.Put('usuarios/me/senha',{senhaAtual:atual,novaSenha:nova});}catch(e){throw comoErro(e);}},
-  politicaSenhaLocal:{minimo:8,maximo:128},
+  politicaSenhaLocal:{minimo:4,maximo:100},
   marcarInteresse,desmarcarInteresse,listarInteresses,
   ofertaAntecipacao:async id=>{try{return await api.Get('alunos/me/ofertas-antecipacao/'+id);}catch(e){throw comoErro(e);}},
   responderOferta:async(id,acao,aulaAnteriorId,chave)=>{try{return await api.Post('alunos/me/ofertas-antecipacao/'+id+'/resposta',{acao,aulaAnteriorId:aulaAnteriorId||null},{cabecalhos:{'Idempotency-Key':chave}});}catch(e){throw comoErro(e);}finally{invalidar();}},
   consultarAvisos:async filtro=>{try{const r=await api.Get(api.ComParams('alunos/me/mensagens',filtro),{comTotal:true});return {...r,itens:r.itens.map(m=>({...m,unidade:nomeDe(m.unidade),remetente:nomeDe(m.remetente)||'Recepção'}))};}catch(e){throw comoErro(e);}},
+  // 18/11/2026 (pedido do usuário): avisos ainda não lidos (resultado do atestado = tipo 4, aula cancelada pela
+  // autoescola, ofertas), para o número no item "Minhas aulas" e nas abas "Avisos e ofertas" e "Atestados médicos".
+  avisosNaoLidos:async()=>{const r=await api.Get(api.ComParams('alunos/me/mensagens',{lidas:false,pagina:1,tamanho:100}));return (Array.isArray(r)?r:r?.itens||[]).filter(m=>!m.lidaEm).map(m=>({id:m.id,tipo:Number(m.tipo?.valor??m.tipo)||0}));},
   marcarMensagemLida:async id=>{try{await api.Post('alunos/me/mensagens/'+id+'/leitura');}catch(e){throw comoErro(e);}finally{invalidar();}},
   // Conversa com a Recepção (uma por autoescola em que o aluno tem matrícula), separada dos avisos.
   conversas:async()=>{try{return (await api.Get('alunos/me/conversas')||[]).map(adaptarConversaAluno);}catch(e){throw comoErro(e);}},
@@ -330,8 +322,14 @@ export function criarServicoAluno(){
    try{return adaptarMensagemConversa(await api.Post('alunos/me/conversas/'+autoescolaId+'/mensagens',{texto:t},{cabecalhos:{'Idempotency-Key':chave||chaveOperacao()}}));}catch(e){throw comoErro(e);}
   },
   marcarConversaLida:async autoescolaId=>{try{await api.Post('alunos/me/conversas/'+autoescolaId+'/leitura');}catch(e){throw comoErro(e);}},
+  // Conversas que a Gerência ou o Master começaram com o aluno (09/11/2026).
+  chatResumo:async()=>{try{return await api.Get('alunos/me/chat/resumo');}catch(e){throw comoErro(e);}},
+  chatConversa:async id=>{try{return (await api.Get('alunos/me/chat/conversas/'+id))||[];}catch(e){throw comoErro(e);}},
+  chatEnviar:async(id,texto)=>{const t=String(texto??'').trim();if(!t||t.length>2000)throw new Error('Mensagem deve ter entre 1 e 2000 caracteres.');try{return await api.Post('alunos/me/chat/conversas/'+id+'/mensagens',{texto:t});}catch(e){throw comoErro(e);}},
+  chatLer:async id=>{try{await api.Post('alunos/me/chat/conversas/'+id+'/leitura');}catch(e){throw comoErro(e);}},
   // Sino e item Mensagens: somente os avisos ainda não lidos.
-  totalNaoLidas:async()=>{const avisos=await opcional(api.Get('alunos/me/mensagens/nao-lidas'));return Number(avisos?.total??avisos)||0;},
+  // 09/11/2026: a página Mensagens é só o chat; o número do menu soma as não lidas da Recepção e da Gerência.
+  totalNaoLidas:async()=>{const [recepcao,diretas]=await Promise.all([opcional(api.Get('alunos/me/conversas/nao-lidas')),opcional(api.Get('alunos/me/chat/resumo'))]);return (Number(recepcao?.total??recepcao)||0)+(Number(diretas?.naoLidas)||0);},
   // Agendamento automático: F13 (D19).
   buscarAgendamentoAutomatico,salvarPreferenciasAutomaticas,recursosAutomaticos};
 }

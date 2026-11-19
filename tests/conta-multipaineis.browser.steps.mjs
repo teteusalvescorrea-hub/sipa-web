@@ -21,7 +21,7 @@ export async function validarContaMultipaineis({evaluate,waitFor,check,navigate,
  for(const perfil of ['operador','gerencia','master']){
   await login(perfil);
   await check(`(async()=>{const c=await (await import('/dev/autenticacao.js')).exigirPerfil(${JSON.stringify(perfil)});return c.id==='recepcao-inicial'&&c.perfilConta==='master'&&c.perfil===${JSON.stringify(perfil)}&&c.unidade==='Vila Velha'&&c.nivel===${{operador:1,gerencia:2,master:3}[perfil]};})()`,'Mesma conta e senha, identidade Master e permissoes efetivas de '+perfil);
-  await check(perfil==='operador'?"!document.querySelector('[data-op-nav=acessos]')&&!document.querySelector('[data-op-nav=auditoria]')":perfil==='gerencia'?"!document.querySelector('[data-op-nav=acessos]')&&!document.querySelector('[data-op-nav=auditoria]')":"!!document.querySelector('[data-op-nav=acessos]')&&!document.querySelector('[data-op-nav=auditoria]')",'Interface corresponde ao painel '+perfil);
+  await check(perfil==='operador'?"!document.querySelector('[data-op-nav=acessos]')&&!document.querySelector('[data-op-nav=auditoria]')":perfil==='gerencia'?"!document.querySelector('[data-op-nav=acessos]')&&!document.querySelector('[data-op-nav=auditoria]')":"!!document.querySelector('[data-op-nav=acessos]')&&!!document.querySelector('[data-op-nav=auditoria]')",'Interface corresponde ao painel '+perfil);
   await navigate(rotas[perfil],"!!document.querySelector('[data-op-nav=alunos]')");
   await check(`(async()=>{const m=await import('/dev/autenticacao.js');return (await m.exigirPerfil(${JSON.stringify(perfil)})).perfilConta==='master';})()`,'Sessao persiste apos recarregar '+perfil);
   if(perfil==='operador'){

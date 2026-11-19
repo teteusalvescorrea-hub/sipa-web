@@ -22,7 +22,7 @@ test('par real completo prevalece, parcial não se mistura com temporários e du
  local();const e=estado();e.recursos=reais();assert.equal(prepararOnibusTemporario(e),e);assert.deepEqual(recursosOperacionaisD(e.recursos),e.recursos);
  const seeded=prepararOnibusTemporario(estado()),parcial={...seeded,recursos:[...seeded.recursos,reais()[0]]};assert.ok(recursosOperacionaisD(parcial.recursos).every(onibusTemporario));
  const completo={...seeded,recursos:[...seeded.recursos,...reais()]};assert.deepEqual(recursosOperacionaisD(completo.recursos).map(r=>r.id),['real-i','real-v']);assert.equal(prepararOnibusTemporario(completo),completo);
- const duplicado={...completo,recursos:[...completo.recursos,{...reais()[0],id:'duplicado'}]};assert.match(motivoCatalogoOnibus(duplicado.recursos),/único/);
+ const duplicado={...completo,recursos:[...completo.recursos,{...reais()[0],id:'duplicado'}]};assert.ok(recursosOperacionaisD(duplicado.recursos).some(r=>r.id==='duplicado'));assert.equal(motivoCatalogoOnibus(duplicado.recursos),'');
 });
 test('colisões e desativações existentes não são sobrescritas ou reativadas',()=>{
  local();const e=estado();e.recursos=[{id:IDS_ONIBUS_TEMPORARIO.instrutor,nome:'Não temporário'}];assert.throws(()=>prepararOnibusTemporario(e),/Identificador/);

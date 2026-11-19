@@ -7,7 +7,7 @@ const aluno=()=>({id:'d',categoria:'D',financeiro:'Pendente',aulasAdquiridas:{D:
 for(const categoria of ['A','B','AB','D'])for(const quantidade of [1,10,20])test('cadastro '+categoria+' com '+quantidade+' creditos imediatos, reserva e persistencia',()=>{
  const unidade=categoria.includes('A')?'Vila Velha':'Cobil\u00e2ndia';
  const op={id:'op',unidade,permissoes:['cadastrar','anotar','agendar','consultar']};
- let e=cadastrarAluno({alunos:[],aulas:[],recursos:[]},op,{nome:'Aluno Teste',cpf:'52998224725',nascimento:'2000-01-01',telefone:'27999999999',email:'teste@example.invalid',categoria,tipoCambio:'manual',unidadeCarro:unidade,quantidadeCarro:String(quantidade),quantidadeMoto:String(quantidade),quantidadeOnibus:String(quantidade),observacoes:'Teste explicito'},'d',new Date('2026-10-19T08:00:00-03:00'));
+ let e=cadastrarAluno({alunos:[],aulas:[],recursos:[]},op,{nome:'Aluno Teste',cpf:'52998224725',nascimento:'2000-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha',telefone:'27999999999',email:'teste@example.invalid',categoria,tipoCambio:'manual',unidadeCarro:unidade,quantidadeCarro:String(quantidade),quantidadeMoto:String(quantidade),quantidadeOnibus:String(quantidade),observacoes:'Teste explicito'},'d',new Date('2026-10-19T08:00:00-03:00'));
  let a=e.alunos[0];const antes=structuredClone(e);
  for(const c of ['A','B','D'].filter(c=>categoria.includes(c))){assert.equal(a.creditos[c].disponiveis,quantidade);assert.equal(resumirCreditosRecepcao(a,[]).categorias[c].disponiveis,quantidade);}
  assert.deepEqual(e,antes);assert.equal(a.financeiro,'Pendente');assert.equal(a.liberacaoAgendaTeste,undefined);

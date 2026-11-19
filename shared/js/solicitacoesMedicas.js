@@ -1,5 +1,9 @@
 import {criarCancelamento,calcularPrazoCancelamento,POLITICA_CANCELAMENTO} from '../../aluno/js/domain/agendamentoAluno.js';
 export const STATUS_MEDICO=Object.freeze({recepcao:'Aguardando análise da recepção',gerencia:'Encaminhado para análise da Gerência',aprovado:'Aprovado pela gerência',rejeitado:'Reprovado pela gerência'});
+// Decidida: sai de Pendentes e vai para o Histórico nas Verificações da Recepção e da Gerência.
+const STATUS_DECIDIDOS=Object.freeze(['aprovado','rejeitado','reprovado']);
+export const solicitacaoDecidida=s=>STATUS_DECIDIDOS.includes(s?.status);
+export const dataDecisaoMedica=s=>[...(s?.eventos||[])].reverse().find(e=>STATUS_DECIDIDOS.includes(e.novo))?.em||null;
 export function historicoMedicoParaExibicao(s,{aluno,responsaveis=[]}={}){
  const perfis={aluno:'Aluno',operador:'Recepção',gerencia:'Gerência',master:'Master'};
  const situacoes={...STATUS_MEDICO,reprovado:'Reprovado pela gerência',devolvido:'Crédito devolvido'};
@@ -22,15 +26,16 @@ export function creditoDoAtestado(s){
  const comprovada=s.status==='aprovado'&&d?.estado==='confirmada'&&typeof d.operacaoId==='string'&&d.operacaoId.trim()&&typeof d.responsavel==='string'&&d.responsavel.trim()&&instanteValido(d.em)&&Array.isArray(itens)&&itens.length>0&&new Set(itens.map(x=>x.aulaId)).size===itens.length&&itens.every(x=>ids.includes(x.aulaId)&&x.alunoId===s.alunoId&&x.categoria===s.categoria&&Number.isSafeInteger(x.quantidade)&&x.quantidade>0);
  const quantidade=comprovada?itens.reduce((total,x)=>total+x.quantidade,0):0;
  if(comprovada&&Number.isSafeInteger(s.creditosEnvolvidos)&&quantidade<=s.creditosEnvolvidos)return {texto:'Devolvido',quantidade,confirmado:true};
- return {texto:({recepcao:'Não devolvido — aguardando decisão',gerencia:'Não devolvido — aguardando decisão da gerência',aprovado:'Devolução pendente',rejeitado:'Não devolvido — solicitação rejeitada'})[s.status]||'Situação da devolução não informada',quantidade:0,confirmado:false};
+ return {texto:({recepcao:'Não devolvido — aguardando decisão',gerencia:'Não devolvido — aguardando decisão da gerência',aprovado:'Devolução pendente',rejeitado:'Não devolvido — atestado reprovado'})[s.status]||'Situação da devolução não informada',quantidade:0,confirmado:false};
 }
 export function etapasDoAtestado(s){
- const final=['aprovado','rejeitado'].includes(s.status),recepcaoConcluida=!!s.parecer?.responsavel&&instanteValido(s.parecer.em)||(s.eventos||[]).some(e=>e.novo==='gerencia'&&e.responsavel&&instanteValido(e.em));
+ const final=['aprovado','rejeitado'].includes(s.status),recepcaoConcluida=!!s.parecer?.responsavel&&instanteValido(s.parecer.em)||(s.eventos||[]).some(e=>e.anterior==='recepcao'&&e.novo==='gerencia'&&e.responsavel&&instanteValido(e.em));
  return [
   {titulo:'Atestado enviado',estado:s.documento?.id&&instanteValido(s.criadaEm)?'concluida':'pendente'},
-  {titulo:'Análise da recepção',estado:recepcaoConcluida?'concluida':s.status==='recepcao'?'atual':'pendente'},
+  // Fase 3: o atestado vai direto para a gerência (sem passar pela recepção).
+  (!recepcaoConcluida&&s.status!=='recepcao'?{titulo:'Direto para a gerência',estado:'concluida'}:{titulo:'Análise da recepção',estado:recepcaoConcluida?'concluida':s.status==='recepcao'?'atual':'pendente'}),
   {titulo:'Análise da gerência',estado:final?'concluida':s.status==='gerencia'?'atual':'pendente'},
-  {titulo:final?(s.status==='aprovado'?'Resultado: aprovado':'Resultado: rejeitado'):'Resultado',estado:final?'concluida':'pendente'}
+  {titulo:final?(s.status==='aprovado'?'Resultado: aprovado':'Resultado: reprovado'):'Resultado',estado:final?'concluida':'pendente'}
  ];
 }
 export function ultimaAtualizacaoAtestado(s){

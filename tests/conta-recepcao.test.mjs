@@ -4,7 +4,7 @@ import {servicoOperador} from '../nivel-1-operador/js/servicoOperador.js';
 import {criarDadosDemo} from '../dev/operador/dadosDemo.js';
 import {repositorioDemo,CHAVE_DEMO} from '../dev/operador/repositorioDemo.js';
 import * as contas from '../dev/aluno/contaRecepcao.js';
-const dados={nome:'Cadastro Local de Teste',cpf:'93541134780',nascimento:'2000-01-01',telefone:'27999998888',email:'teste@example.invalid',tipoCambio:'manual',categoria:'AB',unidadeCarro:'Santa Rita',quantidadeCarro:'20',quantidadeMoto:'15',observacoes:'Teste fictício de ativação.'};
+const dados={nome:'Cadastro Local de Teste',cpf:'93541134780',nascimento:'2000-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha',telefone:'27999998888',email:'teste@example.invalid',tipoCambio:'manual',categoria:'AB',unidadeCarro:'Santa Rita',quantidadeCarro:'20',quantidadeMoto:'15',observacoes:'Teste fictício de ativação.'};
 test('conta fictícia atômica, idempotente, com hash, troca obrigatória, isolamento e bloqueio de tentativas',async()=>{
  const navegador=Object.getOwnPropertyDescriptor(globalThis,'navigator'),map=new Map(),sessao=new Map([['sipa.token','preservado']]);
  const storage=map=>({getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)});

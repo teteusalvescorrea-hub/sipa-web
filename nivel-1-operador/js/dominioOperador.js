@@ -69,7 +69,9 @@ export function autorizar(identidade, permissao) {
     if (!identidade?.id || !UNIDADES.some(([id]) => id === unidade(identidade.unidade)) || !identidade.permissoes?.includes(permissao)) throw new Error('Permissão insuficiente para esta operação.');
 }
 export function vinculo(a, identidade) {
-    if(identidade.nivel>=2)return escopoPermitido(identidade,principal(a))?'cadastro':null;
+    // 11/11/2026 (pente-fino): a Gerência e o Master também veem o aluno de outra base que faz as aulas de carro na unidade
+    // (a Recepção da unidade já via; antes a Gerência listava um aluno a menos que a própria Recepção).
+    if(identidade.nivel>=2)return escopoPermitido(identidade,principal(a))||(carro(a)&&escopoPermitido(identidade,carro(a)))?'cadastro':null;
     const u = unidade(identidade.unidade);
     if (principal(a) === u || carro(a) === u) return 'cadastro';
     return (u === 'Vila Velha' && a.categoria.includes('A'))||(u==='Cobilândia'&&a.categoria==='D') ? 'pista' : null;
@@ -87,9 +89,10 @@ export function consultarAlunos(estado, identidade) {
 export function consultarRecursos(estado, identidade) {
     autorizar(identidade, 'consultar');
     const operacionais=recursosOperacionaisD(estado.recursos);
-    return estado.recursos.filter(r => !r.excluidoEm && (escopoPermitido(identidade,unidade(r.unidade))||recursoMotoCentral(r)||recursoCategoriaD(r)||recursoCarroConsultavel(r,identidade.unidade))&&(!onibusTemporario(r)||operacionais.some(x=>x.id===r.id))).map(r => structuredClone(r));
+    // 12/11/2026: o recurso sem unidade fixa (instrutor ou veículo) é da autoescola toda, como na API.
+    return estado.recursos.filter(r => !r.excluidoEm && (!r.unidade||escopoPermitido(identidade,unidade(r.unidade))||recursoMotoCentral(r)||recursoCategoriaD(r)||recursoCarroConsultavel(r,identidade.unidade))&&(!onibusTemporario(r)||operacionais.some(x=>x.id===r.id))).map(r => structuredClone(r));
 }
-export function consultarCadastrosRecursos(estado,identidade){autorizar(identidade,'consultar');return estado.recursos.filter(r=>!r.excluidoEm&&escopoPermitido(identidade,unidade(r.unidade))).map(r=>structuredClone(r));}
+export function consultarCadastrosRecursos(estado,identidade){autorizar(identidade,'consultar');return estado.recursos.filter(r=>!r.excluidoEm&&(!r.unidade||escopoPermitido(identidade,unidade(r.unidade)))).map(r=>structuredClone(r));}
 export function recursoAdministrativo(estado,identidade,id){const r=consultarCadastrosRecursos(estado,identidade).find(r=>r.id===id);if(!r)throw new Error('Cadastro de recurso fora do escopo administrativo desta unidade.');return r;}
 export const recursoMotoCentral=r=>unidade(r.unidade)==='Vila Velha'&&(r.tipo==='Veículos'?r.categoria==='A':r.tipo==='Instrutores'&&r.categorias?.includes('A'));
 export function consultarAgendaMotos(estado,identidade){
@@ -129,6 +132,13 @@ export function validarCadastroAluno(dados, identidade, alunos = [], instante = 
     if (!/^[1-9]{2}\d{8,9}$/.test(telefone)) erros.telefone='Informe um telefone com DDD (10 ou 11 dígitos).';
     if (email.length>200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email='Informe um e-mail válido.';
     if (!['A','B','D','AB'].includes(categoria)) erros.categoria='Selecione a categoria.';
+    // Fase 1: tipo de CNH e data do contrato (até hoje) são obrigatórios; Cortesia e Permuta só o Master. O KM saiu do
+    // cadastro: sem ele, vale a unidade principal.
+    if (!['1','2','3','4'].includes(String(dados.tipoCnh||''))) erros.tipoCnh='Selecione o tipo de CNH.';
+    else if (['3','4'].includes(String(dados.tipoCnh)) && identidade?.nivel!==3) erros.tipoCnh='Somente o Master cadastra aluno como Cortesia ou Permuta.';
+    if (!dataValida(dados.dataContrato)) erros.dataContrato='Informe a data do contrato.';
+    else if (dados.dataContrato > agoraBrasil(instante).slice(0,10)) erros.dataContrato='A data do contrato não pode ser depois de hoje.';
+    if (dados.km && !UNIDADES.some(([id])=>id===unidade(dados.km))) erros.km='Selecione o KM.';
     if (!UNIDADES.some(([id])=>id===unidade(identidade?.unidade))) erros.unidade='Unidade principal inválida. Confira o vínculo do operador.';
     if (['B','AB'].includes(categoria) && !UNIDADES.some(([id])=>id===unidade(dados.unidadeCarro))) erros.unidadeCarro='Selecione a unidade para aulas de carro.';
     for(const [cat,chave,nome] of [['B','quantidadeCarro','carro'],['A','quantidadeMoto','moto'],['D','quantidadeOnibus','ônibus']]){
@@ -283,7 +293,8 @@ export function resumoAulasAluno(estado, aluno) {
         const anterior=unicas.get(aula.id),instante=a=>Date.parse(a.validadaEm||a.atualizadoEm||'')||0;
         if(!anterior||instante(aula)>=instante(anterior))unicas.set(aula.id,aula);
     }
-    return Object.fromEntries(['A','B','D'].filter(c=>aluno.categoria.includes(c)).map(c=>{
+    const cats=aluno.categorias?.length?aluno.categorias:[...String(aluno.categoria||'')];
+    return Object.fromEntries(['A','B','D'].filter(c=>cats.includes(c)).map(c=>{
         const aulas=[...unicas.values()].filter(a=>a.categoria===c),quantidade=aluno.aulasAdquiridas?.[c];
         return [c,{adquiridas:Number.isInteger(quantidade)&&quantidade>=0?quantidade:null,realizadas:aulas.filter(a=>a.status===5).length,faltas:aulas.filter(a=>a.status===6).length}];
     }));
@@ -313,6 +324,8 @@ export function transferirAluno(estado, identidade, id, destino, motivo, cancela
 }
 function livreNaData(r, data, inicio, fim) {
     if ((r.datasBloqueadas || []).includes(data) || (r.feriadosUnidade || []).includes(data)) return false;
+    // 13/11/2026: o instrutor e o veículo reservados para a prova ficam fora da agenda até 13:00 desse dia.
+    if ((r.reservasProva || []).some(p => p.data === data && inicio < p.ate)) return false;
     const dia = new Date(`${data}T12:00:00Z`).getUTCDay();
     if (r.disponibilidade && !(r.disponibilidade[dia] || []).some(f => typeof f === 'string' ? f === inicio : f.inicio <= inicio && f.fim >= fim)) return false;
     if (r.disponibilidadeSemanal && !r.disponibilidadeSemanal.some(f=>f.dia===dia&&f.inicio<=inicio&&fim<=f.fim)) return false;
@@ -321,7 +334,7 @@ function livreNaData(r, data, inicio, fim) {
 export function motivoRecursoIndisponivel(estado,identidade,data,inicio,filtros={},instante=new Date()){
     autorizar(identidade,'consultar');
     const horario=motivoNovoAgendamento(data,inicio,agoraBrasil(instante),filtros.categoria);if(horario)return horario;
-    const recursos=consultarRecursos(estado,identidade),v=recursos.find(r=>r.id===filtros.veiculoId&&r.tipo==='Veículos');
+    const recursos=filtros.recursosConsultados||consultarRecursos(estado,identidade),v=recursos.find(r=>r.id===filtros.veiculoId&&r.tipo==='Veículos');
     // Agenda do instrutor (sem veículo escolhido): o motivo vem do instrutor; o veículo é escolhido ao agendar.
     if(!v&&filtros.instrutorId){const i=recursos.find(r=>r.id===filtros.instrutorId&&r.tipo==='Instrutores');if(!i)return 'Instrutor não cadastrado ou sem autorização operacional';if(!recursoAtivo(i))return 'Instrutor indisponível';if(!(new Date(data+'T12:00:00Z').getUTCDay()===6&&filtros.categoria!=='D')){const almoco=motivoAlmoco(i,inicio);if(almoco)return almoco;}if(!livreNaData(i,data,inicio,fimDaAula(inicio)))return 'Instrutor fora da jornada ou bloqueado nesta data';return 'Instrutor ou veículos ocupados neste horário';}
     if(!v)return 'Veículo não cadastrado ou sem autorização operacional';
@@ -337,15 +350,15 @@ export function motivoRecursoIndisponivel(estado,identidade,data,inicio,filtros=
     const semIntervalo=jornada.filter(i=>!motivoAlmoco(i,inicio));if(!semIntervalo.length)return 'Intervalo do instrutor';
     const aulas=[...estado.aulas,...(estado.ocupacoes||[])];
     if(aulas.some(a=>a.veiculoId===v.id&&a.data===data&&ocupaRecurso(a)&&a.inicio<fimDaAula(inicio)&&inicio<a.fim))return 'Horário ocupado neste veículo';
-    if(semIntervalo.every(i=>conflito(aulas,{data,inicio,fim:fimDaAula(inicio),instrutorId:i.id,veiculoId:v.id})))return 'Instrutor ocupado em outra aula';
+    if(semIntervalo.every(i=>conflito(aulas,{data,inicio,fim:fimDaAula(inicio),instrutorId:i.id,veiculoId:v.id,categoria:v.categoria})))return 'Instrutor ocupado em outra aula';
     return 'Restrição operacional: confira o vínculo e a configuração dos recursos';
 }
 export function paresNaUnidade(estado, identidade, data, inicio, filtros = {}, instante = new Date()) {
     autorizar(identidade,'consultar'); if (motivoNovoAgendamento(data,inicio,agoraBrasil(instante),filtros.categoria||'D')) return [];
     const alunoCarro=filtros.alunoId&&filtros.categoria==='B'?alunoAutorizado(estado,identidade,filtros.alunoId):{unidadeCarro:unidade(identidade.unidade),tipoCambio:filtros.tipoCambio};
-    const recursos = consultarRecursos(estado,identidade).filter(r=>recursoAtivo(r)&&livreNaData(r,data,inicio,fimDaAula(inicio))&&(!(r.tipo==='Instrutores')||!motivoAlmoco(r,inicio)||(new Date(data+'T12:00:00Z').getUTCDay()===6&&filtros.categoria!=='D')));
-    return recursos.filter(r=>r.tipo==='Instrutores'&&(!filtros.instrutorId||r.id===filtros.instrutorId)).flatMap(i=>recursos.filter(v=>v.tipo==='Veículos'&&i.categorias?.includes(v.categoria)&&(v.categoria==='B'?(i.id===resolverInstrutorCarro(estado.recursos,v)):v.instrutorId?i.id===v.instrutorId:!i.veiculoIds?.length||i.veiculoIds.includes(v.id))&&(!filtros.categoria||v.categoria===filtros.categoria)&&(!filtros.veiculoId||v.id===filtros.veiculoId)
-        && (v.categoria==='D'||v.categoria==='B'?(v.categoria==='D'||(filtros.consultaOperacional===true&&!filtros.alunoId&&!cambioValido(v.tipoCambio)?recursoNaOperacaoCarro(i,operacaoCarro(alunoCarro,data))&&recursoNaOperacaoCarro(v,operacaoCarro(alunoCarro,data)):filtros.alunoId||filtros.tipoCambio?recursoCarroCompativel(i,alunoCarro,data)&&recursoCarroCompativel(v,alunoCarro,data):['manual','automatico'].some(tipoCambio=>recursoCarroCompativel(i,{...alunoCarro,tipoCambio},data)&&recursoCarroCompativel(v,{...alunoCarro,tipoCambio},data)))):recursoMotoCentral(i)&&recursoMotoCentral(v)&&i.veiculoIds?.includes(v.id)) && !validarHorario(data,inicio,undefined,i,v.categoria) && (v.categoria!=='D'||recursosOperacionaisD(estado.recursos).some(r=>r.id===i.id)&&recursosOperacionaisD(estado.recursos).some(r=>r.id===v.id)&&localCategoriaD(data)&&!motivoCatalogoOnibus(estado.recursos)&&![...estado.aulas,...(estado.ocupacoes||[])].some(a=>a.categoria==='D'&&a.data===data&&ocupaRecurso(a)&&a.inicio<fimDaAula(inicio)&&inicio<a.fim)) && !conflito([...estado.aulas,...(estado.ocupacoes||[])],{data,inicio,fim:fimDaAula(inicio),instrutorId:i.id,veiculoId:v.id})).map(v=>({instrutorId:i.id,veiculoId:v.id,categoria:v.categoria})));
+    const recursos = (filtros.recursosConsultados||consultarRecursos(estado,identidade)).filter(r=>recursoAtivo(r)&&livreNaData(r,data,inicio,fimDaAula(inicio))&&(!(r.tipo==='Instrutores')||!motivoAlmoco(r,inicio)||(new Date(data+'T12:00:00Z').getUTCDay()===6&&filtros.categoria!=='D')));
+    return recursos.filter(r=>r.tipo==='Instrutores'&&(!filtros.instrutorId||r.id===filtros.instrutorId)).flatMap(i=>recursos.filter(v=>v.tipo==='Veículos'&&i.categorias?.includes(v.categoria)&&(!filtros.categoria||v.categoria===filtros.categoria)&&(!filtros.veiculoId||v.id===filtros.veiculoId)&&(v.categoria==='B'?(i.id===resolverInstrutorCarro(estado.recursos,v)):v.instrutorId?i.id===v.instrutorId:!i.veiculoIds?.length||i.veiculoIds.includes(v.id))
+        && (v.categoria==='D'||v.categoria==='B'?(v.categoria==='D'||(filtros.consultaOperacional===true&&!filtros.alunoId&&!cambioValido(v.tipoCambio)?recursoNaOperacaoCarro(i,operacaoCarro(alunoCarro,data))&&recursoNaOperacaoCarro(v,operacaoCarro(alunoCarro,data)):filtros.alunoId||filtros.tipoCambio?recursoCarroCompativel(i,alunoCarro,data)&&recursoCarroCompativel(v,alunoCarro,data):['manual','automatico'].some(tipoCambio=>recursoCarroCompativel(i,{...alunoCarro,tipoCambio},data)&&recursoCarroCompativel(v,{...alunoCarro,tipoCambio},data)))):recursoMotoCentral(i)&&recursoMotoCentral(v)&&i.veiculoIds?.includes(v.id)) && !validarHorario(data,inicio,undefined,i,v.categoria) && (v.categoria!=='D'||recursosOperacionaisD(estado.recursos).some(r=>r.id===i.id)&&recursosOperacionaisD(estado.recursos).some(r=>r.id===v.id)&&localCategoriaD(data)&&!motivoCatalogoOnibus(estado.recursos)&&![...estado.aulas,...(estado.ocupacoes||[])].some(a=>a.categoria==='D'&&a.data===data&&ocupaRecurso(a)&&a.inicio<fimDaAula(inicio)&&inicio<a.fim)) && !conflito([...estado.aulas,...(estado.ocupacoes||[])],{data,inicio,fim:fimDaAula(inicio),instrutorId:i.id,veiculoId:v.id,categoria:v.categoria})).map(v=>({instrutorId:i.id,veiculoId:v.id,categoria:v.categoria})));
 }
 export function agendarAula(estado, identidade, dados, id, instante = new Date()) {
     autorizar(identidade,'agendar'); const a = alunoAutorizado(estado,identidade,dados.alunoId,false);

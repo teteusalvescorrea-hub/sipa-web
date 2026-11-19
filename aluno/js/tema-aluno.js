@@ -1,6 +1,6 @@
 // Preferência exclusivamente visual; não acessa sessão, API ou IndexedDB.
 (()=>{
- const paginas=['dashboard.html','minhas-aulas.html','agendamento.html','meu-progresso.html','pacotes.html','meu-perfil.html','mensagens.html'];
+ const paginas=['dashboard.html','minhas-aulas.html','agendamento.html','meu-progresso.html','pacotes.html','meu-perfil.html','mensagens.html','meus-documentos.html'];
  if(!paginas.includes(location.pathname.split('/').pop()))return;
  const raiz=document.documentElement,chave='sipa.ui.tema';raiz.dataset.sipaTheme='aluno';
  let tema=globalThis.SipaTema.ler();

@@ -151,3 +151,58 @@ html[data-sipa-theme=aluno][data-theme=dark] .progress-etapa[data-estado=falhou]
 html[data-sipa-theme=aluno][data-theme=dark] .lessons-hire-button { background:var(--sipa-secondary)!important; color:var(--sipa-accent)!important; border-color:var(--sipa-border)!important; }
 html[data-sipa-theme=aluno][data-theme=dark] .lesson-hire-step-number { border-color:#82c4fa; color:#82c4fa; }
 html[data-sipa-theme=aluno][data-theme=dark] .lesson-hire-dialog .lesson-hire-whatsapp { background:#1769aa!important; color:#fff!important; border-color:#82c4fa!important; }
+
+/* 09/11/2026: preferências do agendamento automático com cara de SIPA (botões em vez das caixinhas do navegador). */
+html body .student-preferences .preference-fields{gap:14px}
+html body .student-preferences fieldset{border:1px solid var(--sipa-border,#c7dcee);border-radius:14px;padding:14px 16px 16px;background:var(--profile-card,#fff)}
+html body .student-preferences fieldset[hidden]{display:none}
+html body .student-preferences legend{padding:0 6px;font-size:13px;font-weight:700}
+html body[data-sipa-escala] .booking-main .student-preferences .preference-options.preference-options,html body .student-preferences .preference-options{display:flex;flex-wrap:wrap;gap:8px;max-height:none;overflow:visible}
+html body .student-preferences .preference-options label{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:1px solid #c7dcee;border-radius:999px;background:#f5f9fd;font-size:13px;font-weight:500;cursor:pointer;user-select:none;transition:background .15s,border-color .15s,color .15s}
+html body .student-preferences .preference-options label:hover{border-color:#1769aa}
+html body .student-preferences .preference-options input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+html body .student-preferences .preference-options label:has(input:checked){background:#1769aa;border-color:#1769aa;color:#fff}
+html body .student-preferences .preference-options label:has(input:checked)::before{content:"✓";font-weight:700}
+html body .student-preferences .preference-options label:has(input:focus-visible){outline:2px solid #1769aa;outline-offset:2px}
+html body .student-preferences .preference-periods{display:flex;gap:8px;margin:2px 0 10px}
+html body .student-preferences .preference-periods button{min-height:32px;padding:0 12px;border:1px dashed #1769aa;border-radius:999px;background:transparent;color:#1769aa;font-size:12px;font-weight:600;cursor:pointer}
+html body .student-preferences .preference-qualquer{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1.5px solid #1769aa;border-radius:14px;background:linear-gradient(120deg,#eaf3fc,#f6fafe);cursor:pointer}
+html body .student-preferences .preference-qualquer input{position:absolute;opacity:0;width:1px;height:1px}
+html body .student-preferences .preference-qualquer-texto{flex:1;display:grid;gap:3px}
+html body .student-preferences .preference-qualquer-texto strong{font-size:14px;color:#12578f}
+html body .student-preferences .preference-qualquer-texto small{font-size:12px;color:#55708a}
+html body .student-preferences .preference-qualquer-chave{flex:none;position:relative;width:46px;height:26px;border-radius:13px;background:#c7d6e4;transition:background .2s}
+html body .student-preferences .preference-qualquer-chave::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+html body .student-preferences .preference-qualquer:has(input:checked) .preference-qualquer-chave{background:#1769aa}
+html body .student-preferences .preference-qualquer:has(input:checked) .preference-qualquer-chave::after{transform:translateX(20px)}
+html body .student-preferences .preference-qualquer:has(input:focus-visible){outline:2px solid #1769aa;outline-offset:2px}
+html[data-theme=dark] body .student-preferences fieldset{background:#132638;border-color:#2b4157}
+html[data-theme=dark] body .student-preferences .preference-options label{background:#1a3045;border-color:#2b4157;color:#e3edf6}
+html[data-theme=dark] body .student-preferences .preference-options label:has(input:checked){background:#2f80c4;border-color:#2f80c4}
+html[data-theme=dark] body .student-preferences .preference-qualquer{background:linear-gradient(120deg,#16314a,#132638);border-color:#4ea3e6}
+html[data-theme=dark] body .student-preferences .preference-qualquer-texto strong{color:#cfe6fb}
+html[data-theme=dark] body .student-preferences .preference-qualquer-texto small{color:#9db3c7}
+
+/* 09/11/2026: blocos mais espaçados e a chave "Qualquer …" em cada um. */
+html body .student-preferences .preference-fields{gap:20px}
+html body .student-preferences fieldset{padding:16px 20px 20px}
+html body .student-preferences legend{margin-bottom:4px;font-size:14px}
+html body[data-sipa-escala] .booking-main .student-preferences .preference-options.preference-options,html body .student-preferences .preference-options{gap:10px;margin-top:12px}
+html body .student-preferences .preference-options label{min-height:38px;padding:0 16px}
+html body .student-preferences fieldset .preference-qualquer{margin-top:6px;padding:12px 16px;border-width:1px;border-radius:12px}
+html body .student-preferences fieldset .preference-qualquer-texto strong{font-size:13.5px}
+html body .student-preferences fieldset.preference-com-qualquer .preference-options,html body .student-preferences fieldset.preference-com-qualquer .preference-periods{display:none}
+html body .student-preferences fieldset.preference-com-qualquer .preference-qualquer{border-color:#1769aa;background:linear-gradient(120deg,#eaf3fc,#f6fafe)}
+html body .student-preferences fieldset:not(.preference-com-qualquer) .preference-qualquer{border-color:#d8e5f0;background:transparent}
+html body .student-preferences .preference-periods{margin:12px 0 0}
+html body .student-preferences .preference-actions{margin-top:6px;gap:10px}
+html[data-theme=dark] body .student-preferences fieldset:not(.preference-com-qualquer) .preference-qualquer{border-color:#2b4157}
+/* 17/11/2026: aula cancelada em cartão baixo (minhas-aulas.css) no tema escuro. */
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .local-lesson-cancelada .local-lesson-fields{background:none!important}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .local-lesson-cancelada .local-lesson-cancel-info{background:#3a2b31!important;border-left-color:#e07a84!important;color:#ecd9dc!important}
+html[data-sipa-theme=aluno][data-theme=dark] .local-lesson-cancel-info strong{color:#f3b3b9!important}
+html[data-sipa-theme=aluno][data-theme=dark] [data-horario-passou] .local-lesson-status{background:#2e3b4a!important;color:#d3dde8!important}
+html[data-sipa-theme=aluno][data-theme=dark] [data-status='5'] .local-lesson-status{background:#1d4430!important;color:#a5e2bd!important;border-color:#2d6a49!important}
+html[data-sipa-theme=aluno][data-theme=dark] [data-status='6'] .local-lesson-status{background:#4a2222!important;color:#ffc2bb!important;border-color:#7a3a36!important}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .local-lesson-falta-info{background:#3a2326!important;color:#ffd2cd!important}
+html[data-sipa-theme=aluno][data-theme=dark] .local-lesson-falta-info strong{color:#ff9d93!important}

@@ -1052,3 +1052,63 @@ body {
 html[data-sipa-theme=aluno][data-theme=dark] :is(.profile-security-card,.profile-security-button) { background:var(--sipa-secondary)!important; color:var(--sipa-texto-neutro)!important; border-color:var(--sipa-border)!important; }
 html[data-sipa-theme=aluno][data-theme=dark] .profile-security-card span { color:var(--sipa-texto-neutro)!important; }
 @media(max-width:500px) { .profile-category-balances { grid-template-columns:minmax(0,1fr); gap:10px; } }
+
+/* 09/11/2026: Meu perfil mais limpo — cabeçalho com destaque, blocos claros e informações em "fichas" leves. */
+html body .profile-main .profile-overview{position:relative;overflow:hidden;gap:18px;padding:26px 28px;border:0;border-radius:18px;background:linear-gradient(120deg,#12578f 0%,#1769aa 55%,#2388d9 100%);box-shadow:0 10px 30px rgba(23,105,170,.22)}
+html body .profile-main .profile-overview::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08)}
+html body .profile-main .profile-overview .profile-avatar{width:64px;height:64px;font-size:26px;border-radius:50%;background:#fff;color:#1769aa;box-shadow:0 0 0 4px rgba(255,255,255,.25)}
+html body .profile-main .profile-identity{gap:6px}
+html body .profile-main .profile-identity .profile-label{color:rgba(255,255,255,.75);letter-spacing:1.4px}
+html body .profile-main .profile-identity h2{color:#fff;font-size:24px}
+html body .profile-main .profile-identity > span:last-child{display:inline-flex;align-self:flex-start;padding:3px 12px;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;font-size:12px;font-weight:600}
+html body .profile-main .profile-section{padding:22px 24px;border-radius:16px;box-shadow:0 4px 16px rgba(18,59,99,.05)}
+html body .profile-main .profile-section-header{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--profile-border,#d8e5f0)}
+html body .profile-main .profile-section-header h2{font-size:17px}
+html body .profile-main .profile-info-grid{gap:12px}
+html body .profile-main .profile-info-card{min-height:0;padding:14px 16px;border:1px solid transparent;border-radius:12px;background:#f3f8fc;box-shadow:none}
+html body .profile-main .profile-info-card > span{font-size:11px;font-weight:600;letter-spacing:.4px;color:#5b7288;text-transform:none}
+html body .profile-main .profile-info-card strong{font-size:15px;font-weight:700;color:#18324a}
+html body .profile-main .profile-info-card small{font-size:11.5px;color:#5b7288}
+html[data-theme=dark] body .profile-main .profile-overview{background:linear-gradient(120deg,#0f3556 0%,#14507f 60%,#1b6aa8 100%)}
+html[data-theme=dark] body .profile-main .profile-info-card{background:#152b40}
+html[data-theme=dark] body .profile-main .profile-info-card > span,html[data-theme=dark] body .profile-main .profile-info-card small{color:#9db3c7}
+html[data-theme=dark] body .profile-main .profile-info-card strong{color:#e3edf6}
+
+/* 09/11/2026: fichas proporcionais — cada uma do tamanho do conteúdo, preenchendo a linha sem sobrar espaço vazio. */
+html body .profile-main .profile-info-grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;align-items:stretch}
+html body .profile-main .profile-info-card{min-height:0;height:auto;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:12px 16px}
+html body .profile-main .profile-info-card strong{line-height:1.35}
+html body .profile-main .profile-info-card small{line-height:1.4}
+html body .profile-main .profile-category-balances{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:2px}
+html body .profile-main .profile-section{padding:18px 20px}
+html body .profile-main .profile-section-header{margin-bottom:12px;padding-bottom:10px}
+/* "Sua formação": o cartão da Categoria só do tamanho do conteúdo; os outros dividem o resto da linha. */
+html body .profile-main .profile-info-grid:has(#profile-course-category){display:flex;flex-wrap:wrap}
+html body .profile-main .profile-info-grid:has(#profile-course-category)>.profile-info-card{flex:1 1 220px}
+html body .profile-main .profile-info-grid:has(#profile-course-category)>.profile-info-card:has(#profile-course-category){flex:0 0 auto;min-width:110px;align-items:center;text-align:center}
+html body .profile-main #profile-course-category{font-size:22px}
+
+/* 09/11/2026: foto de perfil do aluno (clicar na imagem). */
+.profile-avatar.profile-avatar-editavel{position:relative;cursor:pointer;background-size:cover;background-position:center;transition:box-shadow .15s,transform .15s}
+.profile-avatar.profile-avatar-editavel:hover,.profile-avatar.profile-avatar-editavel:focus-visible{box-shadow:0 0 0 3px rgba(23,105,170,.35);outline:none}
+.profile-avatar.profile-avatar-com-foto{color:transparent!important;background-color:#dfeaf4}
+.profile-avatar.profile-avatar-editavel::after{content:'';position:absolute;right:-6px;bottom:-6px;width:26px;height:26px;border:2px solid #fff;border-radius:50%;background:#1769aa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8h3l2-3h6l2 3h3v11H4z'/%3E%3Ccircle cx='12' cy='13' r='3.5'/%3E%3C/svg%3E") center/15px no-repeat;box-shadow:0 2px 6px rgba(16,58,96,.25)}
+.profile-avatar.profile-avatar-enviando{opacity:.6;cursor:progress}
+.profile-foto-dialog{width:min(340px,calc(100vw - 32px));padding:22px;border:0;border-radius:18px;box-shadow:0 20px 50px rgba(16,58,96,.25);text-align:center}
+.profile-foto-dialog::backdrop{background:rgba(10,30,50,.45)}
+.profile-foto-dialog h2{margin:0 0 14px;font-size:18px}
+.profile-foto-previa{width:120px;height:120px;margin:0 auto 18px;border-radius:50%;background:#dfeaf4 center/cover no-repeat}
+.profile-foto-acoes{display:grid;gap:8px}
+.profile-foto-acoes button{min-height:42px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer}
+.profile-foto-principal{border:1px solid #1769aa;background:#1769aa;color:#fff}
+.profile-foto-remover{border:1px solid #e3b3b3;background:#fff;color:#a12525}
+.profile-foto-cancelar{border:1px solid #c9d9e6;background:transparent;color:#365a78}
+html[data-theme=dark] .profile-foto-dialog{background:#14263a;color:#eef4fa}
+html[data-theme=dark] .profile-foto-remover{background:transparent;border-color:#7a3b3b;color:#ff9b9b}
+html[data-theme=dark] .profile-foto-cancelar{color:#dbe7f2;border-color:#4d6a86}
+
+/* 10/11/2026: Meu perfil. Sem foto, o avatar mostra o boneco padrão (silhueta) no lugar da inicial; com foto, a foto
+   (estilo inline do foto-perfil.js) cobre o boneco. A categoria fica pequena: "Categoria: B". */
+html body .profile-main .profile-overview .profile-avatar{background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27f%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%235db2ee%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%231d6ab2%27%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%27p%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%270%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%27.55%27%20stop-color%3D%27%23ffffff%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23d7e3f0%27%2F%3E%3C%2FlinearGradient%3E%3CclipPath%20id%3D%27c%27%3E%3Ccircle%20cx%3D%2732%27%20cy%3D%2732%27%20r%3D%2732%27%2F%3E%3C%2FclipPath%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2732%27%20cy%3D%2732%27%20r%3D%2732%27%20fill%3D%27url(%23f)%27%2F%3E%3Cg%20clip-path%3D%27url(%23c)%27%20fill%3D%27url(%23p)%27%3E%3Cpath%20d%3D%27M32%2012.5c-6.6%200-10.8%204.9-10.8%2012%200%204.3%201.6%208.2%204%2010.6v3.2c0%201.4-.8%202.6-2.1%203.1L12.6%2046C8.2%2047.8%205.5%2051.7%205.5%2056.6V66h53v-9.4c0-4.9-2.7-8.8-7.1-10.6l-10.5-4.6c-1.3-.5-2.1-1.7-2.1-3.1v-3.2c2.4-2.4%204-6.3%204-10.6%200-7.1-4.2-12-10.8-12z%27%2F%3E%3Cellipse%20cx%3D%2720.4%27%20cy%3D%2727.2%27%20rx%3D%272%27%20ry%3D%273.2%27%2F%3E%3Cellipse%20cx%3D%2743.6%27%20cy%3D%2727.2%27%20rx%3D%272%27%20ry%3D%273.2%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center/cover no-repeat,#2f80c6!important;color:transparent!important;font-size:0;box-shadow:0 0 0 3px rgba(255,255,255,.9),0 6px 16px rgba(10,40,70,.25)}
+html body .profile-main .profile-overview .profile-avatar.profile-avatar-com-foto{background-color:#dfeaf4!important}
+html body .profile-main .profile-identity > #profile-category{padding:2px 10px;font-size:11.5px;font-weight:500;letter-spacing:.2px;background:rgba(255,255,255,.14);color:rgba(255,255,255,.92)}

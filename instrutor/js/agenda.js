@@ -39,7 +39,9 @@ const horaDaAula=a=>agoraBrasil(new Date(a.inicio)).slice(11,16);
 export function agruparFaixas(faixas,aulas){
  const itens=[];
  for(const faixa of faixas){
-  const doHorario=faixa.bloqueado?[]:aulas.filter(a=>horaDaAula(a)===faixa.inicio),tipo=faixa.bloqueado?'pausa':doHorario.length?'aula':'livre';
+  // 17/11/2026 (bug relatado pelo usuário): só as aulas ativas ocupam o horário; a cancelada (vaga remarcada para outro
+  // aluno) aparecia como "3 registros neste horário" para o instrutor que atende duas motos.
+  const doHorario=faixa.bloqueado?[]:aulas.filter(a=>aulaAtiva(a)&&horaDaAula(a)===faixa.inicio),tipo=faixa.bloqueado?'pausa':doHorario.length?'aula':'livre';
   itens.push({tipo,inicio:faixa.inicio,fim:faixa.fim,ate:fimDaAula(faixa.inicio),motivo:faixa.motivo||'',faixas:[faixa],aulas:doHorario});
  }
  return itens;

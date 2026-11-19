@@ -1,20 +1,25 @@
 // Apresentação compartilhada do menu existente. Não acessa sessão nem altera rotas.
 (() => {
     const itens = [
-        ['dashboard.html','home'], ['agendamento.html','calendar'],
-        ['minhas-aulas.html','lessons'], ['meu-progresso.html','chart'],
-        ['pacotes.html','package'], ['mensagens.html','message'], ['meu-perfil.html','user']
+        ['dashboard.html','home'], ['agendamento.html','calendarPlus'],
+        ['minhas-aulas.html','wheel'], ['meu-progresso.html','progress'],
+        ['pacotes.html','package'], ['mensagens.html','message'], ['meus-documentos.html','docs'], ['meu-perfil.html','user']
     ];
     const pagina = location.pathname.split('/').pop();
     if (!itens.some(([rota]) => rota === pagina)) return;
     const paths = {
-        message:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/>',
+        message:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>', // 10/11/2026: o balão do item Mensagens, igual ao do Instrutor e da equipe
         home:'<path d="m3 10 9-7 9 7v11h-6v-7H9v7H3V10Z"/>',
-        calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6m10-6v6M3 11h18m-12 4h1m4 0h1"/>',
+        calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 2v6m10-6v6M3 11h18m-12 4h1m4 0h1m-6 3h1m4 0h1"/>',
+        // 10/11/2026: os mesmos ícones dos outros perfis; Agendar aula, Minhas aulas (volante) e Meu progresso ganharam os seus.
+        calendarPlus:'<path d="M12 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5"/><path d="M7 2v6m10-6v6M3 11h18M18 15v6m-3-3h6"/>',
+        wheel:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 14v7M10 12 3.3 10M14 12l6.7-2"/>',
+        progress:'<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-6"/><path d="M15 8h5v5"/>',
         lessons:'<path d="M4 3h16v18H4zM8 7h8M8 11h8m-8 4h5"/>',
         chart:'<path d="M4 3v18h17M8 17v-5m5 5V8m5 9V4"/>',
         package:'<path d="m3 7 9-5 9 5v11l-9 4-9-4V7Zm0 0 9 5 9-5m-9 5v10M7 5l9 5"/>',
         user:'<circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/>',
+        docs:'<path d="M6 2h8l5 5v15H6z"/><path d="M14 2v5h5M9 12h7M9 16h7"/>',
         exit:'<path d="M10 4H4v16h6m4-12 4 4-4 4m-6-4h12"/>',
         menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
         close:'<path d="m6 6 12 12M6 18 18 6"/>'
@@ -28,6 +33,8 @@
         const sidebar=document.querySelector('.sipa-sidebar');if(!sidebar)return;
         const menu=sidebar.querySelector('.sipa-sidebar-menu'),conta=menu?.querySelectorAll('.sipa-sidebar-title')[1];
         if(menu&&!menu.querySelector('a[href="mensagens.html"]')){const a=document.createElement('a');a.href='mensagens.html';a.className='sipa-sidebar-link';const i=document.createElement('span');i.className='sipa-sidebar-icon';a.append(i,document.createTextNode('Mensagens'));menu.insertBefore(a,conta||null);}
+        // 09/11/2026: Meus documentos (o que a Recepção anexa para o aluno).
+        if(menu&&!menu.querySelector('a[href="meus-documentos.html"]')){const a=document.createElement('a');a.href='meus-documentos.html';a.className='sipa-sidebar-link';const i=document.createElement('span');i.className='sipa-sidebar-icon';a.append(i,document.createTextNode('Meus documentos'));menu.insertBefore(a,conta||null);}
         if(menu&&conta){for(const [rota] of itens.slice(0,-1)){const a=menu.querySelector('a[href="'+rota+'"]');if(a)menu.insertBefore(a,conta);}const perfil=menu.querySelector('a[href="meu-perfil.html"]');if(perfil)menu.append(perfil);}
         for(const [rota,nome] of itens){
             const a=sidebar.querySelector('.sipa-sidebar-menu a[href="'+rota+'"]');if(!a)continue;

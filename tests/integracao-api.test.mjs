@@ -23,6 +23,19 @@ const alunoApi={id:'al1',nome:'Ana',cpf:'52998224725',aulasContratadas:12,aulasR
  matriculas:[{unidadeBase:{id:'u1',nome:'Cobilândia'},unidadeCarro:null,tipoCambio:{valor:1,descricao:'Manual'}}],
  saldos:[{categoria:{valor:2,descricao:'B'},contratadas:10,disponiveis:7,agendadas:1,realizadas:2,faltas:0,retidas:0},{categoria:{valor:3,descricao:'D'},contratadas:2,disponiveis:2,agendadas:0,realizadas:0}]};
 
+test('aluno: o carro da consulta segue o cadastro, sem instrutor nem veículo do outro tipo',async()=>{
+ respostas=[
+  rota('GET','horarios-disponiveis',{data:'2026-11-03',fechado:false,horarios:[{horario:'09:00',dataHoraInicio:'2026-11-03T09:00:00',dataHoraFim:'2026-11-03T09:50:00',disponivel:true,motoristas:[
+   {motoristaId:'m1',nome:'Manual',veiculos:[{veiculoId:'v1',modelo:'Kwid',placa:'ABC1D23',tipoCambio:{valor:1}}]},
+   {motoristaId:'m2',nome:'Automático',veiculos:[{veiculoId:'v2',modelo:'E-Kwid',placa:'ABC1D24',tipoCambio:{valor:2}}]}]}]}),
+  rota('GET','alunos/me/mensagens',[]),rota('GET','alunos/me/acompanhamento',null),
+  rota('GET','alunos/me',alunoApi),rota('GET','contratacoes',[]),rota('GET','/api/agendamentos?',[])];
+ const s=criarServicoAluno();await s.carregar();
+ const c=await s.consultarRecursosLocal({categoria:'B',data:'2026-11-03'});
+ assert.deepEqual(c.horarios[0].pares,[{instrutorId:'m1',veiculoId:'v1',tipoCambio:'manual'}]);
+ assert.deepEqual(c.contagem,{instrutores:1,veiculos:1});
+});
+
 test('aluno: saldo por categoria (D = 3), hora de Brasília e status 7 como cancelada com crédito retido',()=>{
  const d=adaptarDadosAluno(alunoApi,[],[aulaApi(),aulaApi({id:'a2',status:{valor:7}})]);
  assert.deepEqual(d.categorias,['B','D']);
@@ -70,7 +83,7 @@ test('aluno: horários viram pares instrutor × veículo; reserva manda Idempote
  assert.ok(cancelar.cabecalhos['Idempotency-Key']);
 });
 
-test('aluno: horário ocupado vira slot com interesse; aula própria vira "Sua aula"; passado sai; marcar e desmarcar usam as rotas novas',async()=>{
+test('aluno: horário ocupado vira slot com interesse; passado e aula própria saem; marcar e desmarcar usam as rotas novas',async()=>{
  respostas=[
   rota('GET','horarios-disponiveis',{data:'2026-11-03',fechado:false,horarios:[
    {horario:'08:00',dataHoraInicio:'2026-11-03T08:00:00',dataHoraFim:'2026-11-03T08:50:00',disponivel:false,motivo:'passado',motoristas:[]},
@@ -82,14 +95,14 @@ test('aluno: horário ocupado vira slot com interesse; aula própria vira "Sua a
   rota('GET','alunos/me/interesses-antecipacao',[{id:'i1',categoria:{valor:2},dataHoraInicio:'2026-11-03T09:00:00',situacao:{valor:2,descricao:'Contatado'},unidade:{id:'u1',nome:'Cobilândia'}}])];
  const s=criarServicoAluno();assert.equal(s.capacidades.interesse,true);assert.equal(s.capacidades.antecipacao,undefined);
  const c=await s.consultarRecursosLocal({categoria:'B',data:'2026-11-03'});
- assert.deepEqual(c.horarios.map(h=>[h.hora,!!h.ocupado,h.interesseId??null,!!h.propria,h.pares.length]),[['09:00',true,'i1',false,0],['10:00',false,null,true,0],['11:00',true,null,false,0]]);
+ assert.deepEqual(c.horarios.map(h=>[h.hora,h.ocupado,h.interesseId,h.pares.length]),[['09:00',true,'i1',0],['11:00',true,null,0]]);
  assert.equal(c.mensagem,'Nenhum horário com instrutor e veículo livres nesta data.');
  chamadas.length=0;
  const novo=await s.marcarInteresse({categoria:'B',data:'2026-11-03',hora:'11:00'});
  const post=chamadas.find(x=>x.metodo==='POST');assert.deepEqual(JSON.parse(post.corpo),{categoria:2,dataHoraInicio:'2026-11-03T11:00:00'});assert.ok(post.cabecalhos['Idempotency-Key']);
  assert.deepEqual([novo.id,novo.hora,novo.situacao,novo.aberto],['i2','11:00','Aguardando',true]);
  await s.desmarcarInteresse('i1');assert.equal(chamadas.at(-1).metodo,'DELETE');assert.match(chamadas.at(-1).url,/alunos\/me\/interesses-antecipacao\/i1$/);
- const [i]=await s.listarInteresses();assert.deepEqual([i.id,i.data,i.hora,i.categoria,i.unidade,i.situacao,i.aberto],['i1','2026-11-03','09:00','B','Cobilândia','Recepção entrou em contato',true]);
+ const [i]=await s.listarInteresses();assert.deepEqual([i.id,i.data,i.hora,i.categoria,i.unidade,i.situacao,i.aberto],['i1','2026-11-03','09:00','B','Cobilândia','Em contato',true]);
  respostas=[rota('POST','alunos/me/interesses-antecipacao',{title:'Conflito',listErrors:[{mensagem:'Esse horário está livre: reserve direto.'}]},409)];
  await assert.rejects(s.marcarInteresse({categoria:'B',data:'2026-11-03',hora:'12:00'}),/reserve direto/);
 });

@@ -4,7 +4,7 @@
 .op-unidade .op-main {padding-bottom:24px}
 .op-unidade .op-main>article:first-child {margin:14px 0 0;padding:12px 16px;box-shadow:none;border-radius:10px}
 .op-unidade .op-main>article:first-child h2 {font-size:11px;letter-spacing:.6px;color:var(--progress-blue)}
-.op-unidade [data-op-panel]>article+article {margin-top:16px}
+.op-unidade [data-op-panel]>:is(article,.op-card)+:is(article,.op-card),.op-unidade [data-op-panel]>:is(article,.op-card)+[data-adm-extra]>:first-child,.op-unidade [data-adm-extra]>*+* {margin-top:16px}
 .op-unidade .op-card {padding:18px;border-radius:12px;box-shadow:0 3px 14px #163d6308}
 .op-unidade .op-card>h2 {margin-bottom:12px}
 .op-unidade .op-notice {display:block;padding:12px 16px}
@@ -97,6 +97,7 @@ html[data-theme=dark] .op-unidade [data-op-confirmar-cadastro] {background:#1829
 html[data-theme=dark] .op-unidade .op-confirm-item {background:#203247}
 @media(max-width:520px){.op-unidade .op-confirm-item{padding:8px 10px}.op-unidade [data-op-confirmar-cadastro]>.op-dialog-heading h2{font-size:20px}.op-unidade .op-confirm-actions button{padding:9px 11px;font-size:12px}}
 .op-unidade .op-dialog button {margin:3px}
+.op-unidade .op-dialog .sipa-select-busca-botao {margin:0}
 .op-unidade .op-dialog details {margin-top:18px}
 .op-unidade .op-dialog summary {cursor:pointer;font-size:13px;font-weight:600}
 .op-unidade .op-demo-feedback {color:var(--progress-blue);background:var(--op-soft);border:1px solid var(--op-line);padding:12px;border-radius:8px}
@@ -105,12 +106,14 @@ html[data-theme=dark] .op-unidade .op-confirm-item {background:#203247}
 .op-unidade .op-menu-mobile {display:none}
 .op-unidade .op-topbar {flex-wrap:wrap}
 .op-unidade .op-topbar .op-unit-chip {margin-left:auto}
+/* 13/11/2026: seletor de unidade de quem atende mais de uma (fica no lugar do chip). */
+.op-unidade .op-topbar .op-unit-select {width:auto;min-width:170px;max-width:240px;margin:0;padding:8px 11px;border-radius:8px;border:1px solid #c6d8e8;background:#f7fafd80;font:inherit;font-size:11px;font-weight:600;color:var(--sipa-texto-neutro);cursor:pointer}
 html[data-theme=dark] .operador-page {--progress-bg:#101c2c;--progress-bg-secondary:#101c2c;--progress-card:#18293d;--progress-card-hover:#20364d;--progress-text:#e7eff7;--progress-text-secondary:#b5c8db;--progress-text-muted:#b5c8db;--progress-border:#3a5068;--progress-border-light:#3a5068;--progress-blue:#82c4ff;--progress-blue-dark:#1769aa;background:#101c2c;color:var(--sipa-texto-claro)}
 html[data-theme=dark] .op-unidade {--op-soft:#20364d;--op-muted:#b5c8db;--op-line:#3a5068}
 html[data-theme=dark] .operador-page .op-button-primary {background:#1769aa;border-color:#337fb8;color:#fff}
 html[data-theme=dark] .operador-page .op-button-outline,html[data-theme=dark] .operador-page .op-close {color:#82c4ff;border-color:#54708c}
 html[data-theme=dark] .operador-page .op-button-outline:hover:not(:disabled) {background:#29425e}
-html[data-theme=dark] .operador-page :is(.op-notice,.op-badge,.op-unit-chip,.op-agenda-filter-panel,.op-agenda .op-agenda-modos,.op-agenda-day,.op-month-day,.op-month-weekday,.op-slot-disponivel,.op-aula-card,.op-aula-destaque) {background:#20364d;border-color:#3a5068;color:#d6e7f6}
+html[data-theme=dark] .operador-page :is(.op-notice,.op-badge,.op-unit-chip,.op-unit-select,.op-agenda-filter-panel,.op-agenda .op-agenda-modos,.op-agenda-day,.op-month-day,.op-month-weekday,.op-slot-disponivel,.op-aula-card,.op-aula-destaque) {background:#20364d;border-color:#3a5068;color:#d6e7f6}
 html[data-theme=dark] .operador-page :is(.op-agenda-nav h2,.op-notice strong,.op-day-heading,.op-slot-disponivel,.op-month-count,.op-month-special,.op-month-event,.op-summary-list li,.op-booking-resumo,.op-day-heading span,.op-agenda-toolbar>label,.op-agenda-legenda,.op-agenda-filter-panel summary,.op-aula-data,.op-aula-recursos,.op-aula-horario,.op-aula-destaque h3,.op-close) {color:#b5c8db}
 html[data-theme=dark] .operador-page :is(.op-agenda-slot>time,.op-day-heading,.op-month-day.op-closed,.op-month-day.op-outside,.op-week-grid .op-agenda-fechada,.op-slot-almoco) {background:#293749;border-color:#3a5068;color:#b5c8db}
 html[data-theme=dark] .operador-page .op-month-event {background:#29425e}
@@ -177,6 +180,14 @@ html[data-theme=dark] .operador-page .op-unidade :is(.op-prova-form,[data-op-aca
 .op-acompanhamento[data-op-exames-ficha] .op-acompanhamento-simples>label:first-child{grid-template-columns:minmax(0,1fr) minmax(130px,1fr)}
 @media(min-width:761px){.op-prova-form{grid-template-columns:minmax(0,1fr) minmax(140px,.7fr) auto;align-items:end}.op-prova-form>.op-ficha-acoes{grid-column:3;grid-row:1}.op-prova-form>p{grid-row:2;grid-column:1/-1}.op-prova-form .op-button{font-size:12px;padding:8px 10px}}
 @media(max-width:760px){.op-acompanhamento[data-op-exames-ficha]{grid-template-columns:1fr}}
+/* Autorizações (LADV e liberação): um bloco por autorização, com os quatro campos lado a lado. */
+.op-acompanhamento[data-op-exames-ficha]+h4{margin:22px 0 0}
+.op-acompanhamento[data-op-autorizacao]{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;align-items:end;margin-top:10px;padding:14px 16px;border:1px solid var(--op-line);border-radius:10px;background:var(--op-soft)}
+.op-acompanhamento[data-op-autorizacao]>h4{grid-column:1/-1;margin:0}
+.op-unidade .op-dialog .op-acompanhamento[data-op-autorizacao]>label{display:grid;gap:6px;margin:0;min-width:0}
+.op-acompanhamento[data-op-autorizacao]>button{grid-column:1/-1}
+@media(max-width:900px){.op-acompanhamento[data-op-autorizacao]{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.op-acompanhamento[data-op-autorizacao]{grid-template-columns:minmax(0,1fr)}}
 /* Um único backdrop nativo, independente da aba. Conter a rolagem evita
    movimentar/recompor a página filtrada quando o conteúdo chega ao limite. */
 .op-unidade [data-op-ficha]{overscroll-behavior:contain;scrollbar-gutter:stable}
@@ -196,9 +207,9 @@ html[data-theme=dark] .operador-page .op-unidade :is(.op-prova-form,[data-op-aca
 [data-theme=dark] .op-reserva-resultados button{background:#182b40;border-color:#38516d}
 .op-agenda-toolbar>[class]{min-width:0}
 
-/* Somente as divisórias existentes da agenda da Recepção; espessuras preservadas. */
-#operador-conteudo .op-agenda :is(.op-week-grid,.op-agenda-day,.op-agenda-slot,.op-day-heading,.op-week-hours>*,.op-agenda-slot>time,.op-month-grid){border-color:#000000}
-#operador-conteudo .op-agenda .op-month-grid{background:#000000}
+/* Somente as divisórias existentes da agenda da Recepção; espessuras preservadas. 10/11/2026: o tom suave das agendas. */
+#operador-conteudo .op-agenda :is(.op-week-grid,.op-agenda-day,.op-agenda-slot,.op-day-heading,.op-week-hours>*,.op-agenda-slot>time,.op-month-grid){border-color:var(--agenda-divisoria,#4b5563)}
+#operador-conteudo .op-agenda .op-month-grid{background:var(--agenda-divisoria,#4b5563)}
 
 /* Detalhes de veículos e equipamentos: somente leitura e ações já autorizadas. */
 .op-unidade .op-dialog.op-resource-details{width:min(900px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:24px;flex-direction:column;overflow:hidden;font-size:13px;background:var(--progress-card);box-shadow:0 12px 36px #10284024}
@@ -358,9 +369,75 @@ html[data-theme=dark] .op-resource-state:is([data-situacao=Inativo],[data-situac
 .op-resumo-seg{display:block;height:100%}
 .op-resumo-seg:first-child{border-radius:7px 0 0 7px}.op-resumo-seg:last-child{border-radius:0 7px 7px 0}
 /* Sóbrio: tons do azul do SIPA; disponível é o trilho claro. */
-.op-resumo-realizadas{--cor:#1769aa}.op-resumo-reservadas{--cor:#7fb0dc}.op-resumo-faltas{--cor:#8a9bad}.op-resumo-disponiveis{--cor:#d6e4f0}
+.op-resumo-realizadas{--cor:#1769aa}.op-resumo-reservadas{--cor:#7fb0dc}.op-resumo-faltas{--cor:#8a9bad}.op-resumo-retidas{--cor:#b8894a}.op-resumo-disponiveis{--cor:#d6e4f0}
 .op-resumo-seg{background:var(--cor)}
-.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item{padding:4px 8px;text-align:center}
+.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item{padding:4px 2px;text-align:center;min-width:0}.op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item dt{white-space:nowrap;font-size:12.5px}
 .op-unidade [data-op-ficha] .op-resumo-aulas-card .op-resumo-item dt::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:var(--cor);vertical-align:middle;box-shadow:inset 0 0 0 1px rgba(16,35,63,.12)}
 .op-unidade [data-op-ficha] .op-aulas-pendentes{margin:12px 0 0;padding:10px 14px;border-radius:10px;background:#fff4e0;color:#8a5300;font-size:13px}
 [data-theme=dark] .op-unidade [data-op-ficha] .op-aulas-pendentes{background:#3a2a0e;color:#ffd38a}
+/* 10/11/2026 (pente-fino: placa em uma linha só na tabela de Veículos e recursos). */
+.op-unidade [data-op-panel=recursos] .op-table td:nth-child(2){white-space:nowrap}
+
+/* 13/11/2026: janela "Agendar aula" organizada: resumo do horário, passos numerados, busca com lupa, alunos em cartões e
+   os créditos do escolhido em destaque. */
+.op-reserva-dialog{width:min(640px,calc(100vw - 32px))}
+.op-reserva{display:grid;gap:18px}
+.op-reserva-resumo{display:grid;gap:12px;padding:14px 16px;border:1px solid var(--op-line);border-radius:12px;background:var(--op-soft);color:var(--sipa-texto-neutro)}
+.op-reserva-quando{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.op-reserva-quando strong{font-size:16px;color:var(--sipa-texto-neutro)}.op-reserva-quando span{font-size:14px;font-weight:600;color:var(--op-muted)}
+.op-reserva-fatos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}
+.op-reserva-fatos div{min-width:0;padding:8px 10px;border:1px solid var(--op-line);border-radius:8px;background:var(--progress-card)}
+.op-reserva-fatos dt{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--op-muted)}
+.op-reserva-fatos dd{margin:3px 0 0;font-size:13px;font-weight:600;color:var(--sipa-texto-neutro);overflow-wrap:anywhere}
+.op-reserva-secao{display:grid;gap:10px;min-width:0}
+.op-reserva-titulo{display:flex;align-items:center;gap:8px;margin:0;font-size:14px;font-weight:700;color:var(--sipa-texto-neutro)}
+.op-reserva-numero{display:grid;place-items:center;flex:none;width:22px;height:22px;border:1px solid var(--op-line);border-radius:50%;background:var(--op-soft);color:var(--op-muted);font-size:12px;font-weight:700}
+.op-unidade .op-reserva-busca input{padding-left:38px!important;background:var(--progress-card) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%236b8299%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2711%27 cy=%2711%27 r=%277%27/%3E%3Cpath d=%27m20 20-3.5-3.5%27/%3E%3C/svg%3E") 12px center/16px no-repeat}
+/* 16/11/2026 (pedido do usuário): a lista em coluna, cada aluno com a altura do próprio conteúdo. Em grade com altura
+   máxima, a altura mínima do botão comum (45 px) espremia os itens e a linha do CPF vazava por cima do aluno seguinte. */
+.op-reserva .op-reserva-resultados{display:flex;flex-direction:column;gap:6px;margin:0;max-height:252px;padding:2px 6px 2px 2px;scrollbar-width:thin;scrollbar-color:var(--op-line) transparent}
+.op-reserva .op-reserva-resultados>*{flex:none}
+.op-unidade .op-dialog .op-reserva-resultados button.op-reserva-aluno{position:relative;display:grid;grid-template-columns:38px minmax(0,1fr) 20px;column-gap:12px;row-gap:2px;align-items:center;height:auto;min-height:0;margin:0;padding:10px 14px 10px 12px;border:1px solid var(--op-line);border-radius:12px;background:var(--progress-card);color:var(--sipa-texto-neutro);font:inherit;text-align:left;line-height:1.35;cursor:pointer;outline:none;transition:border-color .15s,background .15s,box-shadow .15s}
+.op-reserva-aluno::before{content:attr(data-iniciais);grid-row:1/span 3;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--op-soft);border:1px solid var(--op-line);color:#2a6fb5;font-size:13px;font-weight:700;letter-spacing:.02em}
+.op-reserva-aluno::after{content:"";grid-column:3;grid-row:1/span 3;width:18px;height:18px;border:1.5px solid var(--op-line);border-radius:50%;box-sizing:border-box}
+.op-reserva-aluno strong{grid-column:2;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.op-reserva-aluno span{grid-column:2;font-size:12px;color:var(--op-muted);overflow-wrap:anywhere}
+.op-unidade .op-dialog .op-reserva-resultados button.op-reserva-aluno:hover{border-color:#8fb8e3;background:var(--op-soft)}
+.op-unidade .op-dialog .op-reserva-resultados button.op-reserva-aluno:focus-visible{border-color:#3686db;box-shadow:0 0 0 3px rgba(54,134,219,.22)}
+.op-unidade .op-dialog .op-reserva-resultados button.op-reserva-aluno[aria-pressed=true]{border-color:#3686db;background:#eef5fd;box-shadow:0 0 0 1px #3686db inset}
+.op-reserva-aluno[aria-pressed=true]::before{background:#3686db;border-color:#3686db;color:#fff}
+.op-reserva-aluno[aria-pressed=true]::after{border:0;background:#3686db url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 12.5 4 4 8-9%27/%3E%3C/svg%3E") center/12px no-repeat}
+html[data-theme=dark] .op-unidade .op-dialog .op-reserva-resultados button.op-reserva-aluno{background:#16283b;border-color:#33495f}
+html[data-theme=dark] .op-unidade .op-dialog .op-reserva-resultados button.op-reserva-aluno:hover{background:#1b3148;border-color:#4a7aa8}
+html[data-theme=dark] .op-unidade .op-dialog .op-reserva-resultados button.op-reserva-aluno[aria-pressed=true]{background:#1d3a57;border-color:#5aa2e6;box-shadow:0 0 0 1px #5aa2e6 inset}
+html[data-theme=dark] .op-reserva-aluno::before{color:#9cc8f2}
+html[data-theme=dark] .op-reserva-aluno[aria-pressed=true]::before{color:#fff}
+.op-reserva .op-reserva-inelegivel{margin:0;border-radius:10px}
+.op-reserva-vazio{margin:0;padding:12px 14px;border:1px dashed var(--op-line);border-radius:10px;background:var(--op-soft);color:var(--op-muted);font-size:13px;line-height:1.5}
+.op-reserva-saldo{padding:11px 14px;border:1px solid var(--op-line);border-radius:10px;background:var(--op-soft);color:var(--op-muted);font-size:13px}
+.op-reserva-saldo-ativo{border-left:3px solid #3686db;background:var(--progress-card);color:var(--sipa-texto-neutro)}
+.op-reserva-saldo strong{display:block;margin-bottom:8px;font-size:14px}
+.op-reserva-chips{display:flex;flex-wrap:wrap;gap:6px}.op-reserva-chips span{padding:4px 10px;border:1px solid var(--op-line);border-radius:999px;background:var(--op-soft);font-size:12px;font-weight:600}
+.op-reserva-erro:empty{display:none}.op-reserva-erro{margin:0;color:#b42318;font-size:13px}
+.op-reserva .op-dialog-actions{margin:0;padding-top:14px;border-top:1px solid var(--op-line)}
+html[data-theme=dark] .op-reserva .op-reserva-resultados button[aria-pressed=true]{background:#1d3a57}
+html[data-theme=dark] .op-reserva-saldo-ativo{border-left-color:#5aa2e6}
+html[data-theme=dark] .op-reserva-erro{color:#ffb4ab}
+html[data-theme=dark] .op-unidade .op-reserva-busca input{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23b5c8db%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2711%27 cy=%2711%27 r=%277%27/%3E%3Cpath d=%27m20 20-3.5-3.5%27/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:12px center!important;background-size:16px!important}
+@media(max-width:560px){.op-reserva-fatos{grid-template-columns:minmax(0,1fr)}}
+/* 17/11/2026 (pedido do usuário): aba Cadastro da ficha organizada (contratação em etiquetas, validação que quebra linha,
+   locais das aulas dentro da Matrícula, campos alinhados). */
+.op-unidade [data-op-ficha] .op-ficha-campos{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px 24px;align-items:start}
+.op-unidade [data-op-ficha] .op-ficha-campos>div{min-width:0}
+.op-unidade [data-op-ficha] .op-ficha-campos dd{font-size:14px;line-height:1.4}
+.op-unidade [data-op-ficha] .op-ficha-campos .op-badge{white-space:normal;max-width:100%}
+.op-ficha-contratacoes{display:flex;flex-wrap:wrap;gap:6px}
+.op-ficha-contratacao{display:inline-flex;align-items:center;min-height:26px;padding:0 10px;border:1px solid #c9dbeb;border-radius:999px;background:#f3f8fc;color:#12578f;font-size:12.5px;font-weight:600;white-space:nowrap}
+.op-ficha-validado{display:inline-grid;gap:1px;font-size:13.5px;font-weight:600;color:#8a5a00}
+.op-ficha-validado.ok{color:#1f7a45}
+.op-ficha-validado small{font-size:12px;font-weight:500;color:#5a6c7e}
+.op-ficha-locais{display:grid;gap:4px;margin-top:14px;padding:10px 12px;border-radius:8px;background:#f3f8fc;font-size:12.5px;line-height:1.45;color:#33506b}
+.op-ficha-locais strong{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#5a6c7e}
+html[data-theme=dark] .op-ficha-contratacao{background:#1b3248;border-color:#2f5677;color:#bfe0fb}
+html[data-theme=dark] .op-ficha-locais{background:#172b40;color:#c4d4e2}
+html[data-theme=dark] .op-ficha-validado.ok{color:#8fe0ad}

@@ -1142,6 +1142,8 @@ a {
 [data-sipa-aluno] .progress-overview>article h2 { margin-top:0; }
 [data-sipa-aluno] .category-evolution p { font-size:14px; color:var(--sipa-texto-neutro); margin:8px 0; }
 [data-sipa-aluno] .category-evolution > strong { font-size:24px; color:#1769aa; }
+/* Sem porcentagem ("Ainda não iniciado"): o texto um pouco menor que o número. */
+[data-sipa-aluno] .category-evolution > strong.category-evolution-texto { font-size:18px; line-height:1.3; }
 [data-sipa-aluno] .category-progress-track { height:9px; border-radius:8px; background:#dceaf7; overflow:hidden; margin-top:12px; }
 [data-sipa-aluno] .category-progress-track > span { display:block; height:100%; border-radius:inherit; background:#1769aa; }
 [data-sipa-aluno] .progress-main [hidden] { display:none !important; }
@@ -1183,3 +1185,33 @@ a {
 [data-sipa-aluno] .progress-habilitacao>.progress-admin-note { margin:12px 0 0; }
 @container (max-width:640px) { [data-sipa-aluno] .progress-exames { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:500px) { [data-sipa-aluno] .progress-habilitacao { padding:14px; } [data-sipa-aluno] .progress-exame,[data-sipa-aluno] .progress-etapa { padding:10px; } [data-sipa-aluno] .progress-selo { white-space:normal; } }
+/* 17/11/2026 (pedido do usuário): Meu progresso mais limpo: um cartão por categoria (lado a lado em tela larga), números
+   menores e o avanço dentro do cartão, em uma linha com selo e barra. */
+[data-sipa-aluno] .progress-overview{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+[data-sipa-aluno] .progress-card.category-progress-card{display:flex;flex-direction:column;padding:16px 18px}
+[data-sipa-aluno] .category-progress-card>h2{font-size:15px;margin:0}
+@media (min-width:768px){[data-sipa-aluno] .category-progress-card dl{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px;margin:12px 0 0}}
+[data-sipa-aluno] .category-progress-card dl>div{padding:8px 10px}
+[data-sipa-aluno] .category-progress-card dd{font-size:19px;line-height:1.15;color:#14263a;margin:0 0 2px}
+[data-sipa-aluno] .category-progress-card dt{font-size:11.5px}
+[data-sipa-aluno] .category-evolution.category-evolution-dentro{margin:14px 0 0;padding:12px 0 0;border:0;border-top:1px solid #e3ecf4;border-radius:0;background:none}
+[data-sipa-aluno] .category-evolution-linha{display:flex;align-items:center;justify-content:space-between;gap:8px}
+[data-sipa-aluno] .category-evolution-titulo{font-size:13px;font-weight:700;color:#14263a}
+[data-sipa-aluno] .category-evolution-dentro>.category-evolution-linha>strong{display:inline-flex;align-items:center;min-height:24px;padding:0 10px;border-radius:999px;background:#eaf3fb;color:#12578f;font-size:12.5px;font-weight:700;line-height:1}
+[data-sipa-aluno] .category-evolution-dentro>.category-evolution-linha>strong.category-evolution-texto{background:#f1f4f7;color:#5a6c7e}
+[data-sipa-aluno] .category-evolution-dentro>p{margin:6px 0 0;font-size:12.5px}
+[data-sipa-aluno] .category-evolution-dentro .category-progress-track{height:7px;margin-top:8px}
+html[data-sipa-theme=aluno][data-theme=dark] .category-progress-card dd{color:#e6eef6!important}
+html[data-sipa-theme=aluno][data-theme=dark] .category-evolution.category-evolution-dentro{border-top-color:#2b4560!important;background:none!important}
+html[data-sipa-theme=aluno][data-theme=dark] .category-evolution-titulo{color:#e6eef6}
+html[data-sipa-theme=aluno][data-theme=dark] .category-evolution-dentro>.category-evolution-linha>strong{background:#1b3248;color:#bfe0fb}
+/* 17/11/2026: o PDF do agendamento da prova como botão (antes ficava como texto solto). */
+[data-sipa-aluno] .progress-agendamentos-prova{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid #e3ecf4}
+[data-sipa-aluno] .progress-agendamentos-prova>h3{flex:1 1 100%;margin:0 0 2px}
+[data-sipa-aluno] .progress-pdf-prova{display:inline-flex;align-items:center;gap:10px;min-height:42px;padding:8px 14px;border:1px solid #bcd3e8;border-radius:10px;background:#fff;color:#12578f;font:inherit;font-size:13.5px;font-weight:600;line-height:1.35;text-align:left;cursor:pointer}
+[data-sipa-aluno] .progress-pdf-prova::before{content:"PDF";flex:none;padding:3px 6px;border-radius:5px;background:#e3eefa;color:#12578f;font-size:10.5px;font-weight:800;letter-spacing:.04em}
+[data-sipa-aluno] .progress-pdf-prova:hover{background:#eef5fc;border-color:#1769aa}
+[data-sipa-aluno] .progress-pdf-prova:disabled{opacity:.6;cursor:default}
+html[data-sipa-theme=aluno][data-theme=dark] .progress-agendamentos-prova{border-top-color:#2b4560}
+html[data-sipa-theme=aluno][data-theme=dark] .progress-pdf-prova{background:#16293d;border-color:#2b4560;color:#bfe0fb}
+html[data-sipa-theme=aluno][data-theme=dark] .progress-pdf-prova::before{background:#1b3248;color:#bfe0fb}

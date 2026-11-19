@@ -270,17 +270,18 @@
     gap: 3px;
 }
 
+/* 17/11/2026: legível (antes 8px e 7px, quase invisível no fundo escuro). */
 .sipa-sidebar-unit-text strong {
-    color: #d8e2f1;
+    color: #e6eef8;
 
-    font-size: 8px;
+    font-size: 12px;
     font-weight: 600;
 }
 
 .sipa-sidebar-unit-text small {
-    color: #60779b;
+    color: #a9bdd4;
 
-    font-size: 7px;
+    font-size: 11px;
 }
 
 

@@ -37,6 +37,8 @@ export class ApiErro extends Error {
         this.name = "ApiErro";
         this.status = status;
         this.titulo = corpo?.title || "";
+        // 17/11/2026: o código da recusa (ex.: "km-acima-do-ultimo"), para a tela reconhecer o caso sem depender do texto.
+        this.codigo = corpo?.codigo || null;
         this.erros = Array.isArray(corpo?.listErrors)
             ? corpo.listErrors
             : [mensagem];

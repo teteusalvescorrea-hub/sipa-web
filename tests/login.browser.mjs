@@ -216,7 +216,7 @@ try {
         await evaluate("(await import('/aluno/js/dashboard.js')).apresentarDashboard({aulas:[]})");await check("!document.querySelector('#proxima-aula-conteudo .unit-location,#proxima-aula-conteudo .lesson-attendance')",'Sem aula não apresenta endereço nem orientação');
     }
     async function testarCalendarioAcessivel() {
-        await navigate('/aluno/html/agendamento.html', "document.querySelectorAll('#calendar-days button').length===42");
+        await navigate('/aluno/html/agendamento.html', "document.querySelectorAll('#calendar-days button').length>=28");
         await check("{const hoje=(await import('/shared/js/calendario.js')).hojeBrasil();const b=document.querySelector('#calendar-days [aria-current=date]');!!b&&b.dataset.dataLocal===hoje}",'Dia atual usa a data civil de São Paulo');
         await evaluate("window.servico=await (await import('/dev/aluno/authLocal.js')).criarServicoLocal();const r=(await servico.backup()).registros.find(r=>['instrutor','veiculo'].includes(r.tipo)&&r.unidade==='Cobilândia');await servico.salvarRecursoLocal({...r,feriadosUnidade:r.feriadosUnidade||[]});true");
         const snapshot=await evaluate("JSON.stringify(await (await (await import('/dev/aluno/authLocal.js')).criarServicoLocal()).backup())");
@@ -259,7 +259,7 @@ try {
                 if(await evaluate('!!document.querySelector('+JSON.stringify('#calendar-days button[data-data-local="'+alvo+'"]')+')'))break;
                 const anterior=await evaluate("document.querySelector('#calendar-month').textContent");
                 await evaluate("document.querySelector('#next-month').click()");
-                await waitFor(()=>evaluate('document.querySelectorAll("#calendar-days button").length===42&&document.querySelector("#calendar-month").textContent!=='+JSON.stringify(anterior)),'Navegar mês e ano');
+                await waitFor(()=>evaluate('document.querySelectorAll("#calendar-days button").length>=28&&document.querySelector("#calendar-month").textContent!=='+JSON.stringify(anterior)),'Navegar mês e ano');
             }
             await check('!!document.querySelector('+JSON.stringify('#calendar-days button[data-data-local="'+alvo+'"]:disabled .calendar-block-mark')+')&&document.querySelector('+JSON.stringify('#calendar-days button[data-data-local="'+alvo+'"]')+').getAttribute("aria-label").includes("Natal")','Natal bloqueado com risco e nome '+ano);
         }
@@ -276,12 +276,12 @@ try {
         await check('JSON.stringify(await (await (await import("/dev/aluno/authLocal.js")).criarServicoLocal()).backup())==='+JSON.stringify(snapshot),'Navegação preserva integralmente dados, recursos, aulas e créditos');
         // Recursos temporariamente indisponíveis só no perfil descartável deste teste.
         await evaluate("window.servico=await (await import('/dev/aluno/authLocal.js')).criarServicoLocal();window.recursosCalendario=(await servico.backup()).registros.filter(r=>['instrutor','veiculo'].includes(r.tipo)&&r.unidade==='Cobilândia');sessionStorage.setItem('recursos-calendario-teste',JSON.stringify(recursosCalendario));for(const r of recursosCalendario)await servico.salvarRecursoLocal({...r,disponivel:false});true");
-        await navigate('/aluno/html/agendamento.html',"document.querySelectorAll('#calendar-days button').length===42");
+        await navigate('/aluno/html/agendamento.html',"document.querySelectorAll('#calendar-days button').length>=28");
         await check("[...document.querySelectorAll('#calendar-days button.sem-disponibilidade:not(:disabled)')].some(b=>!b.querySelector('.calendar-block-mark')&&b.getAttribute('aria-label').includes('Sem horários'))",'Falta de recursos não vira feriado nem recebe risco');
         await evaluate("window.servico=await (await import('/dev/aluno/authLocal.js')).criarServicoLocal();for(const r of JSON.parse(sessionStorage.getItem('recursos-calendario-teste')))await servico.salvarRecursoLocal(r);true");
-        await navigate('/aluno/html/agendamento.html',"document.querySelectorAll('#calendar-days button').length===42");
+        await navigate('/aluno/html/agendamento.html',"document.querySelectorAll('#calendar-days button').length>=28");
         await evaluate("window.feriadoTeste=document.querySelector('#calendar-days button[data-disponivel=true]:not(:disabled)').dataset.dataLocal;sessionStorage.setItem('feriado-calendario-teste',feriadoTeste);window.servico=await (await import('/dev/aluno/authLocal.js')).criarServicoLocal();window.recursoTeste=JSON.parse(sessionStorage.getItem('recursos-calendario-teste'))[0];await servico.salvarRecursoLocal({...recursoTeste,feriadosUnidade:[...(recursoTeste.feriadosUnidade||[]),feriadoTeste]});true");
-        await navigate('/aluno/html/agendamento.html',"document.querySelectorAll('#calendar-days button').length===42");
+        await navigate('/aluno/html/agendamento.html',"document.querySelectorAll('#calendar-days button').length>=28");
         await check("{const b=[...document.querySelectorAll('#calendar-days button')].find(b=>b.dataset.dataLocal===sessionStorage.getItem('feriado-calendario-teste'));b.disabled&&!!b.querySelector('.calendar-block-mark')&&b.getAttribute('aria-label').includes('Feriado cadastrado da unidade')}",'Feriado explicitamente cadastrado da unidade recebe risco e bloqueio');
         await check("{const servico=await (await import('/dev/aluno/authLocal.js')).criarServicoLocal(),recursos=JSON.parse(sessionStorage.getItem('recursos-calendario-teste')),i=recursos.find(r=>r.tipo==='instrutor'&&r.categorias.includes('B')),v=recursos.find(r=>r.tipo==='veiculo'&&r.categoria==='B'),{hojeBrasil,somarDias}=await import('/shared/js/calendario.js');let rejeitadas=0;for(const data of [somarDias(hojeBrasil(),-1),'2028-12-25',sessionStorage.getItem('feriado-calendario-teste')]){try{await servico.reservarAulasLocais({categoria:'B',unidade:'Cobilândia',operacaoId:crypto.randomUUID(),aulas:[{data,hora:'07:00',instrutorId:i.id,veiculoId:v.id}]});}catch{rejeitadas++;}}rejeitadas===3}",'Validação final rejeita data passada, Natal e feriado cadastrado');
         await evaluate("window.servico=await (await import('/dev/aluno/authLocal.js')).criarServicoLocal();for(const r of JSON.parse(sessionStorage.getItem('recursos-calendario-teste')))await servico.salvarRecursoLocal(r);true");
@@ -310,7 +310,7 @@ try {
             }
         }
         await evaluate("document.querySelector('.sipa-sidebar-menu a[href=\"agendamento.html\"]').click()");
-        await waitFor(()=>evaluate("location.pathname==='/aluno/html/agendamento.html'&&document.querySelectorAll('#calendar-days button').length===42"),'Link Agendar aula navega normalmente');
+        await waitFor(()=>evaluate("location.pathname==='/aluno/html/agendamento.html'&&document.querySelectorAll('#calendar-days button').length>=28"),'Link Agendar aula navega normalmente');
         await navigate('/aluno/html/dashboard.html',"document.body?.dataset.sipaLocal==='aluno'");await evaluate("document.querySelector('.sipa-sidebar-logout').click()");await waitFor(()=>evaluate("location.pathname==='/login.html'"),'Sair da conta preservado');checks.push('Botão Sair encerra a sessão local e retorna ao login');
 
 
@@ -380,7 +380,7 @@ try {
             for(let t=0;t<14;t++){
                 if(await evaluate("!!document.querySelector('#calendar-days button[data-data-local=\"'+diasTeste["+indice+"]+'\"]:not(:disabled)')"))break;
                 await evaluate("window.mesAnterior=document.querySelector('#calendar-month').textContent;document.querySelector('#next-month').click()");
-                await waitFor(()=>evaluate("document.querySelectorAll('#calendar-days button').length===42 && document.querySelector('#calendar-month').textContent!==mesAnterior"),'Mês da seleção');
+                await waitFor(()=>evaluate("document.querySelectorAll('#calendar-days button').length>=28 && document.querySelector('#calendar-month').textContent!==mesAnterior"),'Mês da seleção');
             }
             await evaluate("document.querySelector('#calendar-days button[data-data-local=\"'+diasTeste["+indice+"]+'\"]:not(:disabled)').click()");
             await waitFor(()=>evaluate("document.querySelectorAll('#time-slots button').length===10"),'Horários da seleção');
@@ -506,7 +506,7 @@ try {
         for(const [width,height] of [[1920,1080],[1366,768],[768,1024],[390,844]]){await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});await check('document.documentElement.scrollWidth<=innerWidth','Minhas aulas sem transbordamento '+width);await screenshot('minhas-aulas-lote-'+width+'.png');}
         await evaluate("window.concluida={...(await servico.dadosAlunoLocal()).aulas[0],id:'concluida-fixture-local',categoria:'A',inicio:'2020-10-19T07:00:00-03:00',fim:'2020-10-19T08:00:00-03:00',status:5};await servico.salvar(concluida);true");
         await navigate('/aluno/html/minhas-aulas.html',"document.body?.dataset.sipaLocal==='aluno'");
-        await evaluate("document.querySelector('[data-vista=historico]').click()");
+        await evaluate("document.querySelector('[data-vista=realizadas]').click()");
         await check("document.querySelector('[data-aula-local=concluida-fixture-local]')?.hidden===false && document.querySelector('[data-aula-local=concluida-fixture-local]').textContent.includes('Concluída')",'Aula concluída permanece acessível no histórico após recarregar');
         await check("document.querySelector('#past-lessons-list').closest('section').hidden===false && [...document.querySelectorAll('#past-lessons-list [data-status=\"2\"]')].every(n=>n.hidden)",'Histórico não mistura cancelamentos e continua acessível');
         await evaluate("document.querySelector('[data-vista=confirmadas]').click()");

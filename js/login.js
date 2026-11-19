@@ -62,17 +62,17 @@ const emailValido = valor => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
 
 // Senha provisória (deveTrocarSenha): o login não devolve token. Pede a nova
 // senha aqui mesmo e troca por POST /api/usuarios/trocar-senha-provisoria (M3).
-function pedirNovaSenha(trocar) {
+function pedirNovaSenha(trocar, minimo) {
     return new Promise(resolve => {
         const d = document.createElement("dialog"); d.className = "login-provisoria"; d.setAttribute("aria-labelledby", "provisoria-titulo");
-        d.innerHTML = '<form method="dialog" novalidate><h2 id="provisoria-titulo">Crie sua senha</h2><p>Sua senha atual é provisória. Escolha uma nova senha com pelo menos 8 caracteres.</p><label for="provisoria-nova">Nova senha</label><input type="password" id="provisoria-nova" autocomplete="new-password" minlength="8" maxlength="128" required><label for="provisoria-confirmacao">Confirme a nova senha</label><input type="password" id="provisoria-confirmacao" autocomplete="new-password" minlength="8" maxlength="128" required><p data-provisoria-erro role="alert"></p><footer><button type="button" data-provisoria-cancelar>Cancelar</button><button type="submit" data-provisoria-salvar>Salvar e entrar</button></footer></form>';
+        d.innerHTML = '<form method="dialog" novalidate><h2 id="provisoria-titulo">Crie sua senha</h2><p>Sua senha atual é provisória. Escolha uma nova senha com pelo menos ' + minimo + ' caracteres.</p><label for="provisoria-nova">Nova senha</label><input type="password" id="provisoria-nova" autocomplete="new-password" maxlength="100" required><label for="provisoria-confirmacao">Confirme a nova senha</label><input type="password" id="provisoria-confirmacao" autocomplete="new-password" minlength="8" maxlength="128" required><p data-provisoria-erro role="alert"></p><footer><button type="button" data-provisoria-cancelar>Cancelar</button><button type="submit" data-provisoria-salvar>Salvar e entrar</button></footer></form>';
         const nova = d.querySelector("#provisoria-nova"), confirmacao = d.querySelector("#provisoria-confirmacao"), erro = d.querySelector("[data-provisoria-erro]"), salvar = d.querySelector("[data-provisoria-salvar]");
         let resultado = null, ocupado = false;
         d.querySelector("[data-provisoria-cancelar]").onclick = () => d.close();
         d.addEventListener("cancel", e => { if (ocupado) e.preventDefault(); });
         d.querySelector("form").onsubmit = async e => {
             e.preventDefault(); if (ocupado) return;
-            if (nova.value.length < 8) { erro.textContent = "A nova senha precisa ter pelo menos 8 caracteres."; nova.focus(); return; }
+            if (nova.value.length < minimo) { erro.textContent = "A nova senha precisa ter pelo menos " + minimo + " caracteres."; nova.focus(); return; }
             if (nova.value !== confirmacao.value) { erro.textContent = "A confirmação não corresponde à nova senha."; confirmacao.focus(); return; }
             ocupado = true; salvar.disabled = true; erro.textContent = "";
             try { resultado = await trocar(nova.value); d.close(); }
@@ -88,7 +88,7 @@ function escolherPerfil(perfis) {
     return new Promise(resolve => {
         const nomes = { 1: "Aluno", 2: "Instrutor" };
         const d = document.createElement("dialog"); d.className = "login-provisoria"; d.setAttribute("aria-labelledby", "perfil-titulo");
-        d.innerHTML = '<form method="dialog"><h2 id="perfil-titulo">Como deseja entrar?</h2><p>Este CPF tem mais de um acesso no SIPA.</p><div data-perfis style="display:grid;gap:8px"></div><footer><button type="button" data-perfil-cancelar>Cancelar</button></footer></form>';
+        d.innerHTML = '<form method="dialog"><h2 id="perfil-titulo">Como deseja entrar?</h2><p>Este CPF tem mais de um acesso no AgIA.</p><div data-perfis style="display:grid;gap:8px"></div><footer><button type="button" data-perfil-cancelar>Cancelar</button></footer></form>';
         let escolhido = null;
         for (const p of perfis) {
             const valor = p?.valor ?? p, b = document.createElement("button");
@@ -127,7 +127,7 @@ form.addEventListener("submit", async event => {
         }
         if (resposta?.deveTrocarSenha && !resposta.token) {
             informar('Sua senha é provisória. Crie uma nova senha para continuar.', 'info');
-            resposta = await pedirNovaSenha(nova => (novaSenhaCriada = nova, trocarSenhaProvisoria(identificacao, senha.value, nova, perfilEscolhido)));
+            resposta = await pedirNovaSenha(nova => (novaSenhaCriada = nova, trocarSenhaProvisoria(identificacao, senha.value, nova, perfilEscolhido)), 4); // 13/11/2026: mínimo de 4 caracteres para todos
             // Conta com dois perfis: a senha já foi trocada; falta escolher com qual perfil entrar.
             if (!resposta?.token && resposta?.perfis?.length > 1 && novaSenhaCriada) {
                 perfilEscolhido = await escolherPerfil(resposta.perfis);
@@ -148,7 +148,7 @@ form.addEventListener("submit", async event => {
         }
         if(!Object.hasOwn(destinos, perfil)){
             limparSessao();
-            informar('Esta conta não tem um painel disponível no SIPA.','info');return;
+            informar('Esta conta não tem um painel disponível no AgIA.','info');return;
         }
         redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");
         window.location.assign(destinos[perfil]);
@@ -163,7 +163,7 @@ form.addEventListener("submit", async event => {
 // Única configuração do contato: o destino já informado no link principal.
 const contato = document.getElementById("contato-recepcao");
 const urlContato = new URL(contato.href);
-urlContato.searchParams.set("text", "Olá! Estou tentando acessar minha conta no SIPA e preciso de ajuda da recepção.");
+urlContato.searchParams.set("text", "Olá! Estou tentando acessar minha conta no AgIA e preciso de ajuda da recepção.");
 contato.href = urlContato.href;
 document.querySelectorAll("[data-contato-copia]").forEach(link => { link.href = contato.href; });
 const recuperacao = document.getElementById("recuperar-acesso");
