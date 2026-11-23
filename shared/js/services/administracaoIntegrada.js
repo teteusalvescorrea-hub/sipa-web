@@ -21,6 +21,7 @@ import {identificarMotivo,MOTIVOS_CANCELAMENTO} from '../../../aluno/js/domain/a
 import {adaptarSolicitacao} from '../../../aluno/js/services/alunoIntegrado.js';
 import {textoErro} from '../apiErro.js';
 import {adaptarEvento} from '../../../instrutor/js/services/instrutorIntegrado.js';
+import {tomarPreCarga,rotasDaLeitura,ROTA_UNIDADES} from '../preCargaEquipe.js';
 
 const numero=v=>v?.valor??v??null;
 const descricao=v=>v?.descricao??(typeof v==='string'?v:null);
@@ -109,7 +110,8 @@ export function capacidadesDoMembro(me,perfil){
 // (back antigo), vale o painel escolhido no login e o servidor barra o resto.
 export async function carregarIdentidadeEquipe(perfil,{unidadeEscolhida}={}){
  const nivel=NIVEIS[perfil];if(!nivel)throw new Error('Perfil administrativo inválido.');
- const [me,unidadesApi]=await Promise.all([chamar(Get('equipe/me')),chamar(Get(ComParams('unidades',{todas:true})))]);
+ // 19/11/2026 (desempenho): a pré-carga do HTML do painel (preCargaEquipe.js) já pediu as duas; sem ela, pede aqui.
+ const [me,unidadesApi]=await Promise.all([chamar(tomarPreCarga('equipe/me')||Get('equipe/me')),chamar(tomarPreCarga(ROTA_UNIDADES)||Get(ROTA_UNIDADES))]);
  const painel=numero(me?.painel);if(painel!=null&&painel!==nivel)throw Object.assign(new Error('Sua conta não possui acesso a este painel administrativo.'),{status:403});
  const u=mapaUnidades(lista(unidadesApi)),proprias=(me.unidades||[]).map(u.chave).filter(Boolean);
  const base=proprias[0]||(nivel===3?u.chaves[0]:null);if(!base||!regras.UNIDADES.some(([id])=>id===base))throw new Error('Conta sem unidade vinculada. Solicite o ajuste ao Master.');
@@ -226,8 +228,7 @@ const adaptarHistoricoAluno=itens=>lista(itens).map(h=>({id:h.id,tipo:h.grupo,ti
 function adaptarAuditoria(itens){
  return lista(itens).map(x=>({id:x.id,em:comFusoBrasil(x.quando??x.em),usuario:x.usuario?.id??x.usuario,responsavel:x.usuario?.id,responsavelNome:x.usuario?.nome,...(x.usuario?.id&&x.usuario.id===x.registroId?{contaNome:x.usuario.nome}:{}),tipo:[descricao(x.acao),x.tabela].filter(Boolean).join(' · ').toLowerCase()||'registro',unidade:x.unidade||'',referencia:x.registroId,justificativa:x.justificativa||''}));
 }
-// O "ate" da API é exclusivo (início < ate): a primeira janela vai até amanhã para trazer as aulas de hoje.
-const janelas=(hoje=hojeBrasil())=>[{de:somarDias(hoje,-91),ate:somarDias(hoje,1)},{de:somarDias(hoje,1),ate:somarDias(hoje,92)}];
+// As janelas de agendamentos da leitura (o "ate" da API é exclusivo) ficam em rotasDaLeitura (preCargaEquipe.js).
 const dataHora=(data,inicio)=>data+'T'+inicio+':00';
 
 // Horário liberado (HorarioLiberadoReadDto): o horário que vagou, os pares livres e quem marcou interesse,
@@ -256,8 +257,14 @@ export function adaptarConversaEquipe(c,u){
   // 17/11/2026: a conversa tem a mensagem da diretoria (aula cancelada pela autoescola).
   diretoria:c.comMensagemDaDiretoria===true};
 }
-// Por quanto tempo uma listagem lida da API é reaproveitada (ver GetCache).
-const VALIDADE_CACHE=15000;
+// Por quanto tempo uma listagem lida da API é reaproveitada (ver GetCache). 19/11/2026 (tarefa 18): 60 s (antes 15 s). As
+// leituras do retrato da tela (ler e auditoria) valem até 10 min depois de vencidas: a tela desenha na hora com a guardada e a
+// rota é relida em segundo plano; se vier diferente, quem assinou aoMudarDados redesenha. Os contadores que mudam sozinhos
+// (substituições, SIT) valem 10 s: só juntam os pedidos repetidos da mesma entrada.
+const VALIDADE_CACHE=60000,VALIDADE_VENCIDA=600000,VALIDADE_CURTA=10000;
+const SWR=Object.freeze({vencida:VALIDADE_VENCIDA}),CURTA=Object.freeze({validade:VALIDADE_CURTA});
+// Leitura complementar que falhou: sempre o mesmo vazio, para o retrato guardado continuar valendo (ver ler).
+const SEM_DADOS=Object.freeze([]);
 
 // ---------------------------------------------------------------- serviço
 export function criarServicoAdministrativoIntegrado(identidade,u){
@@ -269,29 +276,56 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
  // Patch, Delete) descarta o cache ao terminar, com sucesso ou erro: depois de salvar, a tela relê do servidor como antes.
  let cache=new Map();
  const descartarCache=()=>{cache=new Map();};
- function GetCache(rota){
-  const guardado=cache.get(rota);if(guardado&&Date.now()-guardado.em<VALIDADE_CACHE)return guardado.p;
-  const mapa=cache,p=Get(rota);mapa.set(rota,{p,em:Date.now()});p.catch(()=>{if(mapa.get(rota)?.p===p)mapa.delete(rota);});return p;
+ // 19/11/2026: a primeira leitura de cada rota reaproveita a pré-carga do HTML (preCargaEquipe.js).
+ function buscar(rota){
+  const mapa=cache,item={p:tomarPreCarga(rota)||Get(rota),em:Date.now()};mapa.set(rota,item);
+  item.p.then(()=>{item.pronto=true;},()=>{if(mapa.get(rota)===item)mapa.delete(rota);});return item.p;
+ }
+ function GetCache(rota,{validade=VALIDADE_CACHE,vencida=0}={}){
+  const guardado=cache.get(rota),idade=guardado?Date.now()-guardado.em:Infinity;
+  if(guardado&&idade<validade)return guardado.p;
+  if(guardado?.pronto&&idade<vencida){revalidar(rota,guardado);return guardado.p;}
+  return buscar(rota);
+ }
+ // Releitura em segundo plano (stale-while-revalidate). Igual: a guardada volta a valer. Diferente: entra no lugar e avisa.
+ // Um comando no meio (cache descartado) deixa a releitura de lado.
+ const ouvintesMudanca=new Set();let avisoMudanca=null;
+ function revalidar(rota,antigo){
+  if(antigo.relendo)return;antigo.relendo=true;const mapa=cache;
+  Get(rota).then(async novo=>{
+   if(cache!==mapa||mapa.get(rota)!==antigo)return;
+   const velho=await antigo.p;
+   if(JSON.stringify(velho)===JSON.stringify(novo)){antigo.em=Date.now();antigo.relendo=false;return;}
+   mapa.set(rota,{p:Promise.resolve(novo),em:Date.now(),pronto:true});
+   clearTimeout(avisoMudanca);avisoMudanca=setTimeout(()=>{for(const f of [...ouvintesMudanca]){try{f();}catch{}}},80);
+  },()=>{antigo.relendo=false;});
  }
  const comando=enviar=>(...args)=>{const p=enviar(...args);p.then(descartarCache,descartarCache);return p;};
  const Post=comando(PostApi),Put=comando(PutApi),Patch=comando(PatchApi),Delete=comando(DeleteApi);
- // Snapshot de leitura no formato do front, remontado a cada consulta (objetos novos: quem altera o retorno não suja o cache).
+ // Snapshot de leitura no formato do front (objetos novos: quem altera o retorno não suja o cache).
+ // 19/11/2026 (tarefa 18): adaptado uma vez por conjunto de respostas. Com as mesmas respostas do cache, o retrato guardado
+ // volta em cópia (listas e itens novos), sem readaptar todos os alunos e aulas a cada troca de seção.
+ let retratoGuardado=null;
+ const copiaRetrato=r=>({...r,alunos:r.alunos.map(a=>({...a})),recursos:r.recursos.map(x=>({...x})),aulas:r.aulas.map(a=>({...a})),excecoesAgenda:[],configuracoesUnidades:{}});
  async function ler(){
-  const [alunos,vinculos,solicitacoes,veiculosDaAutoescola,diasBloqueados,excecoesUnidades,diasProva,...aulas]=await Promise.all([
-   chamar(GetCache(ComParams('alunos',filtroUnidade()))),
-   chamar(GetCache(ComParams('vinculos',{status:2,...filtroUnidade()}))),
+  const rotas=rotasDaLeitura(filtroUnidade());
+  const respostas=await Promise.all([
+   chamar(GetCache(rotas.alunos,SWR)),
+   chamar(GetCache(rotas.vinculos,SWR)),
    // 16/11/2026: o papel sem a tela Atestados (a Central de agendamento) recebia 403 aqui e o painel inteiro não abria
    // ("Acesso ainda não habilitado"). Sem a permissão, os atestados vêm vazios e o resto do painel abre.
-   opcional(GetCache(ComParams('solicitacoes-medicas',{pagina:1,tamanho:100,...filtroUnidade()})),[]).catch(e=>{if(e?.status===403)return [];throw e;}),
+   opcional(GetCache(rotas.solicitacoes,SWR),SEM_DADOS).catch(e=>{if(e?.status===403)return SEM_DADOS;throw e;}),
    // Complemento (veículos sem instrutor): qualquer falha aqui não derruba a tela, os veículos dos vínculos continuam.
-   GetCache(ComParams('veiculos/da-autoescola',filtroUnidade())).catch(()=>[]),
-   GetCache('agenda/dias-bloqueados').catch(()=>[]),
-   GetCache('agenda/excecoes-unidades').catch(()=>[]),
+   GetCache(rotas.veiculos,SWR).catch(()=>SEM_DADOS),
+   GetCache(rotas.diasBloqueados,SWR).catch(()=>SEM_DADOS),
+   GetCache(rotas.excecoes,SWR).catch(()=>SEM_DADOS),
    // 13/11/2026: os veículos reservados para a prova (fora da agenda até 13:00 nesse dia).
-   GetCache('agenda/provas').catch(()=>[]),
-   ...janelas().map(j=>chamar(GetCache(ComParams('agendamentos',{...j,status:[1,2,3,4,5,6,7],...filtroUnidade()}))))]);
+   GetCache(rotas.provas,SWR).catch(()=>SEM_DADOS),
+   ...rotas.agendamentos.map(rota=>chamar(GetCache(rota,SWR)))]);
+  const [alunos,vinculos,solicitacoes,veiculosDaAutoescola,diasBloqueados,excecoesUnidades,diasProva,...aulas]=respostas;
   definirDiasBloqueados(lista(diasBloqueados).map(d=>String(d.data).slice(0,10)));
   definirExcecoesUnidades(lista(excecoesUnidades).map(e=>({unidade:u.chave(e.unidadeId),data:String(e.data).slice(0,10),fechada:e.fechada,justificativa:e.justificativa||''})));
+  if(retratoGuardado&&retratoGuardado.respostas.length===respostas.length&&retratoGuardado.respostas.every((r,i)=>r===respostas[i]))return copiaRetrato(retratoGuardado.retrato);
   const porId=new Map(lista(alunos).map(a=>[a.id,adaptarAlunoEquipe(a,u)]));
   const unicas=new Map(aulas.flatMap(lista).map(a=>[a.id,adaptarAulaEquipe(a,u)]));
   for(const s of lista(solicitacoes)){const sol=s.solicitacao??s,aulaId=sol.aulaIds?.[0]??sol.aulaId??s.aula?.id;let aula=unicas.get(aulaId);/* Aula em outra unidade (carro fora da base): a lista de agendamentos não a traz, mas o atestado é da base do aluno. */if(!aula&&s.aula?.id){aula=adaptarAulaEquipe({...s.aula,alunoId:sol.alunoId,alunoNome:s.aluno?.nome},u);unicas.set(aula.id,aula);}if(aula)aula.solicitacaoMedica=adaptarSolicitacao({...sol,aulaIds:sol.aulaIds||[aulaId]},aula.alunoId);}
@@ -301,7 +335,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   for(const d of lista(diasProva)){const dia=String(d.data).slice(0,10),marcar=r=>{if(r)(r.reservasProva||=[]).push({data:dia,ate:'13:00'});};
    for(const v of d.veiculos||[])marcar(recursos.find(x=>x.tipo==='Veículos'&&x.id===v.veiculoId));
    for(const i of d.instrutores||[])marcar(recursos.find(x=>x.tipo==='Instrutores'&&x.id===i.motoristaId));}
-  return {versao:2,alunos:[...porId.values()],recursos,aulas:[...unicas.values()],excecoesAgenda:[],configuracoesUnidades:{}};
+  const retrato={versao:2,alunos:[...porId.values()],recursos,aulas:[...unicas.values()],excecoesAgenda:[],configuracoesUnidades:{}};
+  retratoGuardado={respostas,retrato};return copiaRetrato(retrato);
  }
  const leitor=estado=>servicoOperador({ler:async()=>estado,...negado},op);
  const base=servicoOperador({ler,...negado},op);
@@ -362,6 +397,9 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
  }
  return {...base,
   identidade:op,senhaPeloServidor:true,
+  // 19/11/2026: avisa quando a releitura em segundo plano trouxe dados diferentes (a tela visível redesenha). Devolve o
+  // cancelamento da assinatura.
+  aoMudarDados(f){ouvintesMudanca.add(f);return ()=>ouvintesMudanca.delete(f);},
   // 13/11/2026: o "Meu perfil" editável (o Master): os dados de quem está logado, o CPF de acesso e a foto de identificação.
   async meuPerfil(){const me=await chamar(Get('equipe/me'));return {nome:me.nome||'',email:me.email||'',telefone:me.telefone||'',cpf:digitos(me.cpf)||'',temFoto:!!me.temFoto,emailConfirmado:me.emailConfirmado!==false};},
   async salvarMeuPerfil(d){await chamar(Put('equipe/me',{nome:String(d.nome||'').trim(),telefone:digitos(d.telefone)||'',email:String(d.email||'').trim()||null,senhaAtual:d.senhaAtual||null,cpf:d.cpf==null?null:(digitos(d.cpf)||'')}));},
@@ -372,8 +410,10 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   // ---- leituras
   consultar:base.consultar,
   async estado(){
-   const e=permitido(await ler());let auditoria=[];
-   if(master&&op.permissoes.includes('auditoria')){const hoje=hojeBrasil();auditoria=adaptarAuditoria(await opcional(GetCache(ComParams('auditoria',{de:somarDias(hoje,-30),ate:hoje,pagina:1,tamanho:100})),[]));}
+   // 19/11/2026: a auditoria do Master sai junto com a leitura, e não depois dela.
+   const hoje=hojeBrasil(),comAuditoria=master&&op.permissoes.includes('auditoria');
+   const [lido,registros]=await Promise.all([ler(),comAuditoria?opcional(GetCache(ComParams('auditoria',{de:somarDias(hoje,-30),ate:hoje,pagina:1,tamanho:100}),SWR),[]):null]);
+   const e=permitido(lido),auditoria=comAuditoria?adaptarAuditoria(registros):[];
    return {responsaveis:[],alunos:e.alunos,recursos:e.recursos,aulas:e.aulas,excecoesAgenda:[],configuracoesUnidades:{},auditoria};
   },
   async ficha(id){return leitor(await lerComAluno(id)).ficha(id);},
@@ -498,9 +538,10 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   async atendimentoChat(){return chamar(Get('equipe/atendimento'));},
   async definirAtendimentoChat(d){return chamar(Put('equipe/atendimento',d));},
   // Fase 7 (4.2): o relatório diário do SIT (as 2 primeiras aulas de cada aluno marcadas no dia) e o "Lançado no SIT".
-  async relatorioSit(data){return chamar(Get(ComParams('agenda/relatorio-sit',{data:data||undefined})));},
+  // 19/11/2026: o contador do menu e o cartão do SIT pedem o mesmo dia: um pedido só (10 s; o lançamento descarta o cache).
+  async relatorioSit(data){return chamar(GetCache(ComParams('agenda/relatorio-sit',{data:data||undefined}),CURTA));},
   // 16/11/2026: os dias do período com aulas do SIT (total, lançadas e pendentes), para o calendário da tela.
-  async diasSit(de,ate){return chamar(Get(ComParams('agenda/relatorio-sit/dias',{de:de||undefined,ate:ate||undefined})));},
+  async diasSit(de,ate){return chamar(GetCache(ComParams('agenda/relatorio-sit/dias',{de:de||undefined,ate:ate||undefined}),CURTA));},
   async lancarSit(agendamentoId){return chamar(Post(`agenda/relatorio-sit/${agendamentoId}/lancamento`,{}));},
   async desfazerSit(agendamentoId){return chamar(Delete(`agenda/relatorio-sit/${agendamentoId}/lancamento`));},
   // Fase 6 (3.4): o PDF do agendamento da prova (o aluno recebe no app), o dia de prova e o veículo da prova.
@@ -712,7 +753,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   // Fase 3: só a Gerência cancela; a Recepção pede a substituição e marca a falta com ônus.
   async substituirAluno(id,{novoAlunoId,motivo,credito}){return chamar(Post(`agendamentos/${id}/substituir`,{novoAlunoId:novoAlunoId||null,motivo:String(motivo||'').trim(),credito}));},
   async solicitarSubstituicao(id,{novoAlunoId,motivo}){return chamar(Post(`agendamentos/${id}/solicitar-substituicao`,{novoAlunoId:novoAlunoId||null,motivo:String(motivo||'').trim()}));},
-  async substituicoes(status){return lista(await chamar(Get(ComParams('agenda/substituicoes',status?{status}:{}))));},
+  // 19/11/2026: a home e o cartão de substituições pediam a mesma lista 3 vezes na entrada: um pedido só (10 s).
+  async substituicoes(status){return [...lista(await chamar(GetCache(ComParams('agenda/substituicoes',status?{status}:{}),CURTA)))];},
   async decidirSubstituicao(id,{aprovar,resposta,credito}){return chamar(Post(`agenda/substituicoes/${id}/decisao`,{aprovar:aprovar===true,resposta:String(resposta||'').trim()||null,credito:credito||null}));},
   async faltaComOnus(id,motivo){await chamar(Post(`agendamentos/${id}/falta-com-onus`,{motivo:String(motivo||'').trim()||null}));},
   // Fase 2: status do veículo, manutenção, preventiva e realocação dos alunos.

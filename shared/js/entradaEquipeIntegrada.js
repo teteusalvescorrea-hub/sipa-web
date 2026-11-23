@@ -22,9 +22,17 @@ export async function montarPainelEquipe({perfil,raiz,template,administracao=fal
  if(!exigirLogin(['Autoescola']))return null;
  const {identidade,unidades}=await carregarIdentidadeEquipe(perfil,{unidadeEscolhida:unidadeEscolhida()});
  const servico=criarServicoAdministrativoIntegrado(identidade,unidades);
+ // 19/11/2026 (tarefa 18): o módulo do painel administrativo baixa enquanto a unidade monta; a montagem dele continua
+ // depois, porque usa o ui que o montarUnidade devolve.
+ const moduloAdministracao=administracao?import('../components/painelAdministrativo.js'):null;moduloAdministracao?.catch(()=>{});
  const ui=await montarUnidade(raiz,template,servico,{sair:async()=>sair()});
- if(administracao){const {montarAdministracao}=await import('../components/painelAdministrativo.js');await montarAdministracao(raiz,servico,ui);}
+ if(administracao){const {montarAdministracao}=await moduloAdministracao;await montarAdministracao(raiz,servico,ui);}
  else{
+  // 19/11/2026: a leitura vencida desenha na hora e é relida em segundo plano; se mudou, as listas da Recepção redesenham
+  // (como depois de um comando), menos com um diálogo aberto ou com alguém digitando num campo do painel.
+  const digitando=()=>{const a=document.activeElement;return !!a&&raiz.contains(a)&&!!a.matches?.('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,select,[contenteditable=true]');};
+  let redesenhando=false;
+  servico.aoMudarDados?.(async()=>{if(redesenhando||!raiz.isConnected||raiz.querySelector('dialog[open]')||digitando())return;redesenhando=true;try{await ui.recarregar();}catch{}finally{redesenhando=false;}});
   if(identidade.permissoes.includes('antecipar')){
    const host=ui.registrarSecao('antecipacao','Antecipação de aulas');
    raiz.querySelector('[data-op-nav=antecipacao]')?.addEventListener('click',async()=>{try{await (await import('../components/antecipacaoPainel.js')).montarAntecipacaoPainel(host,servico,raiz);}catch(e){host.textContent=e.message;}});
@@ -36,7 +44,8 @@ export async function montarPainelEquipe({perfil,raiz,template,administracao=fal
    const host=ui.registrarSecao('mensagens','Mensagens','Conversas com os alunos, a equipe e os instrutores.');
    const fonte=fonteEquipe(servico),marcar=n=>ui.marcarContador('mensagens',n,'mensagens não lidas');
    let chatAtual=null;
-   const montarMensagens=()=>{if(host.querySelector('[data-op-chat]'))return chatAtual;const chat=document.createElement('div');chat.dataset.opChat='';host.replaceChildren(chat);chatAtual=montarChat(chat,fonte,{aoMudarNaoLidas:marcar});return chatAtual;};
+   // 19/11/2026: o chat não consulta com a seção escondida; ao voltar para ela, relê a lista na hora.
+   const montarMensagens=()=>{if(host.querySelector('[data-op-chat]')){chatAtual?.recarregar();return chatAtual;}const chat=document.createElement('div');chat.dataset.opChat='';host.replaceChildren(chat);chatAtual=montarChat(chat,fonte,{aoMudarNaoLidas:marcar});return chatAtual;};
    raiz.querySelector('[data-op-nav=mensagens]')?.addEventListener('click',montarMensagens);
    // 10/11/2026: o "Conversar" (e o nome do aluno) da Antecipação de aulas abre Mensagens já na conversa do aluno.
    // 11/11/2026: o "Enviar mensagem" da ficha e da lista de alunos (sipa-mensagem-iniciar) também: antes ninguém atendia

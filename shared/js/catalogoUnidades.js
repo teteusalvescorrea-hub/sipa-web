@@ -77,7 +77,21 @@ export const UNIDADES_INSTITUCIONAIS=Object.freeze([
   }
 ].map(u=>Object.freeze({...u,aliases:Object.freeze(u.aliases||[])})));
 const chave=valor=>semAcento(String(valor||'').trim().replace(/^Unidade\s+/i,''));
-export function obterUnidadeInstitucional(idOuAlias){const k=chave(idOuAlias);return UNIDADES_INSTITUCIONAIS.find(u=>[u.id,u.nome,...u.aliases].some(v=>chave(v)===k))||null;}
+// 19/11/2026 (desempenho, tarefa 18): é chamada por aula e por recurso. As chaves normalizadas de cada unidade (id, nome e
+// apelidos) ficam num índice (o catálogo é congelado) e o resultado de cada texto pedido fica guardado. Vale a primeira
+// unidade da lista, como no find() de antes.
+let indiceUnidades=null;const memoUnidade=new Map();
+function indice(){
+ if(indiceUnidades)return indiceUnidades;
+ indiceUnidades=new Map();
+ for(const u of UNIDADES_INSTITUCIONAIS)for(const v of [u.id,u.nome,...u.aliases]){const k=chave(v);if(!indiceUnidades.has(k))indiceUnidades.set(k,u);}
+ return indiceUnidades;
+}
+export function obterUnidadeInstitucional(idOuAlias){
+ const mapa=indice(),texto=typeof idOuAlias==='string'?idOuAlias:null;
+ if(texto!==null&&memoUnidade.has(texto))return memoUnidade.get(texto);
+ const u=mapa.get(chave(idOuAlias))||null;if(texto!==null&&memoUnidade.size<5000)memoUnidade.set(texto,u);return u;
+}
 export function normalizarChaveUnidade(valor){return obterUnidadeInstitucional(valor)?.id||String(valor||'').trim().replace(/^Unidade\s+/i,'');}
 export function nomeUnidadeInstitucional(valor){return obterUnidadeInstitucional(valor)?.nome||normalizarChaveUnidade(valor)||'Unidade não informada';}
 export function pesquisaMapsUnidade(valor){const u=obterUnidadeInstitucional(valor);if(!u)return null;const consulta=u.logradouro+', '+u.numero+(u.complemento?' – '+u.complemento:'')+', '+u.bairro+', '+u.cidade+' – '+u.uf+(u.cep?', '+u.cep:'');return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(consulta);}

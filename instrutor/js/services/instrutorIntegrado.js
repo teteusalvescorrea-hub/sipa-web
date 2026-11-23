@@ -86,11 +86,18 @@ export function criarServicoInstrutor(){
   ultimo=null;return dados();
  }
  // Fase 4 (6.1): o veículo do dia e o checklist do primeiro uso da placa.
- async function veiculosDoDia(){try{return await api.Get('motoristas/me/veiculos-do-dia');}catch(e){throw comoErro(e);}}
+ // 19/11/2026 (tarefa 18): a entrada pedia a lista 2 vezes seguidas (checklist e painel). Ela vale 30 s e o checklist novo
+ // descarta; cada chamada recebe uma cópia.
+ let veiculosGuardados=null;
+ async function veiculosDoDia(){
+  if(!veiculosGuardados||Date.now()-veiculosGuardados.em>=30000){const p=api.Get('motoristas/me/veiculos-do-dia');veiculosGuardados={p,em:Date.now()};p.catch(()=>{if(veiculosGuardados?.p===p)veiculosGuardados=null;});}
+  try{const r=await veiculosGuardados.p;return r==null?r:structuredClone(r);}catch(e){throw comoErro(e);}
+ }
  async function registrarChecklist(dados,fotos=[]){
+  veiculosGuardados=null;
   const corpo=new FormData();for(const [k,v] of Object.entries(dados))if(v!==''&&v!=null)corpo.append(k,String(v));
   for(const f of fotos)corpo.append('fotos',f,f.name||'foto');
-  try{return await api.Post('motoristas/me/checklists',corpo);}catch(e){throw comoErro(e);}
+  try{return await api.Post('motoristas/me/checklists',corpo);}catch(e){throw comoErro(e);}finally{veiculosGuardados=null;}
  }
  // Chat (09/11/2026): o instrutor conversa com a Recepção e a Gerência das unidades dele.
  const chamarChat=async p=>{try{return await p;}catch(e){throw comoErro(e);}};

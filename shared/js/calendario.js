@@ -5,9 +5,12 @@ export function dataValida(iso) {
         && Number.isFinite(new Date(`${iso}T12:00:00Z`).getTime())
         && new Date(`${iso}T12:00:00Z`).toISOString().slice(0, 10) === iso;
 }
-export const hojeBrasil = () => new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" }).format(new Date());
+// 19/11/2026 (desempenho): os dois formatadores são criados uma vez só (um Intl.DateTimeFormat novo por chamada era caro).
+const FORMATO_HOJE = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" });
+const FORMATO_AGORA = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" });
+export const hojeBrasil = () => FORMATO_HOJE.format(new Date());
 export function agoraBrasil(instante = new Date()) {
-    const partes = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(instante).map(p => [p.type, p.value]));
+    const partes = Object.fromEntries(FORMATO_AGORA.formatToParts(instante).map(p => [p.type, p.value]));
     return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}:${partes.second}`;
 }
 export const dataPorExtenso = iso => new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long", timeZone: "UTC" }).format(new Date(`${iso}T12:00:00Z`));

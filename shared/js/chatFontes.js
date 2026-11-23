@@ -26,6 +26,10 @@ export function fonteEquipe(servico){
  return {
   categorias:['Pedidos de aulas','Alunos','Grupos','Recepção','Gerência','Instrutores','Master'],
   async listar(){
+   // 19/11/2026 (tarefa 18): o resumo, as conversas, os alunos e os pedidos saem juntos (antes um esperava o outro). Cada
+   // erro continua tratado no mesmo ponto de antes.
+   const resultado=p=>p.then(v=>({v}),e=>({e})),valor=x=>{if(x.e)throw x.e;return x.v;};
+   const conversasP=servico.conversasAlunos?resultado(servico.conversasAlunos({})):null,alunosP=servico.conversasAlunos?alunosDaUnidade():null,pedidosP=servico.pedidosAulas?resultado(servico.pedidosAulas(true)):null;
    const r=await servico.chatResumo();perfil=r.perfil||'';
    const itens=[
     ...(r.grupos||[]).map(grupoDoChat),
@@ -37,7 +41,7 @@ export function fonteEquipe(servico){
     try{
      // Todas as conversas com alunos (a transferida para a Gerência vem marcada) e, depois, os alunos da unidade que
      // ainda não conversaram: a primeira mensagem cria a conversa.
-     const lista=await servico.conversasAlunos({});conversasDoAluno=lista;
+     const lista=valor(await conversasP);conversasDoAluno=lista;
      if(gerencia()){
       // Gerência e Master: só as conversas da Recepção transferidas (para acompanhar e devolver).
       // 17/11/2026 (pedido do usuário): e as que têm a mensagem da diretoria (aula cancelada pela autoescola), para a
@@ -51,7 +55,7 @@ export function fonteEquipe(servico){
      }
     }catch{}
     const unidadeDe=a=>a.unidadePrincipal?nomeUnidadeInstitucional(a.unidadePrincipal):'';
-    const alunos=(await alunosDaUnidade()).filter(a=>a.id).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
+    const alunos=(await alunosP).filter(a=>a.id).sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR'));
     if(gerencia()){
      // A conversa direta da Gerência/Master com cada aluno da unidade (o aluno só vê depois da 1ª mensagem).
      const diretas=new Map((r.alunos||[]).map(a=>[a.alunoId,a]));
@@ -66,7 +70,7 @@ export function fonteEquipe(servico){
    // chegou a mensagem do pedido), com a etiqueta "Novo pedido" e também no filtro "Pedidos de aulas".
    if(servico.pedidosAulas){
     try{
-     const pedidos=await servico.pedidosAulas(true);
+     const pedidos=valor(await pedidosP);
      const porAluno=new Map(conversasDoAluno.map(c=>[c.alunoId,c]));
      for(const p of pedidos){
       let item=itens.find(i=>i.chave==='a:'+p.alunoId);

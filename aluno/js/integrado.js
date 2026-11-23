@@ -33,8 +33,10 @@ async function iniciar(){
  else if(pagina==='meu-perfil.html'){apresentarPerfil(dados);montarAlteracaoSenha(servico);}
  if(['dashboard.html','meu-progresso.html'].includes(pagina))aviso(Object.values(dados.resumo.categorias).some(c=>c.total===null)?'O saldo conjunto está disponível. A separação por categoria ainda não foi informada pelo serviço.':'');
  }catch(e){aviso(e.status===0?'Não foi possível falar com o servidor. Tente novamente ou contate a recepção.':e.message||'Não foi possível carregar seus dados. Tente novamente.');}
+ // Depois de desenhar: junto com a leitura da página, as 3 consultas do contador disputavam as conexões com ela.
  acompanharNaoLidas(servico);
 }
-// Sino e item Mensagens em todas as páginas: avisos + conversa com a Recepção, a cada 15 s e ao voltar para a janela.
-function acompanharNaoLidas(servico){const contar=()=>{if(!document.hidden){servico.totalNaoLidas().then(marcarIndicadorMensagens,()=>{});atualizarIndicadorNovidades(servico);}};setInterval(contar,15000);window.addEventListener('focus',contar);contar();}
+// Sino e item Mensagens em todas as páginas: avisos + conversa com a Recepção, a cada 30 s (19/11/2026: antes 15 s), ao
+// voltar para a janela e ao mostrar a aba de novo.
+function acompanharNaoLidas(servico){const contar=()=>{if(!document.hidden){servico.totalNaoLidas().then(marcarIndicadorMensagens,()=>{});atualizarIndicadorNovidades(servico);}};setInterval(contar,30000);window.addEventListener('focus',contar);document.addEventListener('visibilitychange',()=>{if(!document.hidden)contar();});contar();}
 iniciar();

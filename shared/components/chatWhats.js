@@ -24,6 +24,7 @@ const COR={'Pedidos de aulas':'pedido',Alunos:'aluno',Aluno:'aluno',Grupos:'grup
 
 export function montarChat(host,fonte,{aoMudarNaoLidas,titulo='Conversas',abrirUnica=false}={}){
  carregarCss();host.replaceChildren();host.classList.add('chat-wa');
+ const visivel=()=>document.visibilityState==='visible'&&host.isConnected&&host.getClientRects().length>0;
  const lista=el('section',null,'chat-wa-lista'),painel=el('section',null,'chat-wa-conversa');
  const topo=el('header',null,'chat-wa-topo');topo.append(el('h2',titulo));
  const busca=el('input');busca.type='search';busca.placeholder='Pesquisar conversa';busca.setAttribute('aria-label','Pesquisar conversa');busca.className='chat-wa-busca';
@@ -32,7 +33,7 @@ export function montarChat(host,fonte,{aoMudarNaoLidas,titulo='Conversas',abrirU
  lista.append(topo,busca,filtros,itens);
  const vazio=el('div',null,'chat-wa-vazio');vazio.append(el('strong','Suas conversas'),el('span','Escolha uma conversa na lista para ver e enviar mensagens.'));
  painel.append(vazio);host.append(lista,painel);
- let jaAbriu=false,todos=[],filtro='Tudo',aberto=null,mensagens=[],ultimoCarregado=null,ocupado=false,versao=0;
+ let jaAbriu=false,todos=[],filtro='Tudo',aberto=null,mensagens=[],ultimoCarregado=null,ocupado=false,versao=0,ultimaAssinatura=null;
 
  function chips(){
   // Todas as categorias do perfil aparecem sempre (vazias mostram "Nenhuma conversa").
@@ -56,9 +57,10 @@ export function montarChat(host,fonte,{aoMudarNaoLidas,titulo='Conversas',abrirU
    meio.append(linha1,linha2);b.append(av,meio);b.setAttribute('aria-label',i.nome+(i.naoLidas?', '+i.naoLidas+' não lidas':''));b.onclick=()=>abrir(i);li.append(b);return li;}));
  }
  async function recarregarLista(){
-  try{todos=await fonte.listar();}catch(e){itens.replaceChildren(el('li',e.message||'Não foi possível carregar as conversas.','chat-wa-nada'));return;}
+  try{todos=await fonte.listar();}catch(e){ultimaAssinatura=null;itens.replaceChildren(el('li',e.message||'Não foi possível carregar as conversas.','chat-wa-nada'));return;}
   if(aberto){const atual=todos.find(i=>i.chave===aberto.chave);if(atual)aberto={...atual,naoLidas:0};}
-  desenharLista();aoMudarNaoLidas?.(todos.reduce((s,i)=>s+(i.naoLidas||0),0));
+  // 19/11/2026 (tarefa 18): a lista só é redesenhada quando muda (antes, a cada consulta, mesmo igual).
+  const assinatura=JSON.stringify([todos,aberto?.chave||null,filtro,busca.value]);if(assinatura!==ultimaAssinatura)desenharLista();ultimaAssinatura=assinatura;aoMudarNaoLidas?.(todos.reduce((s,i)=>s+(i.naoLidas||0),0));
   // Uma conversa só (o aluno com a Recepção): já abre, no computador.
   if(abrirUnica&&!aberto&&!jaAbriu&&todos.length===1&&!matchMedia('(max-width: 820px)').matches){jaAbriu=true;abrir(todos[0]);}
  }
@@ -104,7 +106,9 @@ export function montarChat(host,fonte,{aoMudarNaoLidas,titulo='Conversas',abrirU
  }
  busca.addEventListener('input',desenharLista);
  const primeiraCarga=recarregarLista();
- const relogio=setInterval(()=>{if(!host.isConnected){clearInterval(relogio);return;}if(document.visibilityState!=='visible')return;atualizarAberta();recarregarLista();},8000);
+ // 19/11/2026 (tarefa 18): só consulta com o chat à vista. Com a seção escondida, o contador do menu de cada painel segue
+ // sozinho e, ao abrir a seção de novo, o painel chama recarregar() na hora.
+ const relogio=setInterval(()=>{if(!host.isConnected){clearInterval(relogio);return;}if(!visivel())return;atualizarAberta();recarregarLista();},8000);
  // 10/11/2026: abre a conversa pela chave (a Antecipação de aulas abre a do aluno). Sem ela na lista, abre a reserva:
  // a primeira mensagem cria a conversa.
  async function abrirChave(chave,reserva){await primeiraCarga;const item=todos.find(i=>i.chave===chave)||reserva;if(!item)return false;await abrir(item);return true;}

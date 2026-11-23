@@ -87,7 +87,9 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
         const montarProvas=()=>hostProvas.replaceChildren(cartaoDiasProva(servico,{veiculos:(dados.recursos||[]).filter(r=>r.tipo==='Veículos'&&r.ativo!==false),instrutores:(dados.recursos||[]).filter(r=>r.tipo==='Instrutores'&&r.ativo!==false)}));linkProvas?.addEventListener('click',montarProvas);}
     if(comSit){const hostSit=navegacao.registrarSecao('sit','Lançamento no SIT','Confira as aulas agendadas e marque as que já foram lançadas no SIT do Detran.');
         const linkSit=raiz.querySelector('[data-op-nav=sit]');if(linkSit)linkSit.dataset.opUltimo='1';
-        const montarSit=()=>hostSit.replaceChildren(cartaoSit(servico,{aoMudar:contarSit}));montarSit();
+        // 19/11/2026 (tarefa 18): o cartão monta no clique (antes já na entrada, com a seção fechada); o número do menu sai
+        // do contarSit, que divide o pedido do dia com o cartão (cache curto do serviço).
+        const montarSit=()=>hostSit.replaceChildren(cartaoSit(servico,{aoMudar:contarSit}));
         raiz.querySelector('[data-op-nav=sit]')?.addEventListener('click',montarSit);contarSit();}
     raiz.addEventListener('close',e=>{if(e.target.matches('dialog'))e.target.querySelector(':scope>.op-modal-feedback')?.remove();},true);
     raiz.hidden=false;raiz.classList.add('op-mode-demo','op-unidade');
@@ -402,8 +404,12 @@ export async function montarUnidade(raiz,template,servico,{sair,avisoInicial=''}
     // 13/11/2026: os filtros próprios da lista de veículos (a unidade e a situação são os mesmos da barra).
     const filtrosVeiculos={busca:'',categoria:'',cambio:''},ORDEM_CATEGORIA={A:1,B:2,D:3},semTraco=v=>String(v||'').toLocaleUpperCase('pt-BR').replace(/[^0-9A-Z]/g,'');
     async function dadosAtualizados(){dados=await servico.consultar();atualizar();}
+    // 19/11/2026 (tarefa 18): as notas são lidas quando a seção Instrutores está à vista (antes, já na entrada, com ela
+    // fechada). Sem como observar a troca de seção, vale o de antes.
+    const observaSecao=typeof MutationObserver!=='undefined';
+    if(verAvaliacoes&&observaSecao)new MutationObserver(()=>{if(raiz.dataset.opSecao==='instrutores')garantirMedias('Instrutores','instrutores');}).observe(raiz,{attributes:true,attributeFilter:['data-op-secao']});
     function recursos(tipo,secao){
-        if(tipo==='Instrutores')garantirMedias(tipo,secao);
+        if(tipo==='Instrutores'&&(!observaSecao||raiz.dataset.opSecao===secao))garantirMedias(tipo,secao);
         // 13/11/2026: moto e ônibus são operação compartilhada: os de outra unidade também aparecem na lista de veículos (só
         // para consulta; editar continua só para a unidade dona). O ônibus de Cobilândia sumia com outra unidade no topo.
         // 17/11/2026 (pedido do usuário): os instrutores de moto e de ônibus atendem todas as unidades: os ativos de outra

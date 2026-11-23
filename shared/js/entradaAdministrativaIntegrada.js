@@ -3,9 +3,11 @@
 const root=document.getElementById('administracao-root'),perfil=document.body.dataset.perfil,login=new URL('../../login.html',import.meta.url).href;
 let sessaoValidada=false;
 try{
+ // 19/11/2026 (tarefa 18): a estrutura e o módulo da entrada baixam juntos (antes, o import esperava a estrutura).
+ const moduloEntrada=import('./entradaEquipeIntegrada.js');moduloEntrada.catch(()=>{});
  const resposta=await fetch(new URL('../../nivel-1-operador/html/operador-cfc.html',import.meta.url),{credentials:'same-origin'});if(!resposta.ok)throw new Error('Não foi possível carregar a estrutura administrativa.');
  const estrutura=new DOMParser().parseFromString(await resposta.text(),'text/html'),template=estrutura.getElementById('operador-template');if(!template)throw new Error('Estrutura administrativa ausente.');document.body.prepend(document.importNode(estrutura.querySelector('.op-sprite'),true));
- const {montarPainelEquipe}=await import('./entradaEquipeIntegrada.js');sessaoValidada=true;
+ const {montarPainelEquipe}=await moduloEntrada;sessaoValidada=true;
  await montarPainelEquipe({perfil,raiz:root,template,administracao:true});
 }catch(e){
  if([401,403].includes(e?.status))sessaoValidada=false;

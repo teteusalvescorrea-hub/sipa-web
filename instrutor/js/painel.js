@@ -30,13 +30,15 @@ export async function montarPainel(root,servico,{aoSair}={}){
  // Fase 4: o veículo do dia. 10/11/2026: o checklist não abre mais sozinho ao entrar; o instrutor faz pela seção
  // "Checklist do veículo" (início e fim do dia).
  let estado=await servico.dados();
+ // 19/11/2026 (tarefa 18): a agenda do dia sai junto com a leitura do veículo de hoje (antes, uma depois da outra).
+ const agendaInicial=servico.agendaHoje();agendaInicial.catch(()=>{});
  let veiculoHoje=await veiculoAtual(servico,{instrutorId:estado.instrutor?.id});
  // 17/11/2026 (pedido do usuário): sem o veículo de hoje escolhido, a agenda não mostra as aulas (só o aviso para escolher).
  // Vale para quem tem veículo vinculado; sem nenhum, a agenda segue normal.
  let temVeiculos=false;if(!veiculoHoje&&servico.veiculosDoDia){try{temVeiculos=((await servico.veiculosDoDia())||[]).length>0;}catch{temVeiculos=false;}}
  // 16/11/2026: a aula escolhida na agenda (o clique no nome do aluno) para registrar presença ou falta no quadro da direita.
  let aulaEscolhida=null;
- let secao=['inicio','agenda','historico','checklist','mensagens','perfil'].includes(location.hash.slice(1))?location.hash.slice(1):'inicio',agendaAtual=await servico.agendaHoje(),filtro='dia',diasDesempenho=30,cadastros=servico.cadastrosLocais?await servico.cadastrosLocais():[];
+ let secao=['inicio','agenda','historico','checklist','mensagens','perfil'].includes(location.hash.slice(1))?location.hash.slice(1):'inicio',agendaAtual=await agendaInicial,filtro='dia',diasDesempenho=30,cadastros=servico.cadastrosLocais?await servico.cadastrosLocais():[];
  const consultaHistorico={mes:null,periodo:null,aberto:false,inicio:'',fim:'',pagina:1,situacao:'todas'};
  const vida=new AbortController(),signal=vida.signal;root.replaceChildren();root.className='in-shell';
  const side=el('aside',null,'in-sidebar');side.id='in-sidebar';side.setAttribute('aria-label','Navegação do Instrutor');const fecharGaveta=botao('',()=>fecharMenu(true),'in-icon-button in-drawer-close');fecharGaveta.append(icone('close'));fecharGaveta.setAttribute('aria-label','Fechar menu');side.append(fecharGaveta,marca());const nav=el('nav');nav.setAttribute('aria-label','Menu do Instrutor');nav.append(el('p','Menu','in-nav-label'));
@@ -301,7 +303,8 @@ function perfil(){const grade=el('div',null,'in-profile-layout'),pessoa=el('sect
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')atualizar();},{signal});
  addEventListener('focus',atualizar,{signal});
  addEventListener('storage',e=>{if(['sipa.instrutor.dev.dados.v1','sipa.operador.demo.v2'].includes(e.key))atualizar();},{signal});
- const timer=setInterval(atualizar,15000);
+ // 19/11/2026: com a aba escondida não consulta (ao voltar, o visibilitychange acima atualiza na hora).
+ const timer=setInterval(()=>{if(!document.hidden)atualizar();},15000);
  function encerrar(){clearInterval(timer);vida.abort();document.documentElement.style.overflow='';root.replaceChildren();}
  aplicarTema();render();return encerrar;
 }

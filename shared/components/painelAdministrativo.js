@@ -3,8 +3,7 @@ import {confirmarExclusao} from './excluirCadastro.js';
 import {montarMensagensPainel} from './mensagensPainel.js';
 import {acompanharMensagens} from '../js/avisoMensagens.js';
 import {apresentarRelatorio,dataRelatorio,metadadosRelatorio,ordenarRelatorio} from '../js/apresentacaoRelatorios.js';
-import {exportarPdfRelatorio} from '../js/pdfRelatorios.js';
-import {exportarExcelRelatorio} from '../js/excelRelatorios.js';
+// 19/11/2026 (tarefa 18): o PDF e o Excel são carregados no primeiro uso (import()).
 import {exportarCsvRelatorio} from '../js/csvRelatorios.js';
 import {paginaRelatorio} from '../js/paginacaoRelatorio.js';
 import {acoesDoAtestado} from '../js/acoesAtestado.js';
@@ -81,7 +80,8 @@ export async function montarAdministracao(root,servico,ui){
  async function executar(fn,texto){await fn();try{await atualizar(texto);}catch(e){window.dispatchEvent(new Event('focus'));throw e;}return true;}
  function filtrar(campos,consultar){const f=el('form',undefined,'adm-filtros'),controles={},chave=root.dataset.opSecao;for(const [id,titulo,tipo,valor,opcoes] of campos){const inicial=memoriaConsultas[chave]?.[id]??(id==='unidade'&&master&&op.unidadeConsulta?op.unidadeConsulta:valor);const c=tipo==='select'?select(opcoes||[],inicial||''):entrada(tipo,inicial??'');c.name=id;controles[id]=c;f.append(campo(titulo,c));}const b=el('button','Consultar',primario);b.type='submit';f.append(b);const erro=el('p',undefined,'op-acompanhamento-erro');erro.setAttribute('role','alert');f.append(erro);const executarConsulta=async()=>{b.disabled=true;erro.textContent='';try{const valores=Object.fromEntries(Object.entries(controles).map(([k,c])=>[k,c.value]));memoriaConsultas[chave]=valores;await consultar(valores);}catch(e){erro.textContent=e.message;}finally{b.disabled=false;}};f.onsubmit=e=>{e.preventDefault();executarConsulta();};return {f,controles,consultar:executarConsulta};}
  async function home(){
-  const ocupacao=op.permissoes.includes('relatorios')?await servico.relatorio({tipo:'aulas',inicio:hojeBrasil(),fim:hojeBrasil()}):null;
+  // 19/11/2026 (tarefa 18): a ocupação e as substituições saem juntas (antes uma esperava a outra).
+  const [ocupacao,listaSubstituicoes]=await Promise.all([op.permissoes.includes('relatorios')?servico.relatorio({tipo:'aulas',inicio:hojeBrasil(),fim:hojeBrasil()}):null,servico.substituicoes?servico.substituicoes().catch(()=>null):null]);
   const s=estado.aulas.filter(a=>a.solicitacaoMedica).map(a=>a.solicitacaoMedica),destino=pain('visao-geral'),atalhos=el('div',undefined,'op-quick-grid');
   const acoes=[
    ['verificacoes','Verifica\u00e7\u00f5es','Analisar solicita\u00e7\u00f5es e atestados.','check','decidir-atestado'],
@@ -97,7 +97,7 @@ export async function montarAdministracao(root,servico,ui){
   // decididas: o Início da Gerência e do Master era remontado sem o cartão. Agora ele entra aqui, com o total pendente no topo.
   let pendentesDaRecepcao=0,solicitacoes=null;
   if(servico.substituicoes){
-   try{pendentesDaRecepcao=(await servico.substituicoes()).filter(x=>(x.status?.valor??x.status)===1).length;}catch{}
+   try{pendentesDaRecepcao=listaSubstituicoes.filter(x=>(x.status?.valor??x.status)===1).length;}catch{}
    solicitacoes=cartaoSubstituicoes(root,servico,{executar:ui.executar,aoConcluir:()=>atualizar('Solicita\u00e7\u00e3o aprovada.')});
   }
   destino.replaceChildren(indicadores([['Atestados \u00e0 Ger\u00eancia',s.filter(s=>s.status==='gerencia').length,()=>{abaVerificacoes='pendentes';abrirSecao('verificacoes');}],['Alunos',estado.alunos.length,()=>abrirSecao('alunos')],['Pend\u00eancias administrativas',estado.excecoesAgenda.filter(x=>x.status==='pendente').length,()=>abrirSecao('agenda-global')],...(solicitacoes?[['Solicita\u00e7\u00f5es da Recep\u00e7\u00e3o',pendentesDaRecepcao,()=>solicitacoes.scrollIntoView({behavior:'smooth',block:'start'})]]:[]),...(ocupacao?[['Ocupa\u00e7\u00e3o hoje',ocupacao.totais.ocupacao===null?'Sem hor\u00e1rios dispon\u00edveis hoje':String(ocupacao.totais.ocupacao).replace('.',',')+'%',()=>abrirSecao('relatorios')]]:[])]),card('Fun\u00e7\u00f5es r\u00e1pidas',atalhos),...(solicitacoes?[solicitacoes]:[]));
@@ -177,18 +177,20 @@ export async function montarAdministracao(root,servico,ui){
   const mostrarTabela=()=>{refletirOrdem();if(atual)tabelaHost.replaceChildren(tabelaRelatorio(atual,ordem,refletirOrdem));};
   colunaOrdem.onchange=()=>{ordem.coluna=colunaOrdem.value===''?null:Number(colunaOrdem.value);mostrarTabela();};direcaoOrdem.onchange=()=>{ordem.direcao=Number(direcaoOrdem.value);mostrarTabela();};refletirOrdem();
   const paraExportar=()=>[ordenarRelatorio(atual,ordem),{...meta,filtros:[...(meta.filtros||[]),...(ordem.coluna==null?[]:[['Ordenado por',atual.colunas[ordem.coluna]+(ordem.direcao>0?' (crescente)':' (decrescente)')]])]}];
-  const consulta=filtrar([['tipo','Relatório','select','aulas',tipos],...camposAgenda()],async f=>{const colunaAnterior=ordem.coluna==null?null:atual?.colunas[ordem.coluna];atual=null;exportar.disabled=true;excel.disabled=true;delete resultado.dataset.relatorioPronto;resultado.replaceChildren();atual=await servico.relatorio(f);const mantida=atual.colunas.indexOf(colunaAnterior);ordem.coluna=mantida>=0?mantida:null;colunaOrdem.replaceChildren(new Option('Padrão do relatório',''),...atual.colunas.map((c,i)=>new Option(c,String(i))));meta=metadadosRelatorio(consulta.f,tipos.find(([id])=>id===f.tipo)?.[1],op.nivel===3?'Todas as unidades autorizadas':op.unidade);exportar.disabled=false;excel.disabled=false;resultado.dataset.relatorioPronto='true';resultado.replaceChildren(indicadores(Object.entries(atual.totais).map(([k,v])=>[k,v??'Sem horários disponíveis no período'])),notas(atual.criterio),tabelaHost);mostrarTabela();});const exportar=botao('Exportar PDF',async()=>{if(!atual)return;exportar.disabled=true;try{await imprimirRelatorio(...paraExportar());}catch(e){notificar(e.message);}finally{exportar.disabled=false;}});exportar.disabled=true;const excel=botao('Exportar Excel',async()=>{if(!atual)return;excel.disabled=true;try{await exportarExcelRelatorio(...paraExportar());}catch(e){notificar(e.message);}finally{excel.disabled=false;}});excel.disabled=true;const csv=botao('Exportar CSV',()=>{if(!atual)return;try{const [r,m]=paraExportar();exportarCsvRelatorio(r,m);}catch(e){notificar(e.message);}});csv.dataset.admExportarCsv='';const acoes=grupo(exportar,excel,csv);host.replaceChildren(card('Relatórios',consulta.f,ordenacao,acoes,resultado));await consulta.consultar();}
+  const consulta=filtrar([['tipo','Relatório','select','aulas',tipos],...camposAgenda()],async f=>{const colunaAnterior=ordem.coluna==null?null:atual?.colunas[ordem.coluna];atual=null;exportar.disabled=true;excel.disabled=true;delete resultado.dataset.relatorioPronto;resultado.replaceChildren();atual=await servico.relatorio(f);const mantida=atual.colunas.indexOf(colunaAnterior);ordem.coluna=mantida>=0?mantida:null;colunaOrdem.replaceChildren(new Option('Padrão do relatório',''),...atual.colunas.map((c,i)=>new Option(c,String(i))));meta=metadadosRelatorio(consulta.f,tipos.find(([id])=>id===f.tipo)?.[1],op.nivel===3?'Todas as unidades autorizadas':op.unidade);exportar.disabled=false;excel.disabled=false;resultado.dataset.relatorioPronto='true';resultado.replaceChildren(indicadores(Object.entries(atual.totais).map(([k,v])=>[k,v??'Sem horários disponíveis no período'])),notas(atual.criterio),tabelaHost);mostrarTabela();});const exportar=botao('Exportar PDF',async()=>{if(!atual)return;exportar.disabled=true;try{await imprimirRelatorio(...paraExportar());}catch(e){notificar(e.message);}finally{exportar.disabled=false;}});exportar.disabled=true;const excel=botao('Exportar Excel',async()=>{if(!atual)return;excel.disabled=true;try{await (await import('../js/excelRelatorios.js')).exportarExcelRelatorio(...paraExportar());}catch(e){notificar(e.message);}finally{excel.disabled=false;}});excel.disabled=true;const csv=botao('Exportar CSV',()=>{if(!atual)return;try{const [r,m]=paraExportar();exportarCsvRelatorio(r,m);}catch(e){notificar(e.message);}});csv.dataset.admExportarCsv='';const acoes=grupo(exportar,excel,csv);host.replaceChildren(card('Relatórios',consulta.f,ordenacao,acoes,resultado));await consulta.consultar();}
  // Mensagens: o chat da equipe, os pedidos de mais aulas, o horário do chat com o aluno e (com a permissão) as
  // conversas dos alunos. O item do menu mostra as mensagens da equipe ainda não lidas.
  // Mensagens (09/11/2026): o chat estilo WhatsApp (grupos da unidade, equipe, instrutores e alunos transferidos pela
  // Recepção) e os pedidos de mais aulas. O item do menu mostra o total de não lidas.
  const fonteChat=servico.chatResumo?fonteEquipe(servico):null;
  const marcarNaoLidas=n=>ui.marcarContador?.('mensagens',n,'mensagens não lidas');
+ let chatAberto=null;
  async function caixaMensagens(){
-  const host=pain('mensagens');if(!host||host.querySelector('[data-adm-chat]'))return;
+  // 19/11/2026: o chat não consulta com a seção escondida; ao voltar para ela, relê a lista na hora.
+  const host=pain('mensagens');if(!host)return;if(host.querySelector('[data-adm-chat]')){chatAberto?.recarregar();return;}
   const chat=el('div');chat.dataset.admChat='';
   host.replaceChildren(...(fonteChat?[chat]:[]));
-  if(fonteChat)montarChat(chat,fonteChat,{aoMudarNaoLidas:marcarNaoLidas});
+  if(fonteChat)chatAberto=montarChat(chat,fonteChat,{aoMudarNaoLidas:marcarNaoLidas});
  }
  async function contarNaoLidas(){if(!fonteChat)return;try{marcarNaoLidas((await fonteChat.listar()).reduce((s,i)=>s+(i.naoLidas||0),0));}catch{}}
  // Os cartões das funções novas ficam na seção de cada assunto, no fim do painel (recriados quando a seção redesenha).
@@ -324,8 +326,14 @@ const PERFIL_DO_PAPEL={'Operador de CFC':'Recepção','Operador interunidades':'
  let ultimaVersao=localStorage.getItem('sipa.operador.demo.v2'),sincronizando=false;
  async function sincronizar(){const atual=localStorage.getItem('sipa.operador.demo.v2');if(sincronizando||atual===ultimaVersao||root.querySelector('dialog[open]'))return;sincronizando=true;try{await ui.recarregar();await render(root.dataset.opSecao);ultimaVersao=atual;}catch(e){notificar(e.message);}finally{sincronizando=false;}}
  window.addEventListener('storage',e=>{if(e.key==='sipa.operador.demo.v2')sincronizar();});window.addEventListener('focus',sincronizar);root.addEventListener('close',sincronizar,true);setInterval(sincronizar,15000);
+ // 19/11/2026 (tarefa 18): com a leitura vencida, a seção desenha na hora com os dados guardados e o serviço relê em segundo
+ // plano. Se algo mudou, as listas são redesenhadas como depois de um comando (com os filtros de cada uma) e o Início
+ // também; as seções com filtro próprio (relatórios, agendas, acessos) ficam como estão e usam os dados novos na próxima
+ // consulta. Nada é redesenhado com um diálogo aberto ou com alguém digitando num campo do painel.
+ const digitando=()=>{const a=document.activeElement;return !!a&&root.contains(a)&&!!a.matches?.('input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]),textarea,select,[contenteditable=true]');};
+ servico.aoMudarDados?.(async()=>{if(!root.isConnected||sincronizando||root.querySelector('dialog[open]')||digitando())return;sincronizando=true;try{estado=await servico.estado();await ui.recarregar();if(root.dataset.opSecao==='visao-geral')await render('visao-geral');}catch(e){notificar(e.message);}finally{sincronizando=false;}});
  if(mensagens)acompanharMensagens(root,servico,ui);
  root.addEventListener('click',e=>{const n=e.target.closest('[data-op-nav]');if(n)render(n.dataset.opNav);});ui.navegar('visao-geral',false);await render('visao-geral');
  contarNaoLidas();const relogioNaoLidas=setInterval(()=>{if(!root.isConnected){clearInterval(relogioNaoLidas);return;}if(document.visibilityState==='visible'&&root.dataset.opSecao!=='mensagens')contarNaoLidas();},60000);
 }
-export function imprimirRelatorio(r,meta){return exportarPdfRelatorio(r,typeof meta==='string'?{titulo:meta}:meta);}
+export async function imprimirRelatorio(r,meta){const {exportarPdfRelatorio}=await import('../js/pdfRelatorios.js');return exportarPdfRelatorio(r,typeof meta==='string'?{titulo:meta}:meta);}

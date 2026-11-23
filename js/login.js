@@ -140,7 +140,9 @@ form.addEventListener("submit", async event => {
         // O perfil da conta decide a tela: equipe pelo painel do papel (equipe/me), aluno e instrutor pelo perfil do token.
         if (perfil === 'Autoescola') {
             const { Get } = await import('../shared/js/api.js');
-            const membro = await Get('equipe/me'), painel = membro?.painel?.valor ?? membro?.painel ?? null;
+            // 19/11/2026 (desempenho): o equipe/me fica na sessão por 60 s e o painel o reaproveita, sem pedir de novo.
+            const [membro, preCarga] = await Promise.all([Get('equipe/me'), import('../shared/js/preCargaEquipe.js').catch(() => null)]), painel = membro?.painel?.valor ?? membro?.painel ?? null;
+            preCarga?.guardarEquipeMe(membro);
             const url = Object.values(paineisEquipe).find(([nivel]) => nivel === painel)?.[1];
             if (!url) { limparSessao(); informar('Sua conta não tem um painel administrativo liberado. Fale com o Master.', 'info'); return; }
             redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");

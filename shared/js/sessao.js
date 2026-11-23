@@ -23,6 +23,8 @@ export function obterToken() {
 
 export function limparSessao() {
     sessionStorage.removeItem(CHAVE_TOKEN);
+    // 19/11/2026: o equipe/me guardado no login (preCargaEquipe.js) sai junto.
+    sessionStorage.removeItem("sipa.equipe.me");
 }
 
 

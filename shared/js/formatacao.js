@@ -11,7 +11,10 @@ export function formatarTelefone(valor,vazio='Não informado'){
  return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:d.length===10?`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`:(valor||vazio);
 }
 // Comparação de buscas sem acento nem caixa ("Cobilândia" = "cobilandia").
-export const semAcento=v=>String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLocaleLowerCase('pt-BR');
+// 19/11/2026 (desempenho): texto só ASCII não tem acento e o minúsculo do pt-BR é igual ao toLowerCase; o resto passa pela
+// normalização de sempre.
+const SO_ASCII=/^[\x00-\x7F]*$/;
+export const semAcento=v=>SO_ASCII.test(String(v||''))?String(v||'').toLowerCase():String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLocaleLowerCase('pt-BR');
 
 // Máscara de entrada; não confundir com validação matemática nem ocultação.
 export const normalizarCpfEntrada=valor=>String(valor||'').replace(/\D/g,'').slice(0,11);

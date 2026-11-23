@@ -173,8 +173,9 @@ export function criarServicoAluno(){
  const opcional=p=>p.then(v=>v,()=>null);
 
  async function carregar(){
-  const aluno=await api.Get('alunos/me');
-  const [contratacoes,listas,mensagens,acompanhamento]=await Promise.all([
+  // 19/11/2026 (tarefa 18): o alunos/me sai junto com as outras leituras (nenhuma depende dele).
+  const [aluno,contratacoes,listas,mensagens,acompanhamento]=await Promise.all([
+   api.Get('alunos/me'),
    api.Get('contratacoes'),
    Promise.all(janelas().map(j=>api.Get(api.ComParams('agendamentos',j)))),
    opcional(api.Get(api.ComParams('alunos/me/mensagens',{pagina:1,tamanho:100}))),
