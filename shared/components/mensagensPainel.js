@@ -9,7 +9,11 @@ import {menuAcoes} from './menuAcoes.js';
 const principal='op-button op-button-primary',TAMANHO=20,MAXIMO=2000;
 const plural=(n,um,varios)=>n+' '+(n===1?um:varios);
 const nomeUnidade=c=>c.unidadeNome||nomeUnidadeInstitucional(c.unidade)||'Unidade não informada';
-function carregarCss(){if(document.querySelector('[data-css-mensagens-equipe]'))return;const l=el('link');l.rel='stylesheet';l.href=new URL('../css/mensagens-equipe.css',import.meta.url);l.dataset.cssMensagensEquipe='';document.head.append(l);}
+// 25/11/2026 (pedido do usuário): o estilo vira uma promessa e a área fica invisível até ele chegar (sem o texto cru).
+let cssPronto=null;
+export function carregarCssMensagens(){return carregarCss();}
+function carregarCss(){if(cssPronto)return cssPronto;const existente=document.querySelector('[data-css-mensagens-equipe]');if(existente&&existente.sheet)return cssPronto=Promise.resolve();const l=existente||el('link');cssPronto=new Promise(r=>{l.addEventListener('load',()=>r(),{once:true});l.addEventListener('error',()=>r(),{once:true});setTimeout(r,4000);});if(!existente){l.rel='stylesheet';l.href=new URL('../css/mensagens-equipe.css',import.meta.url);l.dataset.cssMensagensEquipe='';document.head.append(l);}return cssPronto;}
+function esconderAteOEstilo(host,pronto){if(host.dataset.estiloPronto)return;host.style.visibility='hidden';pronto.then(()=>{host.style.visibility='';host.dataset.estiloPronto='';});}
 const avisar=raiz=>raiz.dispatchEvent(new Event('sipa-mensagens-atualizadas'));
 
 // Caixa de texto com contador e envio; a mesma chave de idempotência vale até dar certo ou o texto mudar.
@@ -37,7 +41,7 @@ function listaDeMensagens(mensagens){
 }
 
 export async function montarMensagensPainel(host,servico,raiz,ui,{conversaId}={}){
- host.mensagensController?.abort();const controller=new AbortController();host.mensagensController=controller;carregarCss();
+ host.mensagensController?.abort();const controller=new AbortController();host.mensagensController=controller;esconderAteOEstilo(host,carregarCss());
  host.classList.add('sipa-mensagens-equipe');const op=servico.identidade;let pagina=1,total=0,itens=[],revisao=0,aberta=conversaId||null,revisaoConversa=0,ultimaAssinatura='';
  const unidades=UNIDADES_INSTITUCIONAIS.filter(u=>op.unidades?.includes(u.id)).map(u=>[u.id,u.nome]);
  // "Todas" = todas as unidades que a conta lê (a API aplica o escopo).

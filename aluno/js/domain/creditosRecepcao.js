@@ -3,7 +3,7 @@ import {progressoPorCategoria} from './dominioAluno.js';
 // Cadastro nao comprova pagamento. Apenas bloqueios explicitamente registrados
 // podem impedir o uso das aulas adquiridas; Pendente inicial nao e liberacao.
 export function motivoBloqueioCreditos(aluno){
- if(aluno.bloqueioAdministrativo?.ativo===true||aluno.bloqueioAgendamento?.ativo===true)return 'Agendamento bloqueado administrativamente. Consulte a recepção.';
+ if(aluno.bloqueioAdministrativo?.ativo===true||aluno.bloqueioAgendamento?.ativo===true)return 'Agendamento bloqueado administrativamente. Fale com a equipe da autoescola em Mensagens.';
  // Sem integração financeira por enquanto (decisão do João em 03/11): a situação financeira não bloqueia, como na API.
  return '';
 }
@@ -24,6 +24,6 @@ export function resumirCreditosRecepcao(aluno,aulas){
   c.disponiveis=bloqueio?0:c.saldoLiberado;
  }
  if(categorias.some(k=>totais[k]===null)){resumo.total=null;resumo.percentual=null;}
- resumo.motivoBloqueio=bloqueio||(categorias.some(k=>resumo.categorias[k].disponiveis>0)?'':'Saldo disponível esgotado ou bloqueado. Consulte suas reservas e a recepção.');
+ resumo.motivoBloqueio=bloqueio||(categorias.some(k=>resumo.categorias[k].disponiveis>0)?'':'Saldo disponível esgotado ou bloqueado. Consulte suas reservas ou fale com a equipe em Mensagens.');
  return resumo;
 }

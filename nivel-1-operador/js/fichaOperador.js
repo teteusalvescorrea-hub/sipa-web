@@ -37,13 +37,13 @@ export function editarCadastro(e,op,id,dados,eventoId,agora=new Date(),validarCp
  novo.cpf=novo.cpf.replace(/\D/g,'');novo.telefone=novo.telefone.replace(/\D/g,'');
  if(novo.nome.length<5||novo.nome.length>180||novo.nome.split(/\s+/).length<2)erros.nome='Informe o nome completo.';
  if(!/^[\d.\-\s]+$/.test(String(dados.cpf??a.cpf??''))||!/^\d{11}$/.test(novo.cpf))erros.cpf='Informe um CPF com exatamente 11 dígitos numéricos.';
- else if(!validarCpf(novo.cpf))erros.cpf='Informe um CPF válido.';
+ else if(!validarCpf(novo.cpf))erros.cpf='Informe os 11 números do CPF.';
  if(e.alunos.some(x=>x.id!==id&&String(x.cpf).replace(/\D/g,'')===novo.cpf)||(e.contasAlunos||[]).some(c=>c.alunoId!==id&&c.login===novo.cpf))erros.cpf='CPF já cadastrado.';
  if(!dataValida(novo.nascimento)||novo.nascimento>=agoraBrasil(agora).slice(0,10))erros.nascimento='Informe uma data de nascimento anterior a hoje.';
  if(!/^[1-9]{2}\d{8,9}$/.test(novo.telefone))erros.telefone='Informe telefone com DDD.';
  if(novo.email.length>200||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(novo.email))erros.email='Informe um e-mail válido.';
  if(novo.observacoes.length>2000)erros.observacoes='Use até 2000 caracteres.';
- if(!['A','B','D','AB'].includes(novo.categoria))erros.categoria='Categoria inválida.';
+ if(!['A','B','D','AB','AD'].includes(novo.categoria))erros.categoria='Categoria inválida.';
  if(novo.categoria!==a.categoria){
   if(!op.permissoes.includes('editar-categoria'))erros.categoria='Alteração de categoria não autorizada.';
   if(vinculo({...a,...novo},op)!=='cadastro')erros.categoria='Esta alteração remove o vínculo da sua unidade. Solicite a alteração pela unidade principal autorizada.';
@@ -68,7 +68,7 @@ export function salvarExamesFicha(e,op,id,dados,eventoId,agora=new Date()){
   mudancas.push({campo:EXAMES_FICHA[tipo],antes:antes.status,depois:status});
  }
  if(!mudancas.length)return e;
- return gravar(e,{...a,examesAdministrativos:exames},evento(eventoId,a,'exames','Exames atualizados',mudancas,op,agora.toISOString(),id));
+ return gravar(e,{...a,examesAdministrativos:exames},evento(eventoId,a,'exames','Exames médicos atualizados',mudancas,op,agora.toISOString(),id));
 }
 export function movimentarProva(e,op,id,dados,eventoId,agora=new Date()){
  autorizar(op,'verificar');const a=alunoAutorizado(e,op,id),cfg=PROVAS_FICHA[dados.tipo];

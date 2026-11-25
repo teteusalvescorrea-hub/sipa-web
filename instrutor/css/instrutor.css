@@ -558,3 +558,11 @@ html[data-theme=dark] .in-aval-chip{border-color:#2f5677;background:#1b3248;colo
 html[data-theme=dark] .in-badge.in-status-5{color:#9fe0b5;background:#123524;border-color:#2c6a45}
 html[data-theme=dark] .in-badge.in-status-6{color:#ffb4b4;background:#3a1717;border-color:#7a2f2f}
 html[data-theme=dark] .in-badge.in-status-2{color:#c2cfdc;background:#1c2b3b;border-color:#34475c}
+
+/* 24/11/2026: o resultado da prova marcado pelo instrutor no dia (Passou, Reprovou ou Faltou). */
+.in-prova-alunos li{flex-wrap:wrap}
+.in-prova-alunos li .in-prova-resultado{display:flex;flex:1 1 100%;flex-wrap:wrap;gap:6px;align-items:center}
+.in-prova-botao{min-height:36px;padding:6px 14px;border:1px solid #c9d8e6;border-radius:999px;background:#fff;color:#22415c;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.in-prova-botao[aria-pressed="true"]{background:#0f6cbd;border-color:#0f6cbd;color:#fff}
+.in-prova-botao:disabled{opacity:.6;cursor:progress}
+.in-prova-erro{font-size:12px;color:#b42318}

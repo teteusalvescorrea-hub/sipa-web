@@ -29,10 +29,12 @@ async function iniciar(){
  else if(pagina==='agendamento.html'){await apresentarAgendamento(servico,dados);
   // Agendamento automático (F13): ligado pela capacidade do serviço; sem ela, só o manual.
   const auto=document.getElementById('booking-mode-auto');if(auto&&!servico.capacidades.automatico){auto.disabled=true;auto.title='Agendamento automático ainda indisponível. Use o agendamento manual.';}}
- else if(pagina==='meu-progresso.html')apresentarProgresso(dados);
+ else if(pagina==='meu-progresso.html'){apresentarProgresso(dados);
+  // 24/11/2026: o pedido de liberação para agendar, da etapa "Liberação para agendamento".
+  document.addEventListener('sipa-pedir-liberacao',async e=>{try{await servico.solicitarLiberacao();apresentarProgresso(await servico.carregar());aviso('Pedido enviado. A AgIA avisa você quando o agendamento for liberado.');}catch(x){if(e.detail?.botao)e.detail.botao.disabled=false;aviso(x.message||'Não foi possível enviar o pedido.');}});}
  else if(pagina==='meu-perfil.html'){apresentarPerfil(dados);montarAlteracaoSenha(servico);}
  if(['dashboard.html','meu-progresso.html'].includes(pagina))aviso(Object.values(dados.resumo.categorias).some(c=>c.total===null)?'O saldo conjunto está disponível. A separação por categoria ainda não foi informada pelo serviço.':'');
- }catch(e){aviso(e.status===0?'Não foi possível falar com o servidor. Tente novamente ou contate a recepção.':e.message||'Não foi possível carregar seus dados. Tente novamente.');}
+ }catch(e){aviso(e.status===0?'Não foi possível falar com o servidor. Tente novamente em instantes ou fale com a equipe da autoescola.':e.message||'Não foi possível carregar seus dados. Tente novamente.');}
  // Depois de desenhar: junto com a leitura da página, as 3 consultas do contador disputavam as conexões com ela.
  acompanharNaoLidas(servico);
 }

@@ -6,7 +6,7 @@ import {formularioAdministrativo} from '../../../shared/components/formularioAdm
 import {UNIDADES_INSTITUCIONAIS} from '../../../shared/js/catalogoUnidades.js';
 import {formatarCpf,ativarMascaraCpf} from '../../../shared/js/formatacao.js';
 const data=d=>d?formatarData(d):'Não informada';
-const final=s=>['Aprovado','Reprovado','Cancelado'].includes(s);
+const final=s=>['Aprovado','Reprovado','Cancelado','Faltou'].includes(s);
 const primario='op-button op-button-primary';
 function erroFormulario(f){const p=el('p',undefined,'op-acompanhamento-erro');p.setAttribute('role','alert');f.append(p);return p;}
 function envio(f,fn){let ocupado=false;f.addEventListener('submit',async e=>{e.preventDefault();if(ocupado)return;ocupado=true;const botoes=[...f.querySelectorAll('button')];botoes.forEach(b=>b.disabled=true);try{await fn();}finally{ocupado=false;botoes.forEach(b=>b.disabled=false);}});}
@@ -21,7 +21,7 @@ const ultimaProva=(tentativas,tipo)=>tentativas.filter(p=>p.tipo===tipo&&!p.arqu
 function passoProva(titulo,p){
  const s=p?.status||'Não solicitado';
  if(s==='Aprovado')return {titulo,estado:'feito',detalhe:'Aprovado'+(p.data?' em '+data(p.data):'')};
- if(s==='Reprovado'||s==='Cancelado')return {titulo,estado:'falhou',detalhe:`${s} · tentativa ${p.ordem||1}`};
+ if(s==='Reprovado'||s==='Cancelado'||s==='Faltou')return {titulo,estado:'falhou',detalhe:`${s} · tentativa ${p.ordem||1}`};
  if(s==='Agendado')return {titulo,estado:'atual',detalhe:'Agendada'+(p.data?' para '+data(p.data):'')};
  if(s==='Solicitado')return {titulo,estado:'atual',detalhe:'Solicitada, aguardando data'};
  return {titulo,estado:'pendente',detalhe:'Não solicitada'};
@@ -35,7 +35,7 @@ function passoEtapa(titulo,item,feito){
 // Jornada até a habilitação: exames, prova teórica, liberação das aulas práticas, provas práticas e habilitação.
 function jornada(a,tentativas){
  const exames=Object.keys(EXAMES_FICHA).map(t=>lerExameFicha(a,t).status),ok=exames.filter(s=>s==='Aprovado'||s==='Não se aplica').length;
- const itens=[exames.includes('Reprovado')?{titulo:'Exames',estado:'falhou',detalhe:'Há exame reprovado'}:ok===exames.length?{titulo:'Exames',estado:'feito',detalhe:'Todos aprovados'}:{titulo:'Exames',estado:ok||exames.includes('Pendente')?'atual':'pendente',detalhe:`${ok} de ${exames.length} aprovados`}];
+ const itens=[exames.includes('Reprovado')?{titulo:'Exames médicos',estado:'falhou',detalhe:'Há exame reprovado'}:ok===exames.length?{titulo:'Exames médicos',estado:'feito',detalhe:'Todos aprovados'}:{titulo:'Exames médicos',estado:ok||exames.includes('Pendente')?'atual':'pendente',detalhe:`${ok} de ${exames.length} aprovados`}];
  itens.push(passoProva('Prova teórica',ultimaProva(tentativas,'teorica')),passoEtapa('Aulas práticas',etapaParaAgendamento(a,'pratica'),'Liberadas'));
  const praticas=Object.entries(PROVAS_FICHA).filter(([t,c])=>t!=='teorica'&&c.categoria&&a.categoria.includes(c.categoria));
  for(const [t,c] of praticas)itens.push(passoProva('Prova prática '+c.categoria,ultimaProva(tentativas,t)));
@@ -55,7 +55,7 @@ export function montarEdicaoCadastro(destino,a,ctx,{aberto=false}={}){
  const abrir=()=>{
   const f=el('form',undefined,'op-form-grid');f.dataset.opEditarCadastro='';f.noValidate=true;
   const controles={};for(const [k,titulo,tipo] of [['nome','Nome completo','text'],['cpf','CPF','text'],['nascimento','Data de nascimento','date'],['telefone','Telefone','tel'],['email','E-mail','email'],['categoria','Categoria','select'],['observacoes','Observações administrativas','textarea']]){
-   const c=tipo==='select'?select(['A','B','D','AB'],a[k]):tipo==='textarea'?el('textarea'):entrada(tipo,a[k]||'');c.name=k;c.value=a[k]||'';c.disabled=k==='categoria'&&!ctx.permissoes.includes('editar-categoria');if(tipo==='textarea'){c.rows=3;c.maxLength=2000;}if(k==='nome')c.maxLength=180;if(k==='email')c.maxLength=200;if(k==='cpf')c.maxLength=14;
+   const c=tipo==='select'?select(['A','B','D','AB','AD'],a[k]):tipo==='textarea'?el('textarea'):entrada(tipo,a[k]||'');c.name=k;c.value=a[k]||'';c.disabled=k==='categoria'&&!ctx.permissoes.includes('editar-categoria');if(tipo==='textarea'){c.rows=3;c.maxLength=2000;}if(k==='nome')c.maxLength=180;if(k==='email')c.maxLength=200;if(k==='cpf')c.maxLength=14;
    if(k==='cpf'){c.inputMode='numeric';c.value=formatarCpf(c.value);ativarMascaraCpf(c);}
    controles[k]=c;f.append(campo(titulo,c));
   }
@@ -72,11 +72,11 @@ export function montarEdicaoCadastro(destino,a,ctx,{aberto=false}={}){
 export function montarExamesProvas(destino,a,ctx){
  const permitido=ctx.permissoes.includes('verificar');
  destino.append(el('p','Acompanhamento administrativo local. Não realiza consulta, agendamento ou cancelamento oficial no DETRAN.','op-inline-note'));
- const exames=el('form',undefined,'op-acompanhamento');exames.dataset.opExamesFicha='';exames.append(el('h4','Exames'));const controles={};
+ const exames=el('form',undefined,'op-acompanhamento');exames.dataset.opExamesFicha='';exames.append(el('h4','Exames médicos'));const controles={};
  for(const [tipo,nome] of Object.entries(EXAMES_FICHA)){
   const atual=lerExameFicha(a,tipo),c=select(SITUACOES_EXAME,atual.status),linha=el('div',undefined,'op-acompanhamento-linha op-acompanhamento-simples');c.name=tipo;c.disabled=!permitido||atual.origem==='oficial';controles[tipo]=c;linha.append(campo(nome,c));exames.append(linha);
  }
- const salvar=el('button','Salvar exames',primario);salvar.type='submit';salvar.disabled=!permitido;exames.append(salvar);envio(exames,()=>ctx.executar(()=>ctx.servico.salvarExames(a.id,Object.fromEntries(Object.entries(controles).filter(([,c])=>!c.disabled).map(([k,c])=>[k,c.value]))),'Exames salvos.',ctx.reabrir));destino.append(exames);
+ const salvar=el('button','Salvar exames',primario);salvar.type='submit';salvar.disabled=!permitido;exames.append(salvar);envio(exames,()=>ctx.executar(()=>ctx.servico.salvarExames(a.id,Object.fromEntries(Object.entries(controles).filter(([,c])=>!c.disabled).map(([k,c])=>[k,c.value]))),'Exames médicos salvos.',ctx.reabrir));destino.append(exames);
  // Os requisitos já exigidos pelo motor precisam ter um fluxo administrativo
  // acessível. Usa o mesmo comando autorizado, com fonte, data e auditoria.
  destino.append(el('h4','Autorizações para aulas práticas'));
@@ -116,7 +116,7 @@ export function montarProvas(destino,a,ctx){
   const autorizada=permitido&&p.origem!=='oficial'&&(!cfg.categoria||a.categoria.includes(cfg.categoria));
   function acao(titulo,rotulo,controle,dados){const d=modal(ctx.raiz,titulo,'opAcaoProva'),f=el('form'),erro=erroFormulario(f),b=el('button','Confirmar',primario),chave=crypto.randomUUID();f.noValidate=true;b.type='submit';f.prepend(campo(rotulo,controle));f.append(botao('Voltar',()=>d.close()),b);d.append(f);envio(f,async()=>{if(controle.type==='date'&&!dataValida(controle.value)){erro.textContent='Informe uma data válida.';controle.setAttribute('aria-invalid','true');return;}if(dados.acao==='arquivar'&&controle.value.trim().length<5){erro.textContent='Informe o motivo (mínimo de 5 caracteres).';controle.setAttribute('aria-invalid','true');return;}const ok=await ctx.executar(()=>ctx.servico.movimentarProva(a.id,{tipo:p.tipo,tentativaId:p.id,...dados,[dados.acao==='arquivar'?'motivo':controle.type==='date'?'data':'status']:controle.value},chave),'Tentativa atualizada.',ctx.reabrir);if(ok)d.close();});d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();}
   // 18/11/2026: antes do dia da prova só dá para cancelar (a API recusa aprovado ou reprovado).
-  const futura=!!p.data&&String(p.data).slice(0,10)>hojeBrasil(),resultados=futura?(ctx.permissoes.includes('cancelar-prova')?['Cancelado']:[]):(ctx.permissoes.includes('cancelar-prova')?['Aprovado','Reprovado','Cancelado']:['Aprovado','Reprovado']);
+  const futura=!!p.data&&String(p.data).slice(0,10)>hojeBrasil(),resultados=futura?(ctx.permissoes.includes('cancelar-prova')?['Cancelado']:[]):(ctx.permissoes.includes('cancelar-prova')?['Aprovado','Reprovado','Faltou','Cancelado']:['Aprovado','Reprovado','Faltou']);
   const acoesPermitidas=resultados.length?[[futura?'Cancelar prova':'Registrar resultado',()=>acao(futura?'Cancelar prova':'Registrar resultado','Resultado da prova',select(resultados,resultados[0]),{confirmado:true}),futura?undefined:primario]]:[];
   if(ctx.servico.identidade.nivel>=2&&ctx.permissoes.includes('editar-prova'))acoesPermitidas.push(['Editar data',()=>acao('Editar data da prova','Nova data',entrada('date',p.data),{status:'Agendado'})]);
   if(ctx.servico.identidade.nivel>=2&&ctx.permissoes.includes('excluir-prova'))acoesPermitidas.push(['Excluir agendamento',()=>acao('Excluir agendamento administrativo','Motivo obrigatório — não cancela a prova no DETRAN',el('textarea'),{acao:'arquivar'})]);
@@ -134,10 +134,10 @@ export function montarProvas(destino,a,ctx){
   const lista=tentativas.filter(p=>p.tipo===tipo),atual=lista.find(p=>!p.arquivada&&['Solicitado','Agendado'].includes(p.status))||lista.at(-1),host=el('div');
   const s=!atual||atual.arquivada?'Não solicitado':atual.status;
   if(s==='Agendado')agendada(atual,host);
-  else if(s==='Reprovado'||s==='Cancelado'){if(permitido){const nova=botao('Nova tentativa',()=>formularioProva(tipo,null,host));nova.dataset.opNovaTentativa=tipo;host.append(nova);}}
+  else if(s==='Reprovado'||s==='Cancelado'||s==='Faltou'){if(permitido){const nova=botao('Nova tentativa',()=>formularioProva(tipo,null,host));nova.dataset.opNovaTentativa=tipo;host.append(nova);}}
   else if(s!=='Aprovado')formularioProva(tipo,atual,host);
   const card=el('article',undefined,'op-prova-card'),topo=el('header',undefined,'op-prova-card-topo'),titulo=el('div');titulo.append(el('h5',cfg.nome));if(s!=='Não solicitado')titulo.append(el('small',`Tentativa ${atual.ordem||1}${atual.data&&s!=='Agendado'?' · '+data(atual.data):''}`));
-  topo.append(titulo,el('span',s,'op-badge op-prova-situacao op-prova-situacao-'+(s==='Aprovado'?'ok':s==='Reprovado'||s==='Cancelado'?'erro':s==='Não solicitado'?'neutra':'andamento')));
+  topo.append(titulo,el('span',s,'op-badge op-prova-situacao op-prova-situacao-'+(s==='Aprovado'?'ok':s==='Reprovado'||s==='Cancelado'||s==='Faltou'?'erro':s==='Não solicitado'?'neutra':'andamento')));
   card.dataset.opProvaCard=tipo;card.append(topo,host);destino.append(card);
  }
 }
@@ -177,7 +177,7 @@ function dadosLegiveis(h){
 }
 export function montarLinhaTempo(destino,eventos,{abrirAula,aulaExiste}={}){
  const box=el('section',undefined,'op-linha-tempo');box.dataset.opLinhaTempo='';box.setAttribute('aria-label','Histórico do aluno');
- const filtros=el('form',undefined,'op-timeline-filtros'),tipo=select([['','Todos os eventos'],['cadastro','Cadastro e alterações'],['aulas','Aulas e pacotes'],['exames','Exames'],['provas','Provas'],['unidades','Unidades'],['acessos','Acessos']]),inicio=entrada('date'),fim=entrada('date'),erro=erroFormulario(filtros),lista=el('div',undefined,'op-timeline-lista'),paginacao=el('nav',undefined,'op-timeline-paginas');let pagina=1;
+ const filtros=el('form',undefined,'op-timeline-filtros'),tipo=select([['','Todos os eventos'],['cadastro','Cadastro e alterações'],['aulas','Aulas e pacotes'],['exames','Exames médicos'],['provas','Provas'],['unidades','Unidades'],['acessos','Acessos']]),inicio=entrada('date'),fim=entrada('date'),erro=erroFormulario(filtros),lista=el('div',undefined,'op-timeline-lista'),paginacao=el('nav',undefined,'op-timeline-paginas');let pagina=1;
  tipo.name='tipo';inicio.name='inicio';fim.name='fim';filtros.prepend(campo('Eventos',tipo),campo('De',inicio),campo('Até',fim));
  filtros.append(botao('Limpar',()=>{filtros.reset();pagina=1;render();},'op-link'));
  for(const c of [tipo,inicio,fim])c.addEventListener('change',()=>{pagina=1;render();});

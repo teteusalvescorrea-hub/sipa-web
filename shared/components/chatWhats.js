@@ -11,8 +11,12 @@
 import {confirmarAcao,avisarErro} from './confirmarAcao.js';
 const el=(tag,texto,classe)=>{const n=document.createElement(tag);if(texto!=null)n.textContent=texto;if(classe)n.className=classe;return n;};
 const CSS=new URL('../css/chat-whats.css',import.meta.url).href;
-export function carregarCssChat(){carregarCss();}
-function carregarCss(){if(!document.querySelector('link[data-chat-whats]')){const l=document.createElement('link');l.rel='stylesheet';l.href=CSS;l.dataset.chatWhats='';document.head.append(l);}}
+// 25/11/2026 (pedido do usuário): o estilo do chat vira uma promessa; quem monta o chat o deixa invisível até ele chegar
+// (antes, ao abrir Mensagens, aparecia por um instante o texto cru, sem estilo). O painel também o pede ao abrir.
+let cssPronto=null;
+export function carregarCssChat(){return carregarCss();}
+function carregarCss(){if(cssPronto)return cssPronto;const existente=document.querySelector('link[data-chat-whats]');if(existente&&existente.sheet)return cssPronto=Promise.resolve();const l=existente||document.createElement('link');cssPronto=new Promise(r=>{l.addEventListener('load',()=>r(),{once:true});l.addEventListener('error',()=>r(),{once:true});setTimeout(r,4000);});if(!existente){l.rel='stylesheet';l.href=CSS;l.dataset.chatWhats='';document.head.append(l);}return cssPronto;}
+function esconderAteOEstilo(host,pronto){if(!pronto||host.dataset.estiloPronto)return;host.style.visibility='hidden';pronto.then(()=>{host.style.visibility='';host.dataset.estiloPronto='';});}
 
 export const dataDe=v=>{if(!v)return null;if(v instanceof Date)return v;const s=String(v);return new Date(/Z$|[+-]\d\d:\d\d$/.test(s)?s:s+'-03:00');};
 const fuso={timeZone:'America/Sao_Paulo'};
@@ -22,8 +26,25 @@ function horaCurta(d){d=dataDe(d);if(!d||isNaN(d))return '';const hoje=new Date(
 const iniciais=n=>String(n||'?').split(/\s+/).filter(p=>/\p{L}/u.test(p)).slice(0,2).map(p=>p.match(/\p{L}/u)[0]).join('').toUpperCase()||'?';
 const COR={'Pedidos de aulas':'pedido',Alunos:'aluno',Aluno:'aluno',Grupos:'grupo',Grupo:'grupo','Recepção':'recepcao','Gerência':'gerencia',Master:'master',Instrutores:'instrutor',Instrutor:'instrutor'};
 
-export function montarChat(host,fonte,{aoMudarNaoLidas,titulo='Conversas',abrirUnica=false}={}){
- carregarCss();host.replaceChildren();host.classList.add('chat-wa');
+// 25/11/2026 (pedido do usuário): nas telas de Mensagens, o chat preenche toda a área ao lado do menu (de cima a baixo e
+// de ponta a ponta, sem as margens e o rodapé), igual em todos os painéis. Ele fica fixo abaixo do cabeçalho da página;
+// a posição é recalculada quando a janela muda de tamanho ou a seção aparece. No celular, começa na borda da tela.
+function preencherArea(host){
+ const marcador=document.createElement('div');marcador.className='chat-wa-marcador';marcador.setAttribute('aria-hidden','true');host.before(marcador);
+ host.classList.add('chat-wa-cheio');
+ const ajustar=()=>{
+  if(!host.isConnected){parar();return;}
+  if(!marcador.getClientRects().length)return;
+  const m=marcador.getBoundingClientRect(),menu=[...document.querySelectorAll('.sipa-sidebar,.in-sidebar,.op-sidebar')].map(x=>x.getBoundingClientRect()).find(r=>r.width>0&&r.left<=1&&r.right>0&&r.right<innerWidth/2);
+  host.style.top=Math.max(0,Math.round(m.top))+'px';host.style.left=(innerWidth>820&&menu?Math.round(menu.right):0)+'px';
+ };
+ const obs=new ResizeObserver(()=>requestAnimationFrame(ajustar));obs.observe(document.body);if(host.parentElement)obs.observe(host.parentElement);
+ addEventListener('resize',ajustar);addEventListener('scroll',ajustar,{passive:true});
+ const parar=()=>{obs.disconnect();removeEventListener('resize',ajustar);removeEventListener('scroll',ajustar);};
+ requestAnimationFrame(ajustar);setTimeout(ajustar,300);
+}
+export function montarChat(host,fonte,{aoMudarNaoLidas,titulo='Conversas',abrirUnica=false,telaCheia=true}={}){
+ esconderAteOEstilo(host,carregarCss());host.replaceChildren();host.classList.add('chat-wa');if(telaCheia&&!host.classList.contains('chat-wa-cheio'))preencherArea(host);
  const visivel=()=>document.visibilityState==='visible'&&host.isConnected&&host.getClientRects().length>0;
  const lista=el('section',null,'chat-wa-lista'),painel=el('section',null,'chat-wa-conversa');
  const topo=el('header',null,'chat-wa-topo');topo.append(el('h2',titulo));

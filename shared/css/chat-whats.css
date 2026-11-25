@@ -105,3 +105,9 @@ html[data-theme=dark] .chat-wa-tique.lida { color: #6cc0ff; }
 [data-theme=dark] .chat-wa-bolha.minha .chat-wa-autor, html[data-theme=dark] .chat-wa-bolha.minha .chat-wa-autor { color: #9fd0ff; }
 /* 17/11/2026 (pedido do usuário): ao chegar no fim da lista ou das mensagens, a rolada não passa para a página. */
 .chat-wa-itens,.chat-wa-mensagens{overscroll-behavior:contain}
+
+/* 25/11/2026 (pedido do usuário): nas telas de Mensagens, o chat preenche toda a área ao lado do menu (de cima a baixo e
+   de ponta a ponta), sem as margens, o cartão arredondado e o rodapé; o JS (preencherArea) acerta o topo e a esquerda. */
+.chat-wa.chat-wa-cheio{position:fixed;right:0;bottom:0;z-index:5;height:auto;min-height:0;margin:0;border-width:1px 0 0 1px;border-radius:0;box-shadow:none}
+html body .chat-wa.chat-wa-cheio{height:auto}
+.chat-wa-marcador{height:0;margin:0;padding:0}

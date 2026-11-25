@@ -5,15 +5,9 @@ import '../shared/js/selectsComBusca.js';
 import '../shared/js/errosDeCampo.js';
 export const normalizarCPF=normalizarCpfEntrada;
 export const formatarCPF=formatarCpfEntrada;
+// 25/11/2026 (pedido do usuário): qualquer CPF de 11 dígitos entra (sem o dígito verificador), como no cadastro e na API.
 export function validarCPF(valor) {
-    const cpf = normalizarCPF(valor);
-    if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
-    for (let tamanho = 9; tamanho <= 10; tamanho++) {
-        const soma = [...cpf.slice(0, tamanho)].reduce((total, digito, i) => total + Number(digito) * (tamanho + 1 - i), 0);
-        const resto = soma * 10 % 11;
-        if ((resto === 10 ? 0 : resto) !== Number(cpf[tamanho])) return false;
-    }
-    return true;
+    return /^\d{11}$/.test(normalizarCPF(valor));
 }
 
 const form = document.getElementById("login-form"), cpf = document.getElementById("login-cpf"), senha = document.getElementById("login-password");
@@ -57,7 +51,7 @@ olho.addEventListener("click", () => {
 // Destinos relativos a este arquivo (js/ → raiz): funcionam no Pages de projeto (M1).
 const destino = caminho => new URL('../' + caminho, import.meta.url).href;
 const destinos = Object.freeze({ Aluno: destino("aluno/html/dashboard.html"), Motorista: destino("instrutor/html/instrutor.html") });
-const paineisEquipe = Object.freeze({ operador: [1, destino("nivel-1-operador/html/operador-cfc.html")], gerencia: [2, destino("nivel-2-gerencia/html/gerencia.html")], master: [3, destino("nivel-3-master/html/master.html")] });
+const paineisEquipe = Object.freeze({ operador: [1, destino("nivel-1-operador/html/operador-cfc.html")], gerencia: [2, destino("nivel-2-gerencia/html/gerencia.html")], master: [3, destino("nivel-3-master/html/master.html")], frota: [4, destino("nivel-4-frota/html/frota.html")] });
 const emailValido = valor => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor);
 
 // Senha provisória (deveTrocarSenha): o login não devolve token. Pede a nova
@@ -88,7 +82,7 @@ function escolherPerfil(perfis) {
     return new Promise(resolve => {
         const nomes = { 1: "Aluno", 2: "Instrutor" };
         const d = document.createElement("dialog"); d.className = "login-provisoria"; d.setAttribute("aria-labelledby", "perfil-titulo");
-        d.innerHTML = '<form method="dialog"><h2 id="perfil-titulo">Como deseja entrar?</h2><p>Este CPF tem mais de um acesso no AgIA.</p><div data-perfis style="display:grid;gap:8px"></div><footer><button type="button" data-perfil-cancelar>Cancelar</button></footer></form>';
+        d.innerHTML = '<form method="dialog"><h2 id="perfil-titulo">Como deseja entrar?</h2><p>Este CPF tem mais de um acesso na AgIA.</p><div data-perfis style="display:grid;gap:8px"></div><footer><button type="button" data-perfil-cancelar>Cancelar</button></footer></form>';
         let escolhido = null;
         for (const p of perfis) {
             const valor = p?.valor ?? p, b = document.createElement("button");
@@ -114,7 +108,7 @@ form.addEventListener("submit", async event => {
         if(porEmail){if(!emailValido(cpf.value.trim())){informar('Informe um e-mail válido.','error',cpf);return;}}
         else if(cpf.value.replace(/\D/g,'').length!==11||/[^\d.\-\s]/.test(cpf.value)){informar(equipe&&!servicoDemo?'Informe o CPF (11 dígitos) ou o e-mail.':'Informe os 11 dígitos do CPF.','error',cpf);return;}
         if (servicoDemo) { await servicoDemo.entrar(normalizarCPF(cpf.value), senha.value); senha.value = ''; redirecionando = true; return; }
-        if (!porEmail && !validarCPF(cpf.value)) { informar('Informe um CPF válido.', 'error', cpf); return; }
+        if (!porEmail && !validarCPF(cpf.value)) { informar('Informe os 11 números do CPF.', 'error', cpf); return; }
         if (!senha.value) { informar('Digite sua senha.', 'error', senha); return; }
         const identificacao = porEmail ? cpf.value.trim() : normalizarCPF(cpf.value);
         const { login, trocarSenhaProvisoria } = await import("../shared/js/services/authService.js");
@@ -150,7 +144,7 @@ form.addEventListener("submit", async event => {
         }
         if(!Object.hasOwn(destinos, perfil)){
             limparSessao();
-            informar('Esta conta não tem um painel disponível no AgIA.','info');return;
+            informar('Esta conta não tem um painel disponível na AgIA.','info');return;
         }
         redirecionando = true; informar("Login realizado. Abrindo seu painel…", "success");
         window.location.assign(destinos[perfil]);
@@ -165,7 +159,7 @@ form.addEventListener("submit", async event => {
 // Única configuração do contato: o destino já informado no link principal.
 const contato = document.getElementById("contato-recepcao");
 const urlContato = new URL(contato.href);
-urlContato.searchParams.set("text", "Olá! Estou tentando acessar minha conta no AgIA e preciso de ajuda da recepção.");
+urlContato.searchParams.set("text", "Olá! Estou tentando acessar minha conta na AgIA e preciso de ajuda.");
 contato.href = urlContato.href;
 document.querySelectorAll("[data-contato-copia]").forEach(link => { link.href = contato.href; });
 const recuperacao = document.getElementById("recuperar-acesso");
@@ -178,7 +172,7 @@ document.querySelectorAll("[data-recuperacao]").forEach(botao => botao.addEventL
     document.getElementById("recuperacao-digital").hidden = metodo === "presencial";
     if (metodo !== "presencial") {
         document.getElementById("recuperacao-metodo").textContent = metodo === "email" ? "Recuperação por e-mail" : "Recuperação pelo celular";
-        document.getElementById("recuperacao-pendente").textContent = `A recuperação ${metodo === "email" ? "por e-mail" : "pelo celular"} ainda não está disponível. Entre em contato com a recepção.`;
+        document.getElementById("recuperacao-pendente").textContent = `A recuperação ${metodo === "email" ? "por e-mail" : "pelo celular"} ainda não está disponível. Fale com a equipe da autoescola.`;
         document.getElementById("recuperacao-cpf").focus();
     }
 }));

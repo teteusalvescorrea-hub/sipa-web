@@ -75,3 +75,8 @@ html[data-theme=dark] .rating-pronto-icone{background:#1d4430;color:#8fe0ad;box-
 html[data-theme=dark] .rating-pronto-nota{background:#3a2f16}
 html[data-theme=dark] .rating-pronto-nota strong{color:#ffd58a}
 html[data-theme=dark] .rating-pronto-texto,html[data-theme=dark] .rating-pronto-aula{color:#a9bccd}
+
+/* 24/11/2026: o aviso de anonimato da avaliação. */
+.rating-anonimo{display:block;margin:0 0 14px;padding:10px 12px;border-radius:10px;background:#eef6ff;border:1px solid #cfe3fb;color:#1d3b5c;font-size:.86rem;line-height:1.4}
+.rating-anonimo strong{font-weight:700}
+html[data-theme=dark] .rating-anonimo{background:#14263a;border-color:#24496f;color:#d6e6f7}

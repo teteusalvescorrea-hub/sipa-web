@@ -16,6 +16,13 @@ html body dialog.sipa-confirmar.sipa-confirmar{max-width:min(440px,calc(100vw - 
 :root[data-theme="dark"] .sipa-confirmar{background:#16212e;color:#e6edf5;border-color:#2c3b4d}
 :root[data-theme="dark"] .sipa-confirmar p{color:#b7c4d3}
 :root[data-theme="dark"] .sipa-confirmar-voltar{background:#16212e;color:#e6edf5;border-color:#3a4b60}
+html body dialog.sipa-confirmar.sipa-confirmar-largo{max-width:min(560px,calc(100vw - 32px))}
+.sipa-confirmar-extra{margin-top:14px}
+.sipa-confirmar-conferi{display:flex;align-items:flex-start;gap:10px;margin:16px 0 0;padding:12px 14px;border:1px solid #c9d6e3;border-radius:10px;background:#f5f9fd;font-weight:600;line-height:1.4;cursor:pointer}
+.sipa-confirmar-conferi input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:#1769ab}
+.sipa-confirmar-ok:disabled{opacity:.45;cursor:not-allowed}
+:root[data-theme="dark"] .sipa-confirmar-conferi{background:#1b2a3a;border-color:#3a4b60}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .sipa-confirmar-conferi{background:#1b2a3a;border-color:#3a4b60}}
 `;
 
 function garantirEstilo() {
@@ -26,7 +33,7 @@ function garantirEstilo() {
   document.head.append(s);
 }
 
-function montar(titulo, mensagem, botoes) {
+function montar(titulo, mensagem, botoes, extra) {
   garantirEstilo();
   const d = document.createElement('dialog');
   d.className = 'sipa-confirmar';
@@ -39,6 +46,7 @@ function montar(titulo, mensagem, botoes) {
   const p = document.createElement('p');
   p.textContent = mensagem;
   corpo.append(h, p);
+  if (extra) { const caixa = document.createElement('div'); caixa.className = 'sipa-confirmar-extra'; caixa.append(extra); corpo.append(caixa); }
   const acoes = document.createElement('div');
   acoes.className = 'sipa-confirmar-acoes';
   acoes.append(...botoes);
@@ -55,11 +63,21 @@ function botao(texto, classe) {
   return b;
 }
 
-export function confirmarAcao(mensagem, { titulo = 'Confirmar', confirmar = 'Confirmar', cancelar = 'Voltar', perigo = false } = {}) {
+// 25/11/2026 (tela de provas): conteudo = um resumo para conferir; conferencia = o texto da caixa que precisa ser marcada
+// para liberar o "Confirmar".
+export function confirmarAcao(mensagem, { titulo = 'Confirmar', confirmar = 'Confirmar', cancelar = 'Voltar', perigo = false, conteudo = null, conferencia = '' } = {}) {
   return new Promise(resolver => {
     const voltar = botao(cancelar, 'sipa-confirmar-voltar');
     const ok = botao(confirmar, 'sipa-confirmar-ok' + (perigo ? ' perigo' : ''));
-    const d = montar(titulo, mensagem, [voltar, ok]);
+    let extra = conteudo;
+    if (conferencia) {
+      const caixa = document.createDocumentFragment(), rotulo = document.createElement('label'), marca = document.createElement('input');
+      marca.type = 'checkbox'; marca.dataset.sipaConferi = ''; rotulo.className = 'sipa-confirmar-conferi'; rotulo.append(marca, document.createTextNode(conferencia));
+      if (conteudo) caixa.append(conteudo); caixa.append(rotulo); extra = caixa;
+      ok.disabled = true; marca.addEventListener('change', () => { ok.disabled = !marca.checked; });
+    }
+    const d = montar(titulo, mensagem, [voltar, ok], extra);
+    if (conteudo || conferencia) d.classList.add('sipa-confirmar-largo');
     let respondido = false;
     const responder = valor => {
       if (respondido) return;

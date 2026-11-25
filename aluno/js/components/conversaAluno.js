@@ -31,7 +31,7 @@ export async function montarConversaAluno(host,servico,abas){
  function desenhar(mensagens){
   const nova=JSON.stringify([atual,mensagens.map(m=>m.id)]);if(nova===assinatura)return;assinatura=nova;
   lista.replaceChildren();
-  if(!mensagens.length)lista.append(el('li','Ainda não há mensagens. Escreva para a Recepção quando precisar.','conversa-vazio'));
+  if(!mensagens.length)lista.append(el('li','Ainda não há mensagens. Escreva para a equipe da autoescola quando precisar.','conversa-vazio'));
   for(const m of mensagens){const li=el('li',undefined,'conversa-item'),topo=el('p',undefined,'conversa-topo');li.dataset.autor=m.daEquipe?'recepcao':'aluno';li.dataset.conversaMensagem=m.id;
    topo.append(el('strong',m.daEquipe?m.remetente||'Recepção':'Você'),el('span',m.em?dataRelatorio(m.em):''));li.append(topo,el('p',m.texto,'conversa-texto'));lista.append(li);}
   lista.scrollTop=lista.scrollHeight;
@@ -43,7 +43,7 @@ export async function montarConversaAluno(host,servico,abas){
    if(!conversas.some(c=>c.autoescolaId===atual))atual=(conversas.find(c=>c.naoLidas)||conversas[0])?.autoescolaId??null;
    seletor.replaceChildren(...conversas.map(c=>{const o=el('option',c.autoescola+(c.naoLidas?' ('+c.naoLidas+')':''));o.value=c.autoescolaId;return o;}));seletor.value=atual||'';seletorCaixa.hidden=conversas.length<2;
    const c=conversas.find(x=>x.autoescolaId===atual);
-   if(!c){aviso.textContent='Você ainda não tem matrícula em uma autoescola para conversar com a Recepção.';form.hidden=true;lista.hidden=true;abas?.contar('conversa',0);return;}
+   if(!c){aviso.textContent='Você ainda não tem matrícula em uma autoescola para conversar com a equipe.';form.hidden=true;lista.hidden=true;abas?.contar('conversa',0);return;}
    lista.hidden=false;form.hidden=!c.podeEnviar;aviso.textContent=c.podeEnviar?'':'Você não está mais matriculado nesta autoescola. O histórico continua disponível.';
    // Fase 8 (5.6): fora do horário comercial o envio fica desligado e o aviso mostra o horário de atendimento.
    if(c.podeEnviar&&servico.atendimento){try{const h=await servico.atendimento(c.autoescolaId),fechado=!h.aberto;texto.disabled=fechado;if(!enviando)enviar.disabled=fechado;form.dataset.conversaFechada=String(fechado);aviso.textContent=fechado?h.mensagem:'Atendimento: '+h.descricao+'.';}catch{}}

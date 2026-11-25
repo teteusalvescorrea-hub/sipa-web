@@ -4,6 +4,12 @@
 const el=(tag,texto,classe)=>{const n=document.createElement(tag);if(texto!=null)n.textContent=texto;if(classe)n.className=classe;return n;};
 const numero=v=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const plural=(n,um,varios)=>n+' '+(n===1?um:varios);
+const dataCurta=d=>d?String(d).slice(8,10)+'/'+String(d).slice(5,7):'';
+// 24/11/2026 (pedido do usuário): o quadro atualiza de 15 em 15 dias (dias 1º e 16); a API manda as datas.
+export function textoDaAtualizacao(r){
+ if(!r?.atualizadoEm)return 'As avaliações são anônimas: o nome do aluno não aparece.';
+ return 'Atualizado em '+dataCurta(r.atualizadoEm)+(r.proximaAtualizacao?' · próxima atualização em '+dataCurta(r.proximaAtualizacao):'')+'. As avaliações chegam a cada 15 dias e são anônimas: o nome do aluno e o dia da aula não aparecem.';
+}
 
 // Cinco estrelas com preenchimento proporcional à média (4,5 = quatro e meia).
 export function estrelasDaMedia(media){
@@ -37,7 +43,7 @@ function desenhar(card,r){
  contas.append(linha(total,total===1?'avaliação recebida':'avaliações recebidas'),linha(realizadas,realizadas===1?'aula realizada':'aulas realizadas'),
   linha(realizadas?Math.round(total/realizadas*100)+'%':'—','das aulas avaliadas'));
  topo.append(nota,contas);card.append(topo);
- if(!total){card.append(el('p','Você ainda não recebeu avaliações. Elas aparecem aqui conforme os alunos avaliam as aulas.','in-aval-vazio'));return;}
+ if(!total){card.append(el('p','Você ainda não recebeu avaliações. Elas aparecem aqui conforme os alunos avaliam as aulas.','in-aval-vazio'),el('p',textoDaAtualizacao(r),'in-profile-note'));return;}
 
  // Distribuição de 5 a 1 estrela.
  const barras=el('div',null,'in-aval-barras');const por=r.porEstrelas||[];const maior=Math.max(1,...por);
@@ -54,8 +60,8 @@ function desenhar(card,r){
 
  if(r.comentarios?.length){const c=el('div',null,'in-aval-comentarios');c.append(el('h3','Últimos comentários'));
   for(const x of r.comentarios){const item=el('figure',null,'in-aval-comentario');const cab=el('figcaption');
-   cab.append(el('span','★'.repeat(x.nota)+'☆'.repeat(5-x.nota),'in-aval-comentario-estrelas'),el('time',new Date(x.em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})));
+   cab.append(el('span','★'.repeat(x.nota)+'☆'.repeat(5-x.nota),'in-aval-comentario-estrelas'),el('span',r.atualizadoEm?'Quinzena de '+new Date(x.em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit'}):new Date(x.em).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'})));
    item.append(cab,el('blockquote','“'+x.comentario+'”'));c.append(item);}
   card.append(c);}
- card.append(el('p','As avaliações são anônimas: o nome do aluno não aparece.','in-profile-note'));
+ card.append(el('p',textoDaAtualizacao(r),'in-profile-note'));
 }

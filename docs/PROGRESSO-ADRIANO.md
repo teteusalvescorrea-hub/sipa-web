@@ -876,7 +876,7 @@ O que deu errado foi corrigido na hora; o resultado item a item ficou no relató
   usuário passou); e as regras da autoescola: calçado e documentos (sapatilha proibida, identidade e LADV), faltas
   (48 horas úteis, cobrança na reposição, tabela vigente, chuva, 10 minutos sem tolerância), antecipação (as últimas
   aulas), crianças (responsável maior de idade) e, como extra, o uso do aplicativo (cancelar com 48 h úteis, atestado,
-  mensagens). "Baixar em PDF" abre a página no visual do AgIA (nome do aluno, unidade, data) e o navegador salva em
+  mensagens). "Baixar em PDF" abre a página no visual da AgIA (nome do aluno, unidade, data) e o navegador salva em
   PDF. Front: `aluno/js/components/informacoesImportantes.js` e `aluno/css/informacoes.css`; 2 testes novos (front
   315/315). Conferido com um aluno de Santa Rita com moto, carro e ônibus e a prévia do PDF. 2ª rodada: sem documentos,
   a página mostra só as Informações importantes (saiu o aviso "Nenhum documento por aqui ainda").

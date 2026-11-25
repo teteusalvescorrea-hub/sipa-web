@@ -9,6 +9,9 @@ import {textoErro} from '../../../shared/js/apiErro.js';
 import {sair} from '../../../shared/js/services/authService.js';
 import {hojeBrasil,somarDias,comFusoBrasil} from '../../../shared/js/calendario.js';
 import {MOTIVOS_CANCELAMENTO,identificarMotivo} from '../domain/agendamentoAluno.js';
+// 24/11/2026 (pedido do usuário): a liberação para agendar da matrícula (pedido do aluno e liberação da Recepção).
+function liberacaoDe(m){const l=m?.liberacao;if(!l)return null;return {solicitadaEm:l.solicitadaEm||null,liberadoEm:l.liberadoEm||null,podeSolicitar:l.podeSolicitar===true,pendencias:l.pendencias||[]};}
+const comLiberacao=(acompanhamento,liberacao)=>acompanhamento&&liberacao?{...acompanhamento,liberacao}:acompanhamento;
 
 const numero=v=>v?.valor??v;
 const LETRA=Object.freeze({1:'A',2:'B',3:'D'}),NUMERO=Object.freeze({A:1,B:2,D:3});
@@ -120,7 +123,7 @@ function resumoPorCategoria(aluno,contratacoes){
   const s=(aluno.saldos||[]).find(x=>categoria(x.categoria)===c);
   if(aluno.saldos){
    const total=s?.contratadas??0,realizadas=s?.realizadas??0;
-   categorias[c]={total,disponiveis:s?.disponiveis??0,reservadas:s?.agendadas??0,realizadas,faltas:s?.faltas??0,retidas:s?.retidas??0,percentual:total>0&&realizadas>0?Math.min(100,Math.round(100*realizadas/total)):null};
+   categorias[c]={total,disponiveis:s?.disponiveis??0,reservadas:s?.agendadas??0,realizadas,faltas:s?.faltas??0,retidas:s?.retidas??0,aguardando:s?.aguardandoRegistro??0,encerradas:s?.encerradas??0,percentual:total>0&&realizadas>0?Math.min(100,Math.round(100*realizadas/total)):null};
    continue;
   }
   const relevantes=contratacoes.filter(p=>[2,4].includes(numero(p.status))&&(p.categorias||[]).some(k=>categoria(k)===c)),ambiguo=relevantes.some(p=>p.categorias.length!==1);
@@ -145,6 +148,8 @@ export function adaptarDadosAluno(aluno,contratacoes,aulas,extras={}){
   unidadeCarro:nomeDe(matricula?.unidadeCarro)||null,tipoCambio:CAMBIO[numero(matricula?.tipoCambio)]??null,
   // Fase 1: o que falta para agendar, a validade do contrato e se o próximo pedido é o primeiro (24h).
   pendenciasAgendamento:matricula?.liberacao?.pendencias||[],
+  // 24/11/2026: a liberação para agendar (pedido do aluno e liberação da Recepção).
+  liberacaoAgendamento:liberacaoDe(matricula),
   // Fase 3 (5.4): as reposições por atestado (a aula que faltou e a que repõe).
   reposicoes:(aluno.reposicoes||[]).map(r=>({id:r.id,categoria:r.categoria?.descricao??r.categoria,aulaOrigemId:r.aulaOrigemId,aulaReposicaoId:r.aulaReposicaoId||null,criadaEm:r.criadaEm})),validadeContrato:matricula?.liberacao?.validadeContrato||null,primeiroAgendamento:matricula?.liberacao?.primeiroAgendamento===true,nascimento:aluno.dataNascimento||null,
   categoria:letras.join(''),categoriasFormacao:aluno.categoriasFormacao,
@@ -153,7 +158,7 @@ export function adaptarDadosAluno(aluno,contratacoes,aulas,extras={}){
  registros.push(cadastro,...vistas);
  return {integrado:true,aluno:cadastro,aulas:vistas,registros,credito:null,categorias:letras,
   resumo:{categorias,total:aluno.aulasContratadas??null,realizadas:aluno.aulasRealizadas??null,percentual:aluno.aulasContratadas>0?aluno.percentualProgresso:null},
-  acompanhamento:adaptarAcompanhamento(extras.acompanhamento,letras),contratacoes};
+  acompanhamento:comLiberacao(adaptarAcompanhamento(extras.acompanhamento,letras),liberacaoDe(matricula)),contratacoes};
 }
 
 // Até 92 dias por consulta (DA17): uma janela para trás e outra para frente.
@@ -298,7 +303,9 @@ export function criarServicoAluno(){
  const pedirMaisAulas=async()=>{try{return await api.Post('alunos/me/pedidos-aulas',{});}catch(e){throw comoErro(e);}};
  const avaliacoesPendentes=async()=>{try{return await api.Get('alunos/me/avaliacoes-pendentes');}catch(e){throw comoErro(e);}};
  const avaliarAula=async(id,d)=>{try{return await api.Post('alunos/me/aulas/'+id+'/avaliacao',d);}catch(e){throw comoErro(e);}};
- return {capacidades,atendimento,pedirMaisAulas,avaliacoesPendentes,avaliarAula,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
+ // 24/11/2026: o pedido de liberação para agendar (depois da aprovação na teórica).
+ const solicitarLiberacao=async()=>{try{await api.Post('alunos/me/liberacao-agendamento',{});invalidar();}catch(e){throw comoErro(e);}};
+ return {capacidades,atendimento,pedirMaisAulas,avaliacoesPendentes,avaliarAula,solicitarLiberacao,carregar:()=>{invalidar();return dadosAlunoLocal();},dadosAlunoLocal,
   registros:async()=>(await dadosAlunoLocal()).registros,sair,
   consultarHistorico:async id=>(await api.Get('agendamentos/'+id)).historico||[],
   disponibilidadeLocal,motivoFechamentoDoDia,consultarRecursosLocal,reservarAulasLocais,cancelarReservaLocal,solicitarCancelamentoMedico,

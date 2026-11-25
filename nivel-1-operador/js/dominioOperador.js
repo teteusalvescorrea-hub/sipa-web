@@ -60,10 +60,10 @@ export function salvarAcompanhamento(estado,identidade,id,dados,instante=new Dat
 export const principal = a => unidade(a.unidadePrincipal || a.unidade);
 export const carro = a => a.categoria.includes('B') ? unidade(a.unidadeCarro || a.unidadePrincipal || a.unidade) : '';
 export {formatarCpf} from '../../shared/js/formatacao.js';
+// 25/11/2026 (pedido do usuário): qualquer CPF de 11 dígitos vale (sem o dígito verificador), como na API; a unicidade
+// continua (o mesmo CPF não entra em duas contas).
 export function cpfValido(valor) {
-    const cpf = String(valor).replace(/\D/g, '');
-    if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
-    return [9, 10].every(n => { let soma = 0; for (let i = 0; i < n; i++) soma += Number(cpf[i]) * (n + 1 - i); return Number(cpf[n]) === (soma * 10 % 11 % 10); });
+    return /^\d{11}$/.test(String(valor ?? '').replace(/\D/g, ''));
 }
 export function autorizar(identidade, permissao) {
     if (!identidade?.id || !UNIDADES.some(([id]) => id === unidade(identidade.unidade)) || !identidade.permissoes?.includes(permissao)) throw new Error('Permissão insuficiente para esta operação.');
@@ -74,7 +74,7 @@ export function vinculo(a, identidade) {
     if(identidade.nivel>=2)return escopoPermitido(identidade,principal(a))||(carro(a)&&escopoPermitido(identidade,carro(a)))?'cadastro':null;
     const u = unidade(identidade.unidade);
     if (principal(a) === u || carro(a) === u) return 'cadastro';
-    return (u === 'Vila Velha' && a.categoria.includes('A'))||(u==='Cobilândia'&&a.categoria==='D') ? 'pista' : null;
+    return (u === 'Vila Velha' && a.categoria.includes('A'))||(u==='Cobilândia'&&['D','AD'].includes(a.categoria)) ? 'pista' : null;
 }
 export function alunoAutorizado(estado, identidade, id, completo = true) {
     autorizar(identidade, 'consultar');
@@ -126,12 +126,12 @@ export function validarCadastroAluno(dados, identidade, alunos = [], instante = 
     const nome = String(dados.nome || '').trim(), cpf = String(dados.cpf || '').replace(/\D/g, ''), telefone = String(dados.telefone || '').replace(/\D/g, ''), email = String(dados.email || '').trim();
     if (nome.length < 5 || nome.length>180 || nome.split(/\s+/).length < 2) erros.nome='Informe o nome completo (até 180 caracteres).';
     if (!/^[\d.\-\s]+$/.test(String(dados.cpf||''))||!/^\d{11}$/.test(cpf)) erros.cpf='Informe um CPF com exatamente 11 dígitos numéricos.';
-    else if (!validarCpf(cpf)) erros.cpf='Informe um CPF válido.';
+    else if (!validarCpf(cpf)) erros.cpf='Informe os 11 números do CPF.';
     else if (alunos.some(a=>a.cpf===cpf)) erros.cpf='CPF já cadastrado. Solicite a consulta do vínculo existente.';
     if (!dataValida(dados.nascimento) || dados.nascimento >= agoraBrasil(instante).slice(0,10)) erros.nascimento='Informe uma data de nascimento válida anterior a hoje.';
     if (!/^[1-9]{2}\d{8,9}$/.test(telefone)) erros.telefone='Informe um telefone com DDD (10 ou 11 dígitos).';
     if (email.length>200 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) erros.email='Informe um e-mail válido.';
-    if (!['A','B','D','AB'].includes(categoria)) erros.categoria='Selecione a categoria.';
+    if (!['A','B','D','AB','AD'].includes(categoria)) erros.categoria='Selecione a categoria.';
     // Fase 1: tipo de CNH e data do contrato (até hoje) são obrigatórios; Cortesia e Permuta só o Master. O KM saiu do
     // cadastro: sem ele, vale a unidade principal.
     if (!['1','2','3','4'].includes(String(dados.tipoCnh||''))) erros.tipoCnh='Selecione o tipo de CNH.';
@@ -143,7 +143,7 @@ export function validarCadastroAluno(dados, identidade, alunos = [], instante = 
     if (['B','AB'].includes(categoria) && !UNIDADES.some(([id])=>id===unidade(dados.unidadeCarro))) erros.unidadeCarro='Selecione a unidade para aulas de carro.';
     for(const [cat,chave,nome] of [['B','quantidadeCarro','carro'],['A','quantidadeMoto','moto'],['D','quantidadeOnibus','ônibus']]){
         const valor=String(dados[chave]??'').trim();
-        if(['A','B','D','AB'].includes(categoria)&&categoria.includes(cat)&&(!/^[1-9]\d*$/.test(valor)||!Number.isSafeInteger(Number(valor))))erros[chave]=`Informe a quantidade de aulas de ${nome} (inteiro positivo).`;
+        if(['A','B','D','AB','AD'].includes(categoria)&&categoria.includes(cat)&&(!/^[1-9]\d*$/.test(valor)||!Number.isSafeInteger(Number(valor))))erros[chave]=`Informe a quantidade de aulas de ${nome} (inteiro positivo).`;
     }
     if (!String(dados.observacoes||'').trim()) erros.observacoes='Preencha as observações administrativas.';
     else if(String(dados.observacoes).length>2000)erros.observacoes='Use até 2000 caracteres nas observações.';
@@ -331,15 +331,17 @@ function livreNaData(r, data, inicio, fim) {
     if (r.disponibilidadeSemanal && !r.disponibilidadeSemanal.some(f=>f.dia===dia&&f.inicio<=inicio&&fim<=f.fim)) return false;
     return ![...(r.bloqueios || []),...(r.bloqueiosUnidade||[])].some(b=> b.data===data && (!b.inicio||b.inicio<fim && inicio<b.fim));
 }
+// 24/11/2026: o instrutor ou o veículo reservado para a prova (até 13:00) aparece com esse motivo na agenda.
+const naProva=(r,data,inicio)=>(r.reservasProva||[]).some(p=>p.data===data&&inicio<p.ate);
 export function motivoRecursoIndisponivel(estado,identidade,data,inicio,filtros={},instante=new Date()){
     autorizar(identidade,'consultar');
     const horario=motivoNovoAgendamento(data,inicio,agoraBrasil(instante),filtros.categoria);if(horario)return horario;
     const recursos=filtros.recursosConsultados||consultarRecursos(estado,identidade),v=recursos.find(r=>r.id===filtros.veiculoId&&r.tipo==='Veículos');
     // Agenda do instrutor (sem veículo escolhido): o motivo vem do instrutor; o veículo é escolhido ao agendar.
-    if(!v&&filtros.instrutorId){const i=recursos.find(r=>r.id===filtros.instrutorId&&r.tipo==='Instrutores');if(!i)return 'Instrutor não cadastrado ou sem autorização operacional';if(!recursoAtivo(i))return 'Instrutor indisponível';if(!(new Date(data+'T12:00:00Z').getUTCDay()===6&&filtros.categoria!=='D')){const almoco=motivoAlmoco(i,inicio);if(almoco)return almoco;}if(!livreNaData(i,data,inicio,fimDaAula(inicio)))return 'Instrutor fora da jornada ou bloqueado nesta data';return 'Instrutor ou veículos ocupados neste horário';}
+    if(!v&&filtros.instrutorId){const i=recursos.find(r=>r.id===filtros.instrutorId&&r.tipo==='Instrutores');if(!i)return 'Instrutor não cadastrado ou sem autorização operacional';if(!recursoAtivo(i))return 'Instrutor indisponível';if(!(new Date(data+'T12:00:00Z').getUTCDay()===6&&filtros.categoria!=='D')){const almoco=motivoAlmoco(i,inicio);if(almoco)return almoco;}if(naProva(i,data,inicio))return 'Instrutor na prova do Detran (até 13:00)';if(!livreNaData(i,data,inicio,fimDaAula(inicio)))return 'Instrutor fora da jornada ou bloqueado nesta data';return 'Instrutor ou veículos ocupados neste horário';}
     if(!v)return 'Veículo não cadastrado ou sem autorização operacional';
     if(!recursoAtivo(v))return 'Veículo indisponível';
-    if(!livreNaData(v,data,inicio,fimDaAula(inicio)))return 'Veículo fora da jornada ou bloqueado nesta data';
+    if(naProva(v,data,inicio))return 'Veículo na prova do Detran (até 13:00)';if(!livreNaData(v,data,inicio,fimDaAula(inicio)))return 'Veículo fora da jornada ou bloqueado nesta data';
     if(v.categoria==='B'&&!cambioValido(v.tipoCambio))return 'Defina o câmbio do veículo em Editar veículo';
     if(v.categoria==='B'&&!recursoCarroCompativel(v,{unidadeCarro:identidade.unidade,tipoCambio:v.tipoCambio},data))return 'Veículo fora da operação autorizada desta unidade nesta data';
     if(v.categoria==='D'){const motivo=motivoCatalogoOnibus(estado.recursos);if(motivo)return motivo;}
@@ -386,7 +388,9 @@ export function detalhesAgendamento(estado,identidade,id,instante=new Date()){
  let propria=false;try{aulaOperavel(estado,identidade,id);propria=true;}catch{}
  const inicio=a.data+'T'+a.inicio+':00-03:00',valida=dataValida(a.data)&&Number.isFinite(Date.parse(inicio)),futura=Date.parse(inicio)>instante.getTime();
  return {aula:{id:a.id,categoria:a.categoria,data:a.data,inicio:a.inicio,fim:a.fim,status:a.status,instrutorId:a.instrutorId,veiculoId:a.veiculoId,unidade:a.unidade,tipoCambio:a.tipoCambio,unidadeCarro:a.unidadeCarro,localReal:structuredClone(a.localReal),alunoNome:estado.alunos.find(s=>s.id===a.alunoId)?.nome||'Aluno não informado',instrutorNome:estado.recursos.find(r=>r.id===a.instrutorId)?.nome||'Não informado',veiculoNome:v?.nome||'Não informado',...(propria?{cancelamento:structuredClone(a.cancelamento),historico:structuredClone(a.historico||[])}:{})},
- podeSolicitarMedico:propria&&principal(estado.alunos.find(s=>s.id===a.alunoId))===unidade(identidade.unidade)&&identidade.permissoes.includes('verificar')&&((a.status===1&&futura&&identidade.permissoes.includes('cancelar-aula')&&!calcularPrazoCancelamento({...a,inicio},recursosPolitica(estado),instante).dentroPrazo)||(a.status===2&&a.cancelamento?.origem==='recepcao'&&a.cancelamento.credito==='retido'&&!a.solicitacaoMedica&&instante.getTime()-Date.parse(a.cancelamento.em)<=POLITICA_CANCELAMENTO.horasAtestado*3600000)),
+ podeSolicitarMedico:propria&&principal(estado.alunos.find(s=>s.id===a.alunoId))===unidade(identidade.unidade)&&identidade.permissoes.includes('verificar')&&((a.status===1&&futura&&identidade.permissoes.includes('cancelar-aula')&&!calcularPrazoCancelamento({...a,inicio},recursosPolitica(estado),instante).dentroPrazo)||(a.status===2&&a.cancelamento?.origem==='recepcao'&&a.cancelamento.credito==='retido'&&!a.solicitacaoMedica&&instante.getTime()-Date.parse(a.cancelamento.em)<=POLITICA_CANCELAMENTO.horasAtestado*3600000)
+  // 25/11/2026 (pedido do usuário): a falta com atestado em até 72 horas do fim da aula (a falta continua; o crédito volta).
+  ||(a.status===6&&!a.solicitacaoMedica&&instante.getTime()<=Date.parse(a.data+'T'+(a.fim||a.inicio)+':00-03:00')+POLITICA_CANCELAMENTO.horasAtestado*3600000)),
  podeCancelar:valida&&propria&&identidade.permissoes.includes('cancelar-aula')&&[1,3].includes(a.status)&&futura,
  podeRegistrar:valida&&propria&&identidade.permissoes.includes('registrar-frequencia')&&a.status===1&&!futura,
  prazo:propria&&[1,3].includes(a.status)?calcularPrazoCancelamento({...a,inicio},recursosPolitica(estado),instante):null};

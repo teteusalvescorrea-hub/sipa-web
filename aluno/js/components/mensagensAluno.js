@@ -21,6 +21,8 @@ export function atualizarIndicadorMensagens(servico,aluno){if(servico.totalNaoLi
 // aoContar(n): avisos não lidos, para o contador da aba "Avisos".
 export async function montarMensagensAluno(host,servico,{aoContar}={}){
  let ocupado=false,pendente=false,vista='recebidas',pagina=1;const tamanho=5;
+ // 25/11/2026 (pedido do usuário): os avisos que estavam sem ler quando o aluno entrou (já marcados como lidos no servidor).
+ let novasDaVisita=null;const ehNova=m=>!!novasDaVisita?.some(x=>x.id===m.id);
  const abas=el('div',undefined,'mensagens-abas');abas.setAttribute('role','tablist');abas.setAttribute('aria-label','Visualização dos avisos');
  const botoes={};for(const [id,nome] of [['recebidas','Recebidas'],['lidas','Lidas']]){const b=el('button',nome);b.type='button';b.id='mensagens-aba-'+id;b.setAttribute('role','tab');b.setAttribute('aria-controls',host.id);b.onclick=()=>{vista=id;pagina=1;atualizar();};b.onkeydown=e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const destino=e.key==='Home'?'recebidas':e.key==='End'?'lidas':id==='recebidas'?'lidas':'recebidas';botoes[destino].click();botoes[destino].focus();}};botoes[id]=b;abas.append(b);}host.before(abas);host.setAttribute('role','tabpanel');
 
@@ -32,6 +34,8 @@ export async function montarMensagensAluno(host,servico,{aoContar}={}){
    let [r,outro]=await Promise.all([servico.consultarAvisos({lidas:vista==='lidas',pagina,tamanho}),servico.consultarAvisos({lidas:vista!=='lidas',pagina:1,tamanho:1})]);
    total=r.total;const maximo=Math.max(1,Math.ceil(total/tamanho));if(pagina>maximo){pagina=maximo;r=await servico.consultarAvisos({lidas:vista==='lidas',pagina,tamanho});}
    visiveis=r.itens;totais[vista]=total;totais[vista==='lidas'?'recebidas':'lidas']=outro.total;
+   // Nesta visita, "Recebidas" mostra os avisos que chegaram sem ler (o servidor já os conta como lidos).
+   if(novasDaVisita?.length){totais.recebidas=novasDaVisita.length;if(vista==='recebidas'){total=novasDaVisita.length;pagina=Math.min(pagina,Math.max(1,Math.ceil(total/tamanho)));visiveis=novasDaVisita.slice((pagina-1)*tamanho,pagina*tamanho);}}
   }else{
    const lista=itens.filter(m=>vista==='lidas'?!!m.lidaEm:!m.lidaEm);total=lista.length;pagina=Math.min(pagina,Math.max(1,Math.ceil(total/tamanho)));visiveis=lista.slice((pagina-1)*tamanho,pagina*tamanho);
   }
@@ -39,7 +43,7 @@ export async function montarMensagensAluno(host,servico,{aoContar}={}){
   for(const [id,b] of Object.entries(botoes)){const ativa=id===vista;b.setAttribute('aria-selected',String(ativa));b.tabIndex=ativa?0:-1;b.textContent=(id==='recebidas'?'Recebidas':'Lidas')+' ('+totais[id]+')';}
   host.setAttribute('aria-labelledby',botoes[vista].id);
   if(!visiveis.length){host.append(el('p',vista==='lidas'?'Você ainda não possui avisos lidos.':'Nenhum aviso novo. Os avisos descartados ficam em Lidas.','mensagens-vazio'));return;}
-  for(const m of visiveis){const b=el('button',undefined,'mensagem-item');b.type='button';b.dataset.mensagem=m.id;b.dataset.naoLida=String(!m.lidaEm);const topo=el('span',undefined,'mensagem-topo');topo.append(el('strong',m.assunto),el('span',m.lidaEm?'Lida':'Não lida','mensagem-situacao'));b.append(topo,el('span',m.em?dataRelatorio(m.em):'Data não informada'),el('span',(m.remetente||'Recepção')+' — '+nomeUnidadeInstitucional(m.unidade||aluno.unidadePrincipal||aluno.unidade)),el('span',m.texto.slice(0,160)+(m.texto.length>160?'…':'')));b.onclick=()=>abrir(m,aluno);host.append(b);}
+  for(const m of visiveis){const b=el('button',undefined,'mensagem-item');b.type='button';b.dataset.mensagem=m.id;b.dataset.naoLida=String(!m.lidaEm);const topo=el('span',undefined,'mensagem-topo');topo.append(el('strong',m.assunto),el('span',ehNova(m)?'Nova':m.lidaEm?'Lida':'Não lida','mensagem-situacao'));b.append(topo,el('span',m.em?dataRelatorio(m.em):'Data não informada'),el('span',(m.remetente||'Recepção')+' — '+nomeUnidadeInstitucional(m.unidade||aluno.unidadePrincipal||aluno.unidade)),el('span',m.texto.slice(0,160)+(m.texto.length>160?'…':'')));b.onclick=()=>abrir(m,aluno);host.append(b);}
  }finally{ocupado=false;if(pendente){pendente=false;await atualizar();}}}
  async function mostrarConfirmacao(tituloTexto,texto){
   const sucesso=el('dialog',undefined,'mensagem-dialog oferta-confirmacao'),titulo=el('h2',tituloTexto),icone=el('span','✓','oferta-confirmacao-icone'),mensagem=el('p',texto),ok=el('button','Entendi');ok.type='button';ok.onclick=()=>sucesso.close();
@@ -53,11 +57,11 @@ export async function montarMensagensAluno(host,servico,{aoContar}={}){
   caixa.append(vaga,el('p','Este horário foi preenchido por outro aluno.','oferta-nota'),el('p','Deseja continuar na espera deste horário?','oferta-pergunta'));corpo.append(caixa);rodape.append(cancelar,continuar);p.append(h,corpo,erro,rodape);
   const responder=async(acao,titulo,texto)=>{if(enviando)return;enviando=true;cancelar.disabled=continuar.disabled=true;erro.textContent='';if(!chaves.has(acao))chaves.set(acao,crypto.randomUUID());
    try{await servico.responderOferta(interesseId,acao,undefined,chaves.get(acao));p.close();await mostrarConfirmacao(titulo,texto);}catch(e){erro.textContent=e.message;cancelar.disabled=continuar.disabled=false;}finally{enviando=false;}};
-  continuar.onclick=()=>responder('continuar','Você continua na espera','Se este horário voltar a ficar livre, a Recepção poderá enviar uma nova oferta.');
+  continuar.onclick=()=>responder('continuar','Você continua na espera','Se este horário voltar a ficar livre, a AgIA poderá enviar uma nova oferta.');
   cancelar.onclick=()=>responder('descartar','Espera cancelada','Você não está mais na espera deste horário. Suas aulas foram mantidas.');
   p.addEventListener('cancel',e=>{if(enviando)e.preventDefault();});p.addEventListener('close',()=>{p.remove();botoes[vista]?.focus();},{once:true});document.body.append(p);p.showModal();h.focus();
  }
- async function abrir(m,aluno){const d=el('dialog',undefined,'mensagem-dialog'),h=el('h2',m.assunto),corpo=el('div',undefined,'mensagem-conteudo'),erro=el('p'),fechar=el('button','Fechar'),ler=el('button','Descartar aviso');h.id='mensagem-assunto';h.tabIndex=-1;d.setAttribute('aria-labelledby',h.id);d.dataset.mensagemAberta=m.id;fechar.type=ler.type='button';fechar.onclick=()=>d.close();ler.hidden=!!m.lidaEm;erro.setAttribute('role','alert');
+ async function abrir(m,aluno){const d=el('dialog',undefined,'mensagem-dialog'),h=el('h2',m.assunto),corpo=el('div',undefined,'mensagem-conteudo'),erro=el('p'),fechar=el('button','Fechar'),ler=el('button','Descartar aviso');h.id='mensagem-assunto';h.tabIndex=-1;d.setAttribute('aria-labelledby',h.id);d.dataset.mensagemAberta=m.id;fechar.type=ler.type='button';fechar.onclick=()=>d.close();ler.hidden=!!m.lidaEm||ehNova(m);erro.setAttribute('role','alert');
   const registrarLeitura=async()=>{ler.disabled=true;try{await servico.marcarMensagemLida(m.id);d.close();await atualizar(true);}catch(e){erro.textContent=e.message;ler.hidden=false;ler.disabled=false;}};ler.onclick=registrarLeitura;
   corpo.append(el('p',(m.remetente||'Recepção')+' — '+nomeUnidadeInstitucional(m.unidade||aluno.unidadePrincipal||aluno.unidade),'mensagem-origem'),el('p',m.texto,'mensagem-texto'));const rodape=el('footer');rodape.append(ler,fechar);d.append(h,corpo,erro,rodape);d.addEventListener('close',()=>d.remove(),{once:true});document.body.append(d);d.showModal();h.focus();
   if(m.interesseAntecipacaoId&&servico.ofertaAntecipacao){
@@ -126,5 +130,8 @@ export async function montarMensagensAluno(host,servico,{aoContar}={}){
   }
 
  }
- await atualizar();const refrescar=()=>atualizar(true).catch(e=>{host.replaceChildren(el('p',e.message));});window.addEventListener('focus',refrescar);window.addEventListener('storage',e=>{if(e.key==='sipa.operador.demo.v2')refrescar();});
+ // 25/11/2026 (pedido do usuário): entrar aqui já conta como visualizado. Os avisos sem ler são marcados como lidos no
+ // servidor (os contadores zeram); nesta visita continuam em "Recebidas", com o selo "Nova".
+ if(servico.consultarAvisos&&servico.marcarMensagemLida){try{const r=await servico.consultarAvisos({lidas:false,pagina:1,tamanho:100});const pendentes=r?.itens||[];if(pendentes.length){await Promise.allSettled(pendentes.map(m=>servico.marcarMensagemLida(m.id)));novasDaVisita=pendentes;atualizarIndicadorNovidades(servico);}}catch{novasDaVisita=null;}}
+ await atualizar(!!novasDaVisita?.length);const refrescar=()=>atualizar(true).catch(e=>{host.replaceChildren(el('p',e.message));});window.addEventListener('focus',refrescar);window.addEventListener('storage',e=>{if(e.key==='sipa.operador.demo.v2')refrescar();});
 }

@@ -2098,3 +2098,14 @@ html[data-theme=dark] body [data-sipa-aluno] .booking-main .time-slot-ocupado::a
 .booking-reposicao-aviso{margin:8px 0 0;padding:8px 12px;border:1px solid #d6c6fb;border-radius:9px;background:#f7f2ff;color:#4c1d95;font-size:13px;font-weight:600;line-height:1.5}
 .booking-reposicao-aviso[hidden]{display:none}
 html[data-theme=dark] .booking-reposicao-aviso{background:#241a3d;border-color:#5b3fa0;color:#d8c7ff}
+
+/* 24/11/2026: o pedido de liberação para agendar, no aviso de agendamento bloqueado. */
+.booking-liberacao-botao { margin-top:10px; padding:8px 14px; border:0; border-radius:10px; background:#1769aa; color:#fff; font-weight:700; font-size:13px; cursor:pointer; }
+.booking-liberacao-botao:disabled { opacity:.6; cursor:wait; }
+.booking-liberacao-botao:focus-visible { outline:3px solid #8bc1ee; outline-offset:2px; }
+
+/* 24/11/2026 (pente-fino): o aviso de agendamento bloqueado no topo da página, com o pedido de liberação. */
+.booking-bloqueio-topo { margin:0 0 16px; padding:12px 16px; border:1px solid #f6d39f; border-left:4px solid #d97706; border-radius:12px; background:#fff8ec; color:#7a4100; font-size:14px; line-height:1.45; }
+.booking-bloqueio-topo p { margin:0; }
+.booking-bloqueio-topo p + p { margin-top:4px; }
+html[data-theme=dark] .booking-bloqueio-topo { background:#3a2608; border-color:#6b4510; border-left-color:#f59e0b; color:#ffd79a; }

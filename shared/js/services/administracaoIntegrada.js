@@ -8,7 +8,7 @@ import {nomeDoVeiculo} from '../formatacao.js';
 import {Get,ComParams,Post as PostApi,Put as PutApi,Patch as PatchApi,Delete as DeleteApi} from '../api.js';
 import {servicoOperador} from '../../../nivel-1-operador/js/servicoOperador.js';
 import * as regras from '../../../nivel-1-operador/js/dominioOperador.js';
-import {NIVEIS,permissoesDoPerfil,exigirCapacidade,escopoPermitido} from '../permissoesAdministrativas.js';
+import {NIVEIS,PAINEL_DO_PERFIL,permissoesDoPerfil,exigirCapacidade,escopoPermitido} from '../permissoesAdministrativas.js';
 import {obterUnidadeInstitucional} from '../catalogoUnidades.js';
 import {hojeBrasil,somarDias,comFusoBrasil,formatarData} from '../calendario.js';
 import {fimDaAula,definirDiasBloqueados,definirExcecoesUnidades} from '../disponibilidade.js';
@@ -39,9 +39,9 @@ const SITUACAO_EXAME_ID=Object.freeze({Pendente:1,Aprovado:2,Reprovado:3,'Não s
 const SITUACAO_EXAME=Object.freeze({1:'Pendente',2:'Aprovado',3:'Reprovado',4:'Não se aplica',5:'Vencido'});
 const PROVA_ID=Object.freeze({teorica:1,praticaCarro:2,praticaMoto:3,praticaOnibus:4});
 const PROVA_CHAVE=Object.freeze(Object.fromEntries(Object.entries(PROVA_ID).map(([k,v])=>[v,k])));
-const STATUS_PROVA_ID=Object.freeze({Solicitado:1,Agendado:2,Aprovado:3,Reprovado:4,Cancelado:5});
+const STATUS_PROVA_ID=Object.freeze({Solicitado:1,Agendado:2,Aprovado:3,Reprovado:4,Cancelado:5,Faltou:6});
 const STATUS_PROVA=Object.freeze(Object.fromEntries(Object.entries(STATUS_PROVA_ID).map(([k,v])=>[v,k])));
-const PERFIL_DO_PAINEL=Object.freeze({1:'operador',2:'gerencia',3:'master'});
+const PERFIL_DO_PAINEL=Object.freeze({1:'operador',2:'gerencia',3:'master',4:'frota'});
 // Almoço legado do front (duas horas cheias) → intervalo do vínculo na API.
 const ALMOCO_LEGADO=Object.freeze({'11-12':'11:00/13:00','12-13':'12:00/14:00'});
 
@@ -112,7 +112,7 @@ export async function carregarIdentidadeEquipe(perfil,{unidadeEscolhida}={}){
  const nivel=NIVEIS[perfil];if(!nivel)throw new Error('Perfil administrativo inválido.');
  // 19/11/2026 (desempenho): a pré-carga do HTML do painel (preCargaEquipe.js) já pediu as duas; sem ela, pede aqui.
  const [me,unidadesApi]=await Promise.all([chamar(tomarPreCarga('equipe/me')||Get('equipe/me')),chamar(tomarPreCarga(ROTA_UNIDADES)||Get(ROTA_UNIDADES))]);
- const painel=numero(me?.painel);if(painel!=null&&painel!==nivel)throw Object.assign(new Error('Sua conta não possui acesso a este painel administrativo.'),{status:403});
+ const painel=numero(me?.painel);if(painel!=null&&painel!==PAINEL_DO_PERFIL[perfil])throw Object.assign(new Error('Sua conta não possui acesso a este painel administrativo.'),{status:403});
  const u=mapaUnidades(lista(unidadesApi)),proprias=(me.unidades||[]).map(u.chave).filter(Boolean);
  const base=proprias[0]||(nivel===3?u.chaves[0]:null);if(!base||!regras.UNIDADES.some(([id])=>id===base))throw new Error('Conta sem unidade vinculada. Solicite o ajuste ao Master.');
  // 13/11/2026: quem não é Master e tem mais de uma unidade (ex.: Santa Rita e Itaparica) atende uma por vez, a escolhida
@@ -129,7 +129,7 @@ export async function carregarIdentidadeEquipe(perfil,{unidadeEscolhida}={}){
 function corpoRealocacao(d){return {motoristaOrigemId:d.motoristaOrigemId||null,veiculoOrigemId:d.veiculoOrigemId||null,de:d.de,ate:d.ate,motoristaDestinoId:d.motoristaDestinoId||null,veiculoDestinoId:d.veiculoDestinoId||null,motivo:String(d.motivo||'').trim()||null};}
 // 16/11/2026: todas as categorias do aluno, em ordem (o "AB" de categoriaMatricula deixava o ônibus de fora).
 function todasAsCategorias(lista){const c=new Set(lista.map(categoria).filter(Boolean));return ['A','B','D'].filter(x=>c.has(x));}
-function categoriaMatricula(lista){const c=new Set(lista.map(categoria).filter(Boolean));return c.has('A')&&c.has('B')?'AB':['B','A','D'].find(x=>c.has(x))||'';}
+function categoriaMatricula(lista){const c=new Set(lista.map(categoria).filter(Boolean));return c.has('A')&&c.has('B')?'AB':c.has('A')&&c.has('D')?'AD':['B','A','D'].find(x=>c.has(x))||'';}
 export function adaptarAlunoEquipe(a,u){
  const m=a.matricula||a.matriculas?.[0]||{},saldos=a.saldos||[];
  const cat=categoriaMatricula([...(a.categorias||[]),...(m.categorias||[]),...(a.categoriasPretendidas||[]),...(a.categorias?.length||a.categoriasPretendidas?.length?[]:saldos.map(s=>s.categoria))]);
@@ -145,10 +145,10 @@ export function adaptarAlunoEquipe(a,u){
   ...(saldos.length?{creditos,aulasAdquiridas:Object.fromEntries(Object.entries(creditos).map(([k,v])=>[k,v.contratadas]))}:{}),
   observacoes:a.observacoes||'',bloqueioAdministrativo:{ativo:(m.bloqueioAdministrativo??a.bloqueioAdministrativo)===true},
   // Fase 1: o contrato e a validação do cadastro pela Recepção.
-  contrato:m.contrato?{tipoCnh:String(numero(m.contrato.tipoCnh)||''),tipoCnhNome:descricao(m.contrato.tipoCnh)||'',dataContrato:m.contrato.dataContrato||'',validade:m.contrato.validadeContrato||'',km:u.chave(m.contrato.km)||'',temArquivo:m.contrato.temArquivo===true,validadoEm:m.contrato.validadoEm||null,validadoPor:m.contrato.validadoPor||''}:null,
+  contrato:m.contrato?{tipoCnh:String(numero(m.contrato.tipoCnh)||''),tipoCnhNome:descricao(m.contrato.tipoCnh)||'',dataContrato:m.contrato.dataContrato||'',validade:m.contrato.validadeContrato||'',km:u.chave(m.contrato.km)||'',temArquivo:m.contrato.temArquivo===true,validadoEm:m.contrato.validadoEm||null,validadoPor:m.contrato.validadoPor||'',liberacaoSolicitadaEm:m.contrato.liberacaoSolicitadaEm||null,agendamentoLiberadoEm:m.contrato.agendamentoLiberadoEm||null,agendamentoLiberadoPor:m.contrato.agendamentoLiberadoPor||''}:null,
   acesso:acesso.possuiConta===false?'Sem conta de acesso':(acesso.deveTrocarSenha??a.deveTrocarSenha)?'Conta criada · primeiro acesso pendente':'Ativo',contaId:acesso.possuiConta===false?null:a.id,ultimoAcessoEm:acesso.ultimoAcessoEm||null,
   // Contratações da ficha (GET alunos/{id}): pacote (ou avulsa), aulas, categorias e situação da aprovação.
-  ...(Array.isArray(a.contratacoes)?{contratacoes:a.contratacoes.map(c=>({id:c.id,pacote:c.pacoteNome||'',quantidade:c.quantidadeAulas,categorias:(c.categorias||[]).map(categoria).filter(Boolean),status:descricao(c.status)}))}:{}),
+  ...(Array.isArray(a.contratacoes)?{contratacoes:a.contratacoes.map(c=>({id:c.id,pacote:c.pacoteNome||'',quantidade:c.quantidadeAulas,categorias:(c.categorias||[]).map(categoria).filter(Boolean),status:descricao(c.status),tipoAula:descricao(c.tipoAula)||''}))}:{}),
   historico:[],criadoEm:a.criadoEm,origem:'api',api:a};
 }
 function adaptarCancelamento(a,st){
@@ -166,6 +166,8 @@ export function adaptarAulaEquipe(a,u){
   ...(a.solicitacaoMedica?{solicitacaoMedica:adaptarSolicitacao({...a.solicitacaoMedica,aulaIds:[a.id],categoria:a.categoria},a.alunoId)}:{}),
   // 17/11/2026: a aula que repõe outra abonada por atestado (a de origem e o horário dela).
   ...(a.reposicao?{reposicao:{id:a.reposicao.id,aulaOrigemId:a.reposicao.aulaOrigemId,aulaOrigemInicio:String(a.reposicao.aulaOrigemInicio||'')}}:{}),
+  // 24/11/2026: o tipo da aula (pacote inicial, extra, reposição com ônus/atestado, cortesia, habilitados) e se remunera.
+  ...(numero(a.tipoAula)?{tipoAula:Number(numero(a.tipoAula)),remunera:a.remunera!==false}:{}),
   historico:(a.historico||[]).map(h=>({...adaptarEvento(h),autor:h.autorNome||h.autor})),criadoEm:a.criadoEm,
   alunoNome:a.alunoNome,instrutorNome:a.motoristaNome,veiculoNome:a.veiculoModelo,origem:'api'};
 }
@@ -220,7 +222,7 @@ function adaptarProvas(itens,a){
  for(const p of Array.isArray(itens)?itens:itens?.provas||[]){
   const tipo=typeof p.tipo==='string'?p.tipo:p.tipo?.chave||PROVA_CHAVE[numero(p.tipo??p.tipoProvaId)];if(!tipo)continue;
   for(const t of p.tentativas||[]){const status=typeof t.status==='string'?t.status:STATUS_PROVA[numero(t.status??t.situacao)]||'Solicitado';
-   tentativas.push({id:t.id,tipo,ordem:t.ordem||1,status,data:t.data||'',periodo:numero(t.periodo?.valor??t.periodo)||null,horario:t.horario?String(t.horario).slice(0,5):'',temAgendamento:!!t.temAgendamento,resultado:['Aprovado','Reprovado','Cancelado'].includes(status)?status:null,resultadoEm:t.resultadoEm||null,arquivada:!!t.arquivadaEm,arquivadaEm:t.arquivadaEm||null,origem:descricao(t.origem)==='Oficial'?'oficial':'manual',historico:[]});}
+   tentativas.push({id:t.id,tipo,ordem:t.ordem||1,status,data:t.data||'',periodo:numero(t.periodo?.valor??t.periodo)||null,horario:t.horario?String(t.horario).slice(0,5):'',temAgendamento:!!t.temAgendamento,resultado:['Aprovado','Reprovado','Cancelado','Faltou'].includes(status)?status:null,resultadoEm:t.resultadoEm||null,arquivada:!!t.arquivadaEm,arquivadaEm:t.arquivadaEm||null,origem:descricao(t.origem)==='Oficial'?'oficial':'manual',historico:[]});}
  }
  return {...a,tentativasProvas:tentativas};
 }
@@ -308,20 +310,20 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
  let retratoGuardado=null;
  const copiaRetrato=r=>({...r,alunos:r.alunos.map(a=>({...a})),recursos:r.recursos.map(x=>({...x})),aulas:r.aulas.map(a=>({...a})),excecoesAgenda:[],configuracoesUnidades:{}});
  async function ler(){
-  const rotas=rotasDaLeitura(filtroUnidade());
+  const rotas=rotasDaLeitura(filtroUnidade()),frota=op.perfil==='frota';
   const respostas=await Promise.all([
-   chamar(GetCache(rotas.alunos,SWR)),
+   frota?SEM_DADOS:chamar(GetCache(rotas.alunos,SWR)),
    chamar(GetCache(rotas.vinculos,SWR)),
    // 16/11/2026: o papel sem a tela Atestados (a Central de agendamento) recebia 403 aqui e o painel inteiro não abria
    // ("Acesso ainda não habilitado"). Sem a permissão, os atestados vêm vazios e o resto do painel abre.
-   opcional(GetCache(rotas.solicitacoes,SWR),SEM_DADOS).catch(e=>{if(e?.status===403)return SEM_DADOS;throw e;}),
+   frota?SEM_DADOS:opcional(GetCache(rotas.solicitacoes,SWR),SEM_DADOS).catch(e=>{if(e?.status===403)return SEM_DADOS;throw e;}),
    // Complemento (veículos sem instrutor): qualquer falha aqui não derruba a tela, os veículos dos vínculos continuam.
    GetCache(rotas.veiculos,SWR).catch(()=>SEM_DADOS),
-   GetCache(rotas.diasBloqueados,SWR).catch(()=>SEM_DADOS),
-   GetCache(rotas.excecoes,SWR).catch(()=>SEM_DADOS),
+   frota?SEM_DADOS:GetCache(rotas.diasBloqueados,SWR).catch(()=>SEM_DADOS),
+   frota?SEM_DADOS:GetCache(rotas.excecoes,SWR).catch(()=>SEM_DADOS),
    // 13/11/2026: os veículos reservados para a prova (fora da agenda até 13:00 nesse dia).
-   GetCache(rotas.provas,SWR).catch(()=>SEM_DADOS),
-   ...rotas.agendamentos.map(rota=>chamar(GetCache(rota,SWR)))]);
+   frota?SEM_DADOS:GetCache(rotas.provas,SWR).catch(()=>SEM_DADOS),
+   ...(frota?[]:rotas.agendamentos.map(rota=>chamar(GetCache(rota,SWR))))]);
   const [alunos,vinculos,solicitacoes,veiculosDaAutoescola,diasBloqueados,excecoesUnidades,diasProva,...aulas]=respostas;
   definirDiasBloqueados(lista(diasBloqueados).map(d=>String(d.data).slice(0,10)));
   definirExcecoesUnidades(lista(excecoesUnidades).map(e=>({unidade:u.chave(e.unidadeId),data:String(e.data).slice(0,10),fechada:e.fechada,justificativa:e.justificativa||''})));
@@ -355,8 +357,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
  const origemConta=new Map();let papeis=null;
  async function papelDoPerfil(perfil){
   papeis??=lista(await chamar(Get('equipe/papeis-atribuiveis')));
-  const nivel=NIVEIS[perfil],porPainel=papeis.find(p=>numero(p.painel??p.painelAdministrativo??p.painelAdministrativoId)===nivel);
-  return (porPainel||papeis.find(p=>p.nivelPadrao===({1:1,2:3,3:5})[nivel]))?.id;
+  const painel=PAINEL_DO_PERFIL[perfil],porPainel=papeis.find(p=>numero(p.painel??p.painelAdministrativo??p.painelAdministrativoId)===painel);
+  return (porPainel||papeis.find(p=>p.nivelPadrao===({1:1,2:3,3:5})[painel]))?.id;
  }
  async function consultarAcessos(){
   exigirCapacidade(op,'gestao-acessos',3);
@@ -385,7 +387,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    if(dados.acao==='redefinir')return respostaSenha(await chamar(Post(`motoristas/${original.id}/redefinir-acesso`,{justificativa})));
    await chamar(Put(`motoristas/${original.id}/pela-autoescola`,{nome:String(dados.nome||original.nome).trim(),ativo:dados.ativa!==false,justificativa}));return {};
   }
-  if(!['operador','gerencia','master'].includes(perfil))throw new Error('Perfil ou unidade não autorizados.');
+  if(!['operador','gerencia','master','frota'].includes(perfil))throw new Error('Perfil ou unidade não autorizados.');
   const unidade=dados.unidade||original?.unidade;if(!escopoPermitido(op,unidade))throw new Error('Perfil ou unidade não autorizados.');
   const corpo={nome:String(dados.nome||original?.nome||'').trim(),cpf:digitos(dados.cpf??original?.cpf)||null,email:dados.email||original?.email||null,telefone:dados.telefone||original?.telefone||null,papelId:perfil===original?.perfil?original.papelId:await papelDoPerfil(perfil),unidadeIds:(original?.unidades?.length>1&&unidade===original.unidade?original.unidades:[unidade]).map(u.guid),justificativa};
   if(!original)return respostaSenha(await chamar(Post('equipe',corpo,comChave())));
@@ -432,6 +434,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    return leitor(e).solicitacaoMedica(id);
   },
   async documentoMedico(id){return chamar(Get(`solicitacoes-medicas/${id}/documento`,{binario:true}));},
+  // 24/11/2026: o relatório de atestados do aluno (período, aulas abrangidas, autorização e reposições).
+  async atestadosDoAluno(alunoId){return lista(await chamar(Get(`alunos/${alunoId}/atestados`)));},
   // 12/11/2026: os instrutores ativos da categoria, inclusive os sem unidade fixa; o Master vê todos e os outros, os das
   // suas unidades e os sem unidade (a API confere a gravação ao trocar o responsável). O CPF, só de quem está no escopo.
   async instrutoresParaVeiculo(cat){if(!['A','B','D'].includes(cat))throw new Error('Categoria inválida.');const e=await ler(),deTodas=op.nivel===3&&!op.unidadeConsulta;
@@ -447,9 +451,9 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   // Pacotes da autoescola para contratar no balcão.
   async pacotes(){return lista(await chamar(GetCache('pacotes'))).map(p=>({id:p.id,nome:p.nomeExibicao||p.nome,quantidade:p.quantidadeAulas,preco:p.preco,categorias:(p.categorias||[]).map(categoria).filter(Boolean)}));},
   // No balcão o pacote entra já aprovado (o financeiro fica em outro sistema).
-  async contratarPacote(alunoId,pacoteId){return chamar(Post('contratacoes',{pacoteId,alunoId}));},
+  async contratarPacote(alunoId,pacoteId,tipoAula){return chamar(Post('contratacoes',{pacoteId,alunoId,...(Number(tipoAula)?{tipoAula:Number(tipoAula)}:{})}));},
   // Aulas extras avulsas no balcão: já aprovadas, como as do cadastro.
-  async adicionarAulasAvulsas(alunoId,categoria,quantidade){return chamar(Post('contratacoes',{alunoId,categoria:NUMERO[categoria],quantidadeAulas:Number(quantidade)}));},
+  async adicionarAulasAvulsas(alunoId,categoria,quantidade,tipoAula){return chamar(Post('contratacoes',{alunoId,categoria:NUMERO[categoria],quantidadeAulas:Number(quantidade),...(Number(tipoAula)?{tipoAula:Number(tipoAula)}:{})}));},
   async alunosAgendaveis(data,inicio,par){
    const r=await opcional(Get(ComParams('disponibilidade/alunos',{data,inicio,motoristaId:par.instrutorId,veiculoId:par.veiculoId,categoria:NUMERO[par.categoria]})));
    if(!r)return base.alunosAgendaveis(data,inicio,par);
@@ -480,7 +484,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    if(!r)return gerarRelatorio(permitido(await ler()),op,f);
    // A API ainda não calcula a ocupação por par elegível: usa a regra do front sobre os dados lidos da API.
    const totais={...(r.totais||{})};
-   if(!Object.hasOwn(totais,'ocupacao')){const local=(await gerarRelatorio(permitido(await ler()),op,f))?.totais||{};for(const k of ['elegiveis','ocupados','disponiveis','ocupacao'])if(Object.hasOwn(local,k))totais[k]=local[k];}
+   // 24/11/2026 (pente-fino): o relatório de remuneração não leva a ocupação da agenda (não tem a ver com o pagamento).
+   if(f.tipo!=='frequencia'&&!Object.hasOwn(totais,'ocupacao')){const local=(await gerarRelatorio(permitido(await ler()),op,f))?.totais||{};for(const k of ['elegiveis','ocupados','disponiveis','ocupacao'])if(Object.hasOwn(local,k))totais[k]=local[k];}
    return {nomes:r.nomes||{},filtros:{...f},totais,colunas:r.colunas||[],linhas:r.linhas||[],criterio:r.criterio||''};
   },
   // ---- comandos da Recepção
@@ -489,7 +494,7 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    const cat=dados.categoria,quantidades={B:dados.quantidadeCarro,A:dados.quantidadeMoto,D:dados.quantidadeOnibus};
    const r=await chamar(Post('alunos/pela-autoescola',{nome:String(dados.nome).trim(),cpf:digitos(dados.cpf),dataNascimento:dados.nascimento,email:String(dados.email).trim(),telefone:digitos(dados.telefone),categorias:categoriasId(cat),
     unidadeId:u.guid(op.unidade),unidadeCarroId:cat.includes('B')?u.guid(dados.unidadeCarro):null,tipoCnhId:Number(dados.tipoCnh)||null,dataContrato:dados.dataContrato||null,kmUnidadeId:u.guid(dados.km)||null,tipoCambioId:cat.includes('B')?CAMBIO_ID[dados.tipoCambio]??null:null,observacoes:String(dados.observacoes||'').trim(),
-    aulas:['A','B','D'].filter(c=>cat.includes(c)).map(c=>({categoria:NUMERO[c],quantidade:Number(quantidades[c])}))},comChave(solicitacaoId)));
+    aulas:['A','B','D'].filter(c=>cat.includes(c)).map(c=>({categoria:NUMERO[c],quantidade:Number(quantidades[c])})),...(Number(dados.tipoAula)?{tipoAula:Number(dados.tipoAula)}:{})},comChave(solicitacaoId)));
    // O contrato anexado no cadastro sobe logo depois; uma falha aqui não desfaz o cadastro (a ficha anexa de novo).
    let avisoContrato='';if(r?.id&&dados.contratoArquivo?.size){try{await this.anexarContrato(r.id,dados.contratoArquivo);}catch(e){avisoContrato='O cadastro foi criado, mas o contrato não foi anexado: '+(e?.message||'tente de novo pela ficha')+'.';}}
    return {id:r?.id,contaExistente:!!r?.contaExistente,...respostaSenha(r),linkAcesso:r?.linkAcesso||null,avisoContrato};
@@ -498,6 +503,8 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   // 11/11/2026: nome próprio (antes "validarCadastro", o mesmo da validação do formulário, que ficava apagada e chamava
   // alunos/[object Object]/validar-cadastro a cada campo do cadastro).
   async validarCadastroDoAluno(id){regras.autorizar(op,'anotar');await chamar(Post(`alunos/${id}/validar-cadastro`,{}));},
+  // 24/11/2026: "Habilitar agendamento" (a API confere os requisitos e avisa o aluno).
+  async liberarAgendamentoDoAluno(id){regras.autorizar(op,'anotar');await chamar(Post(`alunos/${id}/liberar-agendamento`,{}));},
   async salvarContrato(id,{tipoCnh,dataContrato,km}){regras.autorizar(op,'anotar');await chamar(Put(`alunos/${id}/contrato`,{tipoCnhId:Number(tipoCnh)||null,dataContrato:dataContrato||null,kmUnidadeId:u.guid(km)||null}));},
   async anexarContrato(id,arquivo){regras.autorizar(op,'anotar');if(!arquivo?.size)throw new Error('Escolha o arquivo do contrato (PDF, JPG ou PNG).');const corpo=new FormData();corpo.append('arquivo',arquivo,arquivo.name||'contrato');await chamar(Post(`alunos/${id}/contrato/arquivo`,corpo));},
   // 17/11/2026: as reposições por atestado do aluno: as que ainda não viraram aula (a próxima aula agendada da categoria
@@ -548,7 +555,11 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
   async anexarAgendamentoProva(id,tentativaId,arquivo){if(!arquivo?.size)throw new Error('Escolha o PDF do agendamento.');const corpo=new FormData();corpo.append('arquivo',arquivo,arquivo.name||'agendamento.pdf');await chamar(Post(`alunos/${id}/provas/${tentativaId}/agendamento`,corpo));},
   async agendamentoProva(id,tentativaId){return chamar(Get(`alunos/${id}/provas/${tentativaId}/agendamento`,{binario:true}));},
   async diasProva(f={}){return lista(await chamar(Get(ComParams('agenda/provas',Object.fromEntries(Object.entries(f).filter(([,v])=>v))))));},
-  async definirDiaProva(data,{maxManha,maxTarde}){const n=v=>v===''||v==null?null:Number(v);return chamar(Put(`agenda/provas/${data}`,{maxManha:n(maxManha),maxTarde:n(maxTarde)}));},
+  // 25/11/2026 (pedido do usuário): a prova não tem mais limite de alunos (o sistema conta os colocados).
+  async definirDiaProva(data){return chamar(Put(`agenda/provas/${data}`,{maxManha:null,maxTarde:null}));},
+  // A Gerência edita tudo (data, instrutor e veículo; vazio = sem) e a prévia da confirmação (nada é gravado).
+  async editarDiaProva(data,{novaData,motoristaId,veiculoId}={}){return chamar(Put(`agenda/provas/${data}/edicao`,{novaData:novaData||null,motoristaId:motoristaId||null,veiculoId:veiculoId||null}));},
+  async previaDiaProva(data,{motoristaId,veiculoId,origem}={}){return chamar(Get(ComParams(`agenda/provas/${data}/previa`,Object.fromEntries(Object.entries({motoristaId,veiculoId,origem}).filter(([,v])=>v)))));},
   async reservarVeiculoProva(data,veiculoId){return chamar(Post(`agenda/provas/${data}/veiculos`,{veiculoId}));},
   async liberarVeiculoProva(data,veiculoId){return chamar(Delete(`agenda/provas/${data}/veiculos/${veiculoId}`));},
   // 18/11/2026: exclui o dia de prova vazio (sem aluno, veículo e instrutor).
@@ -572,6 +583,13 @@ export function criarServicoAdministrativoIntegrado(identidade,u){
    const corpo={};for(const [tipo,item] of Object.entries(dados||{})){const chave=tipo==='oftalmologico'?'oftalmologico':tipo;if(!EXAME_ID[chave])throw new Error('Utilize o fluxo de tentativas para as provas.');corpo[chave]={situacaoId:SITUACAO_EXAME_ID[item.status]??null};}
    if(Object.keys(corpo).length)await chamar(Put(`alunos/${id}/exames`,corpo));
   },
+  // 24/11/2026 (pedido do usuário): coloca o aluno na prova prática do dia (a tentativa em aberto do tipo vira Agendado na
+  // data; sem ela, uma nova) e tira (volta para Solicitado, sem data).
+  async colocarNaProva(alunoId,tipo,data){
+   const aberta=adaptarProvas(await chamar(Get(`alunos/${alunoId}/provas`)),{}).tentativasProvas.find(t=>t.tipo===tipo&&!t.arquivada&&['Solicitado','Agendado'].includes(t.status));
+   return this.movimentarProva(alunoId,{tentativaId:aberta?.id,tipo,status:'Agendado',data,periodoId:1});
+  },
+  async tirarDaProva(alunoId,tentativaId){return this.movimentarProva(alunoId,{tentativaId,status:'Solicitado'});},
   async movimentarProva(id,dados,eventoId=chaveOperacao()){
    regras.autorizar(op,'verificar');
    if(dados.acao==='arquivar')return chamar(Post(`alunos/${id}/provas/${dados.tentativaId}/arquivar`,{motivo:String(dados.motivo||'').trim()}));

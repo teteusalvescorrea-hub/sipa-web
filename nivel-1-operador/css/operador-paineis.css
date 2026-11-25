@@ -716,3 +716,310 @@ html body .op-agenda .op-week-grid .op-agenda-slot.op-slot-almoco-cheio .op-slot
 html[data-theme=dark] .op-envio-ajuda{background:#1b3248;color:#d6e8f8}
 html[data-theme=dark] .op-envio-opcao,html[data-theme=dark] .op-envio-form textarea{background:#1a3148;border-color:#35536f;color:#dbe7f2}
 html[data-theme=dark] .op-envio-opcao[aria-checked=true]{background:#1f78c1;border-color:#1f78c1;color:#fff}
+
+/* 24/11/2026: os alunos da prova (busca por nome ou CPF e a lista do dia). */
+.op-dias-prova-busca { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.op-dias-prova-resultados, .op-dias-prova-lista { display: grid; gap: 8px; margin-top: 12px; }
+.op-dias-prova-resultado, .op-dias-prova-alunos-lista li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border: 1px solid var(--op-borda, #dbe5ef); border-radius: 10px; }
+.op-dias-prova-resultado > div, .op-dias-prova-alunos-lista li > div { display: grid; gap: 2px; flex: 1 1 220px; min-width: 0; }
+.op-dias-prova-alunos-lista { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.op-dias-prova-lista h3 { margin: 4px 0 0; font-size: 15px; }
+.op-badge-ok { background: #e7f6ec; color: #1f7a45; }
+.op-badge-erro { background: #fde8e6; color: #b42318; }
+
+/* 24/11/2026: o selo do tipo da aula ocupa a linha inteira do cartão (não cobre o horário). */
+.op-aula-evento .tipo-aula{grid-column:1/-1;justify-self:start;max-width:100%}
+.op-agenda .op-week-grid .op-aula-evento .tipo-aula{font-size:9.5px;padding:0 6px}
+
+/* 24/11/2026 (pente-fino): o aluno que pediu a liberação para agendar, na lista de alunos. */
+.op-etapa-celula { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+.op-badge.op-badge-liberacao { background:#fff1dc; color:#8a4b00; border-color:#f6d39f; }
+html[data-theme=dark] .op-badge.op-badge-liberacao { background:#3a2608; color:#ffd79a; border-color:#6b4510; }
+.op-aulas-liberacao [data-op-habilitar-agendamento] { margin-top:8px; justify-self:start; }
+
+/* 25/11/2026 (pedido do usuário): "Provas práticas" num bloco só, a lista em cartões e a conferência antes de gravar. */
+.op-provas-bloco{display:grid;gap:18px}
+.op-provas-cabecalho{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.op-provas-cabecalho h2{margin:0}
+.op-provas-cabecalho p{margin:6px 0 0;max-width:72ch;line-height:1.5;color:var(--sipa-texto-neutro)}
+.op-provas-contador{flex:none;white-space:nowrap}
+.op-provas-bloco .op-dias-prova-regras{margin-top:-6px}
+.op-provas-nova{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:end;gap:14px 16px;padding:18px;border:1px solid var(--progress-border-light);border-radius:14px;background:var(--progress-card-hover)}
+.op-provas-nova-titulo{grid-column:1/-1;margin:0;font-size:14px;font-weight:700;color:var(--progress-text)}
+.op-provas-nova>label{display:grid;gap:6px;margin:0;min-width:0;font-size:13px;font-weight:600;color:var(--progress-text)}
+.op-provas-nova>label>:is(input,select){height:44px;min-height:44px;margin:0;font-size:14px;font-weight:500;box-sizing:border-box}
+.op-provas-nova>.op-button{height:44px;min-width:170px}
+.op-provas-lista{display:grid;gap:12px}
+.op-provas-lista-titulo{margin:4px 0 0;font-size:14px;font-weight:700;color:var(--progress-text)}
+.op-prova{border:1px solid var(--progress-border-light);border-radius:14px;background:var(--progress-card,#fff);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.op-prova-aberta{border-color:#b9d3ee;box-shadow:0 2px 10px #1769ab12}
+.op-prova-topo{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:14px 18px;padding:14px 16px}
+.op-prova-data{display:grid;place-items:center;width:56px;height:60px;border-radius:12px;background:#eaf3fc;color:#1769ab;line-height:1}
+.op-prova-data strong{font-size:22px;font-weight:700}
+.op-prova-data span{margin-top:3px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.op-prova-info{display:grid;gap:6px;min-width:0}
+.op-prova-titulo{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.op-prova-titulo strong{font-size:15px;color:var(--progress-text)}
+.op-prova-quando{font-size:12px;color:var(--sipa-texto-neutro)}
+.op-prova-recursos{display:flex;flex-wrap:wrap;gap:6px 22px}
+.op-prova-recurso{display:grid;gap:1px;min-width:0;font-size:13px;color:var(--progress-text)}
+.op-prova-recurso small{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--sipa-texto-neutro)}
+.op-prova-vazio-texto{color:var(--sipa-texto-neutro);font-style:italic}
+.op-prova-conta{display:inline-flex;align-items:center;justify-content:center;min-width:86px;padding:6px 12px;border-radius:999px;background:#e7f6ec;color:#1f7a45;font-size:13px;font-weight:700;white-space:nowrap}
+.op-prova-conta-zero{background:var(--progress-card-hover);color:var(--sipa-texto-neutro)}
+.op-prova-acoes{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.op-prova-acoes .op-button{min-height:36px;padding:6px 14px;font-size:13px}
+.op-prova-acoes .op-prova-excluir{color:#a12525;border-color:#e6b9b9}
+.op-prova-acoes .op-prova-excluir:hover{background:#fdf0f0}
+.op-prova-edicao{margin:0 16px 14px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.op-prova-edicao-botoes{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.op-prova-alunos{display:grid;gap:10px;padding:14px 16px 16px;border-top:1px solid var(--progress-border-light);background:var(--progress-card-hover)}
+.op-prova-alunos .op-dias-prova-alunos-lista li{background:var(--progress-card,#fff)}
+.op-prova-alunos input[type=search]{height:42px;box-sizing:border-box;width:100%}
+.op-prova-sem-alunos{margin:0}
+.op-provas-ocupado{cursor:progress}
+.op-provas-ocupado button{pointer-events:none;opacity:.7}
+/* A conferência (dentro do diálogo de confirmação). */
+.op-prova-resumo{display:grid;gap:0;border:1px solid #c9d6e3;border-radius:10px;overflow:hidden}
+.op-prova-resumo-linha{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px;padding:10px 14px;border-bottom:1px solid #e3eaf2}
+.op-prova-resumo-rotulo{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#5a6b7f;padding-top:2px}
+.op-prova-resumo-valor{display:grid;gap:2px;min-width:0}
+.op-prova-resumo-valor strong{font-size:14px;color:#10233f}
+.op-prova-resumo-antes{font-size:12px;color:#7a8898}
+.op-prova-resumo-mudou{background:#fff8e6}
+.op-prova-resumo-alerta{font-size:12px;font-weight:600;color:#9a5b0f}
+.op-prova-resumo-aulas{padding:10px 14px}
+.op-prova-resumo-aulas p{margin:0;font-size:13px;line-height:1.45}
+.op-prova-resumo-aulas ul{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.5}
+.op-prova-resumo-ok{color:#1f7a45}
+.op-prova-resumo-aulas-alerta{background:#fff4ea}
+.op-prova-resumo-aulas-alerta p{font-weight:600;color:#8a4a12}
+html[data-theme=dark] .op-provas-nova{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .op-prova{background:#12263a;border-color:#30465b}
+html[data-theme=dark] .op-prova-aberta{border-color:#3d6c99}
+html[data-theme=dark] .op-prova-data{background:#1c3a58;color:#9cc9f3}
+html[data-theme=dark] .op-prova-conta{background:#163b29;color:#8fdcb0}
+html[data-theme=dark] .op-prova-conta-zero{background:#1b3044;color:#a9b9ca}
+html[data-theme=dark] .op-prova-alunos{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .op-prova-alunos .op-dias-prova-alunos-lista li{background:#12263a}
+html[data-theme=dark] .op-prova-acoes .op-prova-excluir{color:#f3a3a3;border-color:#6b3a3a}
+html[data-theme=dark] .op-prova-acoes .op-prova-excluir:hover{background:#3a2020}
+html[data-theme=dark] .op-prova-resumo{border-color:#3a4b60}
+html[data-theme=dark] .op-prova-resumo-linha{border-color:#2c3b4d}
+html[data-theme=dark] .op-prova-resumo-rotulo{color:#9fb0c2}
+html[data-theme=dark] .op-prova-resumo-valor strong{color:#e6edf5}
+html[data-theme=dark] .op-prova-resumo-mudou{background:#2f2a1a}
+html[data-theme=dark] .op-prova-resumo-alerta{color:#f0c27a}
+html[data-theme=dark] .op-prova-resumo-aulas-alerta{background:#33261a}
+html[data-theme=dark] .op-prova-resumo-aulas-alerta p{color:#f0b27a}
+html[data-theme=dark] .op-prova-resumo-ok{color:#8fdcb0}
+@media(max-width:1000px){.op-provas-nova{grid-template-columns:repeat(2,minmax(0,1fr))}.op-provas-nova>.op-button{grid-column:1/-1;width:100%}.op-prova-topo{grid-template-columns:auto minmax(0,1fr) auto}.op-prova-acoes{grid-column:1/-1;justify-content:flex-start}}
+@media(max-width:600px){.op-provas-cabecalho{flex-direction:column}.op-provas-nova,.op-prova-edicao{grid-template-columns:minmax(0,1fr)}.op-prova-topo{grid-template-columns:auto minmax(0,1fr);padding:12px}.op-prova-conta{justify-self:start;grid-column:2}.op-prova-acoes .op-button{flex:1 1 auto}.op-prova-resumo-linha{grid-template-columns:minmax(0,1fr);gap:2px}.op-prova-edicao{margin:0 12px 12px}}
+.op-prova-resumo-nota{font-size:12px;color:#5a6b7f}
+html[data-theme=dark] .op-prova-resumo-nota{color:#9fb0c2}
+/* 25/11/2026 (pedido do usuário): o resumo numa linha só, sem as etiquetas, e o botão "Agendar prova" que abre a tela. */
+.op-provas-cabecalho{align-items:center}
+.op-provas-cabecalho-textos{min-width:0;flex:1 1 auto}
+.op-provas-cabecalho p{max-width:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op-provas-cabecalho-lado{display:flex;align-items:center;gap:12px;flex:none}
+.op-provas-agendar{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:10px 20px;font-size:14px;font-weight:700;white-space:nowrap}
+.op-provas-agendar-mais{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:rgb(255 255 255 / .22);font-size:16px;line-height:1}
+.op-provas-janela{width:min(560px,calc(100% - 32px))}
+.op-provas-janela .op-provas-nova{grid-template-columns:minmax(0,1fr);gap:16px;padding:0;border:0;background:none}
+.op-provas-janela-ajuda{margin:0;padding:12px 14px;border-radius:10px;background:var(--progress-card-hover);border:1px solid var(--progress-border-light);font-size:13px;line-height:1.5;color:var(--progress-text)}
+.op-provas-ficha-veiculo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;padding:12px 14px;border:1px solid #b9d3ee;border-radius:12px;background:#f2f8fe}
+.op-provas-ficha-veiculo>div{display:grid;gap:2px;min-width:0}
+.op-provas-ficha-veiculo small{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sipa-texto-neutro)}
+.op-provas-ficha-veiculo strong{font-size:14px;color:var(--progress-text);overflow-wrap:anywhere}
+.op-provas-placa{padding:6px 12px;border:2px solid #10233f;border-radius:6px;background:#fff;text-align:center}
+.op-provas-placa strong{font-size:16px;letter-spacing:.08em;font-family:ui-monospace,Consolas,monospace;color:#10233f}
+.op-provas-placa small{color:#1769ab}
+.op-provas-janela-botoes{display:flex;justify-content:flex-end;gap:10px;padding-top:6px}
+.op-provas-janela-botoes .op-button{min-height:44px;min-width:130px}
+html[data-theme=dark] .op-provas-janela-ajuda{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .op-provas-ficha-veiculo{background:#152b40;border-color:#3d6c99}
+html[data-theme=dark] .op-provas-placa{background:#e9eef4}
+@media(max-width:900px){.op-provas-cabecalho{flex-direction:column;align-items:stretch}.op-provas-cabecalho p{white-space:normal}.op-provas-cabecalho-lado{justify-content:space-between}}
+@media(max-width:600px){.op-provas-cabecalho-lado{flex-direction:column-reverse;align-items:stretch}.op-provas-agendar{justify-content:center;width:100%}.op-provas-contador{align-self:flex-start}.op-provas-ficha-veiculo{grid-template-columns:auto minmax(0,1fr)}.op-provas-janela-botoes{flex-direction:column-reverse}.op-provas-janela-botoes .op-button{width:100%}}
+/* 25/11/2026 (pedido do usuário): a categoria da prova, os campos lado a lado e a placa no modelo Mercosul. */
+.op-provas-janela{width:min(640px,calc(100% - 32px))}
+.op-provas-campo{display:grid;gap:8px}
+.op-provas-rotulo{font-size:13px;font-weight:600;color:var(--progress-text)}
+.op-provas-categorias{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.op-provas-categoria{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"icone nome" "icone qtd";align-items:center;column-gap:10px;padding:10px 14px;border:1.5px solid var(--progress-border-light);border-radius:12px;background:var(--progress-card,#fff);color:var(--progress-text);text-align:left;font:inherit;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+.op-provas-categoria:hover{border-color:#8fb8e3}
+.op-provas-categoria:focus-visible{outline:3px solid #1769ab55;outline-offset:2px}
+.op-provas-categoria-icone{grid-area:icone;display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--progress-card-hover);color:#1769ab}
+.op-provas-categoria-icone svg{width:24px;height:24px}
+.op-provas-categoria strong{grid-area:nome;font-size:14px}
+.op-provas-categoria small{grid-area:qtd;font-size:12px;color:var(--sipa-texto-neutro)}
+.op-provas-categoria-ativa{border-color:#1769ab;background:#eef6fe;box-shadow:0 0 0 3px #1769ab1f}
+.op-provas-categoria-ativa .op-provas-categoria-icone{background:#1769ab;color:#fff}
+.op-provas-janela-linha{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.op-provas-janela .op-provas-nova>label,.op-provas-janela-linha>label{display:grid;gap:6px;margin:0;min-width:0;font-size:13px;font-weight:600;color:var(--progress-text)}
+.op-provas-janela-linha>label>select{height:44px;min-height:44px;margin:0;font-size:14px;font-weight:500;box-sizing:border-box}
+.op-provas-campo-dica{font-size:12px;font-weight:500;color:var(--sipa-texto-neutro)}
+.op-provas-ficha-veiculo{grid-template-columns:auto minmax(0,1fr);gap:18px;padding:14px 16px;border-radius:14px}
+.op-provas-ficha-dados{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.op-provas-ficha-dados>div{display:grid;gap:2px;min-width:0}
+/* A placa Mercosul: faixa azul com BRASIL e os caracteres pretos sobre o branco. */
+.op-provas-placa{display:grid;width:150px;padding:0;border:2.5px solid #1b1f24;border-radius:8px;background:#fff;overflow:hidden;box-shadow:0 2px 6px #10233f26;text-align:center}
+.op-provas-placa-faixa{display:flex;align-items:center;justify-content:center;gap:6px;padding:3px 6px;background:#0b3e8f;color:#fff;font-size:10px;font-weight:700;letter-spacing:.18em}
+.op-provas-placa-pais{padding:0 4px;border-radius:2px;background:#fff;color:#0b3e8f;font-size:8px;letter-spacing:.04em;line-height:12px}
+.op-provas-placa strong{padding:6px 8px 7px;font-family:"Arial Narrow",Arial,sans-serif;font-size:26px;font-weight:800;letter-spacing:.06em;line-height:1;color:#111}
+html[data-theme=dark] .op-provas-categoria{background:#12263a;border-color:#30465b}
+html[data-theme=dark] .op-provas-categoria-icone{background:#1b3044;color:#9cc9f3}
+html[data-theme=dark] .op-provas-categoria-ativa{border-color:#5aa0e6;background:#183552;box-shadow:0 0 0 3px #5aa0e62e}
+html[data-theme=dark] .op-provas-categoria-ativa .op-provas-categoria-icone{background:#3d8ad6;color:#fff}
+html[data-theme=dark] .op-provas-placa{background:#fff;border-color:#000}
+@media(max-width:600px){.op-provas-janela-linha,.op-provas-ficha-dados{grid-template-columns:minmax(0,1fr)}.op-provas-ficha-veiculo{grid-template-columns:minmax(0,1fr);justify-items:start}.op-provas-categorias{grid-template-columns:repeat(3,minmax(0,1fr))}.op-provas-categoria{grid-template-columns:1fr;grid-template-areas:"icone" "nome" "qtd";justify-items:center;text-align:center;row-gap:4px;padding:10px 6px}}
+.op-provas-placa{width:auto;min-width:172px}
+.op-provas-placa strong{white-space:nowrap;padding:7px 12px 8px;font-family:Arial,Helvetica,sans-serif;font-size:24px;letter-spacing:.05em}
+.op-provas-ficha-dados{row-gap:14px}
+.op-provas-ficha-veiculo>.op-provas-ficha-dados{gap:14px 20px}
+/* 25/11/2026 (pedido do usuário): categorias sem ícone e o aviso das aulas canceladas. */
+.op-provas-categoria{grid-template-columns:1fr;grid-template-areas:"nome" "qtd";justify-items:center;text-align:center;row-gap:2px;padding:12px 10px}
+.op-provas-categoria strong{font-size:15px}
+.op-provas-aviso{display:grid;gap:4px;padding:12px 16px;border:1px solid #f0c98b;border-left:4px solid #d98a16;border-radius:10px;background:#fff8ec}
+.op-provas-aviso strong{font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:#9a5b0f}
+.op-provas-aviso p{margin:0;font-size:13px;line-height:1.55;color:#4a3a1f}
+html[data-theme=dark] .op-provas-aviso{background:#2e2414;border-color:#6e5226;border-left-color:#e0a040}
+html[data-theme=dark] .op-provas-aviso strong{color:#f0c27a}
+html[data-theme=dark] .op-provas-aviso p{color:#ecdcc0}
+@media(max-width:600px){.op-provas-categoria{padding:10px 6px}}
+/* 25/11/2026 (pedido do usuário): o cartão da prova organizado em blocos e a área dos alunos. */
+.op-prova-topo{gap:16px 20px;padding:16px 18px}
+.op-prova-info{gap:10px}
+.op-prova-titulo{align-items:center;gap:8px}
+.op-prova-titulo strong{font-size:16px}
+.op-prova-chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;background:var(--progress-card-hover);border:1px solid var(--progress-border-light);font-size:12px;font-weight:600;color:var(--sipa-texto-neutro);white-space:nowrap}
+.op-prova-chip-categoria{background:#eaf3fc;border-color:#b9d3ee;color:#1769ab}
+.op-prova-recursos{display:grid;grid-template-columns:repeat(2,minmax(0,max-content));gap:10px;align-items:stretch}
+.op-prova-recurso{display:grid;gap:4px;align-content:start;min-width:0;padding:8px 14px;border:1px solid var(--progress-border-light);border-radius:10px;background:var(--progress-card-hover)}
+.op-prova-recurso small{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--sipa-texto-neutro)}
+.op-prova-recurso-valor{display:grid;gap:4px;font-size:14px;font-weight:600;color:var(--progress-text)}
+.op-prova-veiculo-linha{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.op-prova-placa-mini{display:inline-block;padding:1px 7px;border:1.5px solid #1b1f24;border-top:4px solid #0b3e8f;border-radius:4px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:800;letter-spacing:.06em;line-height:1.4}
+/* Área dos alunos. */
+.op-prova-alunos{gap:14px;padding:16px 18px 18px}
+.op-prova-alunos-cabeca,.op-prova-colocar-cabeca{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.op-prova-alunos h4,.op-prova-colocar h4{margin:0;font-size:14px;font-weight:700;color:var(--progress-text)}
+.op-prova-alunos-numero{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 7px;border-radius:999px;background:#1769ab;color:#fff;font-size:12px;font-weight:700}
+.op-prova-alunos-lista{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.op-prova-alunos-lista li,.op-prova-resultado{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;border:1px solid var(--progress-border-light);border-radius:10px;background:var(--progress-card,#fff)}
+.op-prova-aluno-info{display:grid;gap:2px;flex:1 1 240px;min-width:0}
+.op-prova-aluno-info strong{font-size:14px;color:var(--progress-text)}
+.op-prova-aluno-info span{font-size:12px;color:var(--sipa-texto-neutro)}
+.op-prova-sem-alunos{margin:0;padding:12px 14px;border:1px dashed var(--progress-border);border-radius:10px;font-size:13px;color:var(--sipa-texto-neutro);text-align:center}
+.op-prova-colocar{display:grid;gap:10px;padding-top:14px;border-top:1px solid var(--progress-border-light)}
+.op-prova-colocar-filtro{font-size:12px;font-weight:600;color:#1769ab;padding:2px 10px;border-radius:999px;background:#eaf3fc}
+.op-prova-colocar input[type=search]{height:44px;box-sizing:border-box;width:100%;padding-left:40px;background:var(--progress-card,#fff) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%236b8299%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2711%27 cy=%2711%27 r=%277%27/%3E%3Cpath d=%27m20 20-3.5-3.5%27/%3E%3C/svg%3E") 13px center/18px no-repeat}
+.op-prova-resultados{display:grid;gap:8px}
+.op-prova-resultado .op-button{min-height:38px;padding:8px 16px;font-size:13px}
+.op-prova-resultado-tipo{height:38px;min-width:180px}
+.op-prova-resultados-nada{margin:0;font-size:13px;color:var(--sipa-texto-neutro)}
+.op-prova-resultados-nota{margin:0;font-size:12px;color:var(--sipa-texto-neutro)}
+html[data-theme=dark] .op-prova-chip{background:#1b3044;border-color:#30465b;color:#a9b9ca}
+html[data-theme=dark] .op-prova-chip-categoria,html[data-theme=dark] .op-prova-colocar-filtro{background:#183552;border-color:#3d6c99;color:#9cc9f3}
+html[data-theme=dark] .op-prova-recurso{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .op-prova-alunos-lista li,html[data-theme=dark] .op-prova-resultado{background:#12263a;border-color:#30465b}
+html[data-theme=dark] .op-prova-colocar input[type=search]{background-color:#12263a}
+html[data-theme=dark] .op-prova-alunos-numero{background:#3d8ad6}
+@media(max-width:700px){.op-prova-recursos{grid-template-columns:minmax(0,1fr)}.op-prova-resultado .op-button{flex:1 1 100%}}
+.op-provas-bloco .op-prova-colocar input.op-prova-busca{padding-left:42px;background-position:14px center}
+.op-prova-veiculo-linha{flex-wrap:nowrap;white-space:nowrap}
+@media(max-width:700px){.op-prova-veiculo-linha{flex-wrap:wrap;white-space:normal}}
+html body .op-provas-bloco .op-prova-colocar input.op-prova-busca{padding-left:42px}
+html body .op-provas-bloco .op-prova-alunos .op-prova-colocar input.op-prova-busca{padding-left:42px}
+html body .op-provas-bloco .op-prova-alunos .op-prova-colocar input.op-prova-busca{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%236b8299%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2711%27 cy=%2711%27 r=%277%27/%3E%3Cpath d=%27m20 20-3.5-3.5%27/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:14px center;background-size:18px}
+html[data-theme=dark] body .op-provas-bloco .op-prova-alunos .op-prova-colocar input.op-prova-busca{background-image:url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23a9b9ca%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2711%27 cy=%2711%27 r=%277%27/%3E%3Cpath d=%27m20 20-3.5-3.5%27/%3E%3C/svg%3E")}
+/* 25/11/2026 (pedido do usuário, 2ª versão): o cabeçalho do cartão como uma ficha limpa, sem caixinhas nem etiquetas. */
+.op-prova-topo{grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:16px 22px;padding:18px 20px}
+.op-prova-data{display:grid;justify-items:center;align-content:center;gap:2px;width:68px;height:auto;padding:10px 0;border-radius:12px;background:#1769ab;color:#fff;line-height:1}
+.op-prova-data strong{font-size:26px;font-weight:800}
+.op-prova-data-semana,.op-prova-data-mes{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin:0}
+.op-prova-info{display:grid;gap:4px;min-width:0}
+.op-prova-titulo strong{font-size:17px;font-weight:700;color:var(--progress-text)}
+.op-prova-meta{display:flex;flex-wrap:wrap;gap:4px 0;font-size:13px;color:var(--sipa-texto-neutro)}
+.op-prova-meta span+span::before{content:"·";margin:0 8px;opacity:.6}
+.op-prova-ficha{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;margin:8px 0 0;font-size:14px}
+.op-prova-ficha dt{font-size:12px;font-weight:600;color:var(--sipa-texto-neutro);padding-top:1px}
+.op-prova-ficha dd{margin:0;font-weight:600;color:var(--progress-text);min-width:0;overflow-wrap:anywhere}
+.op-prova-placa-texto{display:inline-block;margin-left:8px;padding:0 6px;border:1px solid var(--progress-border);border-radius:5px;font-family:ui-monospace,Consolas,monospace;font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--progress-text);vertical-align:1px}
+html[data-theme=dark] .op-prova-data{background:#2f6fae}
+html[data-theme=dark] .op-prova-placa-texto{border-color:#3a5068}
+@media(max-width:1000px){.op-prova-topo{grid-template-columns:auto minmax(0,1fr) auto}}
+@media(max-width:600px){.op-prova-topo{grid-template-columns:auto minmax(0,1fr);padding:14px}.op-prova-data{width:58px}.op-prova-data strong{font-size:22px}}
+html[data-theme=dark] .op-prova-data{color:#fff}
+/* 25/11/2026 (pedido do usuário): o histórico das provas que já passaram. */
+.op-provas-historico{display:grid;gap:12px;padding-top:18px;border-top:1px solid var(--progress-border-light)}
+.op-provas-historico-cabeca{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 16px}
+.op-provas-historico-cabeca h3{margin:0}
+.op-provas-historico-ajuda{margin:4px 0 0;font-size:13px;color:var(--sipa-texto-neutro)}
+.op-provas-historico-cabeca select{height:40px;min-width:190px}
+.op-provas-historico-lista{display:grid;gap:10px}
+.op-prova-hist{border:1px solid var(--progress-border-light);border-radius:14px;background:var(--progress-card,#fff);overflow:hidden}
+.op-prova-hist[open]{border-color:#b9d3ee;box-shadow:0 2px 10px #1769ab12}
+.op-prova-hist-resumo{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:14px 20px;padding:14px 18px;cursor:pointer;list-style:none}
+.op-prova-hist-resumo::-webkit-details-marker{display:none}
+.op-prova-hist-resumo:hover{background:var(--progress-card-hover)}
+.op-prova-hist-resumo:focus-visible{outline:3px solid #1769ab55;outline-offset:-3px}
+.op-prova-data-passada{background:#5f7183}
+.op-prova-hist-placar{display:flex;gap:8px}
+.op-prova-hist-ponto{display:grid;justify-items:center;min-width:64px;padding:6px 8px;border-radius:10px;line-height:1.1}
+.op-prova-hist-ponto strong{font-size:18px;font-weight:800}
+.op-prova-hist-ponto small{font-size:11px;font-weight:600}
+.op-prova-hist-ok{background:#e7f6ec;color:#1f7a45}
+.op-prova-hist-erro{background:#fdecec;color:#a12525}
+.op-prova-hist-falta{background:#f1f4f7;color:#5f7183}
+.op-prova-hist-sem{font-size:13px;color:var(--sipa-texto-neutro)}
+.op-prova-hist-seta{width:10px;height:10px;border-right:2px solid var(--sipa-texto-neutro);border-bottom:2px solid var(--sipa-texto-neutro);transform:rotate(45deg);transition:transform .15s;margin-right:4px}
+.op-prova-hist[open] .op-prova-hist-seta{transform:rotate(-135deg)}
+.op-prova-hist-detalhes{display:grid;gap:12px;padding:16px 18px 18px;border-top:1px solid var(--progress-border-light);background:var(--progress-card-hover)}
+.op-prova-hist-numeros{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.op-prova-hist-numeros>div{display:grid;gap:2px;padding:10px 12px;border:1px solid var(--progress-border-light);border-radius:10px;background:var(--progress-card,#fff)}
+.op-prova-hist-numeros small{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--sipa-texto-neutro)}
+.op-prova-hist-numeros strong{font-size:20px;color:var(--progress-text)}
+.op-prova-hist-numeros span{font-size:11px;color:var(--sipa-texto-neutro)}
+.op-prova-hist-pendente{margin:0;padding:10px 14px;border-left:4px solid #d98a16;border-radius:8px;background:#fff8ec;font-size:13px;color:#6b4a14}
+html[data-theme=dark] .op-prova-hist{background:#12263a;border-color:#30465b}
+html[data-theme=dark] .op-prova-hist[open]{border-color:#3d6c99}
+html[data-theme=dark] .op-prova-hist-resumo:hover{background:#152b40}
+html[data-theme=dark] .op-prova-data-passada{background:#3f5266}
+html[data-theme=dark] .op-prova-hist-ok{background:#163b29;color:#8fdcb0}
+html[data-theme=dark] .op-prova-hist-erro{background:#3a2020;color:#f3a3a3}
+html[data-theme=dark] .op-prova-hist-falta{background:#1b3044;color:#a9b9ca}
+html[data-theme=dark] .op-prova-hist-detalhes{background:#152b40;border-color:#30465b}
+html[data-theme=dark] .op-prova-hist-numeros>div{background:#12263a;border-color:#30465b}
+html[data-theme=dark] .op-prova-hist-pendente{background:#2e2414;color:#ecdcc0}
+html[data-theme=dark] .op-provas-historico{border-color:#30465b}
+@media(max-width:1000px){.op-prova-hist-resumo{grid-template-columns:auto minmax(0,1fr) auto}.op-prova-hist-placar{grid-column:2/-1}.op-prova-hist-seta{grid-row:1;grid-column:3}.op-prova-hist-numeros{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:600px){.op-prova-hist-resumo{grid-template-columns:auto minmax(0,1fr) auto;padding:12px 14px}.op-prova-hist-placar{grid-column:1/-1}.op-prova-hist-ponto{flex:1}.op-prova-hist-numeros{grid-template-columns:repeat(2,minmax(0,1fr))}.op-provas-historico-cabeca select{width:100%}}
+/* 25/11/2026 (pedido do usuário): a página de provas no padrão da Agenda da Unidade (botões no topo, direto na página). */
+.op-provas-pagina{display:grid;gap:16px;padding:0;border:0;background:none;box-shadow:none}
+.op-provas-topo-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+html body .op-provas-topo-acoes .op-button.op-provas-acao{margin:0;min-height:44px;padding:10px 20px;border-radius:10px;background:#1769aa;border:1px solid #1769aa;color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(23,105,170,.18)}
+html body .op-provas-topo-acoes .op-button.op-provas-acao:hover{background:#125a94;border-color:#125a94;color:#fff}
+html body .op-provas-topo-acoes .op-button.op-provas-acao:focus-visible{outline:3px solid #9cc8f2;outline-offset:2px}
+html[data-theme=dark] body .op-provas-topo-acoes .op-button.op-provas-acao{background:#2a7fc4;border-color:#2a7fc4;color:#fff}
+.op-provas-lista-cabeca{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.op-provas-lista-cabeca h3{margin:0;font-size:16px}
+.op-provas-contador{font-size:13px;color:var(--sipa-texto-neutro)}
+.op-provas-campo-topo{display:grid;gap:8px;margin:0;font-size:15px;font-weight:600;color:var(--progress-text);max-width:420px}
+.op-provas-campo-topo select{width:100%;height:46px;font-size:14px}
+.op-provas-historico{border-top:0;padding-top:0}
+.op-provas-historico-cabeca{display:grid;gap:6px;justify-content:stretch}
+@media(max-width:600px){.op-provas-topo-acoes .op-button.op-provas-acao{flex:1 1 auto}.op-provas-campo-topo{max-width:none}}
+/* 25/11/2026 (pedido do usuário): a seção "Liberações" do menu. */
+.op-lib-aluno,.op-lib-quando{display:grid;gap:2px;min-width:0}
+.op-lib-aluno strong{font-size:14px;color:var(--progress-text)}
+.op-lib-aluno span,.op-lib-quando small{font-size:12px;color:var(--sipa-texto-neutro)}
+.op-lib-acoes{justify-content:flex-end;flex-wrap:wrap}
+.op-lib-cartao .op-table td{vertical-align:middle}
+/* 25/11/2026 (pedido do usuário): Liberações em duas telas (pedidos e histórico), com os botões no topo. */
+.op-lib-topo{margin-bottom:16px}
+html body .op-lib-topo .op-button.op-button-outline{min-height:44px;padding:10px 20px;border-radius:10px;font-weight:600}
+.op-lib-filtros{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:12px 16px;margin:4px 0 14px}
+.op-lib-filtros label{display:grid;gap:6px;margin:0;font-size:13px;font-weight:600;color:var(--progress-text)}
+.op-lib-filtros :is(input,select){height:44px;box-sizing:border-box;width:100%}
+@media(max-width:600px){.op-lib-filtros{grid-template-columns:minmax(0,1fr)}.op-lib-topo .op-button{flex:1 1 auto}}

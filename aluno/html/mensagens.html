@@ -30,7 +30,7 @@
 <link rel="modulepreload" href="../../shared/components/chatWhats.js">
 <link rel="modulepreload" href="../../shared/js/chatFontes.js">
 <!-- modulepreload:fim -->
-</head><body data-sipa-escala="aluno" data-sipa-aluno>
+<!-- 25/11/2026: o estilo do chat já vem com a página (antes baixava no clique em Mensagens e a área ficava em branco). --><link rel="stylesheet" href="../../shared/css/chat-whats.css" data-chat-whats></head><body data-sipa-escala="aluno" data-sipa-aluno>
 <aside class="sipa-sidebar">
 
     <!-- LOGO -->
@@ -183,6 +183,6 @@
 <main class="profile-main"><header class="profile-header"><button id="mensagens-menu" class="student-menu-toggle" type="button" aria-expanded="false">Menu</button><div><h1>Mensagens</h1><p>Acompanhe os avisos recebidos da autoescola.</p></div></header>
 <div class="mensagens-abas" data-mensagens-abas role="tablist" aria-label="Avisos ou conversa" hidden><button type="button" role="tab" id="aba-avisos" data-aba="avisos" aria-controls="mensagens-lista" aria-selected="true">Avisos</button><button type="button" role="tab" id="aba-conversa" data-aba="conversa" aria-controls="conversa-recepcao" aria-selected="false" tabindex="-1">Conversa com a Recepção <span class="mensagens-aba-contador" data-contador="conversa" hidden></span></button></div>
 <section class="mensagens-lista" id="mensagens-lista" aria-label="Suas mensagens"><p>Carregando mensagens…</p></section>
-<section class="conversa-recepcao" id="conversa-recepcao" aria-label="Conversa com a Recepção" hidden><label class="conversa-autoescola" data-conversa-autoescola hidden>Autoescola <select></select></label><p class="conversa-aviso" data-conversa-aviso role="status"></p><ul class="conversa-lista" data-conversa-lista aria-live="polite"></ul><form class="conversa-form" novalidate><label for="conversa-texto">Mensagem para a Recepção</label><textarea id="conversa-texto" rows="3"></textarea><p class="conversa-erro" data-conversa-erro role="alert"></p><div class="conversa-form-rodape"><span class="conversa-contador" data-conversa-contador>0 / 2000</span><button type="submit">Enviar</button></div></form></section>
+<section class="conversa-recepcao" id="conversa-recepcao" aria-label="Conversa com a equipe da autoescola" hidden><label class="conversa-autoescola" data-conversa-autoescola hidden>Autoescola <select></select></label><p class="conversa-aviso" data-conversa-aviso role="status"></p><ul class="conversa-lista" data-conversa-lista aria-live="polite"></ul><form class="conversa-form" novalidate><label for="conversa-texto">Mensagem para a equipe da autoescola</label><textarea id="conversa-texto" rows="3"></textarea><p class="conversa-erro" data-conversa-erro role="alert"></p><div class="conversa-form-rodape"><span class="conversa-contador" data-conversa-contador>0 / 2000</span><button type="submit">Enviar</button></div></form></section>
 <footer class="profile-footer">AgIA — Gestão Inteligente de Agenda</footer></main>
 <script type="module" src="../js/mensagens.js"></script></body></html>

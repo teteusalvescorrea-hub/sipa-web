@@ -103,3 +103,12 @@ main:has(#conversa-recepcao.chat-wa) > header.profile-header{border-bottom:0!imp
 
 /* 17/11/2026: a rolagem da conversa não passa para a página ao chegar no fim. */
 .conversa-lista{overscroll-behavior:contain}
+/* 25/11/2026 (pedido do usuário): o chat preenche toda a área ao lado do menu (o JS acerta o topo e a esquerda). */
+main:has(#conversa-recepcao.chat-wa-cheio){padding-top:0}
+main:has(#conversa-recepcao.chat-wa-cheio) > header.profile-header{margin:0}
+main:has(#conversa-recepcao.chat-wa) #conversa-recepcao.chat-wa.chat-wa-cheio{height:auto;min-height:0;margin:0}
+main:has(#conversa-recepcao.chat-wa-cheio) > header .sipa-theme-toggle{position:fixed;top:12px;right:16px;z-index:7}
+main:has(#conversa-recepcao.chat-wa-cheio) .profile-footer{display:none}
+/* 25/11/2026: a página Minhas aulas zera a margem de tudo (* {margin:0}); sem a margem automática, o aviso abria colado
+   no canto de cima. O centro da tela fica garantido aqui, em qualquer página que abra o aviso. */
+html body dialog.mensagem-dialog{position:fixed;inset:0;margin:auto;height:fit-content}

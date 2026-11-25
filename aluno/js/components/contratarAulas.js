@@ -3,7 +3,7 @@
 // Abre pelo botão do topo ou pelo endereço #contratar (atalhos de outras telas e o antigo pacotes.html).
 import {LINK_CONTRATAR_AULAS} from '../domain/contatoRecepcao.js';
 const ANCORA='#contratar';
-const PASSOS=['Peça pelo chat ou fale com a Recepção pelo WhatsApp.','A Recepção registra o pacote ou as aulas avulsas.','As aulas entram no seu saldo e você já pode agendar.'];
+const PASSOS=['Peça pelo chat ou pelo WhatsApp da autoescola.','A AgIA registra o pacote ou as aulas avulsas.','As aulas entram no seu saldo e você já pode agendar.'];
 
 export function abrirContratarAulas(origem){
  if(document.querySelector('.lesson-hire-dialog'))return;
@@ -19,13 +19,13 @@ export function abrirContratarAulas(origem){
  const ICONE_CHAT='<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/><path d="M8.5 10.5h7m-7 3h4.5"/></svg>';
  const ICONE_WPP='<svg viewBox="0 0 24 24"><path d="M3.5 20.5l1.3-4.1A8.6 8.6 0 1 1 8 19.5Z"/><path d="M9.2 8.3c-.4 2.9 2.6 6.4 5.9 6.4l.9-1.5-1.9-1-.9.9a3.9 3.9 0 0 1-2.2-2.2l.9-.9-1-1.9Z"/></svg>';
  // Fase 8 (4.6) + 09/11/2026: o pedido avisa a Recepção e já deixa a mensagem no chat do aluno com ela.
- const pedir=opcao('button','lesson-hire-opcao-chat',ICONE_CHAT,'Pedir pelo chat','A Recepção recebe sua mensagem em Mensagens e responde com os valores.');pedir.type='button';pedir.dataset.hirePedido='';
- const whatsapp=opcao('a','lesson-hire-opcao-wpp',ICONE_WPP,'Falar no WhatsApp','Abre o WhatsApp da Recepção em uma nova aba.');whatsapp.href=LINK_CONTRATAR_AULAS;whatsapp.target='_blank';whatsapp.rel='noopener noreferrer';whatsapp.dataset.hireWhatsapp='';
+ const pedir=opcao('button','lesson-hire-opcao-chat',ICONE_CHAT,'Pedir pelo chat','A equipe da autoescola recebe sua mensagem em Mensagens e responde com os valores.');pedir.type='button';pedir.dataset.hirePedido='';
+ const whatsapp=opcao('a','lesson-hire-opcao-wpp',ICONE_WPP,'Falar no WhatsApp','Abre o WhatsApp da autoescola em uma nova aba.');whatsapp.href=LINK_CONTRATAR_AULAS;whatsapp.target='_blank';whatsapp.rel='noopener noreferrer';whatsapp.dataset.hireWhatsapp='';
  const opcoes=el('div',undefined,'lesson-hire-opcoes');opcoes.append(pedir,whatsapp);
  const retorno=el('p',undefined,'lesson-hire-note');retorno.setAttribute('role','status');
  pedir.onclick=async()=>{pedir.disabled=true;retorno.classList.remove('lesson-hire-erro');
   try{const api=await import('../../../shared/js/api.js');await api.Post('alunos/me/pedidos-aulas',{});
-   pedir.classList.add('lesson-hire-opcao-ok');pedir.querySelector('strong').textContent='Pedido enviado';pedir.querySelector('small').textContent='A mensagem chegou à Recepção. Acompanhe em Mensagens.';pedir.querySelector('.lesson-hire-opcao-seta').textContent='✓';
+   pedir.classList.add('lesson-hire-opcao-ok');pedir.querySelector('strong').textContent='Pedido enviado';pedir.querySelector('small').textContent='A mensagem chegou à equipe da autoescola. Acompanhe em Mensagens.';pedir.querySelector('.lesson-hire-opcao-seta').textContent='✓';
    retorno.textContent='';const ir=el('a','Abrir Mensagens','lesson-hire-ir');ir.href=new URL('../../html/mensagens.html',import.meta.url).href;retorno.append(ir);}
   catch(e){pedir.disabled=false;retorno.classList.add('lesson-hire-erro');retorno.textContent=e?.message||'Não foi possível enviar o pedido. Use o WhatsApp.';}};
  const fechar=el('button','Fechar','lesson-hire-fechar');fechar.type='button';fechar.dataset.hireClose='';fechar.onclick=()=>d.close();

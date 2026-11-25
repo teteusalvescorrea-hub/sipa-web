@@ -27,7 +27,7 @@ export function locaisDoAluno({unidade,unidadeCarro,categorias=[]}={}){
   if(origem==='Novo Milênio'){const c=local('Vila Velha');itens.push({texto:'Todas as aulas de carro são na '+c.nome+'.',endereco:c.endereco,referencia:c.referencia});}
   else if(origem){const base=local(origem);itens.push({texto:'Aulas de carro na '+base.nome+'.',endereco:base.endereco,referencia:base.referencia});
    for(const d of DESLOCAMENTOS_CARRO.filter(x=>x.origem===origem)){const destino=local(d.destino);itens.push({texto:DIAS[d.dia].charAt(0).toUpperCase()+DIAS[d.dia].slice(1)+': as aulas são na '+destino.nome+'.',endereco:destino.endereco,referencia:destino.referencia,destaque:true});}}
-  else itens.push({texto:'O local das aulas de carro segue a sua unidade (confirme com a Recepção).'});
+  else itens.push({texto:'O local das aulas de carro segue a sua unidade (a AgIA mostra o endereço em cada aula).'});
   blocos.push({categoria:'B',titulo:'Aulas de carro (4 rodas)',itens});
  }
  if(cats.includes('A')){const c=local('Vila Velha');blocos.push({categoria:'A',titulo:'Aulas de moto (2 rodas)',itens:[{texto:'Todas as aulas de moto são na '+c.nome+'.',endereco:c.endereco}]});}
@@ -41,7 +41,7 @@ export const REGRAS=Object.freeze([
  {titulo:'Faltas, horário e reposição',itens:['Faltar na aula prática sem avisar com no mínimo 48 horas úteis de antecedência gera cobrança por aula no ato da reposição.','Valores de reposição de aula prática conforme a tabela vigente.','Em caso de chuva, as aulas acontecem normalmente.','Chegue com 10 minutos de antecedência: não há tolerância de atraso.']},
  {titulo:'Antecipação de aulas',itens:['Na antecipação de aulas, o cronograma segue a ordem crescente: são antecipadas as últimas aulas.']},
  {titulo:'Crianças',itens:['Se vier com criança, é obrigatório trazer um responsável maior de idade para acompanhá-la. Não cuidamos de menores no local.','Sem responsável, a aula não será realizada: será registrada falta e haverá custo de reposição.']},
- {titulo:'Pelo aplicativo',itens:['Para cancelar uma aula, use Minhas aulas com pelo menos 48 horas úteis de antecedência.','Em caso de problema de saúde, envie o atestado médico pelo próprio cancelamento da aula e acompanhe em Minhas aulas → Atestados médicos.','Dúvidas: fale com a Recepção da sua unidade em Mensagens.']}
+ {titulo:'Pelo aplicativo',itens:['Para cancelar uma aula, use Minhas aulas com pelo menos 48 horas úteis de antecedência.','Em caso de problema de saúde, envie o atestado médico pelo próprio cancelamento da aula e acompanhe em Minhas aulas → Atestados médicos.','Dúvidas: fale com a equipe da sua unidade em Mensagens.']}
 ]);
 
 export function montarInformacoesImportantes(aluno={}){
@@ -72,7 +72,7 @@ function carregarCss(){
 }
 
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
-// O PDF: uma página de impressão com o visual do AgIA; o navegador abre "Salvar como PDF".
+// O PDF: uma página de impressão com o visual da AgIA; o navegador abre "Salvar como PDF".
 export function htmlDoPdf(aluno={}){
  const hoje=new Date().toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
  const locais=locaisDoAluno(aluno).map(b=>`<div class="local"><h4>${esc(b.titulo)}</h4>${b.itens.map(i=>`<p class="${i.destaque?'destaque':''}"><b>${esc(i.texto)}</b>${i.endereco?`<br><span>${esc(i.endereco)}</span>`:''}${i.referencia?`<br><i>Ponto de referência: ${esc(i.referencia)}</i>`:''}</p>`).join('')}</div>`).join('');

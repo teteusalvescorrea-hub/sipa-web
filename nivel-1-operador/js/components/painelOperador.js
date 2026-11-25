@@ -8,7 +8,7 @@ import { iconeSvg } from "./uiOperador.js";
 const ICONE_DA_SECAO = Object.freeze({
     mensagens: "chat", antecipacao: "timer", sit: "sit", "agenda-global": "calendar", acessos: "key", relatorios: "chart",
     auditoria: "gauge", provas: "exam", unidades: "building", permissoes: "lock", configuracoes: "sliders", "visao-geral": "home", agenda: "calendar",
-    alunos: "users", cadastro: "user-plus", instrutores: "badge", perfil: "user", verificacoes: "check", recursos: "car"
+    alunos: "users", liberacoes: "unlock", cadastro: "user-plus", instrutores: "badge", perfil: "user", verificacoes: "check", recursos: "car"
 });
 
 const SECOES = Object.freeze({
@@ -18,7 +18,7 @@ const SECOES = Object.freeze({
     instrutores: ["Instrutores", "Instrutores da unidade", "Consulte os profissionais vinculados à sua unidade."],
     perfil: ["Meu perfil", "Meu perfil", "Identidade e permissões do atendimento atual."],
     agenda: ["Agenda da Unidade", "Agenda da Unidade", "Consulte as aulas e a disponibilidade dos recursos da unidade."],
-    verificacoes: ["Verificações", "Verificações", "Analise solicitações médicas de cancelamento e encaminhe os atestados para a gerência."],
+    verificacoes: ["Verificações", "Verificações", "Acompanhe os atestados dos alunos. A AgIA envia cada um direto para a decisão da Gerência."],
     recursos: ["Recursos da unidade", "Recursos da unidade", "Veículos, instrutores e equipamentos vinculados à sua unidade."]
 });
 

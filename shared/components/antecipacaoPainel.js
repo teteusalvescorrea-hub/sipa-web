@@ -37,7 +37,7 @@ const ICONES={
  relogio:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 };
 const ABAS=[
- ['pedidos','Pedidos para adiantar','Alunos que pediram para adiantar as aulas','laranja','O aluno pediu para adiantar as aulas. Fale com ele pelo chat do AgIA (clique no nome ou em "Conversar") e, depois, marque "Contato feito".'],
+ ['pedidos','Pedidos para adiantar','Alunos que pediram para adiantar as aulas','laranja','O aluno pediu para adiantar as aulas. Fale com ele pelo chat da AgIA (clique no nome ou em "Conversar") e, depois, marque "Contato feito".'],
  ['liberados','Horários liberados','Vagas abertas com alunos interessados','verde','Um horário ocupado vagou e há alunos interessados. Selecione e envie a oferta: o primeiro que aceitar fica com a vaga.'],
  ['espera','Aguardando vaga','Interesses em horários ainda ocupados','azul','Alunos que querem um horário que ainda está ocupado. Quando ele vagar, o aluno passa para "Horários liberados".'],
 ];
@@ -106,7 +106,7 @@ export async function montarAntecipacaoPainel(host,servico,root){
  const conversar=(alunoId,nome)=>root.dispatchEvent(new CustomEvent('sipa-conversar-aluno',{detail:{alunoId,nome}}));
  function nomeAluno(nome,alunoId){
   if(!alunoId||!temChat())return el('strong',nome);
-  const b=el('button',nome,'ant-nome-link');b.type='button';b.title='Abrir a conversa com '+nome+' no chat do AgIA';b.dataset.antConversar=alunoId;b.onclick=()=>conversar(alunoId,nome);return b;
+  const b=el('button',nome,'ant-nome-link');b.type='button';b.title='Abrir a conversa com '+nome+' no chat da AgIA';b.dataset.antConversar=alunoId;b.onclick=()=>conversar(alunoId,nome);return b;
  }
  function vazio(icone,titulo,texto){const n=el('div',undefined,'ant-vazio');n.append(svg(ICONES[icone]),el('strong',titulo),el('p',texto));return n;}
  function carregando(){const n=el('p','Consultando…','ant-carregando');return n;}
@@ -158,7 +158,7 @@ export async function montarAntecipacaoPainel(host,servico,root){
     disp.append(dias,horas);
    }else disp.append(el('span','O aluno não informou dias e horários.','ant-disp-vazio'));
    const acoes=el('div',undefined,'ant-cartao-acoes');
-   if(p.alunoId&&temChat()){const chat=botao('',()=>conversar(p.alunoId,p.aluno),'op-button op-button-outline ant-botao-chat');chat.append(svg(ICONES.chat),el('span','Conversar'));chat.title='Abrir a conversa com '+p.aluno+' no chat do AgIA';chat.dataset.antConversar=p.alunoId;acoes.append(chat);}
+   if(p.alunoId&&temChat()){const chat=botao('',()=>conversar(p.alunoId,p.aluno),'op-button op-button-outline ant-botao-chat');chat.append(svg(ICONES.chat),el('span','Conversar'));chat.title='Abrir a conversa com '+p.aluno+' no chat da AgIA';chat.dataset.antConversar=p.alunoId;acoes.append(chat);}
    const feito=botao('',async()=>{feito.disabled=true;retornoPedidos.textContent='';try{await servico.atenderPedidoAdiantamento(p.id);pedidos=pedidos.filter(x=>x.id!==p.id);retornoPedidos.textContent='Contato registrado: '+p.aluno+' saiu da lista.';desenhar();avisar();}catch(e){feito.disabled=false;retornoPedidos.textContent=e.message;}},principal+' ant-botao-ok');
    feito.append(svg(ICONES.ok),el('span','Contato feito'));feito.dataset.antPedidoAtendido=p.id;acoes.append(feito);
    c.append(topo,dados,disp,acoes);grade.append(c);

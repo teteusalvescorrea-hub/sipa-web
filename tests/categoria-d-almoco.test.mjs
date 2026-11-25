@@ -21,7 +21,7 @@ test('atribuição automática usa somente o par único consultado para D, sem a
 });
 function fixture(){const e=criarDadosDemo();e.alunos=[{...e.alunos[0],id:'s',categoria:'D',unidade:'Cobilândia',unidadePrincipal:'Cobilândia',aulasAdquiridas:{D:8},creditos:{D:{disponiveis:6}},financeiro:'Regular',etapas:Object.fromEntries(Object.keys(ETAPAS).map(k=>[k,{status:'Aprovado'}]))}];e.aulas=[];e.recursos=[{id:'i',tipo:'Instrutores',nome:'Instrutor de teste',unidade:'Cobilândia',categorias:['D'],ativo:true,horarioAlmoco:'12-13'},{id:'v',tipo:'Veículos',nome:'Ônibus de teste',placa:'TST0D01',unidade:'Cobilândia',categoria:'D',ativo:true}];return e;}
 test('locais oficiais nos seis dias, domingo fechado, Tartarugão não é unidade',()=>{
- assert.deepEqual(MATRICULAS,['A','B','D','AB']);for(const d of ['19','20','21','22','23'])assert.equal(localCategoriaD('2026-10-'+d).nome,'KM Cobilândia');
+ assert.deepEqual(MATRICULAS,['A','B','D','AB','AD']);for(const d of ['19','20','21','22','23'])assert.equal(localCategoriaD('2026-10-'+d).nome,'KM Cobilândia');
  const sabado=localCategoriaD('2026-10-24');assert.equal(sabado.nome,LOCAIS_ONIBUS.sabado.nome);assert.equal(sabado.unidadeAdministrativa,'Cobilândia');assert.equal(sabado.latitude,-20.3621362);assert.equal(sabado.longitude,-40.3048018);assert.match(sabado.mapsUrl,/!3d-20\.3621362!4d-40\.3048018/);assert.doesNotMatch(sabado.mapsUrl,/search|Itaperuna/);assert.match(localCategoriaD('2026-10-19').endereco,/Jacinto Admiral, 125/);assert.equal(localCategoriaD('2026-10-25'),null);
 });
 test('cadastro D separado com creditos imediatos, combos não autorizados rejeitados, dados preservados',()=>{

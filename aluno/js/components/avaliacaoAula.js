@@ -41,7 +41,10 @@ export function abrirAvaliacao(servico,aula,{aoEnviar}={}){
  const depois=el('button','Avaliar depois','rating-botao');depois.type='button';depois.onclick=()=>d.close();
  const enviar=el('button','Enviar avaliação','rating-botao rating-botao-primario');enviar.type='submit';
  const rodape=el('footer',undefined,'rating-rodape');rodape.append(depois,enviar);
- f.append(notas,tags,campoComentario,erro,rodape);
+ // 24/11/2026 (pedido do usuário): o aviso de anonimato, claro, antes das estrelas.
+ const anonimo=el('div',undefined,'rating-anonimo');anonimo.dataset.avaliacaoAnonima='';
+ anonimo.append(el('strong','Sua avaliação é anônima.'),el('span',' O instrutor nunca vê o seu nome nem o dia da aula. A AgIA junta as notas e os comentários de vários alunos e mostra para ele só a cada 15 dias.'));
+ f.append(anonimo,notas,tags,campoComentario,erro,rodape);
  f.onsubmit=async e=>{e.preventDefault();erro.textContent='';
   const falta=NOTAS.find(([n])=>!f.querySelector('input[name='+n+']:checked'));
   if(falta){erro.textContent='Dê de 1 a 5 estrelas em "'+falta[1]+'".';f.querySelector('input[name='+falta[0]+']')?.focus();return;}
@@ -56,7 +59,7 @@ export function abrirAvaliacao(servico,aula,{aoEnviar}={}){
    const nota5=el('div',undefined,'rating-pronto-nota');const cheias=Math.round(media);
    nota5.append(el('span','★'.repeat(cheias)+'☆'.repeat(5-cheias),'rating-pronto-estrelas'),el('strong',media.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})));
    const tituloPronto=el('h2','Avaliação enviada!');tituloPronto.id='rating-enviada-titulo';
-   pronto.append(icone,tituloPronto,el('p',resumo.textContent,'rating-pronto-aula'),nota5,el('p','Obrigado! A sua opinião ajuda a autoescola a melhorar as aulas e o atendimento.','rating-pronto-texto'),fechar);
+   pronto.append(icone,tituloPronto,el('p',resumo.textContent,'rating-pronto-aula'),nota5,el('p','Obrigado! A sua opinião é anônima e ajuda a autoescola a melhorar as aulas e o atendimento.','rating-pronto-texto'),fechar);
    cabecalho.hidden=true;d.setAttribute('aria-labelledby',tituloPronto.id);d.classList.add('rating-enviada');f.replaceChildren(pronto);fechar.focus();}
   catch(x){erro.textContent=x.message||'Não foi possível enviar a avaliação.';enviar.disabled=false;}};
  d.append(cabecalho,f);

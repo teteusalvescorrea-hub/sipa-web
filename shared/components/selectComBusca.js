@@ -63,9 +63,15 @@ export function aprimorarSelect(select, { placeholder, busca = 'Buscar...', vazi
     // se passar da borda direita, volta para a esquerda.
     const b = botao.getBoundingClientRect();
     painel.style.width = 'max-content'; painel.style.minWidth = b.width + 'px'; painel.style.maxWidth = (window.innerWidth - 16) + 'px';
-    const largura = painel.offsetWidth, altura = painel.offsetHeight, abaixo = window.innerHeight - b.bottom - 8;
+    // 25/11/2026 (pedido do usuário): abre sempre para baixo; se a lista não couber, ela encurta (com rolagem). Só abre
+    // para cima quando embaixo não sobra espaço nem para umas poucas opções.
+    lista.style.maxHeight = '';
+    const largura = painel.offsetWidth, abaixo = window.innerHeight - b.bottom - 8, acima = b.top - 8;
+    let altura = painel.offsetHeight;
+    const paraCima = altura > abaixo && abaixo < 130 && acima > abaixo;
+    if (!paraCima && altura > abaixo) { lista.style.maxHeight = Math.max(80, abaixo - (altura - lista.offsetHeight) - 4) + 'px'; altura = painel.offsetHeight; }
     painel.style.left = Math.max(8, Math.min(b.left, window.innerWidth - largura - 8)) + 'px';
-    painel.style.top = (altura > abaixo && b.top > abaixo ? Math.max(8, b.top - altura - 4) : b.bottom + 4) + 'px';
+    painel.style.top = (paraCima ? Math.max(8, b.top - altura - 4) : b.bottom + 4) + 'px';
   }
   // 12/11/2026: rolar a janela (ou a página) com a lista aberta não fecha mais a lista de repente (era a "piscada"): ela
   // acompanha o botão e só fecha quando o botão sai da área visível da janela ou da tela.

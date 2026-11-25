@@ -14,6 +14,8 @@ import {formatarCpf,formatarTelefone} from '../../../shared/js/formatacao.js';
 import {formatarData,dataBrasilia,horaBrasilia,dataHoraBrasilia,hojeBrasil} from '../../../shared/js/calendario.js';
 import {situacaoExame,resumoExames,etapasHabilitacao} from '../domain/habilitacaoAluno.js';
 import {MOTIVOS_CANCELAMENTO_LOCAL,UNIDADES_LOCAIS,normalizarUnidadeLocal,nomeUnidadeLocal} from '../domain/dominioAluno.js';
+import {partesDoSaldo,EXPLICACAO_USADAS} from '../domain/saldoAluno.js';
+import {mostrarBloqueioAgendamento} from './bloqueioAgendamento.js';
 export {preencherProgressoAlunoLocal as apresentarProgresso,preencherDadosAlunoLocal as apresentarPerfil,listarAulasAlunoLocal as apresentarAulas,iniciarReservaAlunoLocal as apresentarAgendamento,montarSenhaPerfilLocal as montarAlteracaoSenha};
 // "Antes da sua aula": a partir de 768px o resumo não recebe clique (mouse), então ao alargar a janela o bloco abre.
 if(typeof matchMedia==='function')matchMedia('(max-width:767px)').addEventListener?.('change',e=>{const b=document.getElementById('lesson-attendance');if(b&&!e.matches)b.open=true;});
@@ -23,7 +25,9 @@ function preencherProgressoAlunoLocal(dados){
     for(const categoria of categoriasDoPainel(dados)){
         const c=resumo.categorias[categoria],card=document.createElement('article');card.className='progress-card category-progress-card';card.dataset.categoriaProgresso=categoria;
         const h=document.createElement('h2');h.textContent=(NOMES_CATEGORIA[categoria])+' — Categoria '+categoria;const dl=document.createElement('dl');
-        for(const [campo,label,valor] of [['contratadas','Aulas contratadas',c.total??'—'],['disponiveis','Aulas disponíveis',c.disponiveis??'—'],['agendadas','Aulas agendadas',c.reservadas??'—'],['concluidas','Aulas concluídas',c.realizadas??'—']]){const div=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=String(valor);dd.dataset.metrica=campo;div.append(dt,dd);dl.append(div);}card.append(h,dl);overview.append(card);
+        // 24/11/2026 (pedido do usuário): contratadas = disponíveis + agendadas + já usadas (sem depender do registro de presença).
+        const partes=partesDoSaldo(c);card.title=EXPLICACAO_USADAS;
+        for(const [campo,label,valor] of [['contratadas','Aulas contratadas',c.total??'—'],['disponiveis','Aulas disponíveis',c.disponiveis??'—'],['agendadas','Aulas agendadas',c.reservadas??'—'],['usadas','Aulas já usadas',partes?partes.usadas:'—']]){const div=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=String(valor);dd.dataset.metrica=campo;div.append(dt,dd);dl.append(div);}card.append(h,dl);overview.append(card);
     }
     const detalhes=document.querySelector('.progress-details');detalhes.replaceChildren();detalhes.hidden=true;
     const evolucao=document.querySelector('.progress-bar-section');evolucao.replaceChildren();evolucao.hidden=true;
@@ -48,7 +52,7 @@ function apresentarAcompanhamento(dados,apos){
  const secao=el('section',undefined,'progress-detail-card progress-admin-section progress-habilitacao');secao.dataset.habilitacaoAluno='';secao.setAttribute('aria-labelledby','progress-habilitacao-titulo');
  const topo=el('header'),titulo=el('h2','Sua habilitação');titulo.id='progress-habilitacao-titulo';
  const resumo=el('p',resumoExames(exames,hoje).texto,'progress-habilitacao-resumo');resumo.dataset.examesEmDia='';topo.append(titulo,resumo);secao.append(topo);
- secao.append(el('h3','Exames'));
+ secao.append(el('h3','Exames médicos'));
  const lista=el('ul',undefined,'progress-exames');
  for(const exame of exames){
   const s=situacaoExame(exame,hoje),card=el('li',undefined,'progress-exame');card.dataset.exameAluno=exame.tipo;card.dataset.situacao=s.chave;
@@ -65,10 +69,13 @@ function apresentarAcompanhamento(dados,apos){
   const li=el('li',undefined,'progress-etapa');li.dataset.estado=e.estado;if(e.tipo==='exames')li.dataset.etapaExames='';else li.dataset.provaAluno=e.tipo;
   const marca=el('span',e.estado==='feito'?'✓':e.estado==='falhou'?'!':String(i+1),'progress-etapa-marca');marca.setAttribute('aria-hidden','true');
   const texto=el('div',undefined,'progress-etapa-texto');texto.append(el('strong',e.titulo),el('span',e.situacao,'progress-etapa-situacao'));if(e.detalhe)texto.append(el('small',e.detalhe));
+  // 24/11/2026: o pedido de liberação para agendar (a página do aluno envia e redesenha).
+  if(e.tipo==='liberacao')li.dataset.liberacaoAgendamento=e.estado;
+  if(e.acao==='solicitar'){const b=el('button','Pedir liberação para agendar','progress-liberacao-botao');b.type='button';b.dataset.pedirLiberacao='';b.onclick=()=>{b.disabled=true;document.dispatchEvent(new CustomEvent('sipa-pedir-liberacao',{detail:{botao:b}}));};texto.append(b);}
   if(e.estado==='atual')li.setAttribute('aria-current','step');
   li.append(marca,texto);etapas.append(li);
  });
- secao.append(etapas,el('p','A Recepção agenda suas provas quando os exames estiverem em dia.','progress-admin-note'));
+ secao.append(etapas,el('p','A AgIA agenda suas provas quando os exames estiverem em dia.','progress-admin-note'));
  // Fase 6: o PDF do agendamento da prova, anexado pela autoescola.
  const comPdf=(dados.provas||[]).flatMap(p=>(p.tentativas||[]).filter(t=>t.temAgendamento&&!t.resultado).map(t=>({...t,nome:p.nome})));
  if(comPdf.length){const box=el('div',undefined,'progress-agendamentos-prova');box.dataset.agendamentosProva='';box.append(el('h3','Agendamento da prova'));
@@ -86,7 +93,7 @@ function preencherDadosAlunoLocal(dados) {
     for(const n of document.querySelectorAll('[data-perfil-total],[data-perfil-disponivel]'))if(dados.categorias?.length)n.parentElement.hidden=!dados.categorias.includes(n.dataset.perfilTotal||n.dataset.perfilDisponivel);
     if(aluno?.categoria?.includes('B')){let n=document.getElementById('profile-car-transmission');if(!n){const c=document.createElement('div'),l=document.createElement('span');n=document.createElement('strong');n.id='profile-car-transmission';l.textContent='TIPO DE CARRO';c.className='profile-info-card';c.append(l,n);document.querySelector('.profile-info-grid').append(c);}n.textContent=nomeCambio(aluno.tipoCambio);}
     if(aluno?.nascimento){for(const [id,titulo,valor] of [['profile-birthdate','DATA DE NASCIMENTO',aluno.nascimento.split('-').reverse().join('/')],['profile-car-unit','UNIDADE DAS AULAS DE CARRO',aluno.categoria?.includes('B')?nomeUnidadeLocal(aluno.unidadeCarro||aluno.unidade):'Nao se aplica']]){let n=document.getElementById(id);if(!n){const c=document.createElement('div'),l=document.createElement('span');n=document.createElement('strong');n.id=id;l.textContent=titulo;c.className='profile-info-card';c.append(l,n);document.querySelector('.profile-info-grid').append(c);}n.textContent=valor;}}
-    const categorias = (aluno?.categoriasFormacao||[]).map(c=>({1:'A',2:'B',3:'D'})[c.valor]).filter(Boolean).join(', ').replace(/, (?=[^,]+$)/,' e ') || (['A','B','D','AB'].includes(aluno?.categoria)?aluno.categoria.replace('AB','A e B'):'');
+    const categorias = (aluno?.categoriasFormacao||[]).map(c=>({1:'A',2:'B',3:'D'})[c.valor]).filter(Boolean).join(', ').replace(/, (?=[^,]+$)/,' e ') || (['A','B','D','AB','AD'].includes(aluno?.categoria)?aluno.categoria.replace('AB','A e B').replace('AD','A e D'):'');
     for (const id of ["profile-name", "profile-full-name"]) texto(id, aluno?.nome || "Cadastro ainda não vinculado");
     texto("profile-avatar", aluno?.nome?.charAt(0) || "—"); texto("profile-cpf", formatarCpf(aluno?.documento));
     { const n = document.getElementById("profile-email"), e = aluno?.email || "", i = e.indexOf("@"); if (n) { if (i > 0) n.replaceChildren(e.slice(0, i + 1), document.createElement("wbr"), e.slice(i + 1)); else n.textContent = e || "Não cadastrado"; } } // quebra o e-mail longo depois do @, não no meio texto("profile-phone", aluno?.telefone ? formatarTelefone(aluno.telefone) : "Não cadastrado");
@@ -189,7 +196,7 @@ function avisoCancelamento(aula,creditoDevolvido){
     const icone=document.createElement('div');icone.className='cancel-success-icon';icone.textContent='✓';icone.setAttribute('aria-hidden','true');
     const h=document.createElement('h2');h.id='cancel-success-title';h.textContent='Aula cancelada com sucesso!';
     const p=document.createElement('p');p.append('Sua aula do dia ',Object.assign(document.createElement('strong'),{textContent:dataBrasilia(aula.inicio)}),' às ',Object.assign(document.createElement('strong'),{textContent:horaBrasilia(aula.inicio)}),' foi cancelada.');
-    const info=document.createElement('div');info.className='cancel-success-info';const [tituloInfo,textoInfo]=creditoDevolvido===null?['Atestado enviado para análise.','O crédito desta aula volta para o saldo se a Gerência aprovar o atestado. Acompanhe em "Atestados médicos".']:creditoDevolvido?['Seu saldo foi atualizado.','O crédito desta aula voltou para o seu saldo e você pode reagendar.']:['Crédito retido.','O cancelamento foi fora do prazo, então o crédito desta aula não volta para o saldo.'];
+    const info=document.createElement('div');info.className='cancel-success-info';const [tituloInfo,textoInfo]=creditoDevolvido===null?['Atestado enviado para análise.','O crédito desta aula volta para o saldo se o atestado for aprovado. A AgIA avisa você em "Atestados médicos".']:creditoDevolvido?['Seu saldo foi atualizado.','O crédito desta aula voltou para o seu saldo e você pode reagendar.']:['Crédito retido.','O cancelamento foi fora do prazo, então o crédito desta aula não volta para o saldo.'];
     info.append(Object.assign(document.createElement('strong'),{textContent:tituloInfo}),Object.assign(document.createElement('span'),{textContent:textoInfo}));
     const ok=document.createElement('button');ok.type='button';ok.className='cancel-success-button';ok.textContent='Entendi';
     const fechar=()=>{fundo.remove();document.removeEventListener('keydown',tecla);};const tecla=e=>{if(e.key==='Escape')fechar();};
@@ -201,7 +208,7 @@ function abrirCancelamentoAlunoLocal(aula,dados,origem,aoConfirmar,servico){
     if(origem.disabled)return;
     origem.disabled=true;
     const d=document.createElement('dialog');d.className='lesson-cancel-dialog';d.setAttribute('aria-labelledby','lesson-cancel-title');d.setAttribute('aria-describedby','lesson-cancel-description');
-    d.innerHTML='<header><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3h.01"/></svg><h2 id="lesson-cancel-title" tabindex="-1">Cancelar aula?</h2></header><p id="lesson-cancel-description">Confira a aula antes de confirmar o cancelamento.</p><dl class="lesson-cancel-summary"></dl><div class="lesson-cancel-reason"><label for="lesson-cancel-reason">Motivo do cancelamento <span>(obrigatório)</span></label><select id="lesson-cancel-reason" required aria-describedby="lesson-cancel-hint"><option value="">Selecione um motivo</option></select><small id="lesson-cancel-hint">Selecione o motivo do cancelamento para continuar.</small></div><aside class="lesson-cancel-policy" aria-label="Política de cancelamento"><p></p></aside><aside class="lesson-cancel-policy" data-health-guidance hidden><strong>Apresentação de atestado médico</strong><p>Se possuir um atestado médico válido, apresente-o à recepção em até 72 horas após o cancelamento. A devolução do crédito dependerá de análise e aprovação.</p><p data-health-deadline></p><a href="https://wa.me/55227998713181" target="_blank" rel="noopener noreferrer">Falar com a recepção</a></aside><label class="cancel-consent" hidden><input type="checkbox" data-cancel-consent> Compreendi que o horário será liberado e o crédito ficará retido, com registro de falta. Uma justificativa de saúde dependerá de aprovação da recepção.</label><p data-cancel-error role="alert"></p><footer><button type="button" data-cancel-back>Voltar / Fechar</button><button type="button" data-cancel-confirm disabled>Confirmar cancelamento</button></footer>';
+    d.innerHTML='<header><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 3h.01"/></svg><h2 id="lesson-cancel-title" tabindex="-1">Cancelar aula?</h2></header><p id="lesson-cancel-description">Confira a aula antes de confirmar o cancelamento.</p><dl class="lesson-cancel-summary"></dl><div class="lesson-cancel-reason"><label for="lesson-cancel-reason">Motivo do cancelamento <span>(obrigatório)</span></label><select id="lesson-cancel-reason" required aria-describedby="lesson-cancel-hint"><option value="">Selecione um motivo</option></select><small id="lesson-cancel-hint">Selecione o motivo do cancelamento para continuar.</small></div><aside class="lesson-cancel-policy" aria-label="Política de cancelamento"><p></p></aside><aside class="lesson-cancel-policy" data-health-guidance hidden><strong>Apresentação de atestado médico</strong><p>Se possuir um atestado médico válido, envie-o pela AgIA em até 72 horas após o cancelamento. A devolução do crédito dependerá de análise e aprovação.</p><p data-health-deadline></p><a href="https://wa.me/55227998713181" target="_blank" rel="noopener noreferrer">Falar com a autoescola</a></aside><label class="cancel-consent" hidden><input type="checkbox" data-cancel-consent> Compreendi que o horário será liberado e o crédito ficará retido, com registro de falta. Uma justificativa de saúde dependerá da aprovação do atestado.</label><p data-cancel-error role="alert"></p><footer><button type="button" data-cancel-back>Voltar / Fechar</button><button type="button" data-cancel-confirm disabled>Confirmar cancelamento</button></footer>';
     const estados={1:'Confirmada',3:'Reservada · aguardando aceite',4:'Recusada'};
     for(const [label,valor] of [['Data',dataBrasilia(aula.inicio)],['Horário',horaBrasilia(aula.inicio)+(aula.fim?' às '+horaBrasilia(aula.fim):'')],['Categoria',aula.categoria?(NOMES_CATEGORIA[aula.categoria]?aula.categoria+' — '+NOMES_CATEGORIA[aula.categoria]:aula.categoria):'Não informada'],[['B','D'].includes(aula.categoria)?'Local da aula':'Unidade',nomeLocalDaReserva(aula)],['Instrutor',dados.registros.find(r=>r.id===aula.instrutor)?.nome||'Não informado'],['Veículo',dados.registros.find(r=>r.id===aula.veiculo)?.nome||'Não informado'],['Status atual',estados[aula.status]||'Não informado']]){const campo=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=valor;campo.append(dt,dd);d.querySelector('dl').append(campo);}
     let salvando=false;
@@ -236,7 +243,7 @@ function abrirCancelamentoAlunoLocal(aula,dados,origem,aoConfirmar,servico){
 function montarInteressesAluno(servico){
     const painel=document.createElement('section');painel.id='student-interests';painel.className='student-interests';painel.hidden=true;painel.setAttribute('aria-label','Interesses em antecipar');
     const titulo=document.createElement('h2'),ajuda=document.createElement('p'),lista=document.createElement('div'),erro=document.createElement('p');
-    titulo.textContent='Interesses em antecipar';ajuda.textContent='Horários ocupados em que você marcou interesse. Se um deles vagar, a recepção entra em contato para remarcar uma aula sua.';erro.setAttribute('role','status');
+    titulo.textContent='Interesses em antecipar';ajuda.textContent='Horários ocupados em que você marcou interesse. Se um deles vagar, a AgIA avisa você para remarcar uma aula sua.';erro.setAttribute('role','status');
     painel.append(titulo,ajuda,erro,lista);
     async function carregar(){
         lista.replaceChildren();let itens;
@@ -340,7 +347,7 @@ async function listarAulasAlunoLocal(servico,dados){
             // Fase 3 (5.4): a aula com atestado fica como faltoso; a que repõe aparece como reposição por atestado.
             const reposicoes=dados.aluno?.reposicoes||[];
             // 17/11/2026 (pedido do usuário): o selo diz o que aconteceu com o atestado (não "Faltoso", que parecia erro).
-            if(aula.solicitacaoMedica&&aula.status!==1){const st=aula.solicitacaoMedica.status;situacao.textContent=st==='aprovado'?'Aula abonada':st==='rejeitado'||st==='reprovado'?'Falta (atestado recusado)':'Atestado em análise';card.dataset.atestado=st==='aprovado'?'aprovado':st==='rejeitado'||st==='reprovado'?'recusado':'analise';}
+            if(aula.solicitacaoMedica&&aula.status!==1){const st=aula.solicitacaoMedica.status;situacao.textContent=st==='aprovado'?(aula.status===6?'Falta · atestado aprovado':'Aula abonada'):st==='rejeitado'||st==='reprovado'?'Falta (atestado recusado)':'Atestado em análise';card.dataset.atestado=st==='aprovado'?'aprovado':st==='rejeitado'||st==='reprovado'?'recusado':'analise';}
             if(reposicoes.some(r=>r.aulaReposicaoId===aula.id)){situacao.textContent+=' · Reposição por atestado';card.dataset.reposicao='';}
             cabecalho.append(h,situacao);
             const infos=document.createElement('dl');infos.className='local-lesson-fields';
@@ -353,7 +360,7 @@ async function listarAulasAlunoLocal(servico,dados){
             textoDetalhe('Crédito: '+(consome?'contabilizado no saldo atual conforme a situação da aula.':'não contabiliza consumo no saldo atual.'));
             if(aula.cancelamento){
                 const c=aula.cancelamento;textoDetalhe('Cancelamento: '+(c.dentroPrazo?'dentro':'fora')+' do prazo de 48 horas úteis · Crédito '+c.credito+' · Frequência: '+({cancelada:'cancelada',falta:'falta',justificativa_pendente:'justificativa pendente'})[c.frequencia]+'.');
-                if(aula.solicitacaoMedica){textoDetalhe('Análise médica: '+(STATUS_MEDICO[aula.solicitacaoMedica.status]||'Estado anterior preservado'));}else if(c.justificativa){const j=c.justificativa;const estado=j.estado==='aguardando_apresentacao'&&Date.now()>Date.parse(j.prazoApresentacao)?'Prazo encerrado para apresentação':({aguardando_apresentacao:'Aguardando apresentação do atestado',aguardando_analise:'Aguardando análise da recepção',aprovado:'Aprovado',rejeitado:'Rejeitado',prazo_encerrado:'Prazo encerrado'})[j.estado]||'Estado da justificativa não informado';textoDetalhe('Justificativa: '+estado+' · Prazo: '+dataHoraBrasilia(j.prazoApresentacao)+'. Nenhuma aprovação automática.');const contato=document.createElement('a');contato.href='https://wa.me/55227998713181?text=Ol%C3%A1!%20Gostaria%20de%20orienta%C3%A7%C3%B5es%20da%20recep%C3%A7%C3%A3o.';contato.target='_blank';contato.rel='noopener noreferrer';contato.textContent='Falar com a recepção';detalhes.append(contato);}
+                if(aula.solicitacaoMedica){textoDetalhe('Análise médica: '+(STATUS_MEDICO[aula.solicitacaoMedica.status]||'Estado anterior preservado'));}else if(c.justificativa){const j=c.justificativa;const estado=j.estado==='aguardando_apresentacao'&&Date.now()>Date.parse(j.prazoApresentacao)?'Prazo encerrado para apresentação':({aguardando_apresentacao:'Aguardando apresentação do atestado',aguardando_analise:'Aguardando análise',aprovado:'Aprovado',rejeitado:'Rejeitado',prazo_encerrado:'Prazo encerrado'})[j.estado]||'Estado da justificativa não informado';textoDetalhe('Justificativa: '+estado+' · Prazo: '+dataHoraBrasilia(j.prazoApresentacao)+'. Nenhuma aprovação automática.');const contato=document.createElement('a');contato.href='https://wa.me/55227998713181?text=Ol%C3%A1!%20Gostaria%20de%20orienta%C3%A7%C3%B5es%20da%20recep%C3%A7%C3%A3o.';contato.target='_blank';contato.rel='noopener noreferrer';contato.textContent='Falar com a autoescola';detalhes.append(contato);}
             }
             if(aula.motivoCancelamento)textoDetalhe('Motivo do cancelamento: '+aula.motivoCancelamento);
             const eventos=Array.isArray(aula.historico)?aula.historico:[],cancelamento=[...eventos].reverse().find(e=>e.status===2&&e.em);
@@ -363,10 +370,14 @@ async function listarAulasAlunoLocal(servico,dados){
             // 17/11/2026 (pedido do usuário): a cancelada em cartão baixo (sem o bloco do local) e com quem cancelou e o motivo.
             if(aula.status===2){card.classList.add('local-lesson-cancelada');card.append(linhaDoCancelamento(aula));}
             // 17/11/2026 (pedido do usuário): a falta nunca volta para o saldo; o cartão diz isso.
-            if(aula.status===6&&!aula.solicitacaoMedica){const p=document.createElement('p');p.className='local-lesson-falta-info';p.dataset.faltaInfo='';const t=document.createElement('strong');t.textContent='Falta registrada';p.append(t,document.createTextNode(' · Esta aula foi descontada do seu saldo e não é devolvida.'));card.append(p);}
+            if(aula.status===6&&!aula.solicitacaoMedica){const p=document.createElement('p');p.className='local-lesson-falta-info';p.dataset.faltaInfo='';const t=document.createElement('strong');t.textContent='Falta registrada';// 25/11/2026 (pedido do usuário): com atestado médico, o aluno envia em até 72 horas do fim da aula; aprovado, a falta
+                // continua registrada, o crédito volta e a próxima aula da categoria é a reposição.
+                const prazoAtestado=Date.parse(aula.fim||aula.inicio)+72*3600000,podeAtestar=servico.capacidades?.solicitacaoMedica!==false&&Date.now()<=prazoAtestado;
+                p.append(t,document.createTextNode(podeAtestar?' · Esta aula foi descontada do seu saldo. Se você tem atestado médico, envie até '+dataHoraBrasilia(new Date(prazoAtestado).toISOString())+' para pedir o abono.':' · Esta aula foi descontada do seu saldo e não é devolvida.'));card.append(p);
+                if(podeAtestar){const enviar=document.createElement('button');enviar.type='button';enviar.className='local-lesson-atestado';enviar.dataset.atestadoFalta=aula.id;enviar.textContent='Enviar atestado';enviar.onclick=()=>abrirSolicitacaoMedica({aula,servico,origem:enviar,aoConcluir:async()=>{await listarAulasAlunoLocal(servico,await servico.dadosAlunoLocal());}});p.append(enviar);}}
             if(aula.solicitacaoMedica){
                 const aviso=document.createElement('p');aviso.className='student-medical-state';aviso.dataset.medicalStatus=aula.solicitacaoMedica.status;
-                aviso.append(document.createTextNode('Cancelamento por motivo médico · '),situacaoMedica(aula.solicitacaoMedica));
+                aviso.append(document.createTextNode(aula.status===6?'Atestado da falta · ':'Cancelamento por motivo médico · '),situacaoMedica(aula.solicitacaoMedica));
                 const acompanhar=document.createElement('button');acompanhar.type='button';acompanhar.className='medical-follow-link';acompanhar.textContent='Acompanhar atestado';acompanhar.dataset.medicalFollow=aula.solicitacaoMedica.id;
                 acompanhar.onclick=()=>{tabs.querySelector('[data-vista=atestados]').click();atestados.destacar(aula.solicitacaoMedica.id);};aviso.append(document.createTextNode(' '),acompanhar);card.append(aviso);
             }
@@ -406,7 +417,18 @@ async function iniciarReservaAlunoLocal(servico, inicial) {
     const alterar=()=>{operacaoId=crypto.randomUUID();};
     function mensagem(v){feedback.textContent=v;feedback.style.display='block';feedback.setAttribute('role','status');}
     // Fase 1: o aluno vê o que falta para agendar (validação da recepção, exames, teórica e LADV).
-    if(dados.aluno?.pendenciasAgendamento?.length){mensagem('Agendamento bloqueado. Falta: '+dados.aluno.pendenciasAgendamento.join(', ')+'.');feedback.setAttribute('role','alert');feedback.dataset.bookingPendencias='';}
+    if(dados.aluno?.pendenciasAgendamento?.length){mensagem('Agendamento bloqueado. Falta: '+dados.aluno.pendenciasAgendamento.join(', ')+'.');feedback.setAttribute('role','alert');feedback.dataset.bookingPendencias='';
+        // 24/11/2026: falta a liberação: o pedido sai daqui também (ou o aviso de que já foi pedido).
+        // 24/11/2026 (pente-fino): o mesmo aviso também no topo da página (antes ficava só no cartão de confirmação, no fim).
+        const lib=dados.aluno.liberacaoAgendamento;
+        const pedido=lib?.solicitadaEm&&!lib.liberadoEm?'Seu pedido de liberação foi enviado em '+formatarData(String(lib.solicitadaEm).slice(0,10))+'. A AgIA avisa você quando o agendamento for liberado.':'';
+        const botaoPedir=()=>{const b=document.createElement('button');b.type='button';b.className='booking-liberacao-botao';b.textContent='Pedir liberação para agendar';b.dataset.pedirLiberacao='';
+            b.onclick=async()=>{for(const x of document.querySelectorAll('[data-pedir-liberacao]'))x.disabled=true;try{await servico.solicitarLiberacao();for(const x of document.querySelectorAll('[data-pedir-liberacao]'))x.replaceWith('Pedido enviado. A AgIA avisa você quando o agendamento for liberado.');}catch(e){for(const x of document.querySelectorAll('[data-pedir-liberacao]'))x.disabled=false;mensagem(e.message||'Não foi possível enviar o pedido.');}};return b;};
+        // 25/11/2026 (pedido do usuário): no lugar da faixa do topo, a tela fica esfumaçada e o aviso aparece no meio, com a
+        // linha do tempo das etapas (feito, onde o aluno está e o que falta) e o pedido de liberação quando já der.
+        mostrarBloqueioAgendamento({pendencias:dados.aluno.pendenciasAgendamento,liberacao:lib,pedirLiberacao:lib?.podeSolicitar&&servico.solicitarLiberacao?botaoPedir:null});
+        if(pedido)feedback.append(document.createElement('br'),pedido);
+        else if(lib?.podeSolicitar&&servico.solicitarLiberacao)feedback.append(document.createElement('br'),botaoPedir());}
     else if(dados.aluno?.validadeContrato)feedback.title='Contrato válido até '+formatarData(dados.aluno.validadeContrato)+'.';
     unidade.replaceChildren(...UNIDADES_LOCAIS.map(u=>new Option(nomeUnidadeLocal(u),u)));
     const vinculo=normalizarUnidadeLocal(dados.aluno?.unidade);
@@ -434,7 +456,7 @@ async function iniciarReservaAlunoLocal(servico, inicial) {
         b.type='button';b.className='time-slot unavailable time-slot-interesse';b.dataset.hora=h.hora;b.dataset.ocupado='';b.setAttribute('aria-pressed',String(marcado));
         hora.textContent=h.hora;rotulo.textContent=marcado?'Interesse marcado ✓':'Ocupado · Tenho interesse';b.append(hora,rotulo);b.setAttribute('aria-label',h.hora+' · '+rotulo.textContent);
         const antecipa=temAulaParaAntecipar(h.hora);
-        b.disabled=!marcado&&!antecipa&&!saldoNaCategoria();b.title=b.disabled?semAulaNoPrazo():marcado?'Clique para desmarcar o interesse.':antecipa?'A recepção avisa você se este horário vagar.':'A recepção avisa você se este horário vagar, para marcar a aula com o seu saldo.';
+        b.disabled=!marcado&&!antecipa&&!saldoNaCategoria();b.title=b.disabled?semAulaNoPrazo():marcado?'Clique para desmarcar o interesse.':antecipa?'A AgIA avisa você se este horário vagar.':'A AgIA avisa você se este horário vagar, para marcar a aula com o seu saldo.';
         b.onclick=async()=>{
             if(ocupada||b.disabled)return;b.disabled=true;
             try{

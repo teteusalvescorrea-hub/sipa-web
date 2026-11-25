@@ -139,7 +139,7 @@ export function fonteAluno(servico,{unidade=''}={}){
   categorias:[],
   async listar(){
    const recepcao=(await servico.conversas()).map(c=>({chave:'r:'+c.autoescolaId,tipo:'recepcao',id:c.autoescolaId,nome:'Recepção'+(unidade?' · '+unidade:''),categoria:'Recepção',subtitulo:c.autoescola,
-    ultimaEm:c.ultimaMensagemEm,ultima:c.ultimaMensagemEm?'':'Fale com a Recepção da sua unidade',naoLidas:c.naoLidas||0,somenteLeitura:c.podeEnviar===false,mostrarAutor:true}));
+    ultimaEm:c.ultimaMensagemEm,ultima:c.ultimaMensagemEm?'':'Fale com a equipe da sua unidade',naoLidas:c.naoLidas||0,somenteLeitura:c.podeEnviar===false,mostrarAutor:true}));
    let diretas=[];
    if(servico.chatResumo){try{diretas=((await servico.chatResumo()).contatos||[]).map(c=>({chave:'u:'+c.usuarioId,tipo:'pessoa',id:c.usuarioId,nome:c.categoria+(unidade?' · '+unidade:''),categoria:c.categoria,subtitulo:c.nome,
     ultimaEm:c.ultimaEm,ultima:c.ultimaMensagem||'',ultimaMinha:c.ultimaMinha===true,naoLidas:c.naoLidas||0}));}catch{}}

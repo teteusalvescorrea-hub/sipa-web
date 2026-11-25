@@ -27,11 +27,11 @@ export function acoesDeCancelamento(raiz,servico,aula,estado,{executar,aoConclui
  if(nivel===1&&servico.solicitarSubstituicao){
   const c=botao('Solicitar cancelamento',()=>{const motivo=motivoCampo();
    dialogo(raiz,'Solicitar cancelamento à Gerência · '+quando,[['Motivo',motivo]],
-    async()=>{await servico.solicitarSubstituicao(aula.id,{novoAlunoId:'',motivo:motivo.value});await executar(async()=>{},'Pedido de cancelamento enviado à Gerência.',aoConcluir);});});
+    async()=>{await servico.solicitarSubstituicao(aula.id,{novoAlunoId:'',motivo:motivo.value});await executar(async()=>{},'A AgIA enviou o pedido de cancelamento à Gerência.',aoConcluir);});});
   c.dataset.opSolicitarCancelamento='';botoes.push(c);
   const b=botao('Solicitar substituição',()=>{const novo=select(alunos(estado,aula,'Selecione o aluno substituto')),motivo=motivoCampo();novo.required=true;novo.dataset.opNovoAluno='';
    dialogo(raiz,'Solicitar substituição à Gerência · '+quando,[['Aluno substituto',novo],['Motivo',motivo]],
-    async()=>{await servico.solicitarSubstituicao(aula.id,{novoAlunoId:novo.value,motivo:motivo.value});await executar(async()=>{},'Solicitação enviada à Gerência.',aoConcluir);});});
+    async()=>{await servico.solicitarSubstituicao(aula.id,{novoAlunoId:novo.value,motivo:motivo.value});await executar(async()=>{},'A AgIA enviou a solicitação à Gerência.',aoConcluir);});});
   b.dataset.opSolicitarSubstituicao='';botoes.push(b);
  }
  if(servico.faltaComOnus){

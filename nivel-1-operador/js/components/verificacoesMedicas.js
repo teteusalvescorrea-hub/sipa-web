@@ -19,7 +19,7 @@ export function montarVerificacoesMedicas(raiz,painel,servico,executar,tabela){
  // Pendentes: ainda com a Recepção ou a Gerência. Histórico: aprovadas e reprovadas, como na tela da Gerência.
  const abas=el('div',undefined,'op-resource-tabs');abas.setAttribute('role','group');abas.setAttribute('aria-label','Visualização das solicitações médicas');
  const botoesAba={};for(const id of ['pendentes','historico']){const b=botao('',()=>{if(aba===id)return;aba=id;pagina=1;renderizar();});b.dataset.medicalAba=id;botoesAba[id]=b;abas.append(b);}
- const card=el('article',undefined,'op-card');card.append(el('h2','Solicitações médicas'),el('p','Os atestados vão direto para a Gerência, que decide sobre os créditos. Aqui a Recepção acompanha cada pedido.','op-help'),abas,form,erroFiltros,lista,paginas);painel.replaceChildren(metricas,card);
+ const card=el('article',undefined,'op-card');card.append(el('h2','Solicitações médicas'),el('p','A AgIA envia os atestados direto para a Gerência, que decide sobre os créditos. Aqui você acompanha cada pedido.','op-help'),abas,form,erroFiltros,lista,paginas);painel.replaceChildren(metricas,card);
  let registros=[],pagina=1,atual=null,url=null,aba='pendentes';const ordem=estadoOrdenacao();
  const d=modal(raiz,'Analisar solicitação médica','opMedica'),corpo=el('div');d.classList.add('op-medical-dialog');d.append(corpo);
  const revogar=()=>{if(url){URL.revokeObjectURL(url);url=null;}};d.addEventListener('close',()=>{revogar();corpo.replaceChildren();atual=null;});

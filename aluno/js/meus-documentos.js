@@ -15,7 +15,7 @@ async function montar(api,servico){
  let docs;
  try{docs=await api.Get('alunos/me/documentos');}catch(e){host.replaceChildren(el('p',e?.message||'Não foi possível carregar seus documentos.','docs-erro'));return;}
  docs=Array.isArray(docs)?docs:[];
- if(!docs.length){const vazio=el('div',undefined,'docs-vazio');vazio.append(el('strong','Nenhum documento por aqui ainda.'),el('span','Quando a Recepção anexar o seu contrato, a LADV, as regras de vestimenta ou o agendamento da prova, eles aparecem nesta página.'));/* 17/11/2026 (pedido do usuário): com as Informações importantes, sem o aviso de "nenhum documento". */host.replaceChildren(...(topo.length?topo:[vazio]));return;}
+ if(!docs.length){const vazio=el('div',undefined,'docs-vazio');vazio.append(el('strong','Nenhum documento por aqui ainda.'),el('span','Quando a AgIA anexar o seu contrato, a LADV, as regras de vestimenta ou o agendamento da prova, eles aparecem nesta página.'));/* 17/11/2026 (pedido do usuário): com as Informações importantes, sem o aviso de "nenhum documento". */host.replaceChildren(...(topo.length?topo:[vazio]));return;}
  const resumo=el('p',docs.length===1?'1 documento disponível.':docs.length+' documentos disponíveis.','docs-resumo');
  const grade=el('div',undefined,'docs-grupos');
  for(const [categoria,titulo] of GRUPOS){

@@ -8,7 +8,7 @@ if(desenvolvimentoAtivo()){
 }else{const {exigirLogin}=await import('../../shared/js/sessao.js');if(exigirLogin(['Aluno'])){const servico=(await import('./services/alunoIntegrado.js')).criarServicoAluno();document.querySelector('.sipa-sidebar-logout').onclick=e=>{e.preventDefault();servico.sair();};host.textContent='Carregando suas mensagens…';
  // 09/11/2026: a página é só o chat com a Recepção da unidade (e a Gerência, quando ela escreve). Sem os avisos.
  host.hidden=true;host.replaceChildren();document.querySelector('[data-mensagens-abas]')?.setAttribute('hidden','');
- const sub=document.querySelector('.profile-header p');if(sub)sub.textContent='Converse com a Recepção da sua unidade.';
+ const sub=document.querySelector('.profile-header p');if(sub)sub.textContent='Converse com a equipe da sua unidade.';
  const caixa=document.getElementById('conversa-recepcao');
  try{
   if(caixa&&servico.conversas){caixa.hidden=false;caixa.removeAttribute('aria-labelledby');caixa.setAttribute('aria-label','Conversas');

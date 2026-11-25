@@ -147,7 +147,7 @@ export async function garantirChecklist(servico,{instrutorId,trocar=false,veicul
     const dados={veiculoId:v.id,km:controles.km.value,combustivel:controles.combustivel.value,semAvarias:controles.avarias.value,observacoes:controles.observacoes.value,...(confirmarKm?{confirmarKm:true}:{})};
     for(const [nome,,c] of controles.itens)dados[nome]=c.value;
     const r=await servico.registrarChecklist(dados,[...controles.fotos.files]);gravarEscolha(instrutorId,v);mostrarErro(erro,'',controles.km);
-    if(r?.alerta){area.replaceChildren(el('p','Checklist enviado. A Gerência foi avisada dos itens que precisam de manutenção.','in-ck-situacao ok'));salvar.textContent='Continuar';controles=null;salvar.disabled=false;placa.disabled=true;return;}
+    if(r?.alerta){area.replaceChildren(el('p','Checklist enviado. A AgIA registrou os itens que precisam de manutenção e avisou a equipe.','in-ck-situacao ok'));salvar.textContent='Continuar';controles=null;salvar.disabled=false;placa.disabled=true;return;}
     d.close();
    }catch(x){mostrarErro(erro,x.message,controles?.km);salvar.disabled=false;if(x?.codigo===CODIGO_KM_ACIMA&&controles)oferecerConfirmacaoKm(erro,()=>{confirmarKm=true;f.requestSubmit();});}
   };
@@ -190,7 +190,7 @@ export function checklistFimDoDia(servico,v,{kmInicio=null}={}){
    try{
     const r=await servico.registrarChecklist({veiculoId:v.id,momento:MOMENTO_FIM,km:km.value,combustivel:combustivel.value,semAvarias:defeito.value,observacoes:obs.observacoes.value,...(confirmarKm?{confirmarKm:true}:{})},[...obs.fotos.files]);
     enviado=true;
-    if(r?.alerta){corpo.replaceChildren(el('p','Checklist do fim do dia enviado. A Gerência foi avisada do defeito.','in-ck-situacao ok'));cancelar.remove();salvar.textContent='Fechar';salvar.type='button';salvar.disabled=false;salvar.onclick=()=>d.close();salvar.focus();return;}
+    if(r?.alerta){corpo.replaceChildren(el('p','Checklist do fim do dia enviado. A AgIA registrou o defeito e avisou a equipe.','in-ck-situacao ok'));cancelar.remove();salvar.textContent='Fechar';salvar.type='button';salvar.disabled=false;salvar.onclick=()=>d.close();salvar.focus();return;}
     d.close();
    }catch(x){mostrarErro(erro,x.message,km);salvar.disabled=false;if(x?.codigo===CODIGO_KM_ACIMA)oferecerConfirmacaoKm(erro,()=>{confirmarKm=true;f.requestSubmit();});}
   };

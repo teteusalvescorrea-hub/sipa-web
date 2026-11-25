@@ -2,7 +2,7 @@ import {UNIDADES_INSTITUCIONAIS,normalizarChaveUnidade,nomeUnidadeInstitucional}
 import {MOTIVOS_CANCELAMENTO} from './agendamentoAluno.js';
 export const MOTIVOS_CANCELAMENTO_LOCAL=MOTIVOS_CANCELAMENTO.map(m=>m.nome);
 export function resumirCreditos(credito, aulas = [], agora = Date.now()) {
-    const categorias = Object.fromEntries(["A", "B", "D"].map(categoria => [categoria, { total: credito?.categorias?.[categoria] || 0, disponiveis: 0, reservadas: 0, realizadas: 0, consumidas: 0 }]));
+    const categorias = Object.fromEntries(["A", "B", "D"].map(categoria => [categoria, { total: credito?.categorias?.[categoria] || 0, disponiveis: 0, reservadas: 0, realizadas: 0, faltas: 0, retidas: 0, aguardando: 0, consumidas: 0 }]));
     let incompletas = 0;
     // Consumos já existentes preservados ao retirar históricos descartáveis.
     for(const item of credito?.consumosPreservadosLimpeza || []) {
@@ -15,6 +15,10 @@ export function resumirCreditos(credito, aulas = [], agora = Date.now()) {
         const c = categorias[aula.categoria], status = aula.status, inicio = Date.parse(aula.inicio);
         if (!c || ![1, 2, 3, 4, 5, 6].includes(status) || !Number.isFinite(inicio)) { incompletas++; continue; }
         if (status === 5) c.realizadas++;
+        // 24/11/2026: as partes que também gastam crédito, para o cartão fechar no total (saldoAluno.js).
+        if (status === 6) c.faltas++;
+        if (status === 2 && aula.cancelamento?.credito === "retido") c.retidas++;
+        if (status === 1 && inicio <= agora) c.aguardando++;
         if ([1, 3, 4].includes(status) && inicio > agora) c.reservadas++;
         if ([1, 5, 6].includes(status) || (status === 2 && aula.cancelamento?.credito === "retido") || ([3, 4].includes(status) && inicio > agora)) c.consumidas++;
     }

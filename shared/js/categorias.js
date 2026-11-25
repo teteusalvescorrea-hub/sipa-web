@@ -2,7 +2,7 @@ import {localReservaCarro} from './operacaoCarro.js';
 import {dataValida,diaSemana,agoraBrasil} from './calendario.js';
 import {desenvolvimentoAtivo} from './ambiente.js';
 export const CATEGORIAS=Object.freeze(['A','B','D']);
-export const MATRICULAS=Object.freeze(['A','B','D','AB']);
+export const MATRICULAS=Object.freeze(['A','B','D','AB','AD']);
 export const NOMES_CATEGORIA=Object.freeze({A:'Moto',B:'Carro',D:'Ônibus'});
 export const ALMOCOS=Object.freeze([['11-12','11:00 e 12:00'],['12-13','12:00 e 13:00']]);
 export const INTERVALOS_ALMOCO=Object.freeze([['11:00/12:00','11:00 às 12:00'],['12:00/13:00','12:00 às 13:00'],['13:00/14:00','13:00 às 14:00'],['11:00/13:00','11:00 às 13:00'],['12:00/14:00','12:00 às 14:00']]);
@@ -46,8 +46,8 @@ export function recursosOperacionaisD(recursos){
 }
 export function motivoCatalogoOnibus(recursos){
  const ativos=recursosOperacionaisD(recursos),instrutores=ativos.filter(r=>['Instrutores','instrutor'].includes(r.tipo)),veiculos=ativos.filter(r=>['Veículos','veiculo'].includes(r.tipo));
- if(!instrutores.length)return 'Sem instrutor ativo habilitado para a operação Categoria D neste ambiente. Solicite o cadastro ou a conferência do recurso à recepção.';
- if(!veiculos.length)return 'Sem ônibus ativo na operação Categoria D neste ambiente. Solicite o cadastro ou a conferência do recurso à recepção.';
+ if(!instrutores.length)return 'Sem instrutor ativo habilitado para a operação Categoria D neste ambiente. Fale com a equipe da autoescola.';
+ if(!veiculos.length)return 'Sem ônibus ativo na operação Categoria D neste ambiente. Fale com a equipe da autoescola.';
  // 12/11/2026: vários instrutores podem ter a categoria D; quem dirige o ônibus é o instrutor ligado a ele (o par da agenda),
  // como na API, que só limita a um ônibus por autoescola.
  return '';

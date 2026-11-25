@@ -2839,3 +2839,7 @@ html[data-theme=dark] .lessons-main :is(.student-interests,.student-medical-requ
 .medical-request-abonadas ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
 [data-theme="dark"] .medical-request-abonadas{background:rgba(19,124,67,.14);border-color:rgba(19,124,67,.45)}
 [data-theme="dark"] .medical-request-abonadas strong{color:#6fd39b}
+/* 25/11/2026: o botão "Enviar atestado" no aviso da falta (abono por atestado em até 72 horas). */
+[data-sipa-aluno] .lessons-main .local-lesson-falta-info .local-lesson-atestado{display:inline-flex;align-items:center;margin-left:8px;padding:3px 10px;border:1px solid #b42318;border-radius:6px;background:#fff;color:#b42318;font:600 12.5px/1.4 inherit;cursor:pointer}
+[data-sipa-aluno] .lessons-main .local-lesson-falta-info .local-lesson-atestado:hover{background:#b42318;color:#fff}
+html[data-sipa-theme=aluno][data-theme=dark] .lessons-main .local-lesson-falta-info .local-lesson-atestado{background:transparent!important;border-color:#ff9d93!important;color:#ff9d93!important}

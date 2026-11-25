@@ -8,7 +8,7 @@ const ICONE='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="14"
 const quando=iso=>{const s=String(iso||'');return s?s.slice(8,10)+'/'+s.slice(5,7)+' às '+s.slice(11,16):'';};
 const ICONE_OK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 const ROTULO='Quero adiantar minhas aulas',ROTULO_ENVIADO='Pedido de antecipação enviado';
-const JA_ENVIADO=pedidoEm=>({titulo:'Seu pedido já está com a Recepção',texto:'Você pediu para adiantar suas aulas em '+quando(pedidoEm)+'. A Recepção já está com o pedido e entra em contato quando houver um horário mais cedo.'});
+const JA_ENVIADO=pedidoEm=>({titulo:'Seu pedido já está com a AgIA',texto:'Você pediu para adiantar suas aulas em '+quando(pedidoEm)+'. A AgIA já está com o pedido e avisa você quando houver um horário mais cedo.'});
 
 // O botão no estado "enviado" (verde, com o visto) ou de volta ao normal.
 function mostrarEstado(botao,pedidoEm){
@@ -17,7 +17,7 @@ function mostrarEstado(botao,pedidoEm){
  if(enviado)botao.dataset.pedidoEm=pedidoEm;else delete botao.dataset.pedidoEm;
  botao.querySelector('i').innerHTML=enviado?ICONE_OK:ICONE;
  botao.querySelector('span').textContent=enviado?ROTULO_ENVIADO:ROTULO;
- botao.title=enviado?'Enviado em '+quando(pedidoEm)+'. A Recepção entra em contato quando houver um horário mais cedo.':'';
+ botao.title=enviado?'Enviado em '+quando(pedidoEm)+'. A AgIA avisa você quando houver um horário mais cedo.':'';
  botao.setAttribute('aria-label',enviado?ROTULO_ENVIADO+' em '+quando(pedidoEm):ROTULO);
 }
 
@@ -54,7 +54,7 @@ function escolherDisponibilidade(botao,{alterar=false}={}){
  const cabecalho=el('header');cabecalho.innerHTML=ICONE;
  const h=el('h2',alterar?'Alterar dias e horários':'Quando você pode fazer aula?');h.id='lesson-adiantar-title';h.tabIndex=-1;cabecalho.append(h);
  const corpo=el('div',undefined,'lesson-adiantar-form');
- corpo.append(el('p','Marque os dias e os horários em que você pode vir. A Recepção usa isso para encaixar suas aulas mais cedo.','lesson-adiantar-intro'));
+ corpo.append(el('p','Marque os dias e os horários em que você tem disponibilidade. A AgIA usa essas informações para oferecer horários e antecipar suas aulas sempre que abrir uma vaga.','lesson-adiantar-intro'));
  const chip=(texto,ativo,aoMudar,titulo)=>{const b=el('button',texto,'lesson-adiantar-chip');b.type='button';b.setAttribute('aria-pressed',String(ativo));if(titulo)b.setAttribute('aria-label',titulo);
   b.onclick=()=>{const v=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(v));aoMudar(v);validar();};return b;};
  const grupo=(titulo,...filhos)=>{const s=el('fieldset',undefined,'lesson-adiantar-grupo');s.append(el('legend',titulo),...filhos);return s;};
@@ -92,8 +92,8 @@ async function enviarPedido(botao,disponibilidade,alterar){
   const r=await api.Post('alunos/me/pedido-adiantamento',disponibilidade);
   guardarDisponibilidade(botao,r);mostrarEstado(botao,r?.pedidoEm||new Date().toISOString());
   const resumo=resumoDisponibilidade(r?.diasDaSemana||disponibilidade.diasDaSemana,r?.horarios||disponibilidade.horarios);
-  confirmacao(botao,{titulo:alterar?'Dias e horários atualizados':'Pedido enviado à Recepção',texto:(alterar?'A Recepção já vê os novos dias e horários':'A Recepção recebeu que você deseja adiantar suas aulas e entra em contato quando houver um horário mais cedo')+(resumo?'. Você pode: '+resumo+'.':'.')});
- }catch(e){if(!alterar)mostrarEstado(botao,null);else mostrarEstado(botao,botao.dataset.pedidoEm);confirmacao(botao,{titulo:'Não foi possível enviar',texto:e?.message||'Tente de novo em instantes ou fale com a Recepção.',erro:true});}
+  confirmacao(botao,{titulo:alterar?'Dias e horários atualizados':'Pedido enviado à AgIA',texto:(alterar?'A AgIA já considera os novos dias e horários':'A AgIA recebeu seu pedido para adiantar as aulas e avisa você quando houver um horário mais cedo')+(resumo?'. Você pode: '+resumo+'.':'.')});
+ }catch(e){if(!alterar)mostrarEstado(botao,null);else mostrarEstado(botao,botao.dataset.pedidoEm);confirmacao(botao,{titulo:'Não foi possível enviar',texto:e?.message||'Tente de novo em instantes ou fale com a equipe em Mensagens.',erro:true});}
  finally{delete botao.dataset.enviando;botao.removeAttribute('aria-busy');}
 }
 function guardarDisponibilidade(botao,r){if(r)botao.dataset.disponibilidade=JSON.stringify({dias:r.diasDaSemana||[],horarios:r.horarios||[]});}

@@ -2,6 +2,7 @@ import {localDaReserva,localDaAula,orientacoesComparecimento} from '../../shared
 import {localDaReservaOperacional} from '../../shared/js/categorias.js';
 import {nomeUnidadeInstitucional} from '../../shared/js/catalogoUnidades.js';
 import {ROTA_CONTRATAR_AULAS} from './domain/contatoRecepcao.js';
+import {textoDoSaldo,EXPLICACAO_USADAS} from './domain/saldoAluno.js';
 ﻿// Apresentação compartilhada. Saldo vem dos serviços; nunca é debitado pela tela.
 const texto = (id, valor) => { const node = document.getElementById(id); if (node) node.textContent = valor; };
 const statusAula = {1:'Confirmada',2:'Cancelada',3:'Aguardando aceite',4:'Recusada',5:'Realizada',6:'Falta'};
@@ -18,7 +19,7 @@ export function apresentarDashboard({aluno,resumo,aulas=[],registros=[],categori
     if((categorias.includes('D')||resumo?.categorias?.D?.total>0)&&!document.getElementById('credito-D')){const card=document.getElementById('credito-B').closest('article').cloneNode(true);for(const n of card.querySelectorAll('[id]'))n.id=n.id.replace('credito-B','credito-D');card.querySelector('.credit-heading span').textContent='Ônibus';card.querySelector('h2').textContent='Categoria D';document.querySelector('.summary-grid').append(card);}for(const categoria of ['A','B','D']) {
         const card=document.getElementById('credito-'+categoria)?.closest('article');if(card&&categorias.length)card.hidden=!categorias.includes(categoria);
         const saldo=resumo?.categorias?.[categoria]; texto('credito-'+categoria,saldo?.disponiveis??'—');
-        texto('credito-'+categoria+'-detalhe',saldo?`${saldo.total??'Total não informado'} créditos${Number.isFinite(saldo.liberadas)?' · '+saldo.liberadas+' liberadas':''} · ${saldo.reservadas} reservadas · ${saldo.realizadas} concluídas`:'Saldo por categoria ainda não informado.');
+        texto('credito-'+categoria+'-detalhe',textoDoSaldo(saldo));const detalheSaldo=document.getElementById('credito-'+categoria+'-detalhe');if(detalheSaldo)detalheSaldo.title=saldo?EXPLICACAO_USADAS:'';
     }
     // 16/11/2026: a grade do saldo segue quantos cartões estão visíveis (o CSS casa 1, 2 ou 3 na mesma linha).
     const grade=document.querySelector('.summary-grid');if(grade)grade.dataset.cartoes=String(grade.querySelectorAll('.credit-card:not([hidden])').length);

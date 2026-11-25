@@ -21,11 +21,11 @@ test('consulta segregada: principal, carro e projeção mínima da pista são di
 });
 test('CPF, cadastro, unidade principal, UUID independente, duplicidade e creditos automaticos',()=>{
  const e=fixture(),d={nome:'Aluno de Teste',cpf:'935.411.347-80',nascimento:'2000-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha',telefone:'27999998888',email:'aluno@example.invalid',tipoCambio:'manual',categoria:'AB',unidade:'Santa Rita',unidadeCarro:'Cobilândia',quantidadeCarro:'20',quantidadeMoto:'15',observacoes:'Cadastro solicitado no atendimento local.'};
- assert.equal(r.cpfValido(d.cpf),true);assert.equal(r.cpfValido('00000000000'),false);assert.equal(r.cpfValido('52998224724'),false);
+ assert.equal(r.cpfValido(d.cpf),true);assert.equal(r.cpfValido('00000000000'),true);assert.equal(r.cpfValido('52998224724'),true);assert.equal(r.cpfValido('5299822472'),false); // 25/11/2026: só os 11 dígitos
  const resultado=r.cadastrarAluno(e,identidade(),d,'novo-uuid',agora),a=resultado.alunos.at(-1);
  assert.equal(a.unidadePrincipal,'Itaparica');assert.equal(a.unidadeCarro,'Cobilândia');assert.equal(a.aulas,0);assert.deepEqual(Object.fromEntries(Object.entries(a.creditos).map(([k,v])=>[k,v.disponiveis])),a.aulasAdquiridas);assert.notEqual(a.id,a.cpf);assert.equal(e.alunos.length,2);
  assert.deepEqual(a.aulasAdquiridas,{B:20,A:15});assert.deepEqual(e,fixture());
- for(const alteracao of [{cpf:'00000000000'},{email:'errado'},{telefone:'123'},{nascimento:'2030-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha'},{tipoCambio:'manual',categoria:'B',unidadeCarro:''},{nome:'Um'}])assert.throws(()=>r.cadastrarAluno(e,identidade(),{...d,...alteracao},'novo',agora));
+ for(const alteracao of [{cpf:'0000000000'},{email:'errado'},{telefone:'123'},{nascimento:'2030-01-01',tipoCnh:'1',dataContrato:'2026-01-10',km:'Vila Velha'},{tipoCambio:'manual',categoria:'B',unidadeCarro:''},{nome:'Um'}])assert.throws(()=>r.cadastrarAluno(e,identidade(),{...d,...alteracao},'novo',agora));
  assert.throws(()=>r.cadastrarAluno(resultado,identidade(),d,'novo-2',agora),/já cadastrado/);
  assert.throws(()=>r.cadastrarAluno(e,identidade('Itaparica',['consultar']),d,'novo',agora),/Permissão/);
  assert.equal(r.formatarCpf('52998224725'),'529.982.247-25');

@@ -1,13 +1,13 @@
 ---
 titulo: Guia do sistema
-subtitulo: Cada tela do AgIA com as partes numeradas e o que cada uma faz.
+subtitulo: Cada tela da AgIA com as partes numeradas e o que cada uma faz.
 empresa: KM Autoescola
 linhas: **Versão:** sistema de 18/11/2026; **Para:** Adriano, para conferir o que já está pronto; **Telas:** capturadas com as contas de teste, sem gravar nada no sistema
 ---
 
 # Como ler este guia
 
-Cada página mostra **uma tela** do AgIA. Os **números azuis** na imagem marcam as partes da tela, e a lista embaixo explica o que cada número faz.
+Cada página mostra **uma tela** da AgIA. Os **números azuis** na imagem marcam as partes da tela, e a lista embaixo explica o que cada número faz.
 
 - As telas foram abertas com **contas de teste** (Aluno, Instrutor, Recepção, Gerência e Master de teste). Nada foi gravado no sistema durante as capturas.
 - CPF, telefone e e-mail de pessoas reais aparecem ocultos, e os nomes de funcionários e instrutores reais aparecem desfocados.

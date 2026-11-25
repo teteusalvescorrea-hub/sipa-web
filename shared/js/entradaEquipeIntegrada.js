@@ -6,7 +6,9 @@ import {carregarIdentidadeEquipe,criarServicoAdministrativoIntegrado} from './se
 import {montarUnidade} from '../../nivel-1-operador/js/components/unidadeOperador.js';
 import {acompanharHorariosLiberados} from './avisoAntecipacao.js';
 import {acompanharVerificacoes} from './avisoVerificacoes.js';
-import {montarChat} from '../components/chatWhats.js';
+import {montarChat,carregarCssChat} from '../components/chatWhats.js';
+// 25/11/2026: o estilo do chat já baixa em segundo plano, para a aba Mensagens abrir pronta (sem o texto cru).
+if(typeof window!=='undefined')(window.requestIdleCallback||(f=>setTimeout(f,1500)))(()=>carregarCssChat());
 import {fonteEquipe} from './chatFontes.js';
 import {cartaoPedidosAulas} from '../../nivel-1-operador/js/components/fase8Equipe.js';
 
@@ -58,6 +60,7 @@ export async function montarPainelEquipe({perfil,raiz,template,administracao=fal
   }
  }
  // 18/11/2026: atestados sem decisão no item Verificações do menu (Recepção, Gerência e Master).
- acompanharVerificacoes(raiz,servico,ui);
+ // 24/11/2026: o Administrador de Frotas não acompanha atestados.
+ if(perfil!=='frota')acompanharVerificacoes(raiz,servico,ui);
  return {servico,ui};
 }

@@ -17,8 +17,9 @@ export function etapaParaAgendamento(aluno,tipo){
 
 export function pendenciasAgendamento(aluno,data){
  const requisitos={...ETAPAS};
- // Esses exames, quando explicitamente registrados na ficha, também são respeitados.
- for(const [tipo,nome] of [['toxicologico','Exame toxicológico'],['oftalmologico','Exame oftalmológico']]){
+ // Esses exames, quando explicitamente registrados na ficha, também são respeitados. 25/11/2026: o toxicológico não trava
+ // (pode ser feito por último; a Recepção acompanha na ficha).
+ for(const [tipo,nome] of [['oftalmologico','Exame oftalmológico']]){
   if(aluno.examesAdministrativos?.[tipo])requisitos[tipo]=nome;
  }
  return Object.entries(requisitos).flatMap(([tipo,nome])=>{

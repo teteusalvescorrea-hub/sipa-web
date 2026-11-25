@@ -30,7 +30,9 @@ export function adaptarAulaInstrutor(a){
   ...(a.local&&cat==='B'?{localReal:{nome:a.local.nome,endereco:a.local.endereco,mapsUrl:a.local.mapsUrl}}:{}),
   endereco:a.local?.endereco||a.localAula||'',historico:(a.historico||[]).map(adaptarEvento),
   // 17/11/2026: a aula é reposição de uma aula abonada por atestado.
-  ...(a.reposicao?{reposicao:{aulaOrigemInicio:comFusoBrasil(a.reposicao.aulaOrigemInicio)}}:{})};
+  ...(a.reposicao?{reposicao:{aulaOrigemInicio:comFusoBrasil(a.reposicao.aulaOrigemInicio)}}:{}),
+  // 24/11/2026: o tipo da aula e se ela remunera (a reposição de atestado não remunera).
+  ...(numero(a.tipoAula)?{tipoAula:Number(numero(a.tipoAula)),remunera:a.remunera!==false}:{})};
 }
 
 export function adaptarInstrutor(me,veiculos=[]){
@@ -114,5 +116,7 @@ export function criarServicoInstrutor(){
  const provas=async({de,ate}={})=>{const q=new URLSearchParams();if(de)q.set('de',de);if(ate)q.set('ate',ate);const s=q.toString();try{return (await api.Get('motoristas/me/provas'+(s?'?'+s:'')))||[];}catch(e){throw comoErro(e);}};
  // 17/11/2026: as avaliações que os alunos deram ao instrutor (média, total, distribuição, tags e comentários).
  const minhasAvaliacoes=async()=>{try{return await api.Get('motoristas/me/avaliacoes');}catch(e){throw comoErro(e);}};
- return {demonstracao:false,dados,agendaHoje,registrar,veiculosDoDia,registrarChecklist,meusChecklists,provas,minhasAvaliacoes,chatResumo,chatConversa,chatEnviar,chatLer,chatGrupo,chatEnviarGrupo,chatLerGrupo};
+ // 24/11/2026: o resultado da prova (3 aprovado, 4 reprovado, 6 faltou).
+ const registrarResultadoProva=async(tentativaId,statusProvaId)=>{try{return await api.Post('motoristas/me/provas/'+tentativaId+'/resultado',{statusProvaId});}catch(e){throw comoErro(e);}};
+ return {demonstracao:false,dados,agendaHoje,registrar,veiculosDoDia,registrarChecklist,meusChecklists,provas,registrarResultadoProva,minhasAvaliacoes,chatResumo,chatConversa,chatEnviar,chatLer,chatGrupo,chatEnviarGrupo,chatLerGrupo};
 }

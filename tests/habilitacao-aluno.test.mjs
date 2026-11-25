@@ -49,14 +49,17 @@ test('etapas: Exames, teórica e prática de cada categoria; a primeira não con
  const exames=['toxicologico','oftalmologico','psicologico','medico'].map(tipo=>exame('Aprovado','2027-10-01',tipo));
  const provas=[{tipo:'teorica',nome:'Prova teórica',tentativas:[]},{tipo:'praticaCarro',nome:'Prova prática de carro — Categoria B',tentativas:[]},{tipo:'praticaOnibus',nome:'Prova prática de ônibus — Categoria D',tentativas:[]}];
  let e=etapasHabilitacao({exames,provas},hoje);
- assert.deepEqual(e.map(x=>x.titulo),['Exames','Prova teórica','Prática · Carro B','Prática · Ônibus D']);
+ assert.deepEqual(e.map(x=>x.titulo),['Exames médicos','Prova teórica','Prática · Carro B','Prática · Ônibus D']);
  assert.deepEqual(e.map(x=>x.estado),['feito','atual','pendente','pendente']);
  assert.equal(e[0].situacao,'Em dia');assert.equal(e[1].situacao,'Aguardando agendamento');
  e=etapasHabilitacao({exames:[...exames.slice(0,3),exame('Não informado')],provas},hoje);
- assert.deepEqual([e[0].estado,e[0].situacao],['atual','3 de 4 em dia']);assert.equal(e[1].estado,'pendente');
+ assert.deepEqual([e[0].estado,e[0].situacao],['atual','2 de 3 em dia']);assert.equal(e[1].estado,'pendente');
+ // 25/11/2026: o toxicológico pendente não segura os exames (pode ser feito por último) e aparece como aviso.
+ e=etapasHabilitacao({exames:[exame('Não informado','','toxicologico'),...exames.slice(1)],provas},hoje);
+ assert.deepEqual([e[0].estado,e[0].situacao,e[0].detalhe],['feito','Em dia','O toxicológico pode ser feito depois.']);assert.equal(e[1].estado,'atual');
  e=etapasHabilitacao({exames:[...exames.slice(0,3),exame('Vencido','2026-01-01')],provas},hoje);
  assert.equal(e[0].estado,'falhou');
- assert.deepEqual(etapasHabilitacao({exames:[],provas:[{tipo:'praticaMoto',tentativas:[]}]},hoje).map(x=>x.titulo),['Exames','Prática · Moto A']);
+ assert.deepEqual(etapasHabilitacao({exames:[],provas:[{tipo:'praticaMoto',tentativas:[]}]},hoje).map(x=>x.titulo),['Exames médicos','Prática · Moto A']);
  assert.deepEqual(etapasHabilitacao(null,hoje).map(x=>x.tipo),['exames']);
 });
 
